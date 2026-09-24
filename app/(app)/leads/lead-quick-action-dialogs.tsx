@@ -12,19 +12,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
-import {
-  FileText,
-  LoaderCircle as Loader2,
-  Mail,
-  Notebook as NotebookPen,
-  Phone,
-  Send,
-  Sparkles,
-  Video,
-} from 'lucide-react'
+import { FileText, LoaderCircle as Loader2, Mail, Plus, Phone, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type ReactNode, type SubmitEvent, useEffect, useState } from 'react'
 
+import { GoogleMeetIcon } from '@/components/icons/google-meet-icon'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -84,10 +76,10 @@ export function QuickActionTile({
       variant="outline"
       size="sm"
       className={cn(
-        'border-border/80 bg-card/60 justify-start gap-2 font-medium [&>span]:min-w-0',
+        'border-border/80 bg-card/60 h-8 w-full min-w-0 justify-start gap-2 px-2.5 text-left font-medium [&>span]:min-w-0',
         'hover:border-foreground/25 hover:bg-muted/60 transition-colors',
         tone === 'whatsapp' &&
-        'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
+          'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
       )}
       {...props}
     >
@@ -318,10 +310,7 @@ export function QMeetDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <QuickActionTile
-            icon={<Video className="text-muted-foreground size-3.5" />}
-            label="Agendar"
-          />
+          <QuickActionTile icon={<GoogleMeetIcon className="size-3.5" />} label="Agendar" />
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -503,10 +492,7 @@ export function QMeetNowDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <QuickActionTile
-            icon={<Video className="size-3.5 text-green-500" />}
-            label="Ahora"
-          />
+          <QuickActionTile icon={<GoogleMeetIcon className="size-3.5" />} label="Ahora" />
         </DialogTrigger>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
@@ -1049,7 +1035,7 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
       <DialogTrigger asChild>
         <QuickActionTile
           icon={<Mail className="text-muted-foreground size-3.5" />}
-          label="Registrar email"
+          label="Registrar"
         />
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
@@ -1128,10 +1114,7 @@ export function QNoteDialog({ leadId }: { leadId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <QuickActionTile
-          icon={<NotebookPen className="text-muted-foreground size-3.5" />}
-          label="Añadir nota"
-        />
+        <QuickActionTile icon={<Plus className="text-muted-foreground size-3.5" />} label="Nota" />
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -1176,7 +1159,7 @@ export function QSendEmailDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <QuickActionTile
-          icon={<Send className="text-muted-foreground size-3.5" />}
+          icon={<Mail className="text-muted-foreground size-3.5" />}
           label="Enviar"
         />
       </DialogTrigger>

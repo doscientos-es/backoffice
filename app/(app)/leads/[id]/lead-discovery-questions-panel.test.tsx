@@ -68,4 +68,30 @@ describe('LeadDiscoveryQuestionsPanel', () => {
     expect(screen.getByDisplayValue('¿Qué no aplica?')).toBeTruthy()
     expect(screen.queryByDisplayValue('¿Qué fue archivado?')).toBeNull()
   })
+
+  it('collapses the script accessibly and restores it on demand', () => {
+    render(
+      <LeadDiscoveryQuestionsPanel
+        leadId="lead-1"
+        initialQuestions={[question('open', 'open', '¿Qué queda por aclarar?')]}
+        aiEnabled={false}
+        canEdit
+      />,
+    )
+
+    const toggle = screen.getByRole('button', { name: /Preguntas por resolver/ })
+    const content = document.getElementById(toggle.getAttribute('aria-controls') ?? '')
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(content?.getAttribute('aria-hidden')).toBe('false')
+
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(content?.getAttribute('aria-hidden')).toBe('true')
+    expect(content?.hasAttribute('inert')).toBe(true)
+
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(content?.hasAttribute('inert')).toBe(false)
+  })
 })

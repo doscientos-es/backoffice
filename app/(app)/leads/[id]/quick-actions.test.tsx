@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('../actions', () => ({ claimLead: vi.fn() }))
@@ -16,8 +16,8 @@ vi.mock('../lead-quick-action-dialogs', () => ({
   QCallDialog: () => <button type="button">Llamar</button>,
   QWhatsAppDialog: () => <button type="button">Preparar</button>,
   QSendEmailDialog: () => <button type="button">Enviar</button>,
-  QEmailDialog: () => <button type="button">Registrar email</button>,
-  QNoteDialog: () => <button type="button">Añadir nota</button>,
+  QEmailDialog: () => <button type="button">Registrar</button>,
+  QNoteDialog: () => <button type="button">Nota</button>,
   QMeetNowDialog: () => <button type="button">Ahora</button>,
   QMeetDialog: () => <button type="button">Agendar</button>,
 }))
@@ -39,27 +39,47 @@ const props = {
 }
 
 describe('LeadQuickActions', () => {
-  it('keeps frequent actions visible and secondary actions collapsed', () => {
-    render(<LeadQuickActions {...props} googleEnabled />)
-
-    expect(screen.getByRole('button', { name: 'Llamar' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Preparar' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Enviar' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Agendar' })).not.toBeNull()
-    expect(screen.queryByRole('button', { name: 'Añadir nota' })).toBeNull()
-    expect(screen.getByRole('button', { name: 'Llamar' }).parentElement?.className).toContain(
-      'grid-cols-2',
+  it('shows the compact action groups without a collapsible section', () => {
+    render(
+      <LeadQuickActions
+        {...props}
+        googleEnabled
+        aiEnabled
+        createTaskAction={async () => ({ ok: true, id: 'task-1', projectId: null })}
+      />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /Más acciones/ }))
+    for (const name of [
+      'Llamar',
+      'Preparar',
+      'Enviar',
+      'Registrar',
+      'Programar',
+      'Nota',
+      'Ahora',
+      'Agendar',
+      'Sincronizar',
+      'Tareas',
+    ]) {
+      expect(screen.getByRole('button', { name })).not.toBeNull()
+    }
+    for (const group of ['Contacto', 'Email', 'Acciones', 'Reunión', 'Herramientas']) {
+      expect(screen.getByText(group)).not.toBeNull()
+    }
+    expect(screen.queryByRole('button', { name: /Más acciones/ })).toBeNull()
+  })
 
-    expect(screen.getByText('Registrar')).not.toBeNull()
-    expect(screen.getByText('Reuniones')).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Ahora' }).parentElement?.className).toContain(
-      'grid-cols-2',
+  it('only shows meeting and sync actions when Google is enabled', () => {
+    render(
+      <LeadQuickActions
+        {...props}
+        aiEnabled
+        createTaskAction={async () => ({ ok: true, id: 'task-1', projectId: null })}
+      />,
     )
-    expect(screen.getByText('Herramientas')).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Añadir nota' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Sincronizar' })).not.toBeNull()
+
+    expect(screen.getByRole('button', { name: 'Tareas' })).not.toBeNull()
+    expect(screen.queryByRole('button', { name: 'Ahora' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Sincronizar' })).toBeNull()
   })
 })

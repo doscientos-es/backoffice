@@ -1,9 +1,12 @@
 'use client'
 
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
   DrawerClose,
   DrawerContent,
   DrawerDescription,
@@ -14,7 +17,6 @@ import {
   ArrowUpRight,
   Building2,
   CalendarPlus,
-  ChevronDown,
   Clock,
   Hand,
   LoaderCircle as Loader2,
@@ -34,14 +36,6 @@ import { useRouter } from 'next/navigation'
 import { type ReactNode, useState, useTransition } from 'react'
 
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@doscientos/ui'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -54,20 +48,10 @@ import { formatEUR, relativeTime } from '@/lib/utils'
 
 import { ScheduleReminderDialog } from '../reminders/schedule-reminder-dialog'
 import { createTask } from '../tasks/actions'
-import { ExtractTasksDialog } from './[id]/extract-tasks-dialog'
-import { GmailSyncButton } from './[id]/gmail-sync-button'
 import { LeadEditDialog } from './[id]/lead-edit-dialog'
 import { LeadCallLink } from './[id]/phone-actions'
 import { assignLeadOwner, claimLead } from './actions'
-import {
-  QCallDialog,
-  QEmailDialog,
-  QMeetDialog,
-  QMeetNowDialog,
-  QNoteDialog,
-  QSendEmailDialog,
-  QWhatsAppDialog,
-} from './lead-quick-action-dialogs'
+import { LeadQuickActionGroups } from './lead-quick-action-groups'
 import type { KanbanLead } from './leads-kanban'
 
 const INTERACTION_LABEL: Record<string, string> = {
@@ -564,95 +548,16 @@ export function DrawerQuickActions({
   aiEnabled: boolean
   googleEnabled: boolean
 }) {
-  const secondaryActionCount = 3 + (googleEnabled ? 3 : 0) + (aiEnabled ? 1 : 0)
-
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
-        Acciones rápidas
-      </p>
-      <div className="grid grid-cols-2 gap-1.5 [&_button]:h-auto [&_button]:min-h-8 [&_button]:px-2 [&_button]:text-left [&_button]:whitespace-normal">
-        <QCallDialog
-          leadId={leadId}
-          leadName={leadName}
-          leadPhone={leadPhone}
-          leadEmail={leadEmail}
-          senderName={senderName}
-          aiEnabled={aiEnabled}
-        />
-        <QWhatsAppDialog
-          leadId={leadId}
-          leadName={leadName}
-          leadEmail={leadEmail}
-          leadPhone={leadPhone}
-          senderName={senderName}
-          aiEnabled={aiEnabled}
-        />
-        <div className="col-span-2">
-          <ScheduleReminderDialog
-            leadId={leadId}
-            defaultTitle={`Seguimiento de ${leadName}`}
-            trigger={
-              <Button type="button" size="sm" variant="outline" className="w-full justify-start">
-                <CalendarPlus className="text-muted-foreground size-3.5" />
-                Programar seguimiento
-              </Button>
-            }
-          />
-        </div>
-      </div>
-      <Collapsible>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="group/more w-full justify-between px-2">
-            <span className="flex items-center gap-1.5">
-              Más acciones
-              <span className="text-muted-foreground text-xs font-normal">
-                {secondaryActionCount}
-              </span>
-            </span>
-            <ChevronDown className="text-muted-foreground size-4 transition-transform group-aria-expanded/more:rotate-180" />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-1.5">
-          <div className="bg-muted/20 flex flex-col gap-3 rounded-lg border p-2">
-            <DrawerActionGroup label="Registrar">
-              <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
-              <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
-              <QNoteDialog leadId={leadId} />
-            </DrawerActionGroup>
-            {googleEnabled ? (
-              <DrawerActionGroup label="Reuniones">
-                <QMeetNowDialog leadId={leadId} leadName={leadName} leadEmail={leadEmail} />
-                <QMeetDialog
-                  leadId={leadId}
-                  leadName={leadName}
-                  leadEmail={leadEmail}
-                  projects={[]}
-                />
-              </DrawerActionGroup>
-            ) : null}
-            {googleEnabled || aiEnabled ? (
-              <DrawerActionGroup label="Herramientas">
-                {googleEnabled ? <GmailSyncButton leadId={leadId} leadEmail={leadEmail} /> : null}
-                {aiEnabled ? (
-                  <ExtractTasksDialog leadId={leadId} createTaskAction={createTask} />
-                ) : null}
-              </DrawerActionGroup>
-            ) : null}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
-  )
-}
-
-function DrawerActionGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <p className="text-muted-foreground px-1 text-[10px] font-semibold tracking-wide uppercase">
-        {label}
-      </p>
-      {children}
-    </div>
+    <LeadQuickActionGroups
+      leadId={leadId}
+      leadName={leadName}
+      leadPhone={leadPhone}
+      leadEmail={leadEmail}
+      senderName={senderName}
+      aiEnabled={aiEnabled}
+      googleEnabled={googleEnabled}
+      createTaskAction={createTask}
+    />
   )
 }

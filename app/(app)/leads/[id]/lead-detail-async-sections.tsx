@@ -240,35 +240,28 @@ export async function LeadQuickActionsSection({
   if (membersResult.error) throw new Error(membersResult.error.message)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Acciones rápidas</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <LeadQuickActions
-          leadId={lead.id}
-          leadName={lead.name}
-          leadEmail={lead.email}
-          leadPhone={lead.phone}
-          senderName={senderName}
-          openCallInitially={openCallInitially}
-          openScheduleInitially={openScheduleInitially}
-          defaultDurationMinutes={defaultDurationMinutes}
-          defaultCallOutcome={defaultCallOutcome}
-          callSessionId={callSessionId}
-          claimable={canEdit && !lead.assigned_to}
-          aiEnabled={aiEnabled}
-          googleEnabled={googleEnabled}
-          projects={projectsResult.data ?? []}
-          meetMembers={(membersResult.data ?? []).map((member) => ({
-            id: member.id,
-            name: member.name,
-            email: member.email ?? '',
-          }))}
-          scheduleMembers={scheduleMembers}
-          createTaskAction={createTask}
-        />
-      </CardContent>
-    </Card>
+    <LeadQuickActions
+      leadId={lead.id}
+      leadName={lead.name}
+      leadEmail={lead.email}
+      leadPhone={lead.phone}
+      senderName={senderName}
+      openCallInitially={openCallInitially}
+      openScheduleInitially={openScheduleInitially}
+      defaultDurationMinutes={defaultDurationMinutes}
+      defaultCallOutcome={defaultCallOutcome}
+      callSessionId={callSessionId}
+      claimable={canEdit && !lead.assigned_to}
+      aiEnabled={aiEnabled}
+      googleEnabled={googleEnabled}
+      projects={projectsResult.data ?? []}
+      meetMembers={(membersResult.data ?? []).map((member) => ({
+        id: member.id,
+        name: member.name,
+        email: member.email ?? '',
+      }))}
+      scheduleMembers={scheduleMembers}
+      createTaskAction={createTask}
+    />
   )
 }

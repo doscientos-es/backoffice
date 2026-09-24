@@ -1,6 +1,6 @@
 'use client'
 
-import { LoaderCircle as Loader2, RefreshCw } from 'lucide-react'
+import { LoaderCircle as Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import { sileo } from 'sileo'
@@ -40,7 +40,7 @@ export function GmailSyncButton({
       type="button"
       variant="outline"
       size="sm"
-      className="w-full justify-start gap-2"
+      className="h-8 w-full min-w-0 justify-start gap-2 px-2.5 text-left text-xs"
       disabled={pending || !leadEmail}
       aria-label={pending ? 'Sincronizando Gmail' : 'Sincronizar Gmail'}
       title={leadEmail ? 'Importar emails de Gmail' : 'Este lead no tiene email registrado'}

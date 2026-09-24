@@ -1,30 +1,16 @@
 'use client'
 
-import { CalendarDays as CalendarClock, ChevronDown, Hand, ListTodo } from 'lucide-react'
-import { type ReactNode, useState, useTransition } from 'react'
+import { Hand } from 'lucide-react'
+import { useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 
 import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@doscientos/ui'
 
-import {
-  type ScheduleMember,
-  ScheduleReminderDialog,
-} from '../../reminders/schedule-reminder-dialog'
+import type { ScheduleMember } from '../../reminders/schedule-reminder-dialog'
 import { claimLead } from '../actions'
-import {
-  type MeetMember,
-  QCallDialog,
-  QEmailDialog,
-  QMeetDialog,
-  QMeetNowDialog,
-  QNoteDialog,
-  QSendEmailDialog,
-  QWhatsAppDialog,
-  QuickActionTile,
-} from '../lead-quick-action-dialogs'
-import { ExtractTasksDialog, type ExtractTasksDialogProps } from './extract-tasks-dialog'
-import { GmailSyncButton } from './gmail-sync-button'
+import type { MeetMember } from '../lead-quick-action-dialogs'
+import { LeadQuickActionGroups } from '../lead-quick-action-groups'
+import type { ExtractTasksDialogProps } from './extract-tasks-dialog'
 
 type Props = {
   leadId: string
@@ -66,135 +52,27 @@ export function LeadQuickActions({
   scheduleMembers = [],
   createTaskAction,
 }: Props) {
-  const canExtractTasks = aiEnabled && createTaskAction
-  const secondaryActionCount = 2 + (googleEnabled ? 3 : 0) + (canExtractTasks ? 1 : 0)
-
   return (
     <div className="flex flex-col gap-3">
       {claimable && <ClaimButton leadId={leadId} />}
-
-      {/* Primary actions: compact two-column layout for the narrow details rail. */}
-      <div className="grid grid-cols-2 gap-1.5">
-        <QCallDialog
-          leadId={leadId}
-          leadPhone={leadPhone}
-          leadName={leadName}
-          leadEmail={leadEmail}
-          senderName={senderName}
-          aiEnabled={aiEnabled}
-          openInitially={openCallInitially}
-          defaultDurationMinutes={defaultDurationMinutes}
-          defaultOutcome={defaultCallOutcome}
-          callSessionId={callSessionId}
-        />
-        <ScheduleDialog
-          leadId={leadId}
-          leadName={leadName}
-          members={scheduleMembers}
-          openInitially={openScheduleInitially}
-        />
-        <QWhatsAppDialog
-          leadId={leadId}
-          leadName={leadName}
-          leadEmail={leadEmail}
-          leadPhone={leadPhone}
-          senderName={senderName}
-          aiEnabled={aiEnabled}
-        />
-        <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
-      </div>
-
-      <Collapsible>
-        <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground group/more flex w-full items-center justify-center gap-1.5 rounded-md py-0.5 text-xs font-medium transition-colors"
-          >
-            Más acciones
-            <span className="bg-muted rounded-full px-1.5 py-0.5 text-[10px] tabular-nums">
-              {secondaryActionCount}
-            </span>
-            <ChevronDown className="size-3 transition-transform group-aria-expanded/more:rotate-180" />
-          </button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-2.5">
-          <div className="bg-muted/30 flex flex-col gap-2.5 rounded-lg p-2.5">
-            <ActionGroup label="Registrar">
-              <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
-              <QNoteDialog leadId={leadId} />
-            </ActionGroup>
-            {googleEnabled && (
-              <>
-                <ActionGroup label="Reuniones" columns={2}>
-                  <QMeetNowDialog
-                    leadId={leadId}
-                    leadName={leadName}
-                    leadEmail={leadEmail}
-                    meetMembers={meetMembers}
-                  />
-                  <QMeetDialog
-                    leadId={leadId}
-                    leadName={leadName}
-                    leadEmail={leadEmail}
-                    projects={projects}
-                    meetMembers={meetMembers}
-                  />
-                </ActionGroup>
-                <ActionGroup label="Herramientas">
-                  <GmailSyncButton leadId={leadId} leadEmail={leadEmail} />
-                  {canExtractTasks && (
-                    <ExtractTasksDialog
-                      leadId={leadId}
-                      createTaskAction={createTaskAction}
-                      trigger={
-                        <ActionTrigger
-                          icon={<ListTodo className="size-3.5" />}
-                          label="Extraer tareas IA"
-                        />
-                      }
-                    />
-                  )}
-                </ActionGroup>
-              </>
-            )}
-            {!googleEnabled && canExtractTasks && (
-              <ActionGroup label="Herramientas">
-                <ExtractTasksDialog
-                  leadId={leadId}
-                  createTaskAction={createTaskAction}
-                  trigger={
-                    <ActionTrigger
-                      icon={<ListTodo className="size-3.5" />}
-                      label="Extraer tareas IA"
-                    />
-                  }
-                />
-              </ActionGroup>
-            )}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
-  )
-}
-
-function ActionGroup({
-  label,
-  children,
-  columns = 1,
-}: {
-  label: string
-  children: ReactNode
-  columns?: 1 | 2
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <p className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
-        {label}
-      </p>
-      <div className={columns === 2 ? 'grid grid-cols-2 gap-1' : 'grid grid-cols-1 gap-1'}>
-        {children}
-      </div>
+      <LeadQuickActionGroups
+        leadId={leadId}
+        leadName={leadName}
+        leadEmail={leadEmail}
+        leadPhone={leadPhone}
+        senderName={senderName}
+        aiEnabled={aiEnabled}
+        googleEnabled={googleEnabled}
+        projects={projects}
+        meetMembers={meetMembers}
+        scheduleMembers={scheduleMembers}
+        openCallInitially={openCallInitially}
+        openScheduleInitially={openScheduleInitially}
+        defaultDurationMinutes={defaultDurationMinutes}
+        defaultCallOutcome={defaultCallOutcome}
+        callSessionId={callSessionId}
+        createTaskAction={createTaskAction}
+      />
     </div>
   )
 }
@@ -229,56 +107,5 @@ function ClaimButton({ leadId }: { leadId: string }) {
       </span>
       <span className="text-sm font-medium">Asignármelo</span>
     </Button>
-  )
-}
-
-function ActionTrigger({
-  icon,
-  label,
-  ...rest
-}: { icon: ReactNode; label: string } & React.ComponentProps<typeof Button>) {
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      className="h-auto min-w-0 justify-start gap-2 px-2.5 py-2"
-      {...rest}
-    >
-      <span className="text-muted-foreground shrink-0">{icon}</span>
-      <span className="truncate text-xs leading-tight font-medium">{label}</span>
-    </Button>
-  )
-}
-
-// ---------------- SCHEDULE (reminder) ----------------
-
-function ScheduleDialog({
-  leadId,
-  leadName,
-  members,
-  openInitially = false,
-}: {
-  leadId: string
-  leadName: string
-  members?: ScheduleMember[]
-  openInitially?: boolean
-}) {
-  const [open, setOpen] = useState(openInitially)
-
-  return (
-    <ScheduleReminderDialog
-      leadId={leadId}
-      defaultTitle={`Llamar a ${leadName}`}
-      defaultActionType="call"
-      members={members}
-      open={open}
-      onOpenChange={setOpen}
-      trigger={
-        <QuickActionTile
-          icon={<CalendarClock className="text-muted-foreground size-3.5" />}
-          label="Agendar"
-        />
-      }
-    />
   )
 }
