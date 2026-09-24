@@ -517,6 +517,145 @@ export const updateLeadMomTestSignal = defineAction({
   },
 });
 
+const DiscoveryQuestionInput = z.object({
+  leadId: z.string().uuid(),
+  question: z.string().trim().min(3).max(500),
+  category: z.string().trim().min(1).max(40).default("other"),
+  rationale: z.string().trim().max(500).default(""),
+  priority: z.number().int().min(1).max(3).default(2),
+});
+
+export const createLeadDiscoveryQuestion = defineAction({
+  name: "leads.discoveryQuestion.create",
+  schema: DiscoveryQuestionInput,
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (input, { user }) => {
+    const supabase = await createServerClient();
+    const { error } = await supabase.from("lead_discovery_questions").insert({
+      lead_id: input.leadId,
+      question: input.question,
+      category: input.category,
+      rationale: input.rationale,
+      priority: input.priority,
+      origin: "manual",
+      created_by: user.id,
+      updated_by: user.id,
+    });
+    if (error) throw new Error(error.message);
+  },
+});
+
+export const saveLeadDiscoveryQuestion = defineAction({
+  name: "leads.discoveryQuestion.save",
+  schema: z.object({
+    leadId: z.string().uuid(),
+    questionId: z.string().uuid(),
+    question: z.string().trim().min(3).max(500),
+    answer: z.string().trim().max(2000),
+    rationale: z.string().trim().max(500),
+  }),
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (input, { user }) => {
+    const answer = input.answer || null;
+    const { error } = await (await createServerClient())
+      .from("lead_discovery_questions")
+      .update({
+        question: input.question,
+        answer,
+        answer_source: answer ? "manual" : null,
+        rationale: input.rationale,
+        status: answer ? "answered" : "open",
+        suggested_answer: null,
+        source_interaction_id: null,
+        evidence_excerpt: null,
+        confidence: null,
+        updated_by: user.id,
+      })
+      .eq("id", input.questionId)
+      .eq("lead_id", input.leadId);
+    if (error) throw new Error(error.message);
+  },
+});
+
+export const acceptLeadDiscoverySuggestion = defineAction({
+  name: "leads.discoveryQuestion.acceptSuggestion",
+  schema: z.object({ leadId: z.string().uuid(), questionId: z.string().uuid() }),
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (input, { user }) => {
+    const supabase = await createServerClient();
+    const { data: current, error: readError } = await supabase
+      .from("lead_discovery_questions")
+      .select("suggested_answer, answer_source, status")
+      .eq("id", input.questionId)
+      .eq("lead_id", input.leadId)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!current?.suggested_answer || current.answer_source === "manual") {
+      throw new Error("La sugerencia ya no está disponible o la respuesta fue editada manualmente.");
+    }
+
+    const { data: updated, error } = await supabase
+      .from("lead_discovery_questions")
+      .update({
+        answer: current.suggested_answer,
+        answer_source: "ai",
+        status: "answered",
+        suggested_answer: null,
+        updated_by: user.id,
+      })
+      .eq("id", input.questionId)
+      .eq("lead_id", input.leadId)
+      .in("status", ["open", "needs_review"])
+      .or("answer_source.is.null,answer_source.eq.ai")
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!updated) throw new Error("La pregunta cambió mientras revisabas la sugerencia. Actualiza la ficha.");
+  },
+});
+
+export const dismissLeadDiscoverySuggestion = defineAction({
+  name: "leads.discoveryQuestion.dismissSuggestion",
+  schema: z.object({ leadId: z.string().uuid(), questionId: z.string().uuid() }),
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (input, { user }) => {
+    const { error } = await (await createServerClient())
+      .from("lead_discovery_questions")
+      .update({
+        suggested_answer: null,
+        status: "open",
+        updated_by: user.id,
+      })
+      .eq("id", input.questionId)
+      .eq("lead_id", input.leadId)
+      .eq("status", "needs_review");
+    if (error) throw new Error(error.message);
+  },
+});
+
+export const setLeadDiscoveryQuestionStatus = defineAction({
+  name: "leads.discoveryQuestion.setStatus",
+  schema: z.object({
+    leadId: z.string().uuid(),
+    questionId: z.string().uuid(),
+    status: z.enum(["deferred", "not_applicable", "archived", "open"]),
+  }),
+  roles: ["owner", "admin", "member"],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (input, { user }) => {
+    const { error } = await (await createServerClient())
+      .from("lead_discovery_questions")
+      .update({ status: input.status, updated_by: user.id })
+      .eq("id", input.questionId)
+      .eq("lead_id", input.leadId);
+    if (error) throw new Error(error.message);
+  },
+});
+
 // ---------------- CLAIM (reclamar un lead sin owner) ----------------
 
 /**

@@ -45,6 +45,7 @@ import { LeadNextMove } from './lead-next-move'
 import { LeadNotesDialog } from './lead-notes-dialog'
 import { LeadRecentInteractions } from './lead-recent-interactions'
 import { LeadRelatedLinks } from './lead-related-links'
+import { LeadDiscoveryQuestionsPanel } from './lead-discovery-questions-panel'
 import { MomTestChecklist } from './mom-test-checklist'
 import { PhoneQuickActions } from './phone-actions'
 import { LeadStatusSelect } from './status-select'
@@ -101,6 +102,7 @@ export default async function LeadDetailPage({
     tasks,
     reminders,
     attachments,
+    discoveryQuestions,
   } = result
 
   const aiEnabled = isAIEnabled()
@@ -159,6 +161,7 @@ export default async function LeadDetailPage({
     tasks,
     reminders,
     attachments,
+    discoveryQuestions,
   })
   const defaultDurationMinutes = suggestedCallDurationMinutes(interactions)
   const sessionDuration = Number(query?.duration)
@@ -561,6 +564,13 @@ export default async function LeadDetailPage({
                 scheduleMembers={members}
               />
             </SectionBoundary>
+
+            <LeadDiscoveryQuestionsPanel
+              leadId={lead.id as string}
+              initialQuestions={discoveryQuestions}
+              aiEnabled={aiEnabled}
+              canEdit={canEdit}
+            />
 
             <SectionBoundary label="No se pudo actualizar la calificación">
               <Card>

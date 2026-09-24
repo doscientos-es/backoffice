@@ -1,4 +1,5 @@
 import { formatInteractionForAI, type LeadInteractionForAI } from './interaction-utils'
+import type { LeadDiscoveryQuestion } from './types'
 
 type LeadContextRow = Record<string, unknown>
 
@@ -158,6 +159,30 @@ export type LeadBriefingForAI = {
   tasks: LeadBriefingTask[]
   reminders: LeadBriefingReminder[]
   attachments: LeadBriefingAttachment[]
+  discoveryQuestions?: LeadDiscoveryQuestion[]
+}
+
+export function formatLeadDiscoveryQuestionsForAI(questions: LeadDiscoveryQuestion[]): string {
+  const confirmed = questions
+    .filter((question) => question.status === 'answered' && question.answer?.trim())
+    .map((question) => `- ${question.question}: ${question.answer}`)
+    .join('\n')
+  const open = questions
+    .filter((question) => !['answered', 'archived', 'not_applicable'].includes(question.status))
+    .map((question) => {
+      const suggestion = question.suggested_answer
+        ? ` | propuesta IA pendiente de confirmar: ${question.suggested_answer}`
+        : ''
+      return `- ${question.question}${suggestion}`
+    })
+    .join('\n')
+
+  return [
+    'Confirmadas (fuente CRM):',
+    confirmed || '(sin respuestas confirmadas)',
+    'Pendientes (no asumir como hechos):',
+    open || '(sin preguntas pendientes)',
+  ].join('\n')
 }
 
 /**
@@ -196,6 +221,8 @@ export function formatLeadBriefingForAI(context: LeadBriefingForAI): string {
     'Usa únicamente estos datos como fuente de verdad. Si falta información, indícalo y no la inventes.',
     '\n## Ficha y cualificación del lead',
     formatLeadContextForAI(context.lead),
+    '\n## Descubrimiento funcional',
+    formatLeadDiscoveryQuestionsForAI(context.discoveryQuestions ?? []),
     `Cliente vinculado: ${display(context.clientName)}`,
     '\n## Historial de interacciones (cronológico)',
     interactions || '(sin interacciones registradas)',

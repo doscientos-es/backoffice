@@ -210,6 +210,26 @@ export type LeadDetailInteraction = LeadInteraction & {
   resend_email_id: string | null
 }
 
+export type LeadDiscoveryQuestion = {
+  id: string
+  lead_id: string
+  question: string
+  category: string
+  rationale: string
+  priority: number
+  status: 'open' | 'answered' | 'needs_review' | 'deferred' | 'not_applicable' | 'archived'
+  answer: string | null
+  suggested_answer: string | null
+  answer_source: 'manual' | 'ai' | null
+  source_interaction_id: string | null
+  evidence_excerpt: string | null
+  confidence: number | null
+  origin: 'manual' | 'ai'
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
 /** Related records shown as commercial shortcuts on the lead detail page. */
 export type LeadRelatedProposal = {
   id: string
@@ -258,6 +278,7 @@ export type LeadDetailResult = {
   /** False when the optional company-research schema is unavailable. */
   companyResearchAvailable: boolean
   interactions: LeadDetailInteraction[]
+  discoveryQuestions: LeadDiscoveryQuestion[]
   linkedClientId: string | null
   linkedClientName: string | null
   proposals: LeadRelatedProposal[]

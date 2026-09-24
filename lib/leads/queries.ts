@@ -13,6 +13,7 @@ import {
   type LeadClientRef,
   type LeadConvertResult,
   type LeadDetailInteraction,
+  type LeadDiscoveryQuestion,
   type LeadDetailResult,
   type LeadInteraction,
   type LeadListItem,
@@ -349,6 +350,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     { data: lead, error: leadErr },
     companyResearch,
     { data: interactions },
+    { data: discoveryQuestionRows, error: discoveryQuestionsError },
     { data: linkedClient },
     { data: tasks },
     { data: reminders },
@@ -362,6 +364,13 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       .eq('lead_id', id)
       .order('created_at', { ascending: false })
       .limit(50),
+    supabase
+      .from('lead_discovery_questions')
+      .select('*')
+      .eq('lead_id', id)
+      .order('priority', { ascending: true })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
     notDeleted(supabase.from('clients').select('id, name').eq('lead_id', id)).maybeSingle(),
     notDeleted(
       supabase
@@ -395,6 +404,13 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     throw new Error('No se pudo cargar el lead.')
   }
   if (!lead) return null
+
+  if (discoveryQuestionsError) {
+    log.warn(
+      { leadId: id, err: discoveryQuestionsError.message },
+      'lead_discovery_questions_query_failed',
+    )
+  }
 
   const [campaignNames, marketingAdName] = await Promise.all([
     loadMarketingCampaignNames([(lead.utm_campaign as string | null) ?? null]),
@@ -469,6 +485,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
     } as unknown as LeadDetailResult['lead'],
     companyResearchAvailable: companyResearch.available,
     interactions: detailInteractions,
+    discoveryQuestions: (discoveryQuestionRows ?? []) as LeadDiscoveryQuestion[],
     linkedClientId,
     linkedClientName,
     proposals: (proposalRows ?? []).map((p) => ({
