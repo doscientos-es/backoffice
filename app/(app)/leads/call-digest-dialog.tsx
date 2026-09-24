@@ -1,5 +1,6 @@
 'use client'
 
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@doscientos/ui'
 import {
   Check,
   Clipboard as ClipboardList,
@@ -8,18 +9,11 @@ import {
   MessageCircle,
   Sparkle as Sparkles,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@doscientos/ui'
 import { cn } from '@/lib/utils'
 
 import { createTask } from '../tasks/actions'
@@ -73,7 +67,7 @@ export function CallDigestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Seguimiento de la llamada</DialogTitle>
           <DialogDescription>
@@ -200,7 +194,8 @@ type CopilotResult = {
 
 function copilotErrorMessage(code: string | undefined, status: number): string {
   if (code === 'ai_disabled') return 'La IA no está configurada.'
-  if (code === 'rate_limited') return 'Has alcanzado el límite temporal del copiloto. Espera un minuto.'
+  if (code === 'rate_limited')
+    return 'Has alcanzado el límite temporal del copiloto. Espera un minuto.'
   if (code === 'call_not_found') return 'Esta ficha todavía no tiene una llamada registrada.'
   if (code === 'ai_unavailable') return 'La IA no pudo resumir la llamada. Inténtalo de nuevo.'
   if (status === 504 || status === 502)
@@ -324,9 +319,10 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
             <InsightList title="Por confirmar" items={data.open_questions} muted />
           ) : null}
           {(data.discovery_updates_saved ?? 0) + (data.new_questions_added ?? 0) > 0 ? (
-            <p className="text-muted-foreground rounded-md bg-muted/50 px-2.5 py-2 text-xs">
-              Guion actualizado: {data.discovery_updates_saved ?? 0} respuesta(s) propuestas para revisar y{' '}
-              {data.new_questions_added ?? 0} pregunta(s) nueva(s). Revisa el panel de preguntas del lead.
+            <p className="text-muted-foreground bg-muted/50 rounded-md px-2.5 py-2 text-xs">
+              Guion actualizado: {data.discovery_updates_saved ?? 0} respuesta(s) propuestas para
+              revisar y {data.new_questions_added ?? 0} pregunta(s) nueva(s). Revisa el panel de
+              preguntas del lead.
             </p>
           ) : null}
           {data.tasks.length > 0 ? (

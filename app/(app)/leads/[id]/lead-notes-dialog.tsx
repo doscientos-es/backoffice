@@ -1,9 +1,5 @@
 'use client'
 
-import { FileText, Maximize2 } from 'lucide-react'
-
-import { Button } from '@/components/ui/button'
-import { CopyButton } from '@/components/ui/copy-button'
 import {
   Dialog,
   DialogContent,
@@ -12,6 +8,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
+import { FileText, Maximize2 } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { CopyButton } from '@/components/ui/copy-button'
 
 export function LeadNotesDialog({ notes }: { notes: string }) {
   return (
@@ -26,7 +26,7 @@ export function LeadNotesDialog({ notes }: { notes: string }) {
           <Maximize2 className="size-3.5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="text-primary size-4" />
