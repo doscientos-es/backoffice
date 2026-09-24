@@ -12,8 +12,9 @@ vi.mock('../actions', () => ({
   setLeadDiscoveryQuestionStatus: vi.fn(),
 }))
 
-import { LeadDiscoveryQuestionsPanel } from './lead-discovery-questions-panel'
 import type { LeadDiscoveryQuestion } from '@/lib/leads/types'
+
+import { LeadDiscoveryQuestionsPanel } from './lead-discovery-questions-panel'
 
 function question(
   id: string,
