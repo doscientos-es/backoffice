@@ -559,21 +559,46 @@ export const saveLeadDiscoveryQuestion = defineAction({
   roles: ["owner", "admin", "member"],
   revalidate: (_payload, input) => [`/leads/${input.leadId}`],
   handler: async (input, { user }) => {
-    const answer = input.answer || null;
-    const { error } = await (await createServerClient())
+    const supabase = await createServerClient();
+    const { data: current, error: readError } = await supabase
       .from("lead_discovery_questions")
-      .update({
-        question: input.question,
+      .select("suggested_answer")
+      .eq("id", input.questionId)
+      .eq("lead_id", input.leadId)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!current) throw new Error("Pregunta de descubrimiento no encontrada.");
+
+    const answer = input.answer || null;
+    const patch: Record<string, unknown> = {
+      question: input.question,
+      rationale: input.rationale,
+      updated_by: user.id,
+    };
+    if (answer) {
+      Object.assign(patch, {
         answer,
-        answer_source: answer ? "manual" : null,
-        rationale: input.rationale,
-        status: answer ? "answered" : "open",
+        answer_source: "manual",
+        status: "answered",
         suggested_answer: null,
         source_interaction_id: null,
         evidence_excerpt: null,
         confidence: null,
-        updated_by: user.id,
-      })
+      });
+    } else if (!current.suggested_answer) {
+      Object.assign(patch, {
+        answer: null,
+        answer_source: null,
+        status: "open",
+        source_interaction_id: null,
+        evidence_excerpt: null,
+        confidence: null,
+      });
+    }
+
+    const { error } = await supabase
+      .from("lead_discovery_questions")
+      .update(patch)
       .eq("id", input.questionId)
       .eq("lead_id", input.leadId);
     if (error) throw new Error(error.message);

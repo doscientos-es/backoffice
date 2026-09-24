@@ -61,6 +61,26 @@ vi.mock('@/lib/supabase/server', () => ({
         }
       }
 
+      if (table === 'lead_discovery_questions') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: async () => ({
+                data: [
+                  {
+                    question: '¿Qué alcance debe tener el portal?',
+                    status: 'answered',
+                    answer: 'Primero solo alta y seguimiento de órdenes.',
+                    suggested_answer: null,
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          }),
+        }
+      }
+
       return {
         select: () => ({
           eq: () => ({
@@ -123,6 +143,7 @@ describe('POST /api/crm/ai/draft-email', () => {
     )
     expect(state.generatedPrompt).toContain('2026-08-23 (ayer) | call')
     expect(state.generatedPrompt).toContain('2026-06-24 (hace aprox. 2 meses (61 días)) | call')
+    expect(state.generatedPrompt).toContain('Primero solo alta y seguimiento de órdenes.')
     expect(state.generatedSystem).toContain(
       'Adapta las referencias temporales y los tiempos verbales',
     )

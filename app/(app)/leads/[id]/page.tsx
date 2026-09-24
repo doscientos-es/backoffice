@@ -435,9 +435,13 @@ export default async function LeadDetailPage({
 
               <LeadRecentInteractions
                 leadId={lead.id as string}
+                leadName={displayName}
                 leadEmail={(lead.email as string | null) ?? null}
+                leadPhone={(lead.phone as string | null) ?? null}
+                senderName={user.name}
                 canEdit={canEdit}
                 aiEnabled={aiEnabled}
+                defaultDurationMinutes={defaultDurationMinutes}
                 interactions={interactions ?? []}
                 totalActivityEvents={countActivityEvents({
                   interactions: interactions ?? [],

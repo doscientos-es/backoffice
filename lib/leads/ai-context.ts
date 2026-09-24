@@ -253,7 +253,13 @@ export function formatLeadCallCopilotBriefing(
   > & { discoveryQuestions?: LeadDiscoveryQuestion[] },
 ): string {
   const chronological = context.interactions.slice().reverse()
-  const latestCallIndex = chronological.findLastIndex((item) => item.type === 'call')
+  let latestCallIndex = -1
+  for (let index = chronological.length - 1; index >= 0; index--) {
+    if (chronological[index]?.type === 'call') {
+      latestCallIndex = index
+      break
+    }
+  }
   const latestCall = latestCallIndex >= 0 ? chronological[latestCallIndex] : null
   const nearby = chronological
     .filter((_, index) => index !== latestCallIndex)

@@ -203,6 +203,8 @@ vi.mock("@/lib/email/resend", () => ({ sendEmail }));
 
 import {
   archiveRecoveryLead,
+  createLeadDiscoveryQuestion,
+  saveLeadDiscoveryQuestion,
   claimLead,
   createLead,
   deleteLead,
@@ -394,6 +396,50 @@ describe("claimLead", () => {
   it("returns ok:true when lead has no owner", async () => {
     const result = await claimLead({ leadId: "00000000-0000-0000-0000-000000000001" });
     expect(result.ok).toBe(true);
+  });
+});
+
+describe("lead discovery questions", () => {
+  it("creates a manual question attributed to the current user", async () => {
+    const result = await createLeadDiscoveryQuestion({
+      leadId: "00000000-0000-0000-0000-000000000001",
+      question: "¿Cómo asignáis los transportes?",
+      category: "workflow",
+      rationale: "Afecta el flujo de asignación.",
+      priority: 1,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(db.insertedRows).toContainEqual(
+      expect.objectContaining({
+        table: "lead_discovery_questions",
+        question: "¿Cómo asignáis los transportes?",
+        origin: "manual",
+        created_by: "member-1",
+      }),
+    );
+  });
+
+  it("marks an explicitly saved answer as manual and clears stale AI evidence", async () => {
+    const result = await saveLeadDiscoveryQuestion({
+      leadId: "00000000-0000-0000-0000-000000000001",
+      questionId: "00000000-0000-0000-0000-000000000002",
+      question: "¿Cómo asignáis los transportes?",
+      answer: "El jefe asigna cada transporte por disponibilidad.",
+      rationale: "Conocer la operativa actual.",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(db.updatedRows).toContainEqual(
+      expect.objectContaining({
+        table: "lead_discovery_questions",
+        answer_source: "manual",
+        status: "answered",
+        suggested_answer: null,
+        source_interaction_id: null,
+        updated_by: "member-1",
+      }),
+    );
   });
 });
 

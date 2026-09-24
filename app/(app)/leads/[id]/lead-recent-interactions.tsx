@@ -11,6 +11,7 @@ import {
 import type { LeadDetailInteraction } from '@/lib/leads/types'
 import { relativeTime } from '@/lib/utils'
 
+import { QCallDialog, QEmailDialog, QNoteDialog } from '../lead-quick-action-dialogs'
 import { CallInteractionDetails } from './call-interaction-details'
 import { LeadInteractionDetails } from './lead-interaction-details'
 
@@ -24,9 +25,13 @@ const LABEL: Record<string, string> = {
 
 type LeadRecentInteractionsProps = {
   leadId: string
+  leadName: string
   leadEmail: string | null
+  leadPhone: string | null
+  senderName: string
   canEdit: boolean
   aiEnabled: boolean
+  defaultDurationMinutes: number | null
   interactions: LeadDetailInteraction[]
   /** How many interactions to show before linking to the full activity tab. */
   limit?: number
@@ -56,9 +61,13 @@ function label(interaction: LeadDetailInteraction): string {
  */
 export function LeadRecentInteractions({
   leadId,
+  leadName,
   leadEmail,
+  leadPhone,
+  senderName,
   canEdit,
   aiEnabled,
+  defaultDurationMinutes,
   interactions,
   limit = 5,
   totalActivityEvents,
@@ -73,13 +82,28 @@ export function LeadRecentInteractions({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <CardTitle className="text-base">Últimas interacciones</CardTitle>
           <p className="text-muted-foreground mt-1 text-sm font-normal">
             Llamadas, emails y notas más recientes con este lead.
           </p>
         </div>
+        {canEdit ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <QNoteDialog leadId={leadId} />
+            <QCallDialog
+              leadId={leadId}
+              leadName={leadName}
+              leadPhone={leadPhone}
+              leadEmail={leadEmail}
+              senderName={senderName}
+              aiEnabled={aiEnabled}
+              defaultDurationMinutes={defaultDurationMinutes}
+            />
+            <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
+          </div>
+        ) : null}
       </CardHeader>
       <CardContent>
         {recent.length === 0 ? (

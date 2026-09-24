@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
       )
       if (error) throw error
     }
-    const discoveryUpdatesSaved = savedUpdates.reduce((total, count) => total + count, 0)
+    const discoveryUpdatesSaved = savedUpdates.reduce<number>((total, count) => total + count, 0)
     log.info(
       { leadId: body.lead_id, tasks: result.tasks.length, discoveryUpdatesSaved, newQuestions: newQuestions.length },
       'call_copilot_ok',
