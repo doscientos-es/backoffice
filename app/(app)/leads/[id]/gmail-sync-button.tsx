@@ -1,11 +1,10 @@
 'use client'
 
-import { LoaderCircle as Loader2 } from 'lucide-react'
+import { LoaderCircle as Loader2, Mail } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import { sileo } from 'sileo'
 
-import { GmailIcon } from '@/components/icons/gmail-icon'
 import { Button } from '@/components/ui/button'
 
 import { syncLeadGmail } from '../actions'
@@ -46,7 +45,11 @@ export function GmailSyncButton({
       title={leadEmail ? 'Importar emails de Gmail' : 'Este lead no tiene email registrado'}
       onClick={onClick}
     >
-      {pending ? <Loader2 className="size-3.5 animate-spin" /> : <GmailIcon />}
+      {pending ? (
+        <Loader2 className="size-3.5 animate-spin" />
+      ) : (
+        <Mail className="text-muted-foreground size-3.5" />
+      )}
       {pending ? 'Sincronizando…' : 'Sincronizar'}
     </Button>
   )

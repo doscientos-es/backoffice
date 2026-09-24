@@ -25,6 +25,8 @@ describe('LeadRecentInteractions', () => {
   it('offers shortcuts to add interactions from the history section', () => {
     render(<LeadRecentInteractions {...props} />)
 
+    const quickActions = screen.getByRole('group', { name: 'Acciones rápidas' })
+    expect(quickActions.previousElementSibling?.textContent).toContain('Últimas interacciones')
     expect(screen.getByRole('button', { name: 'Añadir nota' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'Registrar llamada' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'Registrar email' })).toBeDefined()

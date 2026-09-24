@@ -73,16 +73,18 @@ export function LeadRecentInteractions({
   totalActivityEvents,
 }: LeadRecentInteractionsProps) {
   const recent = groupResendInteractions(interactions)
-    .map(({ interaction, latestInteraction }) => ({ interaction, date: interactionDate(latestInteraction) }))
+    .map(({ interaction, latestInteraction }) => ({
+      interaction,
+      date: interactionDate(latestInteraction),
+    }))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, limit)
 
-  const hasMoreHistory =
-    totalActivityEvents != null && totalActivityEvents > recent.length
+  const hasMoreHistory = totalActivityEvents != null && totalActivityEvents > recent.length
 
   return (
     <Card>
-      <CardHeader className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+      <CardHeader className="flex flex-col items-start gap-3">
         <div>
           <CardTitle className="text-base">Últimas interacciones</CardTitle>
           <p className="text-muted-foreground mt-1 text-sm font-normal">
@@ -90,7 +92,10 @@ export function LeadRecentInteractions({
           </p>
         </div>
         {canEdit ? (
-          <div className="flex flex-wrap items-center gap-1.5">
+          <fieldset
+            aria-label="Acciones rápidas"
+            className="flex min-w-0 flex-wrap items-center gap-1.5 [&_button]:w-auto"
+          >
             <QNoteDialog leadId={leadId} />
             <QCallDialog
               leadId={leadId}
@@ -102,7 +107,7 @@ export function LeadRecentInteractions({
               defaultDurationMinutes={defaultDurationMinutes}
             />
             <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
-          </div>
+          </fieldset>
         ) : null}
       </CardHeader>
       <CardContent>
@@ -156,7 +161,12 @@ export function LeadRecentInteractions({
               })}
             </ul>
             {hasMoreHistory ? (
-              <Button asChild variant="ghost" size="sm" className="text-muted-foreground mt-2 w-full">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground mt-2 w-full"
+              >
                 <Link href={`/leads/${leadId}?tab=actividad`}>
                   Ver todo el historial
                   <ArrowRight className="size-3.5" />
