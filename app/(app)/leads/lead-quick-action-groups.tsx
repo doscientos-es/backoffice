@@ -1,7 +1,9 @@
 'use client'
 
-import { CalendarDays, ListTodo } from 'lucide-react'
+import { ListTodo } from 'lucide-react'
 import { useState } from 'react'
+
+import { GoogleCalendarIcon } from '@/components/icons/google-calendar-icon'
 
 import { ScheduleReminderDialog, type ScheduleMember } from '../reminders/schedule-reminder-dialog'
 import { ExtractTasksDialog, type ExtractTasksDialogProps } from './[id]/extract-tasks-dialog'
@@ -93,7 +95,7 @@ export function LeadQuickActionGroups({
         onOpenChange={setScheduleOpen}
         trigger={
           <QuickActionTile
-            icon={<CalendarDays className="text-muted-foreground size-3.5" />}
+            icon={<GoogleCalendarIcon className="h-3.5 w-auto shrink-0" />}
             label="Programar"
           />
         }

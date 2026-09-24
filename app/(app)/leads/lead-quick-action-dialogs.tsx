@@ -310,7 +310,10 @@ export function QMeetDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <QuickActionTile icon={<GoogleMeetIcon className="size-3.5" />} label="Agendar" />
+          <QuickActionTile
+            icon={<GoogleMeetIcon className="h-3.5 w-auto shrink-0" />}
+            label="Agendar"
+          />
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -492,7 +495,10 @@ export function QMeetNowDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <QuickActionTile icon={<GoogleMeetIcon className="size-3.5" />} label="Ahora" />
+          <QuickActionTile
+            icon={<GoogleMeetIcon className="h-3.5 w-auto shrink-0" />}
+            label="Ahora"
+          />
         </DialogTrigger>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
