@@ -211,3 +211,53 @@ export function formatLeadBriefingForAI(context: LeadBriefingForAI): string {
     `${attachments || '(sin adjuntos)'}\nNota: solo se incluyen los nombres y tipos de los archivos; su contenido no se ha extraído.`,
   ].join('\n')
 }
+
+const CALL_COPILOT_CONTEXT_CHARS = 12_000
+
+/**
+ * Briefing for the post-call copilot. Keeps the latest call intact and only a
+ * short slice of nearby context so structured generation finishes within the
+ * serverless budget.
+ */
+export function formatLeadCallCopilotBriefing(
+  context: Pick<
+    LeadBriefingForAI,
+    'lead' | 'clientName' | 'interactions' | 'proposals' | 'tasks'
+  >,
+): string {
+  const chronological = context.interactions.slice().reverse()
+  const latestCallIndex = chronological.findLastIndex((item) => item.type === 'call')
+  const latestCall = latestCallIndex >= 0 ? chronological[latestCallIndex] : null
+  const nearby = chronological
+    .filter((_, index) => index !== latestCallIndex)
+    .slice(-4)
+    .map(formatInteractionForAI)
+    .join('\n')
+    .slice(-2_000)
+  const openTasks = context.tasks
+    .filter((task) => task.status !== 'done' && task.status !== 'cancelled')
+    .slice(0, 5)
+    .map((task) => `- ${display(task.title)} | ${display(task.status)}`)
+    .join('\n')
+  const proposals = context.proposals
+    .slice(0, 3)
+    .map(
+      (proposal) =>
+        `- ${display(proposal.number)} | ${display(proposal.title)} | ${display(proposal.status)}`,
+    )
+    .join('\n')
+
+  return [
+    '# Copiloto de la última llamada',
+    'Fuente principal: la llamada más reciente. El contexto cercano solo sirve para no contradecirla.',
+    `\nLead: ${display(context.lead.name)} · ${display(context.lead.company)} · estado: ${display(context.lead.status)}`,
+    `Cliente vinculado: ${display(context.clientName)}`,
+    `\n## Llamada más reciente\n${latestCall ? formatInteractionForAI(latestCall) : '(sin llamada registrada)'}`,
+    `\n## Contexto cercano\n${nearby || '(sin contexto adicional)'}`,
+    `\n## Tareas abiertas\n${openTasks || '(sin tareas abiertas)'}`,
+    `\n## Propuestas\n${proposals || '(sin propuestas)'}`,
+  ]
+    .join('\n')
+    .slice(0, CALL_COPILOT_CONTEXT_CHARS)
+}
+

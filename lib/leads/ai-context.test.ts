@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   formatLeadBriefingForAI,
+  formatLeadCallCopilotBriefing,
   formatLeadContextForAI,
   formatLeadConversionEventsForAI,
   formatLeadProposalsForAI,
@@ -123,5 +124,50 @@ describe('lead AI context', () => {
     expect(briefing).toContain('Portal de clientes')
     expect(briefing).toContain('F-2026-01')
     expect(briefing).toContain('brief.pdf')
+  })
+
+  it('keeps the latest call as the copilot source and drops unrelated history', () => {
+    const briefing = formatLeadCallCopilotBriefing({
+      lead: { name: 'María', company: 'Acme', status: 'qualifying' },
+      clientName: null,
+      interactions: [
+        {
+          type: 'note',
+          subject: 'Antiguo',
+          body: 'Nota que no debe dominar el resumen.',
+          payload: null,
+          created_at: '2026-01-01T10:00:00.000Z',
+        },
+        {
+          type: 'call',
+          subject: 'Descubrimiento',
+          body: 'Quiere un portal interno.',
+          payload: { transcript: 'Acordamos enviar alcance el viernes.' },
+          created_at: '2026-08-01T10:00:00.000Z',
+        },
+      ],
+      proposals: [],
+      tasks: [
+        {
+          title: 'Tarea cerrada',
+          status: 'done',
+          due_date: null,
+          description: null,
+          priority: 'low',
+        },
+        {
+          title: 'Enviar alcance',
+          status: 'todo',
+          due_date: null,
+          description: null,
+          priority: 'high',
+        },
+      ],
+    })
+
+    expect(briefing).toContain('Acordamos enviar alcance el viernes.')
+    expect(briefing).toContain('Enviar alcance')
+    expect(briefing).not.toContain('Tarea cerrada')
+    expect(briefing).not.toContain('Facturación vinculada')
   })
 })

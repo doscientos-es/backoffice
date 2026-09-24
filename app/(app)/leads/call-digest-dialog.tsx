@@ -195,6 +195,16 @@ type CopilotResult = {
   follow_up_focus: string
 }
 
+function copilotErrorMessage(code: string | undefined, status: number): string {
+  if (code === 'ai_disabled') return 'La IA no está configurada.'
+  if (code === 'rate_limited') return 'Has alcanzado el límite temporal del copiloto. Espera un minuto.'
+  if (code === 'call_not_found') return 'Esta ficha todavía no tiene una llamada registrada.'
+  if (code === 'ai_unavailable') return 'La IA no pudo resumir la llamada. Inténtalo de nuevo.'
+  if (status === 504 || status === 502)
+    return 'La IA tardó demasiado en responder. Inténtalo de nuevo.'
+  return 'No se pudo analizar la llamada.'
+}
+
 function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
   const [data, setData] = useState<CopilotResult | null>(null)
   const [selected, setSelected] = useState<string[]>([])
@@ -228,7 +238,7 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
               : 'No se pudo generar el copiloto de la llamada. Inténtalo de nuevo.',
           )
         }
-        if (!response.ok) throw new Error(json.error ?? 'No se pudo analizar la llamada.')
+        if (!response.ok) throw new Error(copilotErrorMessage(json.error, response.status))
         if (cancelled) return
         if (!json.summary || !Array.isArray(json.tasks)) {
           throw new Error('El copiloto devolvió un resultado incompleto.')

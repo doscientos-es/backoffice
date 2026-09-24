@@ -3,13 +3,14 @@ import { z } from 'zod'
 
 import { AI_MODELS, isAIEnabled, runAIObject } from '@/lib/ai'
 import { requireUser } from '@/lib/auth'
-import { formatLeadBriefingForAI } from '@/lib/leads/ai-context'
+import { formatLeadCallCopilotBriefing } from '@/lib/leads/ai-context'
 import { getLeadDetail } from '@/lib/leads/queries'
 import { scopedLogger } from '@/lib/logger'
 import { rateLimit } from '@/lib/ratelimit'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+export const maxDuration = 60
 
 const log = scopedLogger('ai.call-copilot')
 const BodySchema = z.object({ lead_id: z.string().uuid() })
@@ -19,17 +20,18 @@ const TaskSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
 })
 const ResultSchema = z.object({
-  summary: z.string().min(1).max(1800),
-  decisions: z.array(z.string().max(300)).max(6).default([]),
-  open_questions: z.array(z.string().max(300)).max(5).default([]),
-  tasks: z.array(TaskSchema).max(6).default([]),
-  follow_up_focus: z.string().max(500).default(''),
+  summary: z.string().min(1).max(700),
+  decisions: z.array(z.string().max(180)).max(4).default([]),
+  open_questions: z.array(z.string().max(180)).max(4).default([]),
+  tasks: z.array(TaskSchema).max(4).default([]),
+  follow_up_focus: z.string().max(240).default(''),
 })
 
-const SYSTEM_PROMPT = `Eres copiloto comercial para una agencia digital española. Resume la llamada más reciente
-usando SOLO el briefing entregado. Distingue lo acordado de lo que sigue abierto. Propón tareas únicamente
-cuando una acción se haya solicitado explícitamente o sea una consecuencia comercial inequívoca. No inventes
-fechas, presupuesto, alcance, compromisos ni responsables. El texto se revisa internamente: no redactes un email.`
+const SYSTEM_PROMPT = `Eres copiloto comercial para una agencia digital española. Resume SOLO la llamada marcada
+como más reciente. Distingue lo acordado de lo que sigue abierto. Propón como máximo 4 tareas, y solo
+cuando una acción se haya solicitado explícitamente o sea una consecuencia comercial inequívoca.
+Sé breve: cada texto en una frase. No inventes fechas, presupuesto, alcance, compromisos ni responsables.
+No redactes un email.`
 
 export async function POST(req: NextRequest) {
   if (!isAIEnabled()) return NextResponse.json({ error: 'ai_disabled' }, { status: 503 })
@@ -51,7 +53,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'lead_id inválido' }, { status: 400 })
   }
 
-  const detail = await getLeadDetail(body.lead_id)
+  let detail: Awaited<ReturnType<typeof getLeadDetail>>
+  try {
+    detail = await getLeadDetail(body.lead_id)
+  } catch (err) {
+    log.error(
+      { leadId: body.lead_id, err: err instanceof Error ? err.message : err },
+      'call_copilot_lead_failed',
+    )
+    return NextResponse.json({ error: 'lead_unavailable' }, { status: 502 })
+  }
   if (!detail) return NextResponse.json({ error: 'lead_not_found' }, { status: 404 })
   const hasCall = detail.interactions.some((item) => item.type === 'call')
   if (!hasCall) return NextResponse.json({ error: 'call_not_found' }, { status: 422 })
@@ -60,19 +71,15 @@ export async function POST(req: NextRequest) {
     const result = await runAIObject({
       model: AI_MODELS.summarizer,
       system: SYSTEM_PROMPT,
-      user: formatLeadBriefingForAI({
+      user: formatLeadCallCopilotBriefing({
         lead: detail.lead,
         clientName: detail.linkedClientName,
         interactions: detail.interactions,
         proposals: detail.proposals,
-        projects: detail.projects,
-        invoices: detail.invoices,
         tasks: detail.tasks,
-        reminders: detail.reminders,
-        attachments: detail.attachments,
       }),
       schema: ResultSchema,
-      maxOutputTokens: 1400,
+      maxOutputTokens: 900,
     })
     log.info({ leadId: body.lead_id, tasks: result.tasks.length }, 'call_copilot_ok')
     return NextResponse.json({ ok: true, ...result })
