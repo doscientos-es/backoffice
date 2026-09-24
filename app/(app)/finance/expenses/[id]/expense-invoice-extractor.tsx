@@ -143,7 +143,7 @@ export function ExpenseInvoiceExtractor({ expense, attachments }: Props) {
     <div className="border-border bg-muted/20 flex flex-wrap items-center gap-2 rounded-lg border border-dashed p-3">
       <select
         aria-label="Factura a analizar"
-        className="border-input bg-background h-8 max-w-64 rounded-md border px-2 text-sm"
+        className="border-border bg-background h-8 max-w-64 rounded-md border px-2 text-sm"
         value={attachmentId}
         onChange={(event) => setAttachmentId(event.target.value)}
         disabled={pending}

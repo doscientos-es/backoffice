@@ -28,7 +28,7 @@ export function WebFilters({
   const params = useSearchParams()
 
   const [q, setQ] = useState(initialQ)
-  const commitRef = useRef<(q: string, type: string) => void>(() => {})
+  const commitRef = useRef<(q: string, type: string) => void>(() => { })
 
   commitRef.current = (search: string, type: string) => {
     const next = new URLSearchParams(params.toString())
@@ -65,7 +65,7 @@ export function WebFilters({
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar por nombre, URL o tech…"
           className={cn(
-            'h-8 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm',
+            'h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm',
             'placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
           )}
         />

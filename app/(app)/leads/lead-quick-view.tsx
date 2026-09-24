@@ -511,7 +511,7 @@ function AssignWidget({ leadId, members }: { leadId: string; members: MemberOpti
       </Button>
       <select
         disabled={isPending}
-        className="border-input bg-background text-muted-foreground focus:ring-ring h-7 w-full rounded-md border px-2 text-xs focus:ring-1 focus:outline-none"
+        className="border-border bg-background text-muted-foreground focus:ring-ring h-7 w-full rounded-md border px-2 text-xs focus:ring-1 focus:outline-none"
         value=""
         onChange={(e) => handleAssign(e.target.value)}
       >

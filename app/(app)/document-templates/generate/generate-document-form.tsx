@@ -78,7 +78,7 @@ export function GenerateDocumentForm({ templates, context, leadId, clientId, pro
       <label className="grid gap-1.5 text-sm font-medium">
         Documento genérico
         <select
-          className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+          className="border-border bg-background h-9 rounded-md border px-3 text-sm"
           value={templateId}
           onChange={(event) => selectTemplate(event.target.value)}
         >

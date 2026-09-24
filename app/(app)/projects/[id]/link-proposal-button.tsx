@@ -49,7 +49,7 @@ export function LinkProposalButton({ projectId, unlinkdProposals }: Props) {
     return (
       <div className="flex items-center gap-2">
         <select
-          className="border-input bg-background h-7 rounded-md border px-2 text-xs"
+          className="border-border bg-background h-7 rounded-md border px-2 text-xs"
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
         >

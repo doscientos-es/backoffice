@@ -30,16 +30,16 @@ type VatState =
   | { status: 'idle' }
   | { status: 'loading' }
   | {
-      status: 'valid'
-      name?: string
-      address?: string
-      source?: 'vies' | 'openmercantil' | 'es-checksum'
-      companyStatus?: string
-      province?: string
-      city?: string
-      companyType?: string
-      officers?: OpenMercantilOfficer[]
-    }
+    status: 'valid'
+    name?: string
+    address?: string
+    source?: 'vies' | 'openmercantil' | 'es-checksum'
+    companyStatus?: string
+    province?: string
+    city?: string
+    companyType?: string
+    officers?: OpenMercantilOfficer[]
+  }
   | { status: 'not_found'; message: string }
   | { status: 'invalid'; message: string }
 
@@ -143,7 +143,7 @@ export function NifInput({
           onClick={verify}
           disabled={state.status === 'loading' || !value.trim()}
           title="Buscar en Registro Mercantil y VIES"
-          className="border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+          className="border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
         >
           {state.status === 'loading' ? (
             <Loader2 className="size-3.5 animate-spin" />
@@ -157,7 +157,7 @@ export function NifInput({
       {/* Offline checksum (instant, no network) */}
       {state.status === 'idle' && offline && (
         <p
-          className={`flex items-start gap-1.5 text-xs ${offline.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}
+          className={`flex items-start gap-1.5 text-xs ${offline.valid ? 'text-success' : 'text-destructive'}`}
         >
           {offline.valid ? (
             <CheckCircle className="mt-0.5 size-3.5 shrink-0" />
@@ -170,7 +170,7 @@ export function NifInput({
 
       {/* Found in Registro Mercantil or VIES */}
       {state.status === 'valid' && (
-        <p className="flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+        <p className="flex items-start gap-1.5 text-xs text-success">
           <CheckCircle className="mt-0.5 size-3.5 shrink-0" />
           <span>
             {state.source === 'openmercantil' ? (

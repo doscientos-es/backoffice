@@ -214,14 +214,14 @@ export function ClientLogoUpload({
                   handleUrlApply()
                 }
               }}
-              className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring h-7 w-full rounded-md border pr-2 pl-7 text-xs focus-visible:ring-1 focus-visible:outline-none"
+              className="border-border bg-background placeholder:text-muted-foreground focus-visible:ring-ring h-7 w-full rounded-md border pr-2 pl-7 text-xs focus-visible:ring-1 focus-visible:outline-none"
             />
           </div>
           <button
             type="button"
             onClick={handleUrlApply}
             disabled={!urlValue.trim()}
-            className="border-input bg-background hover:bg-accent h-7 rounded-md border px-2.5 text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-40"
+            className="border-border bg-background hover:bg-accent h-7 rounded-md border px-2.5 text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-40"
           >
             Usar URL
           </button>
@@ -242,14 +242,14 @@ export function ClientLogoUpload({
                   void handleDomainSearch()
                 }
               }}
-              className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring h-7 w-full rounded-md border pr-2 pl-7 text-xs focus-visible:ring-1 focus-visible:outline-none"
+              className="border-border bg-background placeholder:text-muted-foreground focus-visible:ring-ring h-7 w-full rounded-md border pr-2 pl-7 text-xs focus-visible:ring-1 focus-visible:outline-none"
             />
           </div>
           <button
             type="button"
             onClick={handleDomainSearch}
             disabled={!domainValue.trim() || uploading}
-            className="border-input bg-background hover:bg-accent h-7 rounded-md border px-2.5 text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-40"
+            className="border-border bg-background hover:bg-accent h-7 rounded-md border px-2.5 text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-40"
           >
             {uploading ? <Loader2 className="size-3 animate-spin" /> : 'Buscar'}
           </button>

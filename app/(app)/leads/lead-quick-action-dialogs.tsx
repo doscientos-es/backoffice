@@ -79,7 +79,7 @@ export function QuickActionTile({
         'border-border/80 bg-card/60 h-8 w-full min-w-0 justify-start gap-2 px-2.5 text-left font-medium [&>span]:min-w-0',
         'hover:border-foreground/25 hover:bg-muted/60 transition-colors',
         tone === 'whatsapp' &&
-          'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
+        'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
       )}
       {...props}
     >
@@ -753,7 +753,7 @@ export function QCallDialog({
             label="Llamar"
           />
         </DialogTrigger>
-        <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-md">
+        <DialogContent className="flex max-h-[90vh] w-full max-w-md flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>Registrar llamada</DialogTitle>
             {leadPhone && <DialogDescription>{leadPhone}</DialogDescription>}
