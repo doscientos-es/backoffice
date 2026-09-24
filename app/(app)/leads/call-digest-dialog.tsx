@@ -9,6 +9,7 @@ import {
   Sparkle as Sparkles,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -193,6 +194,8 @@ type CopilotResult = {
   open_questions: string[]
   tasks: SuggestedTask[]
   follow_up_focus: string
+  discovery_updates_saved?: number
+  new_questions_added?: number
 }
 
 function copilotErrorMessage(code: string | undefined, status: number): string {
@@ -206,6 +209,7 @@ function copilotErrorMessage(code: string | undefined, status: number): string {
 }
 
 function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
+  const router = useRouter()
   const [data, setData] = useState<CopilotResult | null>(null)
   const [selected, setSelected] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
@@ -246,6 +250,9 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
         const result = json as CopilotResult
         setData(result)
         setSelected(result.tasks.map((task) => task.title))
+        if ((result.discovery_updates_saved ?? 0) + (result.new_questions_added ?? 0) > 0) {
+          router.refresh()
+        }
       } catch (reason) {
         if (!cancelled) setError(reason instanceof Error ? reason.message : 'Error desconocido.')
       } finally {
@@ -256,7 +263,7 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
     return () => {
       cancelled = true
     }
-  }, [leadId, open])
+  }, [leadId, open, router])
 
   async function applyTasks() {
     if (!data || selected.length === 0) return
@@ -315,6 +322,12 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
           ) : null}
           {data.open_questions.length > 0 ? (
             <InsightList title="Por confirmar" items={data.open_questions} muted />
+          ) : null}
+          {(data.discovery_updates_saved ?? 0) + (data.new_questions_added ?? 0) > 0 ? (
+            <p className="text-muted-foreground rounded-md bg-muted/50 px-2.5 py-2 text-xs">
+              Guion actualizado: {data.discovery_updates_saved ?? 0} respuesta(s) propuestas para revisar y{' '}
+              {data.new_questions_added ?? 0} pregunta(s) nueva(s). Revisa el panel de preguntas del lead.
+            </p>
           ) : null}
           {data.tasks.length > 0 ? (
             <div className="bg-background/70 rounded-md border p-2.5">

@@ -68,6 +68,7 @@ vi.mock("@/lib/supabase/server", () => ({
     from: (table: string) => {
       // Resolved value for terminal awaits (.single, .maybeSingle, or direct await)
       let selectedColumns = "";
+      let updatedRow: Record<string, unknown> | null = null;
       const resolve = () => {
         if (db.queryError) return { data: null, error: { message: db.queryError } };
         if (table === "lead_interactions" && selectedColumns === "payload") {
@@ -98,20 +99,24 @@ vi.mock("@/lib/supabase/server", () => ({
           return builder;
         },
         update(patch: Record<string, unknown>) {
-          db.updatedRows.push({ table, ...patch });
+          updatedRow = { table, ...patch, filters: [] as unknown[] };
+          db.updatedRows.push(updatedRow);
           return builder;
         },
         select(columns?: string) {
           selectedColumns = columns ?? "";
           return builder;
         },
-        eq() {
+        eq(column: string, value: unknown) {
+          if (updatedRow) (updatedRow.filters as unknown[]).push([column, value]);
           return builder;
         },
-        is() {
+        is(column: string, value: unknown) {
+          if (updatedRow) (updatedRow.filters as unknown[]).push([column, value]);
           return builder;
         },
-        in() {
+        in(column: string, values: unknown) {
+          if (updatedRow) (updatedRow.filters as unknown[]).push([column, values]);
           return builder;
         },
         not() {
@@ -474,6 +479,18 @@ describe("logLeadCall", () => {
     expect(db.updatedRows.some((row) => row.table === "leads" && row.status === "contacted")).toBe(
       false,
     );
+    expect(
+      db.updatedRows.find(
+        (row) =>
+          row.table === "tasks" &&
+          (row.filters as Array<[string, unknown]>).some(
+            ([column, values]) =>
+              column === "description" &&
+              Array.isArray(values) &&
+              values.includes("AUTO_LEAD_FIRST_TOUCH"),
+          ),
+      ),
+    ).toMatchObject({ status: "done", completed_at: expect.any(String) });
   });
 
   it("never overwrites a manually decided accessibility signal", async () => {

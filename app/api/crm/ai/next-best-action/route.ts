@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       tasks: detail.tasks,
       reminders: detail.reminders,
       attachments: detail.attachments,
+      discoveryQuestions: detail.discoveryQuestions,
     })
   } else {
     const supabase = await createServerClient()

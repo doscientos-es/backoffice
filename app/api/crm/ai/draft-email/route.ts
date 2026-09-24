@@ -19,7 +19,9 @@ import { z } from 'zod'
 
 import { AI_MODELS, isAIEnabled, runAIObject } from '@/lib/ai'
 import { requireUser } from '@/lib/auth'
+import { formatLeadDiscoveryQuestionsForAI } from '@/lib/leads/ai-context'
 import { formatDatedInteractionForAI, interactionBodyText } from '@/lib/leads/interaction-utils'
+import type { LeadDiscoveryQuestion } from '@/lib/leads/types'
 import { scopedLogger } from '@/lib/logger'
 import { rateLimit } from '@/lib/ratelimit'
 import { createServerClient } from '@/lib/supabase/server'
@@ -137,12 +139,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'lead not found' }, { status: 404 })
   }
 
-  const { data: interactions } = await supabase
-    .from('lead_interactions')
-    .select('type, subject, body, payload, created_at')
-    .eq('lead_id', body.lead_id)
-    .order('created_at', { ascending: false })
-    .limit(5)
+  const [{ data: interactions }, { data: discoveryQuestions }] = await Promise.all([
+    supabase
+      .from('lead_interactions')
+      .select('type, subject, body, payload, created_at')
+      .eq('lead_id', body.lead_id)
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase
+      .from('lead_discovery_questions')
+      .select('*')
+      .eq('lead_id', body.lead_id)
+      .order('priority', { ascending: true }),
+  ])
 
   let replySource: string | null = null
   if (body.reply_to_interaction_id) {
@@ -197,6 +206,9 @@ Resumen IA actual: ${(lead.ai_summary as string | null) ?? '—'}
 
 Últimas 5 interacciones (cronológico):
 ${interactionsText || '(sin interacciones previas)'}
+
+Descubrimiento funcional (las propuestas IA no confirmadas no son hechos):
+${formatLeadDiscoveryQuestionsForAI((discoveryQuestions ?? []) as LeadDiscoveryQuestion[])}
 
 ${replySource ? `Mensaje concreto al que responder (contenido completo, fuente prioritaria):\n${replySource}\n` : ''}
   Tipo de mensaje solicitado: ${body.kind ?? 'follow_up'}

@@ -20,10 +20,12 @@ import { listLeadConversionEvents } from '@/lib/conversion-events/queries'
 import {
   formatLeadContextForAI,
   formatLeadConversionEventsForAI,
+  formatLeadDiscoveryQuestionsForAI,
   formatLeadProposalsForAI,
   formatScheduledLeadTasksForAI,
 } from '@/lib/leads/ai-context'
 import { formatInteractionForAI } from '@/lib/leads/interaction-utils'
+import type { LeadDiscoveryQuestion } from '@/lib/leads/types'
 import { scopedLogger } from '@/lib/logger'
 import { rateLimit } from '@/lib/ratelimit'
 import { createServerClient } from '@/lib/supabase/server'
@@ -109,7 +111,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'lead not found' }, { status: 404 })
   }
 
-  const [{ data: interactions }, { data: scheduledTasks }, { data: linkedClient }] =
+  const [
+    { data: interactions },
+    { data: scheduledTasks },
+    { data: linkedClient },
+    { data: discoveryQuestions },
+  ] =
     await Promise.all([
       supabase
         .from('lead_interactions')
@@ -132,6 +139,11 @@ export async function POST(req: NextRequest) {
         .eq('lead_id', body.lead_id)
         .is('deleted_at', null)
         .maybeSingle(),
+      supabase
+        .from('lead_discovery_questions')
+        .select('*')
+        .eq('lead_id', body.lead_id)
+        .order('priority', { ascending: true }),
     ])
 
   const proposalFilter = linkedClient?.id
@@ -234,6 +246,9 @@ export async function POST(req: NextRequest) {
 
 ${leadContext}
 Cliente vinculado: ${linkedClient?.name ?? '—'}
+
+Descubrimiento funcional (distingue respuestas confirmadas de preguntas pendientes):
+${formatLeadDiscoveryQuestionsForAI((discoveryQuestions ?? []) as LeadDiscoveryQuestion[])}
 
 Historial completo disponible (cronológico; las llamadas incluyen notas, resultado, duración y transcripción):
 ${interactionsText || '(sin interacciones registradas)'}

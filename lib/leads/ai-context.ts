@@ -250,7 +250,7 @@ export function formatLeadCallCopilotBriefing(
   context: Pick<
     LeadBriefingForAI,
     'lead' | 'clientName' | 'interactions' | 'proposals' | 'tasks'
-  >,
+  > & { discoveryQuestions?: LeadDiscoveryQuestion[] },
 ): string {
   const chronological = context.interactions.slice().reverse()
   const latestCallIndex = chronological.findLastIndex((item) => item.type === 'call')
@@ -279,6 +279,7 @@ export function formatLeadCallCopilotBriefing(
     'Fuente principal: la llamada más reciente. El contexto cercano solo sirve para no contradecirla.',
     `\nLead: ${display(context.lead.name)} · ${display(context.lead.company)} · estado: ${display(context.lead.status)}`,
     `Cliente vinculado: ${display(context.clientName)}`,
+    `\n## Guion de descubrimiento\n${formatLeadDiscoveryQuestionsForAI(context.discoveryQuestions ?? [])}`,
     `\n## Llamada más reciente\n${latestCall ? formatInteractionForAI(latestCall) : '(sin llamada registrada)'}`,
     `\n## Contexto cercano\n${nearby || '(sin contexto adicional)'}`,
     `\n## Tareas abiertas\n${openTasks || '(sin tareas abiertas)'}`,

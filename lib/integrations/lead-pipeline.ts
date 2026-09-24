@@ -1,11 +1,11 @@
 import { scopedLogger } from '@/lib/logger'
+import { FIRST_TOUCH_REMINDER_MARKER } from '@/lib/leads/call-workflow'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 import { type LeadIntake, parseEmployeeFloor, urgencyWeight } from './lead-intake'
 
 const log = scopedLogger('lead-pipeline')
-const FIRST_TOUCH_MARKER = 'AUTO_LEAD_FIRST_TOUCH'
 
 function firstTouchDelayMinutes(input: LeadIntake, score: number): number {
   const urgency = input.urgency?.toLowerCase()
@@ -27,7 +27,7 @@ async function createFirstTouchReminder(
     .select('id')
     .eq('lead_id', leadId)
     .eq('kind', 'reminder')
-    .eq('description', FIRST_TOUCH_MARKER)
+    .eq('description', FIRST_TOUCH_REMINDER_MARKER)
     .maybeSingle()
   if (existing) return
 
@@ -38,7 +38,7 @@ async function createFirstTouchReminder(
     .insert({
       kind: 'reminder',
       title: `Primer contacto · ${input.name}`,
-      description: FIRST_TOUCH_MARKER,
+      description: FIRST_TOUCH_REMINDER_MARKER,
       start_at: startAt,
       lead_id: leadId,
       created_by: assignedTo,

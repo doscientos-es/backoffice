@@ -3,6 +3,7 @@ import type { CallOutcome } from '@/lib/schemas/lead'
 export const CALL_REMINDER_DESCRIPTION = 'CALL_PENDING'
 export const CALL_REMINDER_NOTIFIED_DESCRIPTION = 'CALL_PENDING_NOTIFIED'
 export const CALL_AUTO_FOLLOW_UP = 'CALL_AUTO_FOLLOW_UP'
+export const FIRST_TOUCH_REMINDER_MARKER = 'AUTO_LEAD_FIRST_TOUCH'
 export const CALL_REMINDER_DELAY_MS = 3 * 60 * 1000
 
 export function followUpDelayHours(outcome: CallOutcome | undefined): number | null {

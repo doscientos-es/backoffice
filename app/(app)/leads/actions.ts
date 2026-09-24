@@ -25,6 +25,7 @@ import {
   CALL_REMINDER_DELAY_MS,
   CALL_REMINDER_DESCRIPTION,
   CALL_REMINDER_NOTIFIED_DESCRIPTION,
+  FIRST_TOUCH_REMINDER_MARKER,
   followUpDelayHours,
   normalizePhoneForCall,
   normalizePhoneForWhatsApp,
@@ -1080,7 +1081,11 @@ export const logLeadCall = defineAction<
 >({
   name: "leads.logCall",
   schema: LogCallInput,
-  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  revalidate: (_payload, input) => [
+    `/leads/${input.leadId}`,
+    "/reminders",
+    "/inicio",
+  ],
   handler: async (data, { user }) => {
     const { leadId, notes, transcript, callSessionId, durationMinutes, outcome, callDate } = data;
 
@@ -1162,7 +1167,11 @@ export const logLeadCall = defineAction<
       .update({ completed_at: new Date().toISOString(), status: "done" })
       .eq("kind", "reminder")
       .eq("lead_id", leadId)
-      .in("description", [CALL_REMINDER_DESCRIPTION, CALL_REMINDER_NOTIFIED_DESCRIPTION])
+      .in("description", [
+        CALL_REMINDER_DESCRIPTION,
+        CALL_REMINDER_NOTIFIED_DESCRIPTION,
+        FIRST_TOUCH_REMINDER_MARKER,
+      ])
       .eq("status", "todo")
       .is("completed_at", null);
 
