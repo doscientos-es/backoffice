@@ -40,6 +40,7 @@ export function LeadDiscoveryQuestionsPanel({ leadId, initialQuestions, aiEnable
   const router = useRouter()
   const [questions, setQuestions] = useState(initialQuestions)
   const [expanded, setExpanded] = useState(true)
+  const [showResolved, setShowResolved] = useState(false)
   const [adding, setAdding] = useState(false)
   const [newQuestion, setNewQuestion] = useState('')
   const [busy, setBusy] = useState(false)
@@ -48,9 +49,17 @@ export function LeadDiscoveryQuestionsPanel({ leadId, initialQuestions, aiEnable
   useEffect(() => setQuestions(initialQuestions), [initialQuestions])
 
   const visibleQuestions = useMemo(
-    () => questions.filter((question) => question.status !== 'archived'),
-    [questions],
+    () =>
+      questions.filter(
+        (question) =>
+          question.status !== 'archived' &&
+          (showResolved || !['answered', 'not_applicable'].includes(question.status)),
+      ),
+    [questions, showResolved],
   )
+  const resolvedCount = questions.filter((question) =>
+    ['answered', 'not_applicable'].includes(question.status),
+  ).length
   const unresolvedCount = questions.filter((question) =>
     ['open', 'needs_review'].includes(question.status),
   ).length
@@ -169,6 +178,19 @@ export function LeadDiscoveryQuestionsPanel({ leadId, initialQuestions, aiEnable
             </form>
           ) : null}
 
+          {resolvedCount > 0 ? (
+            <Button
+              type="button"
+              size="xs"
+              variant="ghost"
+              className="self-start"
+              aria-expanded={showResolved}
+              onClick={() => setShowResolved((value) => !value)}
+            >
+              {showResolved ? 'Ocultar' : 'Mostrar'} resueltas ({resolvedCount})
+            </Button>
+          ) : null}
+
           {visibleQuestions.length ? (
             <div className="flex flex-col gap-3">
               {visibleQuestions.map((question) => (
@@ -183,7 +205,9 @@ export function LeadDiscoveryQuestionsPanel({ leadId, initialQuestions, aiEnable
             </div>
           ) : !adding ? (
             <p className="text-muted-foreground text-sm">
-              Aún no hay preguntas. Añade una o genera un guion inicial con IA.
+              {questions.some((question) => question.status !== 'archived')
+                ? 'No hay preguntas pendientes ahora mismo.'
+                : 'Aún no hay preguntas. Añade una o genera un guion inicial con IA.'}
             </p>
           ) : null}
 

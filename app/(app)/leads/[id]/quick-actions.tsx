@@ -73,8 +73,8 @@ export function LeadQuickActions({
     <div className="flex flex-col gap-3">
       {claimable && <ClaimButton leadId={leadId} />}
 
-      {/* Primary: one full-width row per channel — no truncation in the narrow rail */}
-      <div className="grid grid-cols-1 gap-1.5">
+      {/* Primary actions: compact two-column layout for the narrow details rail. */}
+      <div className="grid grid-cols-2 gap-1.5">
         <QCallDialog
           leadId={leadId}
           leadPhone={leadPhone}
@@ -87,6 +87,12 @@ export function LeadQuickActions({
           defaultOutcome={defaultCallOutcome}
           callSessionId={callSessionId}
         />
+        <ScheduleDialog
+          leadId={leadId}
+          leadName={leadName}
+          members={scheduleMembers}
+          openInitially={openScheduleInitially}
+        />
         <QWhatsAppDialog
           leadId={leadId}
           leadName={leadName}
@@ -96,12 +102,6 @@ export function LeadQuickActions({
           aiEnabled={aiEnabled}
         />
         <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
-        <ScheduleDialog
-          leadId={leadId}
-          leadName={leadName}
-          members={scheduleMembers}
-          openInitially={openScheduleInitially}
-        />
       </div>
 
       <Collapsible>
@@ -125,7 +125,7 @@ export function LeadQuickActions({
             </ActionGroup>
             {googleEnabled && (
               <>
-                <ActionGroup label="Reuniones">
+                <ActionGroup label="Reuniones" columns={2}>
                   <QMeetNowDialog
                     leadId={leadId}
                     leadName={leadName}
@@ -178,13 +178,23 @@ export function LeadQuickActions({
   )
 }
 
-function ActionGroup({ label, children }: { label: string; children: ReactNode }) {
+function ActionGroup({
+  label,
+  children,
+  columns = 1,
+}: {
+  label: string
+  children: ReactNode
+  columns?: 1 | 2
+}) {
   return (
     <div className="flex flex-col gap-1">
       <p className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
         {label}
       </p>
-      <div className="grid grid-cols-1 gap-1">{children}</div>
+      <div className={columns === 2 ? 'grid grid-cols-2 gap-1' : 'grid grid-cols-1 gap-1'}>
+        {children}
+      </div>
     </div>
   )
 }
@@ -266,7 +276,7 @@ function ScheduleDialog({
       trigger={
         <QuickActionTile
           icon={<CalendarClock className="text-muted-foreground size-3.5" />}
-          label="Agendar llamada"
+          label="Agendar"
         />
       }
     />

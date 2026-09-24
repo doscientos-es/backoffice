@@ -67,7 +67,7 @@ const CALL_NOTES_MAX_LENGTH = 8_000
 /** Shape passed for Meet invitee selection — subset of team_members with email. */
 export type MeetMember = { id: string; name: string; email: string }
 
-/** Primary quick-action row: icon inline with the label, full width of the rail. */
+/** Compact primary action tile with an icon and a concise label. */
 export function QuickActionTile({
   icon,
   label,
@@ -87,7 +87,7 @@ export function QuickActionTile({
         'border-border/80 bg-card/60 justify-start gap-2 font-medium [&>span]:min-w-0',
         'hover:border-foreground/25 hover:bg-muted/60 transition-colors',
         tone === 'whatsapp' &&
-          'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
+        'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
       )}
       {...props}
     >
@@ -320,7 +320,7 @@ export function QMeetDialog({
         <DialogTrigger asChild>
           <QuickActionTile
             icon={<Video className="text-muted-foreground size-3.5" />}
-            label="Agendar reunión Meet"
+            label="Agendar"
           />
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
@@ -505,7 +505,7 @@ export function QMeetNowDialog({
         <DialogTrigger asChild>
           <QuickActionTile
             icon={<Video className="size-3.5 text-green-500" />}
-            label="Meet ahora"
+            label="Ahora"
           />
         </DialogTrigger>
         <DialogContent className="sm:max-w-sm">
@@ -758,7 +758,7 @@ export function QCallDialog({
         <DialogTrigger asChild>
           <QuickActionTile
             icon={<Phone className="text-muted-foreground size-3.5" />}
-            label="Registrar llamada"
+            label="Llamar"
           />
         </DialogTrigger>
         <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-md">
@@ -985,7 +985,7 @@ export function QWhatsAppDialog({
       <DialogTrigger asChild>
         <QuickActionTile
           icon={<WhatsAppIcon className="size-3.5 text-emerald-600" />}
-          label="Preparar WhatsApp"
+          label="Preparar"
           tone="whatsapp"
         />
       </DialogTrigger>
@@ -1177,7 +1177,7 @@ export function QSendEmailDialog({
       <DialogTrigger asChild>
         <QuickActionTile
           icon={<Send className="text-muted-foreground size-3.5" />}
-          label="Enviar email"
+          label="Enviar"
         />
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">

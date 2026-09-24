@@ -9,12 +9,12 @@ vi.mock('./[id]/extract-tasks-dialog', () => ({
   ExtractTasksDialog: () => <button type="button">Extraer tareas IA</button>,
 }))
 vi.mock('./[id]/gmail-sync-button', () => ({
-  GmailSyncButton: () => <button type="button">Sincronizar Gmail</button>,
+  GmailSyncButton: () => <button type="button">Sincronizar</button>,
 }))
 vi.mock('./lead-quick-action-dialogs', () => ({
   QCallDialog: () => <button type="button">Registrar llamada</button>,
   QWhatsAppDialog: () => <button type="button">Preparar WhatsApp</button>,
-  QSendEmailDialog: () => <button type="button">Enviar email</button>,
+  QSendEmailDialog: () => <button type="button">Enviar</button>,
   QEmailDialog: () => <button type="button">Registrar email</button>,
   QNoteDialog: () => <button type="button">Añadir nota</button>,
   QMeetNowDialog: () => <button type="button">Meet ahora</button>,
@@ -37,17 +37,17 @@ describe('DrawerQuickActions', () => {
       />,
     )
 
-    expect(screen.queryByRole('button', { name: 'Enviar email' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Enviar' })).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: /Más acciones/ }))
 
     for (const name of [
-      'Enviar email',
+      'Enviar',
       'Registrar email',
       'Añadir nota',
       'Meet ahora',
       'Agendar reunión Meet',
-      'Sincronizar Gmail',
+      'Sincronizar',
       'Extraer tareas IA',
     ]) {
       expect(screen.getByRole('button', { name })).not.toBeNull()

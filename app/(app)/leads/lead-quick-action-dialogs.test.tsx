@@ -20,7 +20,7 @@ describe('QWhatsAppDialog', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Preparar WhatsApp' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Preparar' }))
     expect(screen.getByRole('dialog', { name: 'Preparar WhatsApp' })).toBeTruthy()
 
     fireEvent.click(document.querySelector('[data-slot=dialog-overlay]') as HTMLElement)

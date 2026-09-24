@@ -13,16 +13,16 @@ vi.mock('../lead-quick-action-dialogs', () => ({
       {label}
     </button>
   ),
-  QCallDialog: () => <button type="button">Registrar llamada</button>,
-  QWhatsAppDialog: () => <button type="button">Preparar WhatsApp</button>,
-  QSendEmailDialog: () => <button type="button">Enviar email</button>,
+  QCallDialog: () => <button type="button">Llamar</button>,
+  QWhatsAppDialog: () => <button type="button">Preparar</button>,
+  QSendEmailDialog: () => <button type="button">Enviar</button>,
   QEmailDialog: () => <button type="button">Registrar email</button>,
   QNoteDialog: () => <button type="button">Añadir nota</button>,
-  QMeetNowDialog: () => <button type="button">Meet ahora</button>,
-  QMeetDialog: () => <button type="button">Agendar reunión Meet</button>,
+  QMeetNowDialog: () => <button type="button">Ahora</button>,
+  QMeetDialog: () => <button type="button">Agendar</button>,
 }))
 vi.mock('./gmail-sync-button', () => ({
-  GmailSyncButton: () => <button type="button">Sincronizar Gmail</button>,
+  GmailSyncButton: () => <button type="button">Sincronizar</button>,
 }))
 vi.mock('./extract-tasks-dialog', () => ({
   ExtractTasksDialog: ({ trigger }: { trigger: React.ReactNode }) => trigger,
@@ -42,18 +42,24 @@ describe('LeadQuickActions', () => {
   it('keeps frequent actions visible and secondary actions collapsed', () => {
     render(<LeadQuickActions {...props} googleEnabled />)
 
-    expect(screen.getByRole('button', { name: 'Registrar llamada' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Preparar WhatsApp' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Enviar email' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Agendar llamada' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Llamar' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Preparar' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Enviar' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Agendar' })).not.toBeNull()
     expect(screen.queryByRole('button', { name: 'Añadir nota' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Llamar' }).parentElement?.className).toContain(
+      'grid-cols-2',
+    )
 
     fireEvent.click(screen.getByRole('button', { name: /Más acciones/ }))
 
     expect(screen.getByText('Registrar')).not.toBeNull()
     expect(screen.getByText('Reuniones')).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Ahora' }).parentElement?.className).toContain(
+      'grid-cols-2',
+    )
     expect(screen.getByText('Herramientas')).not.toBeNull()
     expect(screen.getByRole('button', { name: 'Añadir nota' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Sincronizar Gmail' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Sincronizar' })).not.toBeNull()
   })
 })

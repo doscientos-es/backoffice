@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import { sileo } from 'sileo'
 
+import { GmailIcon } from '@/components/icons/gmail-icon'
 import { Button } from '@/components/ui/button'
 
 import { syncLeadGmail } from '../actions'
@@ -41,11 +42,12 @@ export function GmailSyncButton({
       size="sm"
       className="w-full justify-start gap-2"
       disabled={pending || !leadEmail}
+      aria-label={pending ? 'Sincronizando Gmail' : 'Sincronizar Gmail'}
       title={leadEmail ? 'Importar emails de Gmail' : 'Este lead no tiene email registrado'}
       onClick={onClick}
     >
-      {pending ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
-      {pending ? 'Sincronizando Gmail…' : 'Sincronizar Gmail'}
+      {pending ? <Loader2 className="size-3.5 animate-spin" /> : <GmailIcon />}
+      {pending ? 'Sincronizando…' : 'Sincronizar'}
     </Button>
   )
 }

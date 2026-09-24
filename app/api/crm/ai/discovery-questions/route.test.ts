@@ -1,7 +1,9 @@
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { state } = vi.hoisted(() => ({ state: { writes: [] as Array<Record<string, unknown>> } }))
+const { state } = vi.hoisted(() => ({
+  state: { writes: [] as Array<Record<string, unknown>> },
+}))
 
 vi.mock('@/lib/ai', () => ({
   AI_MODELS: { summarizer: 'test-model' },
@@ -29,7 +31,9 @@ vi.mock('@/lib/ai', () => ({
     ],
   })),
 }))
-vi.mock('@/lib/auth', () => ({ requireUser: vi.fn(async () => ({ id: 'member-1', role: 'member' })) }))
+vi.mock('@/lib/auth', () => ({
+  requireUser: vi.fn(async () => ({ id: 'member-1', role: 'member' })),
+}))
 vi.mock('@/lib/ratelimit', () => ({ rateLimit: () => ({ success: true }) }))
 vi.mock('@/lib/logger', () => ({ scopedLogger: () => ({ info: vi.fn(), error: vi.fn() }) }))
 vi.mock('@/lib/leads/queries', () => ({
