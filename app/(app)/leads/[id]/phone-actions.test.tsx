@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { LeadWhatsAppButton } from './phone-actions'
+import { LeadWhatsAppButton, PhoneQuickActions } from './phone-actions'
 
 vi.mock('qrcode', () => ({ toDataURL: vi.fn() }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
@@ -34,5 +34,14 @@ describe('LeadWhatsAppButton', () => {
     expect((screen.getByLabelText('Mensaje') as HTMLTextAreaElement).value).toContain(
       'He intentado llamarte porque rellenaste un formulario',
     )
+  })
+})
+
+describe('PhoneQuickActions', () => {
+  it('uses the WhatsApp brand icon next to the lead phone number', () => {
+    render(<PhoneQuickActions {...props} />)
+
+    const icon = screen.getByRole('button', { name: 'Preparar WhatsApp' }).querySelector('svg')
+    expect(icon?.getAttribute('fill')).toBe('currentColor')
   })
 })

@@ -38,14 +38,14 @@ import {
   LeadQuickActionsSection,
 } from './lead-detail-async-sections'
 import { LeadDetailTabs, resolveLeadTab } from './lead-detail-tabs'
+import { LeadDiscoveryQuestionsPanel } from './lead-discovery-questions-panel'
 import { LeadEditDialog } from './lead-edit-dialog'
-import { LeadNextActionTaskItem } from './lead-next-action-task-item'
 import { LeadNextActionReminderItem } from './lead-next-action-reminder-item'
+import { LeadNextActionTaskItem } from './lead-next-action-task-item'
 import { LeadNextMove } from './lead-next-move'
 import { LeadNotesDialog } from './lead-notes-dialog'
 import { LeadRecentInteractions } from './lead-recent-interactions'
 import { LeadRelatedLinks } from './lead-related-links'
-import { LeadDiscoveryQuestionsPanel } from './lead-discovery-questions-panel'
 import { MomTestChecklist } from './mom-test-checklist'
 import { PhoneQuickActions } from './phone-actions'
 import { LeadStatusSelect } from './status-select'
@@ -173,7 +173,9 @@ export default async function LeadDetailPage({
     query?.outcome === 'connected' || query?.outcome === 'no_answer' ? query.outcome : undefined
   const callSessionId =
     query?.callSessionId &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(query.callSessionId)
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      query.callSessionId,
+    )
       ? query.callSessionId
       : undefined
   return (
@@ -271,9 +273,6 @@ export default async function LeadDetailPage({
           {tab === 'resumen' ? (
             <>
               <Card>
-                <CardHeader className="border-border/70 bg-muted/10 border-b">
-                  <CardTitle className="text-base">Contexto del lead</CardTitle>
-                </CardHeader>
                 <CardContent className="pt-5">
                   <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
                     <DetailGrid>
@@ -284,7 +283,9 @@ export default async function LeadDetailPage({
                       </DetailRow>
                       {(lead.status === 'lost' || lead.status === 'not_interested') &&
                         lead.lost_reason && (
-                          <DetailRow label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}>
+                          <DetailRow
+                            label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}
+                          >
                             <span className="text-destructive font-medium">
                               {lead.lost_reason as string}
                             </span>
@@ -321,9 +322,13 @@ export default async function LeadDetailPage({
                         </DetailRow>
                       )}
                       <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
-                      {lead.company_size && <DetailRow label="Tamaño">{lead.company_size}</DetailRow>}
+                      {lead.company_size && (
+                        <DetailRow label="Tamaño">{lead.company_size}</DetailRow>
+                      )}
                       {lead.urgency && <DetailRow label="Urgencia">{lead.urgency}</DetailRow>}
-                      {lead.solution_type && <DetailRow label="Solución">{lead.solution_type}</DetailRow>}
+                      {lead.solution_type && (
+                        <DetailRow label="Solución">{lead.solution_type}</DetailRow>
+                      )}
                       {campaignName && <DetailRow label="Campaña Meta">{campaignName}</DetailRow>}
                       {metaAdId && metaAdName && (
                         <DetailRow label="Anuncio Meta">
@@ -358,14 +363,19 @@ export default async function LeadDetailPage({
                       )}
                       {lead.conversion_step && (
                         <DetailRow label="Conversión">
-                          {CONVERSION_STEP_LABEL[lead.conversion_step as string] ?? lead.conversion_step}
+                          {CONVERSION_STEP_LABEL[lead.conversion_step as string] ??
+                            lead.conversion_step}
                         </DetailRow>
                       )}
-                      {lead.landing_path && <DetailRow label="Landing">{lead.landing_path}</DetailRow>}
+                      {lead.landing_path && (
+                        <DetailRow label="Landing">{lead.landing_path}</DetailRow>
+                      )}
                       {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
                       {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
                         <DetailRow label="Calculadora">
-                          {[lead.calculator_cost, lead.calculator_hours].filter(hasValue).join(' · ')}
+                          {[lead.calculator_cost, lead.calculator_hours]
+                            .filter(hasValue)
+                            .join(' · ')}
                         </DetailRow>
                       )}
                     </DetailGrid>
@@ -389,7 +399,8 @@ export default async function LeadDetailPage({
                           ) : null}
                           {lastTouch ? (
                             <p>
-                              <span className="text-foreground font-medium">Last touch:</span> {lastTouch}
+                              <span className="text-foreground font-medium">Last touch:</span>{' '}
+                              {lastTouch}
                             </p>
                           ) : null}
                         </div>
