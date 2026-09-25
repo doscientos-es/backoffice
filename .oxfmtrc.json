@@ -1,0 +1,25 @@
+{
+  "endOfLine": "lf",
+  "ignorePatterns": [
+    "**/AGENTS.md",
+    ".next/**",
+    ".turbo/**",
+    "coverage/**",
+    "dist/**",
+    "node_modules/**",
+    "playwright-report/**",
+    "storybook-static/**",
+    "test-results/**"
+  ],
+  "printWidth": 100,
+  "semi": false,
+  "singleQuote": true,
+  "sortImports": true,
+  "sortTailwindcss": {
+    "functions": ["cn", "clsx"],
+    "stylesheet": "./app/globals.css"
+  },
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "useTabs": false
+}

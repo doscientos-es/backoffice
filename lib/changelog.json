@@ -1,0 +1,24 @@
+{
+  "releases": [
+    {
+      "date": "2026-09-24",
+      "title": "Mejoras en el trabajo con leads",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Puedes preparar preguntas de descubrimiento para profundizar en las necesidades de un lead.",
+            "Hay un acceso directo para sincronizar las conversaciones de Gmail desde la ficha de un lead."
+          ]
+        },
+        {
+          "title": "Mejoras",
+          "items": [
+            "Las acciones rápidas y los diálogos de leads son más fáciles de utilizar en diferentes tamaños de pantalla.",
+            "Hemos ajustado la presentación de formularios y diálogos para que se adapten mejor a pantallas pequeñas."
+          ]
+        }
+      ]
+    }
+  ]
+}

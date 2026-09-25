@@ -69,14 +69,21 @@ describe('SettingsNav – item visibility', () => {
     expect(desktopNav(container).getByRole('link', { name: 'Equipo' })).toBeTruthy()
   })
 
-  it('renders exactly 3 links for non-admin (Perfil + Seguridad + Legal)', () => {
+  it('renders exactly 4 links for non-admin (Perfil + Seguridad + Novedades + Legal)', () => {
     const { container } = renderNav(false)
-    expect(desktopNav(container).getAllByRole('link')).toHaveLength(3)
+    expect(desktopNav(container).getAllByRole('link')).toHaveLength(4)
   })
 
-  it('renders 9 links for admin after consolidating Correo', () => {
+  it('renders 11 links for admin after adding Novedades', () => {
     const { container } = renderNav(true)
-    expect(desktopNav(container).getAllByRole('link')).toHaveLength(9)
+    expect(desktopNav(container).getAllByRole('link')).toHaveLength(11)
+  })
+
+  it('shows Novedades to all roles', () => {
+    const { container } = renderNav(false)
+    expect(
+      desktopNav(container).getByRole('link', { name: 'Novedades' }).getAttribute('href'),
+    ).toBe('/settings/changelog')
   })
 
   it('shows the consolidated Correo section for admins', () => {
@@ -125,21 +132,21 @@ describe('SettingsNav – item visibility', () => {
 
 describe('SettingsNav – active state', () => {
   it('sets aria-current=page on the active route', () => {
-    ;(usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/settings/profile')
+    ; (usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/settings/profile')
     const { container } = renderNav(false)
     const perfilLink = desktopNav(container).getByRole('link', { name: /perfil/i })
     expect(perfilLink.getAttribute('aria-current')).toBe('page')
   })
 
   it('does not set aria-current on inactive routes', () => {
-    ;(usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/settings/profile')
+    ; (usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/settings/profile')
     const { container } = renderNav(false)
     const legalLink = desktopNav(container).getByRole('link', { name: /legal/i })
     expect(legalLink.getAttribute('aria-current')).toBeNull()
   })
 
   it('marks /settings/company as active when on that path (admin)', () => {
-    ;(usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/settings/company')
+    ; (usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/settings/company')
     const { container } = renderNav(true)
     const nav = desktopNav(container)
     expect(nav.getByRole('link', { name: /empresa/i }).getAttribute('aria-current')).toBe('page')

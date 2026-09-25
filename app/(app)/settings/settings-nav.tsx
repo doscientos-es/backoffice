@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Database as DatabaseBackup,
   FileText,
+  History,
   Mail,
   Shield,
   Target,
@@ -69,6 +70,7 @@ const GROUPS: readonly Group[] = [
         requiresAdmin: true,
       },
       { href: '/settings/diagnostics', label: 'Diagnóstico', icon: Activity, requiresAdmin: true },
+      { href: '/settings/changelog', label: 'Novedades', icon: History, requiresAdmin: false },
     ],
   },
   {
