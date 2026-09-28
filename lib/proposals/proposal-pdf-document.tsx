@@ -414,16 +414,12 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
     proposal: ca ? "Proposta" : en ? "Proposal" : "Propuesta",
     custom: ca ? "personalitzada" : en ? "custom" : "personalizada",
     prepared: ca ? "Preparada per a" : en ? "Prepared for" : "Preparada para",
-    investment: ca
-      ? "Inversió inicial (sense IVA)"
-      : en
-        ? "Initial investment (excluding VAT)"
-        : "Inversión inicial (sin IVA)",
+    investment: ca ? "Inversió inicial" : en ? "Initial investment" : "Inversión inicial",
     taxExcluded: ca
-      ? "IVA no inclòs; s'afegirà al total."
+      ? "(IVA no inclòs)"
       : en
-        ? "VAT excluded; it will be added to the total."
-        : "IVA no incluido; se añadirá al total.",
+        ? "(VAT excluded)"
+        : "(IVA no incluido)",
     valid: ca ? "Vàlida fins al" : en ? "Valid until" : "Válida hasta el",
     context: ca ? "Context" : en ? "Context" : "Contexto",
     challenges: ca ? "Reptes detectats" : en ? "Challenges identified" : "Retos detectados",
@@ -481,10 +477,10 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         <View style={styles.metricCard}>
           <Text style={styles.metricLabel}>{copy.investment}</Text>
           <Text style={styles.metricValue}>{money(data.subtotal)}</Text>
-          <Text style={styles.metricText}>
-            {validUntil ? `${copy.valid} ${validUntil}. ` : ""}
-            {copy.taxExcluded}
-          </Text>
+          <Text style={styles.metricText}>{copy.taxExcluded}</Text>
+          {validUntil ? (
+            <Text style={styles.metricText}>{`${copy.valid} ${validUntil}.`}</Text>
+          ) : null}
         </View>
         <Text style={styles.coverFooter}>
           {ca ? "Document confidencial" : en ? "Confidential document" : "Documento confidencial"} ·

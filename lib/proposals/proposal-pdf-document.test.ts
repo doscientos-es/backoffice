@@ -67,9 +67,10 @@ describe("proposal PDF helpers", () => {
 
     const pdfBytes = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
     const { pages } = await extractPdfPages(pdfBytes);
-    expect(pages[0]?.content).toContain("Inversión inicial (sin IVA)");
-    expect(pages[0]?.content).toContain("1.000,00 €");
-    expect(pages[0]?.content).toContain("IVA no incluido");
-    expect(pages[0]?.content).not.toContain("1.210,00 €");
+    const coverText = pages[0]?.content.replace(/\s+/g, "") ?? "";
+    expect(coverText).toContain("INVERSIÓNINICIAL");
+    expect(coverText).toContain("1000,00€");
+    expect(coverText).toContain("(IVANOINCLUIDO)");
+    expect(coverText).not.toContain("1210,00€");
   });
 });

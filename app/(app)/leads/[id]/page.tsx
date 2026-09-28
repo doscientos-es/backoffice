@@ -280,6 +280,12 @@ export default async function LeadDetailPage({
         <div className="order-2 flex min-w-0 flex-col gap-6 lg:order-1">
           {tab === "resumen" ? (
             <>
+              <LeadDiscoveryQuestionsPanel
+                leadId={lead.id as string}
+                initialQuestions={discoveryQuestions}
+                aiEnabled={aiEnabled}
+                canEdit={canEdit}
+              />
               <Card>
                 <CardContent className="pt-5">
                   <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
@@ -617,13 +623,6 @@ export default async function LeadDetailPage({
                 scheduleMembers={members}
               />
             </SectionBoundary>
-
-            <LeadDiscoveryQuestionsPanel
-              leadId={lead.id as string}
-              initialQuestions={discoveryQuestions}
-              aiEnabled={aiEnabled}
-              canEdit={canEdit}
-            />
 
             <SectionBoundary label="No se pudo actualizar la calificación">
               <Card>
