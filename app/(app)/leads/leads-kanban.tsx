@@ -120,7 +120,8 @@ const STATUS_BY_COLUMN: Record<Exclude<LeadKanbanColumnId, "meeting">, LeadStatu
   archived: "archived",
 };
 
-const COMPACT_COLUMNS_KEY = "leads-kanban:compact-columns:v2";
+const COMPACT_COLUMNS_KEY = "leads-kanban:compact-columns:v3";
+const PREVIOUS_COMPACT_COLUMNS_KEY = "leads-kanban:compact-columns:v2";
 
 function loadColumnPreferences(key: string): LeadKanbanColumnPreferences | null {
   try {
@@ -139,6 +140,26 @@ function loadColumnPreferences(key: string): LeadKanbanColumnPreferences | null 
   } catch {
     return null;
   }
+}
+
+function migrateColumnPreferences(): LeadKanbanColumnPreferences | null {
+  const previousPreferences = loadColumnPreferences(PREVIOUS_COMPACT_COLUMNS_KEY);
+  if (!previousPreferences) return null;
+
+  // Terminal columns now start collapsed. Keep other saved choices while
+  // clearing old overrides that left closed columns expanded by default.
+  const terminalColumns = new Set<LeadKanbanColumnId>([
+    "won",
+    "lost",
+    "not_interested",
+    "archived",
+  ]);
+  const migrated = {
+    compact: previousPreferences.compact,
+    expanded: previousPreferences.expanded.filter((id) => !terminalColumns.has(id)),
+  };
+  saveColumnPreferences(COMPACT_COLUMNS_KEY, migrated);
+  return migrated;
 }
 
 function saveColumnPreferences(key: string, value: LeadKanbanColumnPreferences) {
@@ -178,7 +199,8 @@ export function LeadsKanban({
     expanded: [],
   });
   useEffect(() => {
-    const storedPreferences = loadColumnPreferences(COMPACT_COLUMNS_KEY);
+    const storedPreferences =
+      loadColumnPreferences(COMPACT_COLUMNS_KEY) ?? migrateColumnPreferences();
     if (storedPreferences) setColumnPreferences(storedPreferences);
   }, []);
 
