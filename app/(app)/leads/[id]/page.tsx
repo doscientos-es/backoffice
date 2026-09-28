@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { BriefcaseBusiness, ExternalLink, FileText, ReceiptText } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -337,6 +337,36 @@ export default async function LeadDetailPage({
                           <MemberLabel member={lead.assignee} />
                         </DetailRow>
                       </DetailGrid>
+                      <nav aria-label="Accesos comerciales" className="mt-5 flex flex-wrap gap-2">
+                        <Link
+                          href={`/leads/${lead.id as string}?tab=comercial`}
+                          className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 text-xs font-medium transition-colors hover:border-primary/30 hover:bg-primary/5"
+                        >
+                          <FileText className="size-3.5 text-muted-foreground" aria-hidden="true" />
+                          Propuestas{" "}
+                          <span className="text-muted-foreground">{proposals.length}</span>
+                        </Link>
+                        <Link
+                          href={`/leads/${lead.id as string}?tab=comercial`}
+                          className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 text-xs font-medium transition-colors hover:border-primary/30 hover:bg-primary/5"
+                        >
+                          <ReceiptText
+                            className="size-3.5 text-muted-foreground"
+                            aria-hidden="true"
+                          />
+                          Facturas <span className="text-muted-foreground">{invoices.length}</span>
+                        </Link>
+                        <Link
+                          href={`/leads/${lead.id as string}?tab=comercial`}
+                          className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 text-xs font-medium transition-colors hover:border-primary/30 hover:bg-primary/5"
+                        >
+                          <BriefcaseBusiness
+                            className="size-3.5 text-muted-foreground"
+                            aria-hidden="true"
+                          />
+                          Proyectos <span className="text-muted-foreground">{projects.length}</span>
+                        </Link>
+                      </nav>
                     </section>
 
                     <section className="min-w-0">
