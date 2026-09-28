@@ -4,11 +4,11 @@ export function resolvePortalLanguage(
   leadLanguage: unknown,
   linkLanguage?: unknown,
 ): PortalLanguage {
-  if (leadLanguage === 'ca' || leadLanguage === 'en' || leadLanguage === 'es') {
-    return leadLanguage
-  }
   if (linkLanguage === 'ca' || linkLanguage === 'en' || linkLanguage === 'es') {
     return linkLanguage
+  }
+  if (leadLanguage === 'ca' || leadLanguage === 'en' || leadLanguage === 'es') {
+    return leadLanguage
   }
   return 'es'
 }

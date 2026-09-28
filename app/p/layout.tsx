@@ -1,6 +1,7 @@
 import { ShieldCheck } from 'lucide-react'
 
 import { LogoMark } from '@/components/branding'
+import { PortalLanguageSwitch } from '@/components/portal/language-switch'
 
 export const metadata = {
   title: 'Portal · doscientos',
@@ -14,6 +15,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[32rem] bg-[radial-gradient(circle_at_15%_0%,rgba(189,255,123,0.14),transparent_34%),radial-gradient(circle_at_85%_8%,rgba(42,66,39,0.12),transparent_30%)] dark:bg-[radial-gradient(circle_at_15%_0%,rgba(189,255,123,0.08),transparent_34%),radial-gradient(circle_at_85%_8%,rgba(189,255,123,0.05),transparent_30%)]"
       />
+      <div className="fixed top-3 right-3 z-50 sm:top-4 sm:right-5">
+        <PortalLanguageSwitch />
+      </div>
 
       <header className="relative border-b border-black/[0.06] bg-white/70 backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#111410]/80">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
