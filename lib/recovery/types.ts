@@ -38,6 +38,7 @@ export type RecoveryLead = {
   company: string | null
   email: string | null
   phone: string | null
+  language?: 'es' | 'ca' | 'en' | null
   source: string | null
   status: RecoveryClosureStatus
   estimated_value: number | null

@@ -104,11 +104,12 @@ export function LeadRecentInteractions({
               leadName={leadName}
               leadPhone={leadPhone}
               leadEmail={leadEmail}
+              leadLanguage={leadLanguage}
               senderName={senderName}
               aiEnabled={aiEnabled}
               defaultDurationMinutes={defaultDurationMinutes}
             />
-            <QEmailDialog leadId={leadId} leadEmail={leadEmail} defaultLanguage={leadLanguage} />
+            <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
           </fieldset>
         ) : null}
       </CardHeader>

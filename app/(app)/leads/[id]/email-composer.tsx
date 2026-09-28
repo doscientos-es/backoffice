@@ -1,7 +1,7 @@
 'use client'
 
 import { LoaderCircle as Loader2, Sparkle as Sparkles } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 
 import { AiNotice } from '@/components/ui/ai-notice'
 import { Button } from '@/components/ui/button'
@@ -63,9 +63,9 @@ export function EmailComposer({
   const [to, setTo] = useState(defaultTo)
   const [subject, setSubject] = useState(defaultSubject ?? '')
   const [body, setBody] = useState(defaultBody ?? '')
-  const [language, setLanguage] = useState<string>(
-    defaultLanguage === 'ca' || defaultLanguage === 'en' ? defaultLanguage : 'es',
-  )
+  const normalizedDefaultLanguage =
+    defaultLanguage === 'ca' || defaultLanguage === 'en' ? defaultLanguage : 'es'
+  const [language, setLanguage] = useState<string>(normalizedDefaultLanguage)
   const [aiInstructions, setAiInstructions] = useState('')
   const [drafting, setDrafting] = useState(false)
   const [hasGeneratedDraft, setHasGeneratedDraft] = useState(false)
@@ -79,6 +79,10 @@ export function EmailComposer({
     0,
     MAX_DRAFT_INSTRUCTIONS - baseDraftInstructions.length - instructionSeparatorLength,
   )
+
+  useEffect(() => {
+    setLanguage(normalizedDefaultLanguage)
+  }, [normalizedDefaultLanguage])
 
   async function handleDraftWithAI() {
     setDrafting(true)

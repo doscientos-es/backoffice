@@ -94,6 +94,7 @@ function LastAttemptDialog({
   leadName,
   leadEmail,
   leadPhone,
+  leadLanguage,
   senderName,
   aiEnabled,
   open,
@@ -103,6 +104,7 @@ function LastAttemptDialog({
   leadName: string
   leadEmail: string | null
   leadPhone: string | null
+  leadLanguage?: string | null
   senderName: string
   aiEnabled?: boolean
   open: boolean
@@ -113,6 +115,7 @@ function LastAttemptDialog({
     { id: leadId, name: leadName, email: leadEmail },
     senderName,
     publicEnv.NEXT_PUBLIC_CAL_LINK,
+    leadLanguage === 'ca' || leadLanguage === 'en' ? leadLanguage : 'es',
   )
   const firstName = leadName.split(' ')[0] || leadName
   const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
@@ -120,19 +123,49 @@ function LastAttemptDialog({
     name: leadName,
     email: leadEmail,
   })
-  const emailSubject = `¿Hablamos sobre lo que necesitas, ${firstName}?`
-  const emailBody = [
-    `Hola ${firstName},`,
-    `\nSoy ${senderName || 'el equipo'}, de Doscientos.`,
-    '\nNos dejaste tus datos al completar un formulario en uno de nuestros anuncios de Meta. Te escribo porque he intentado llamarte varias veces, pero no he conseguido localizarte.',
-    '\nNos gustaría entender qué necesitas y ver si podemos ayudarte.',
-    bookingUrl
-      ? `\nPuedes responderme a este email o, si te va mejor, agendar directamente una reunión aquí: ${bookingUrl}`
-      : '\nPuedes responderme a este email y buscamos un momento para hablar.',
-    '\n¿Qué opción te resulta más cómoda?',
-    '\nUn saludo,',
-    senderName || 'El equipo de Doscientos',
-  ].join('\n')
+  const emailSubject = leadLanguage === 'ca'
+    ? `Parlem del que necessites, ${firstName}?`
+    : leadLanguage === 'en'
+      ? `Shall we talk about what you need, ${firstName}?`
+      : `¿Hablamos sobre lo que necesitas, ${firstName}?`
+  const emailBody = leadLanguage === 'ca'
+    ? [
+        `Hola ${firstName},`,
+        `\nSoc ${senderName || 'l’equip'}, de Doscientos.`,
+        '\nEns vas deixar les teves dades en un formulari d’un dels nostres anuncis de Meta. T’escric perquè he intentat trucar-te diverses vegades, però no t’he pogut localitzar.',
+        '\nEns agradaria entendre què necessites i veure si et podem ajudar.',
+        bookingUrl
+          ? `\nPots respondre aquest correu o, si et va millor, reservar una reunió aquí: ${bookingUrl}`
+          : '\nPots respondre aquest correu i busquem un moment per parlar.',
+        '\nQuina opció et va millor?',
+        '\nUna salutació,',
+        senderName || 'L’equip de Doscientos',
+      ].join('\n')
+    : leadLanguage === 'en'
+      ? [
+          `Hi ${firstName},`,
+          `\nI’m ${senderName || 'the team'} from Doscientos.`,
+          '\nYou shared your details in a form on one of our Meta ads. I’m writing because I’ve tried calling a few times but haven’t been able to reach you.',
+          '\nWe’d like to understand what you need and see how we can help.',
+          bookingUrl
+            ? `\nYou can reply to this email or, if it’s easier, book a meeting here: ${bookingUrl}`
+            : '\nYou can reply to this email and we can find a time to talk.',
+          '\nWhich option works best for you?',
+          '\nBest,',
+          senderName || 'The Doscientos team',
+        ].join('\n')
+      : [
+          `Hola ${firstName},`,
+          `\nSoy ${senderName || 'el equipo'}, de Doscientos.`,
+          '\nNos dejaste tus datos al completar un formulario en uno de nuestros anuncios de Meta. Te escribo porque he intentado llamarte varias veces, pero no he conseguido localizarte.',
+          '\nNos gustaría entender qué necesitas y ver si podemos ayudarte.',
+          bookingUrl
+            ? `\nPuedes responderme a este email o, si te va mejor, agendar directamente una reunión aquí: ${bookingUrl}`
+            : '\nPuedes responderme a este email y buscamos un momento para hablar.',
+          '\n¿Qué opción te resulta más cómoda?',
+          '\nUn saludo,',
+          senderName || 'El equipo de Doscientos',
+        ].join('\n')
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
@@ -171,6 +204,7 @@ function LastAttemptDialog({
             leadName={leadName}
             leadEmail={leadEmail}
             leadPhone={leadPhone}
+            defaultLanguage={leadLanguage ?? undefined}
             senderName={senderName}
             aiEnabled={aiEnabled}
             defaultMessage={message}
@@ -182,6 +216,7 @@ function LastAttemptDialog({
           <EmailComposer
             leadId={leadId}
             defaultTo={leadEmail ?? ''}
+            defaultLanguage={leadLanguage ?? undefined}
             defaultSubject={emailSubject}
             defaultBody={emailBody}
             draftKind="no_answer_recovery"
@@ -602,6 +637,7 @@ export function QCallDialog({
   leadName,
   leadPhone,
   leadEmail,
+  leadLanguage,
   senderName,
   aiEnabled,
   openInitially = false,
@@ -613,6 +649,7 @@ export function QCallDialog({
   leadName: string
   leadPhone: string | null
   leadEmail: string | null
+  leadLanguage?: string | null
   senderName: string
   aiEnabled?: boolean
   openInitially?: boolean
@@ -923,6 +960,7 @@ export function QCallDialog({
         leadName={leadName}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
+        leadLanguage={leadLanguage}
         senderName={senderName}
         aiEnabled={aiEnabled}
         open={digestOpen}
@@ -946,6 +984,7 @@ export function QCallDialog({
         leadName={leadName}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
+        leadLanguage={leadLanguage}
         senderName={senderName}
         aiEnabled={aiEnabled}
         open={whatsappOpen}
@@ -960,6 +999,7 @@ export function QWhatsAppDialog({
   leadName,
   leadEmail,
   leadPhone,
+  leadLanguage,
   senderName,
   aiEnabled,
 }: {
@@ -967,6 +1007,7 @@ export function QWhatsAppDialog({
   leadName: string
   leadEmail: string | null
   leadPhone: string | null
+  leadLanguage?: string | null
   senderName: string
   aiEnabled?: boolean
 }) {
@@ -1001,6 +1042,7 @@ export function QWhatsAppDialog({
           leadName={leadName}
           leadEmail={leadEmail}
           leadPhone={leadPhone}
+          defaultLanguage={leadLanguage ?? undefined}
           senderName={senderName}
           aiEnabled={aiEnabled}
           onSuccess={() => setOpen(false)}
@@ -1013,11 +1055,9 @@ export function QWhatsAppDialog({
 export function QEmailDialog({
   leadId,
   leadEmail,
-  defaultLanguage,
 }: {
   leadId: string
   leadEmail: string | null
-  defaultLanguage?: string | null
 }) {
   const [open, setOpen] = useState(false)
   const [direction, setDirection] = useState<'incoming' | 'outgoing'>('outgoing')
@@ -1155,10 +1195,12 @@ export function QNoteDialog({ leadId }: { leadId: string }) {
 export function QSendEmailDialog({
   leadId,
   leadEmail,
+  defaultLanguage,
   aiEnabled,
 }: {
   leadId: string
   leadEmail: string | null
+  defaultLanguage?: string | null
   aiEnabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
@@ -1185,6 +1227,7 @@ export function QSendEmailDialog({
         <EmailComposer
           leadId={leadId}
           defaultTo={leadEmail ?? ''}
+          defaultLanguage={defaultLanguage ?? undefined}
           disabled={!leadEmail}
           disabledReason="Este lead no tiene email registrado."
           aiEnabled={aiEnabled}

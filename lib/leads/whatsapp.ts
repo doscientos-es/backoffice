@@ -11,10 +11,34 @@ export function buildLeadWhatsAppMessage(
   lead: WhatsAppLead,
   senderName: string,
   calendarLink: string | undefined,
+  language: 'es' | 'ca' | 'en' = 'es',
 ): string {
   const bookingUrl = buildBookingUrl(calendarLink, lead)
+  const name = lead.name.split(' ')[0] || lead.name
+  if (language === 'ca') {
+    return [
+      `Hola, ${name}. Soc ${senderName || 'l’equip'}, de Doscientos.`,
+      'He intentat trucar-te perquè vas omplir un formulari en un dels nostres anuncis de Meta.',
+      'M’agradaria entendre què necessites i veure si et podem ajudar.',
+      bookingUrl
+        ? `Em pots explicar breument per aquí què necessites o, si ho prefereixes, reservar una reunió: ${bookingUrl}`
+        : 'Em pots explicar breument per aquí què necessites i et respondré tan aviat com pugui.',
+      'Què et va millor?',
+    ].join('\n\n')
+  }
+  if (language === 'en') {
+    return [
+      `Hi ${name}, I’m ${senderName || 'the team'} from Doscientos.`,
+      'I tried to call because you filled in a form on one of our Meta ads.',
+      'I’d like to understand what you need and see how we can help.',
+      bookingUrl
+        ? `You can tell me briefly here or, if you prefer, book a meeting: ${bookingUrl}`
+        : 'You can tell me briefly here and I’ll get back to you as soon as I can.',
+      'What works best for you?',
+    ].join('\n\n')
+  }
   return [
-    `Hola, ${lead.name.split(' ')[0] || lead.name}. Soy ${senderName || 'el equipo'}, de Doscientos.`,
+    `Hola, ${name}. Soy ${senderName || 'el equipo'}, de Doscientos.`,
     'He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.',
     'Me gustaría entender qué necesitas y ver si podemos ayudarte.',
     bookingUrl

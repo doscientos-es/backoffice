@@ -206,6 +206,7 @@ export async function LeadQuickActionsSection({
     name: string
     email: string | null
     phone: string | null
+    language?: string | null
     assigned_to: string | null
   }
   senderName: string
@@ -245,6 +246,7 @@ export async function LeadQuickActionsSection({
       leadName={lead.name}
       leadEmail={lead.email}
       leadPhone={lead.phone}
+      leadLanguage={lead.language}
       senderName={senderName}
       openCallInitially={openCallInitially}
       openScheduleInitially={openScheduleInitially}

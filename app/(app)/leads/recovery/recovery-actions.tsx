@@ -115,6 +115,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
           <EmailComposer
             leadId={lead.id}
             defaultTo={lead.email ?? ""}
+            defaultLanguage={lead.language ?? undefined}
             defaultSubject={template.subject}
             defaultBody={template.body}
             disabled={!lead.email}

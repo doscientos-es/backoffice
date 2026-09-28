@@ -577,6 +577,7 @@ export default async function LeadDetailPage({
                   name: lead.name,
                   email: lead.email,
                   phone: lead.phone,
+                  language: lead.language,
                   assigned_to: lead.assigned_to,
                 }}
                 senderName={user.name}

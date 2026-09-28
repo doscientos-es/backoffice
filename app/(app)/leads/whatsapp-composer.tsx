@@ -2,7 +2,7 @@
 
 import { Check, LoaderCircle as Loader2, MessageCircle, Sparkle as Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { AiNotice } from '@/components/ui/ai-notice'
 import { Button } from '@/components/ui/button'
@@ -58,12 +58,14 @@ export function WhatsAppComposer({
     { id: leadId, name: leadName, email: leadEmail },
     senderName,
     publicEnv.NEXT_PUBLIC_CAL_LINK,
+    defaultLanguage === 'ca' || defaultLanguage === 'en' ? defaultLanguage : 'es',
   )
   const initialMessage = signedMessage(defaultMessage ?? fallbackMessage, senderName)
   const [message, setMessage] = useState(initialMessage)
-  const [language, setLanguage] = useState(
-    defaultLanguage === 'ca' || defaultLanguage === 'en' ? defaultLanguage : 'es',
-  )
+  const normalizedDefaultLanguage =
+    defaultLanguage === 'ca' || defaultLanguage === 'en' ? defaultLanguage : 'es'
+  const [language, setLanguage] = useState(normalizedDefaultLanguage)
+  useEffect(() => setLanguage(normalizedDefaultLanguage), [normalizedDefaultLanguage])
   const [drafting, setDrafting] = useState(false)
   const [openedMessage, setOpenedMessage] = useState<string | null>(null)
   const feedback = useFormFeedback()

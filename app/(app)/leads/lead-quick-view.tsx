@@ -311,6 +311,7 @@ function Body({
           leadName={displayName}
           leadPhone={lead.phone}
           leadEmail={lead.email}
+          leadLanguage={lead.language}
           senderName={senderName}
           aiEnabled={aiEnabled}
           googleEnabled={googleEnabled}
@@ -537,6 +538,7 @@ export function DrawerQuickActions({
   leadName,
   leadPhone,
   leadEmail,
+  leadLanguage,
   senderName,
   aiEnabled,
   googleEnabled,
@@ -545,6 +547,7 @@ export function DrawerQuickActions({
   leadName: string
   leadPhone: string | null
   leadEmail: string | null
+  leadLanguage?: string | null
   senderName: string
   aiEnabled: boolean
   googleEnabled: boolean
@@ -555,6 +558,7 @@ export function DrawerQuickActions({
       leadName={leadName}
       leadPhone={leadPhone}
       leadEmail={leadEmail}
+      leadLanguage={leadLanguage}
       senderName={senderName}
       aiEnabled={aiEnabled}
       googleEnabled={googleEnabled}

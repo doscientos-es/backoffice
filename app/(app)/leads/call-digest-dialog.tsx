@@ -25,6 +25,7 @@ type Props = {
   leadName: string
   leadEmail: string | null
   leadPhone: string | null
+  leadLanguage?: string | null
   senderName: string
   aiEnabled?: boolean
   open: boolean
@@ -41,6 +42,7 @@ export function CallDigestDialog({
   leadName,
   leadEmail,
   leadPhone,
+  leadLanguage,
   senderName,
   aiEnabled,
   open,
@@ -58,10 +60,11 @@ export function CallDigestDialog({
     setEmailSent(false)
   }, [leadPhone, open])
 
-  const whatsappDefault = [
-    `Hola, ${leadName.split(' ')[0] || leadName}.`,
-    'Gracias por la llamada. Te envío por aquí un breve seguimiento de lo que hemos comentado.',
-  ].join('\n\n')
+  const whatsappDefault = leadLanguage === 'ca'
+    ? `Hola, ${leadName.split(' ')[0] || leadName}. Gràcies per la trucada. Et faig arribar per aquí un breu seguiment del que hem comentat.`
+    : leadLanguage === 'en'
+      ? `Hi ${leadName.split(' ')[0] || leadName}. Thanks for the call. I’m sending a brief follow-up on what we discussed.`
+      : `Hola, ${leadName.split(' ')[0] || leadName}. Gracias por la llamada. Te envío por aquí un breve seguimiento de lo que hemos comentado.`
   const showEmail = channel === 'email' || (channel === 'both' && !emailSent)
   const showWhatsApp = channel === 'whatsapp' || (channel === 'both' && emailSent)
 
@@ -113,6 +116,7 @@ export function CallDigestDialog({
             key={`email-${draftKey}`}
             leadId={leadId}
             defaultTo={leadEmail ?? ''}
+            defaultLanguage={leadLanguage ?? undefined}
             defaultSubject="Resumen de nuestra llamada · {{nombre}}"
             disabled={!leadEmail}
             disabledReason="Este lead no tiene email registrado. Puedes añadirlo desde la ficha del lead."
@@ -133,6 +137,7 @@ export function CallDigestDialog({
             leadName={leadName}
             leadEmail={leadEmail}
             leadPhone={leadPhone}
+            defaultLanguage={leadLanguage ?? undefined}
             senderName={senderName}
             aiEnabled={aiEnabled}
             defaultMessage={whatsappDefault}

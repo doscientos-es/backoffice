@@ -17,6 +17,7 @@ type Props = {
   leadName: string
   leadEmail: string | null
   leadPhone: string | null
+  leadLanguage?: string | null
   senderName: string
   openCallInitially?: boolean
   openScheduleInitially?: boolean
@@ -38,6 +39,7 @@ export function LeadQuickActions({
   leadName,
   leadEmail,
   leadPhone,
+  leadLanguage,
   senderName,
   openCallInitially,
   openScheduleInitially,
@@ -60,6 +62,7 @@ export function LeadQuickActions({
         leadName={leadName}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
+        leadLanguage={leadLanguage}
         senderName={senderName}
         aiEnabled={aiEnabled}
         googleEnabled={googleEnabled}

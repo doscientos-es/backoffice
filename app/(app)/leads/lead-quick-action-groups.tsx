@@ -25,6 +25,7 @@ type Props = {
   leadName: string
   leadEmail: string | null
   leadPhone: string | null
+  leadLanguage?: string | null
   senderName: string
   aiEnabled?: boolean
   googleEnabled?: boolean
@@ -45,6 +46,7 @@ export function LeadQuickActionGroups({
   leadName,
   leadEmail,
   leadPhone,
+  leadLanguage,
   senderName,
   aiEnabled,
   googleEnabled,
@@ -66,6 +68,7 @@ export function LeadQuickActionGroups({
       <QCallDialog
         leadId={leadId}
         leadPhone={leadPhone}
+        leadLanguage={leadLanguage}
         leadName={leadName}
         leadEmail={leadEmail}
         senderName={senderName}
@@ -80,10 +83,11 @@ export function LeadQuickActionGroups({
         leadName={leadName}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
+        leadLanguage={leadLanguage}
         senderName={senderName}
         aiEnabled={aiEnabled}
       />
-      <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} aiEnabled={aiEnabled} />
+      <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} defaultLanguage={leadLanguage} aiEnabled={aiEnabled} />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
 
       <ScheduleReminderDialog

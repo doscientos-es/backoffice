@@ -9,7 +9,7 @@
  * Body: { lead_id, kind?, instructions?, language?, channel?, reply_to_interaction_id? }
  *  - kind: tipo de email deseado (p.ej. "follow_up", "intro", "propuesta")
  *  - instructions: notas adicionales libres del usuario
- *  - language: idioma del email ("es" | "ca" | "en"), por defecto "es"
+ *  - language: idioma del mensaje; si se omite, se usa el idioma guardado del lead
  *
  * Auth: requireUser (viewer denegado). 503 si la IA no está configurada.
  */
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
 
   const { data: lead, error: leadErr } = await supabase
     .from('leads')
-    .select('id, name, company, email, source, status, notes, ai_summary')
+    .select('id, name, company, email, source, status, notes, ai_summary, language')
     .eq('id', body.lead_id)
     .is('deleted_at', null)
     .maybeSingle()
@@ -138,6 +138,10 @@ export async function POST(req: NextRequest) {
   if (leadErr || !lead) {
     return NextResponse.json({ error: 'lead not found' }, { status: 404 })
   }
+
+  const language = body.language ?? (EMAIL_LANGUAGES.includes(lead.language as (typeof EMAIL_LANGUAGES)[number])
+    ? (lead.language as (typeof EMAIL_LANGUAGES)[number])
+    : 'es')
 
   const [{ data: interactions }, { data: discoveryQuestions }] = await Promise.all([
     supabase
@@ -221,7 +225,7 @@ Remitente: ${user.name} (${user.email})`
   try {
     const common = {
       model: AI_MODELS.drafter,
-      system: buildSystemPrompt(body.language ?? 'es', channel),
+      system: buildSystemPrompt(language, channel),
       user: userPrompt,
       temperature: 0.6,
       maxOutputTokens: 1000,
@@ -242,7 +246,7 @@ Remitente: ${user.name} (${user.email})`
     {
       leadId: body.lead_id,
       kind: body.kind ?? 'follow_up',
-      language: body.language ?? 'es',
+      language,
       channel,
     },
     'ai_draft_email_ok',

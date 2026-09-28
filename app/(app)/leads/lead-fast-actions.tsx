@@ -80,6 +80,7 @@ function WhatsAppFollowUp({
   leadName,
   leadEmail,
   leadPhone,
+  leadLanguage,
   senderName,
   aiEnabled,
   open,
@@ -89,6 +90,7 @@ function WhatsAppFollowUp({
   leadName: string
   leadEmail: string | null
   leadPhone: string | null
+  leadLanguage?: string | null
   senderName: string
   aiEnabled: boolean
   open: boolean
@@ -109,6 +111,7 @@ function WhatsAppFollowUp({
           leadName={leadName}
           leadEmail={leadEmail}
           leadPhone={leadPhone}
+          defaultLanguage={leadLanguage ?? undefined}
           senderName={senderName}
           aiEnabled={aiEnabled}
           draftKind="no_answer_recovery"
@@ -135,6 +138,7 @@ export function LeadFastActions({ lead, aiEnabled, senderName }: Props) {
         leadName={lead.name}
         leadEmail={lead.email}
         leadPhone={lead.phone}
+        leadLanguage={lead.language}
         senderName={senderName}
         aiEnabled={aiEnabled}
         defaultDurationMinutes={lead.scheduled_meeting_duration_minutes}
@@ -144,6 +148,7 @@ export function LeadFastActions({ lead, aiEnabled, senderName }: Props) {
         leadName={lead.name}
         leadEmail={lead.email}
         leadPhone={lead.phone}
+        leadLanguage={lead.language}
         senderName={senderName}
         aiEnabled={aiEnabled}
       />
@@ -158,6 +163,7 @@ function QuickWhatsAppDialog({
   leadName,
   leadEmail,
   leadPhone,
+  leadLanguage,
   senderName,
   aiEnabled,
 }: {
@@ -165,6 +171,7 @@ function QuickWhatsAppDialog({
   leadName: string
   leadEmail: string | null
   leadPhone: string | null
+  leadLanguage?: string | null
   senderName: string
   aiEnabled: boolean
 }) {
@@ -187,6 +194,7 @@ function QuickWhatsAppDialog({
         leadName={leadName}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
+        defaultLanguage={leadLanguage ?? undefined}
         senderName={senderName}
         aiEnabled={aiEnabled}
         onSuccess={() => setOpen(false)}
@@ -246,6 +254,7 @@ function CallDialog({
   leadName,
   leadEmail,
   leadPhone,
+  leadLanguage,
   senderName,
   aiEnabled,
   defaultDurationMinutes,
@@ -254,6 +263,7 @@ function CallDialog({
   leadName: string
   leadEmail: string | null
   leadPhone: string | null
+  leadLanguage?: string | null
   senderName: string
   aiEnabled: boolean
   defaultDurationMinutes: number | null
@@ -381,6 +391,7 @@ function CallDialog({
         leadName={leadName}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
+        leadLanguage={leadLanguage}
         senderName={senderName}
         aiEnabled={aiEnabled}
         open={digestOpen}
@@ -404,6 +415,7 @@ function CallDialog({
         leadName={leadName}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
+        leadLanguage={leadLanguage}
         senderName={senderName}
         aiEnabled={aiEnabled}
         open={whatsappOpen}
