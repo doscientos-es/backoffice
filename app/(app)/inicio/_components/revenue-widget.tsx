@@ -1,18 +1,18 @@
-import Link from 'next/link'
+import Link from "next/link";
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
-import { getRevenueSeries } from '@/lib/dashboard/queries'
-import type { DashboardRange } from '@/lib/dashboard/types'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
+import { getRevenueSeries } from "@/lib/dashboard/queries";
+import type { DashboardRange } from "@/lib/dashboard/types";
 
-import { RevenueChart } from '../revenue-chart'
+import { RevenueChart } from "../revenue-chart";
 
 export async function RevenueWidget({ range }: { range: DashboardRange }) {
-  const data = await getRevenueSeries(range)
+  const data = await getRevenueSeries(range);
   const hasData = [data.billed, data.collected].some((metric) =>
     metric.totals.some((point) => point.current > 0 || point.previous > 0),
-  )
+  );
 
   return (
     <Card>
@@ -28,7 +28,7 @@ export async function RevenueWidget({ range }: { range: DashboardRange }) {
               <EmptyTitle>Sin actividad financiera en este periodo</EmptyTitle>
             </EmptyHeader>
             <EmptyContent>
-              <p className="text-muted-foreground max-w-sm text-center text-sm">
+              <p className="max-w-sm text-center text-sm text-muted-foreground">
                 No hay facturas emitidas ni cobros recibidos. Prueba con un periodo más amplio o
                 crea una factura para empezar a ver la evolución.
               </p>
@@ -45,5 +45,5 @@ export async function RevenueWidget({ range }: { range: DashboardRange }) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

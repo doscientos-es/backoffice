@@ -11,72 +11,237 @@ import {
   MessageSquareText,
   Receipt,
   Sparkles,
-} from 'lucide-react'
-import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+} from "lucide-react";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
-import { PortalPasswordGate } from '@/components/portal/password-gate'
-import { StatusBadge } from '@/components/ui/status-badge'
-import { getCurrentUser } from '@/lib/auth'
-import { isPortalUnlocked } from '@/lib/portal/access'
-import { formatPortalDate, formatPortalEUR, resolvePortalLanguage } from '@/lib/portal/language'
-import { PROJECT_STATUS, TASK_STATUS } from '@/lib/status'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { PortalPasswordGate } from "@/components/portal/password-gate";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { getCurrentUser } from "@/lib/auth";
+import { isPortalUnlocked } from "@/lib/portal/access";
+import { formatPortalDate, formatPortalEUR, resolvePortalLanguage } from "@/lib/portal/language";
+import { PROJECT_STATUS, TASK_STATUS } from "@/lib/status";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-import { unlockProjectPortal } from './actions'
-import { ProjectRequestDialog } from './request-form'
+import { unlockProjectPortal } from "./actions";
+import { ProjectRequestDialog } from "./request-form";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: 'Seguimiento del proyecto · doscientos',
+  title: "Seguimiento del proyecto · doscientos",
   robots: { index: false, follow: false },
-}
+};
 
 const REQUEST_STATUS: Record<string, { label: string; dot: string }> = {
-  new: { label: 'Recibida', dot: 'bg-sky-500' },
-  in_progress: { label: 'En curso', dot: 'bg-amber-500' },
-  resolved: { label: 'Resuelta', dot: 'bg-emerald-500' },
-  closed: { label: 'Cerrada', dot: 'bg-zinc-400' },
-}
+  new: { label: "Recibida", dot: "bg-sky-500" },
+  in_progress: { label: "En curso", dot: "bg-amber-500" },
+  resolved: { label: "Resuelta", dot: "bg-emerald-500" },
+  closed: { label: "Cerrada", dot: "bg-zinc-400" },
+};
 
 export default async function ProjectPortalPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ token: string }>
-  searchParams: Promise<{ lang?: string }>
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ lang?: string }>;
 }) {
-  const { token } = await params
-  const { lang } = await searchParams
-  const admin = createAdminClient()
-  const auth = await getCurrentUser()
-  const isTeam = auth.ok
+  const { token } = await params;
+  const { lang } = await searchParams;
+  const admin = createAdminClient();
+  const auth = await getCurrentUser();
+  const isTeam = auth.ok;
 
   const { data: project } = await admin
-    .from('projects')
+    .from("projects")
     .select(
-      'id, name, status, starts_at, ends_at, portal_password_hash, is_client_visible, clients(name, lead_id, leads(language))',
+      "id, name, status, starts_at, ends_at, portal_password_hash, is_client_visible, clients(name, lead_id, leads(language))",
     )
-    .eq('portal_token', token)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (!project) notFound()
-  const clientRelation = (project as unknown as { clients: { name: string; leads?: { language?: string | null } | null } | null }).clients
-  const portalLanguage = resolvePortalLanguage(clientRelation?.leads?.language, lang)
-  const copy = portalLanguage === 'ca'
-    ? { preview: 'Vista prèvia interna.', hidden: 'Aquest portal encara està ocult per al client.', intro: 'Consulta el progrés del projecte i envia’ns qualsevol sol·licitud des d’un únic lloc.', progress: 'Progrés compartit', start: 'Inici del projecte', delivery: 'Lliurament previst', documents: 'Documents compartits', documentIntro: 'Consulta propostes i factures relacionades amb aquest projecte.', work: 'Estat del treball', websites: 'Webs', websitesIntro: 'Versions compartides del teu projecte.', proposal: 'Proposta', invoice: 'Factura', noDate: 'Sense data', preparing: 'Estem preparant els propers passos', done: 'Tot el treball compartit està completat', taskCount: (done: number, total: number) => `${done} de ${total} tasques completades`, taskProgress: 'Progrés de les tasques compartides', upcoming: 'Propers passos en preparació', upcomingDescription: 'Les tasques compartides apareixeran aquí amb el seu estat i la data prevista.', requests: 'Sol·licituds', allClear: 'Tot al dia', requestCategory: { question: 'Consulta', incident: 'Incidència', change: 'Canvi', material: 'Material', maintenance: 'Manteniment', complaint: 'Queixa' }, requestStatus: { new: 'Rebuda', in_progress: 'En curs', resolved: 'Resolta', closed: 'Tancada' }, projectStatuses: { planning: 'Planificació', active: 'Actiu', on_hold: 'En pausa', done: 'Finalitzat', cancelled: 'Cancel·lat' }, taskStatuses: { todo: 'Per fer', in_progress: 'En curs', in_review: 'Revisió', done: 'Feta', cancelled: 'Cancel·lada' } }
-    : portalLanguage === 'en'
-      ? { preview: 'Internal preview.', hidden: 'This portal is still hidden from the client.', intro: 'Check project progress and send us requests from one place.', progress: 'Shared progress', start: 'Project start', delivery: 'Expected delivery', documents: 'Shared documents', documentIntro: 'View proposals and invoices related to this project.', work: 'Work status', websites: 'Websites', websitesIntro: 'Shared versions of your project.', proposal: 'Proposal', invoice: 'Invoice', noDate: 'No date', preparing: 'We are preparing the next steps', done: 'All shared work is complete', taskCount: (done: number, total: number) => `${done} of ${total} tasks complete`, taskProgress: 'Shared task progress', upcoming: 'Next steps are being prepared', upcomingDescription: 'Shared tasks will appear here with their status and expected date.', requests: 'Requests', allClear: 'All up to date', requestCategory: { question: 'Question', incident: 'Issue', change: 'Change', material: 'Materials', maintenance: 'Maintenance', complaint: 'Complaint' }, requestStatus: { new: 'Received', in_progress: 'In progress', resolved: 'Resolved', closed: 'Closed' }, projectStatuses: { planning: 'Planning', active: 'Active', on_hold: 'On hold', done: 'Completed', cancelled: 'Cancelled' }, taskStatuses: { todo: 'To do', in_progress: 'In progress', in_review: 'In review', done: 'Completed', cancelled: 'Cancelled' } }
-      : { preview: 'Vista previa interna.', hidden: 'Este portal todavía está oculto para el cliente.', intro: 'Consulta el avance del proyecto y envíanos cualquier solicitud desde un único lugar.', progress: 'Progreso compartido', start: 'Inicio del proyecto', delivery: 'Entrega prevista', documents: 'Documentos compartidos', documentIntro: 'Consulta propuestas y facturas relacionadas con este proyecto.', work: 'Estado del trabajo', websites: 'Webs', websitesIntro: 'Versiones compartidas de tu proyecto.', proposal: 'Propuesta', invoice: 'Factura', noDate: 'Sin fecha', preparing: 'Estamos preparando los próximos pasos', done: 'Todo el trabajo compartido está completado', taskCount: (done: number, total: number) => `${done} de ${total} tareas completadas`, taskProgress: 'Progreso de las tareas compartidas', upcoming: 'Próximos pasos en preparación', upcomingDescription: 'Cuando compartamos tareas contigo, aparecerán aquí con su estado y fecha prevista.', requests: 'Solicitudes', allClear: 'Todo al día', requestCategory: { question: 'Consulta', incident: 'Incidencia', change: 'Cambio', material: 'Material', maintenance: 'Mantenimiento', complaint: 'Queja' }, requestStatus: { new: 'Recibida', in_progress: 'En curso', resolved: 'Resuelta', closed: 'Cerrada' }, projectStatuses: { planning: 'Planificación', active: 'Activo', on_hold: 'En pausa', done: 'Finalizado', cancelled: 'Cancelado' }, taskStatuses: { todo: 'Por hacer', in_progress: 'En curso', in_review: 'Revisión', done: 'Terminada', cancelled: 'Cancelada' } }
+    .eq("portal_token", token)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!project) notFound();
+  const clientRelation = (
+    project as unknown as {
+      clients: { name: string; leads?: { language?: string | null } | null } | null;
+    }
+  ).clients;
+  const portalLanguage = resolvePortalLanguage(clientRelation?.leads?.language, lang);
+  const copy =
+    portalLanguage === "ca"
+      ? {
+          preview: "Vista prèvia interna.",
+          hidden: "Aquest portal encara està ocult per al client.",
+          intro:
+            "Consulta el progrés del projecte i envia’ns qualsevol sol·licitud des d’un únic lloc.",
+          progress: "Progrés compartit",
+          start: "Inici del projecte",
+          delivery: "Lliurament previst",
+          documents: "Documents compartits",
+          documentIntro: "Consulta propostes i factures relacionades amb aquest projecte.",
+          work: "Estat del treball",
+          websites: "Webs",
+          websitesIntro: "Versions compartides del teu projecte.",
+          proposal: "Proposta",
+          invoice: "Factura",
+          noDate: "Sense data",
+          preparing: "Estem preparant els propers passos",
+          done: "Tot el treball compartit està completat",
+          taskCount: (done: number, total: number) => `${done} de ${total} tasques completades`,
+          taskProgress: "Progrés de les tasques compartides",
+          upcoming: "Propers passos en preparació",
+          upcomingDescription:
+            "Les tasques compartides apareixeran aquí amb el seu estat i la data prevista.",
+          requests: "Sol·licituds",
+          allClear: "Tot al dia",
+          requestCategory: {
+            question: "Consulta",
+            incident: "Incidència",
+            change: "Canvi",
+            material: "Material",
+            maintenance: "Manteniment",
+            complaint: "Queixa",
+          },
+          requestStatus: {
+            new: "Rebuda",
+            in_progress: "En curs",
+            resolved: "Resolta",
+            closed: "Tancada",
+          },
+          projectStatuses: {
+            planning: "Planificació",
+            active: "Actiu",
+            on_hold: "En pausa",
+            done: "Finalitzat",
+            cancelled: "Cancel·lat",
+          },
+          taskStatuses: {
+            todo: "Per fer",
+            in_progress: "En curs",
+            in_review: "Revisió",
+            done: "Feta",
+            cancelled: "Cancel·lada",
+          },
+        }
+      : portalLanguage === "en"
+        ? {
+            preview: "Internal preview.",
+            hidden: "This portal is still hidden from the client.",
+            intro: "Check project progress and send us requests from one place.",
+            progress: "Shared progress",
+            start: "Project start",
+            delivery: "Expected delivery",
+            documents: "Shared documents",
+            documentIntro: "View proposals and invoices related to this project.",
+            work: "Work status",
+            websites: "Websites",
+            websitesIntro: "Shared versions of your project.",
+            proposal: "Proposal",
+            invoice: "Invoice",
+            noDate: "No date",
+            preparing: "We are preparing the next steps",
+            done: "All shared work is complete",
+            taskCount: (done: number, total: number) => `${done} of ${total} tasks complete`,
+            taskProgress: "Shared task progress",
+            upcoming: "Next steps are being prepared",
+            upcomingDescription:
+              "Shared tasks will appear here with their status and expected date.",
+            requests: "Requests",
+            allClear: "All up to date",
+            requestCategory: {
+              question: "Question",
+              incident: "Issue",
+              change: "Change",
+              material: "Materials",
+              maintenance: "Maintenance",
+              complaint: "Complaint",
+            },
+            requestStatus: {
+              new: "Received",
+              in_progress: "In progress",
+              resolved: "Resolved",
+              closed: "Closed",
+            },
+            projectStatuses: {
+              planning: "Planning",
+              active: "Active",
+              on_hold: "On hold",
+              done: "Completed",
+              cancelled: "Cancelled",
+            },
+            taskStatuses: {
+              todo: "To do",
+              in_progress: "In progress",
+              in_review: "In review",
+              done: "Completed",
+              cancelled: "Cancelled",
+            },
+          }
+        : {
+            preview: "Vista previa interna.",
+            hidden: "Este portal todavía está oculto para el cliente.",
+            intro:
+              "Consulta el avance del proyecto y envíanos cualquier solicitud desde un único lugar.",
+            progress: "Progreso compartido",
+            start: "Inicio del proyecto",
+            delivery: "Entrega prevista",
+            documents: "Documentos compartidos",
+            documentIntro: "Consulta propuestas y facturas relacionadas con este proyecto.",
+            work: "Estado del trabajo",
+            websites: "Webs",
+            websitesIntro: "Versiones compartidas de tu proyecto.",
+            proposal: "Propuesta",
+            invoice: "Factura",
+            noDate: "Sin fecha",
+            preparing: "Estamos preparando los próximos pasos",
+            done: "Todo el trabajo compartido está completado",
+            taskCount: (done: number, total: number) => `${done} de ${total} tareas completadas`,
+            taskProgress: "Progreso de las tareas compartidas",
+            upcoming: "Próximos pasos en preparación",
+            upcomingDescription:
+              "Cuando compartamos tareas contigo, aparecerán aquí con su estado y fecha prevista.",
+            requests: "Solicitudes",
+            allClear: "Todo al día",
+            requestCategory: {
+              question: "Consulta",
+              incident: "Incidencia",
+              change: "Cambio",
+              material: "Material",
+              maintenance: "Mantenimiento",
+              complaint: "Queja",
+            },
+            requestStatus: {
+              new: "Recibida",
+              in_progress: "En curso",
+              resolved: "Resuelta",
+              closed: "Cerrada",
+            },
+            projectStatuses: {
+              planning: "Planificación",
+              active: "Activo",
+              on_hold: "En pausa",
+              done: "Finalizado",
+              cancelled: "Cancelado",
+            },
+            taskStatuses: {
+              todo: "Por hacer",
+              in_progress: "En curso",
+              in_review: "Revisión",
+              done: "Terminada",
+              cancelled: "Cancelada",
+            },
+          };
 
   if (!isTeam) {
-    if (project.is_client_visible === false) notFound()
+    if (project.is_client_visible === false) notFound();
     const unlocked = await isPortalUnlocked(
       token,
       (project.portal_password_hash as string | null) ?? null,
-    )
+    );
     if (!unlocked) {
-      return <PortalPasswordGate token={token} action={unlockProjectPortal} language={portalLanguage} />
+      return (
+        <PortalPasswordGate token={token} action={unlockProjectPortal} language={portalLanguage} />
+      );
     }
   }
 
@@ -88,68 +253,78 @@ export default async function ProjectPortalPage({
     { data: invoices },
   ] = await Promise.all([
     admin
-      .from('tasks')
-      .select('id, title, client_title, client_summary, status, due_date, completed_at')
-      .eq('project_id', project.id as string)
-      .eq('kind', 'task')
-      .eq('is_client_visible', true)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: true }),
+      .from("tasks")
+      .select("id, title, client_title, client_summary, status, due_date, completed_at")
+      .eq("project_id", project.id as string)
+      .eq("kind", "task")
+      .eq("is_client_visible", true)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true }),
     admin
-      .from('project_requests')
-      .select('id, subject, category, status, created_at')
-      .eq('project_id', project.id as string)
-      .order('created_at', { ascending: false })
+      .from("project_requests")
+      .select("id, subject, category, status, created_at")
+      .eq("project_id", project.id as string)
+      .order("created_at", { ascending: false })
       .limit(20),
     admin
-      .from('web_projects')
-      .select('id, name, url')
-      .eq('project_id', project.id as string)
-      .eq('is_client_visible', true)
-      .is('deleted_at', null)
-      .order('name'),
+      .from("web_projects")
+      .select("id, name, url")
+      .eq("project_id", project.id as string)
+      .eq("is_client_visible", true)
+      .is("deleted_at", null)
+      .order("name"),
     admin
-      .from('proposals')
-      .select('id, number, title, total, status, portal_token, is_client_visible')
-      .eq('project_id', project.id as string)
-      .eq('is_client_visible', true)
-      .not('portal_token', 'is', null)
-      .not('status', 'in', '(draft,cancelled)')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false }),
+      .from("proposals")
+      .select("id, number, title, total, status, portal_token, is_client_visible")
+      .eq("project_id", project.id as string)
+      .eq("is_client_visible", true)
+      .not("portal_token", "is", null)
+      .not("status", "in", "(draft,cancelled)")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
     admin
-      .from('invoices')
-      .select('id, full_number, total, status, portal_token, is_client_visible')
-      .eq('project_id', project.id as string)
-      .eq('is_client_visible', true)
-      .not('portal_token', 'is', null)
-      .not('status', 'in', '(draft,cancelled)')
-      .is('deleted_at', null)
-      .order('issue_date', { ascending: false }),
-  ])
+      .from("invoices")
+      .select("id, full_number, total, status, portal_token, is_client_visible")
+      .eq("project_id", project.id as string)
+      .eq("is_client_visible", true)
+      .not("portal_token", "is", null)
+      .not("status", "in", "(draft,cancelled)")
+      .is("deleted_at", null)
+      .order("issue_date", { ascending: false }),
+  ]);
 
-  const visibleTasks = (tasks ?? []).filter((task) => task.status !== 'cancelled')
-  const completed = visibleTasks.filter((task) => task.status === 'done').length
+  const visibleTasks = (tasks ?? []).filter((task) => task.status !== "cancelled");
+  const completed = visibleTasks.filter((task) => task.status === "done").length;
   const progress =
-    visibleTasks.length === 0 ? 0 : Math.round((completed / visibleTasks.length) * 100)
-  const client = clientRelation
-  const hasTasks = visibleTasks.length > 0
+    visibleTasks.length === 0 ? 0 : Math.round((completed / visibleTasks.length) * 100);
+  const client = clientRelation;
+  const hasTasks = visibleTasks.length > 0;
   const progressCopy = !hasTasks
     ? copy.preparing
     : progress === 100
       ? copy.done
-      : copy.taskCount(completed, visibleTasks.length)
-  const localizedProjectStatus = Object.fromEntries(Object.entries(PROJECT_STATUS).map(([key, meta]) => [key, { ...meta, label: copy.projectStatuses[key as keyof typeof copy.projectStatuses] }]))
-  const localizedTaskStatus = Object.fromEntries(Object.entries(TASK_STATUS).map(([key, meta]) => [key, { ...meta, label: copy.taskStatuses[key as keyof typeof copy.taskStatuses] }]))
+      : copy.taskCount(completed, visibleTasks.length);
+  const localizedProjectStatus = Object.fromEntries(
+    Object.entries(PROJECT_STATUS).map(([key, meta]) => [
+      key,
+      { ...meta, label: copy.projectStatuses[key as keyof typeof copy.projectStatuses] },
+    ]),
+  );
+  const localizedTaskStatus = Object.fromEntries(
+    Object.entries(TASK_STATUS).map(([key, meta]) => [
+      key,
+      { ...meta, label: copy.taskStatuses[key as keyof typeof copy.taskStatuses] },
+    ]),
+  );
   const publicWebs = (webProjects ?? []).filter((web) => {
     try {
-      return ['http:', 'https:'].includes(new URL(web.url as string).protocol)
+      return ["http:", "https:"].includes(new URL(web.url as string).protocol);
     } catch {
-      return false
+      return false;
     }
-  })
-  const publicProposals = proposals ?? []
-  const publicInvoices = invoices ?? []
+  });
+  const publicProposals = proposals ?? [];
+  const publicInvoices = invoices ?? [];
 
   return (
     <div className="flex flex-col gap-5 px-4 py-5 sm:gap-6 sm:px-6 sm:py-9">
@@ -179,7 +354,7 @@ export default async function ProjectPortalPage({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
               <p className="text-sm font-medium text-[#bdff7b]">
-                {client?.name ?? 'Proyecto compartido'}
+                {client?.name ?? "Proyecto compartido"}
               </p>
               <span className="size-1 rounded-full bg-white/30" aria-hidden="true" />
               <StatusBadge
@@ -224,8 +399,16 @@ export default async function ProjectPortalPage({
       </header>
 
       <section className="grid border-y border-black/[0.07] sm:grid-cols-2 sm:divide-x sm:divide-black/[0.07] dark:border-white/[0.09] dark:sm:divide-white/[0.09]">
-        <InfoItem label={copy.start} date={project.starts_at as string | null} language={portalLanguage} />
-        <InfoItem label={copy.delivery} date={project.ends_at as string | null} language={portalLanguage} />
+        <InfoItem
+          label={copy.start}
+          date={project.starts_at as string | null}
+          language={portalLanguage}
+        />
+        <InfoItem
+          label={copy.delivery}
+          date={project.ends_at as string | null}
+          language={portalLanguage}
+        />
       </section>
 
       {publicWebs.length > 0 ? (
@@ -236,9 +419,7 @@ export default async function ProjectPortalPage({
               {copy.websites}
             </h2>
           </div>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            {copy.websitesIntro}
-          </p>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{copy.websitesIntro}</p>
           <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
             {publicWebs.map((web) => (
               <li key={web.id as string}>
@@ -265,9 +446,7 @@ export default async function ProjectPortalPage({
               {copy.documents}
             </h2>
           </div>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            {copy.documentIntro}
-          </p>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{copy.documentIntro}</p>
           <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
             {publicProposals.map((proposal) => (
               <a
@@ -284,7 +463,7 @@ export default async function ProjectPortalPage({
                   </span>
                 </span>
                 <span className="shrink-0 text-sm font-medium tabular-nums">
-        {formatPortalEUR(Number(proposal.total ?? 0), portalLanguage)}
+                  {formatPortalEUR(Number(proposal.total ?? 0), portalLanguage)}
                 </span>
               </a>
             ))}
@@ -358,7 +537,9 @@ export default async function ProjectPortalPage({
                         {formatPortalDate(task.due_date as string, portalLanguage)}
                       </time>
                     ) : (
-                      <span className="text-xs text-zinc-400 dark:text-zinc-500">{copy.noDate}</span>
+                      <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                        {copy.noDate}
+                      </span>
                     )}
                     <StatusBadge meta={localizedTaskStatus} value={task.status as string} />
                   </div>
@@ -388,7 +569,7 @@ export default async function ProjectPortalPage({
           {(requests ?? []).length > 0 ? (
             <ul className="mt-4 max-h-[28rem] divide-y divide-zinc-200 overflow-y-auto pr-1 dark:divide-white/[0.08]">
               {(requests ?? []).map((request) => {
-                const status = REQUEST_STATUS[request.status as string]
+                const status = REQUEST_STATUS[request.status as string];
                 return (
                   <li key={request.id as string} className="py-3.5">
                     <p className="text-sm leading-5 font-medium break-words">
@@ -396,18 +577,23 @@ export default async function ProjectPortalPage({
                     </p>
                     <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                       <span className="inline-flex items-center gap-1.5 font-medium">
-                        <span className={`size-1.5 rounded-full ${status?.dot ?? 'bg-zinc-400'}`} />
-                        {copy.requestStatus[request.status as keyof typeof copy.requestStatus] ?? (request.status as string)}
+                        <span className={`size-1.5 rounded-full ${status?.dot ?? "bg-zinc-400"}`} />
+                        {copy.requestStatus[request.status as keyof typeof copy.requestStatus] ??
+                          (request.status as string)}
                       </span>
                       <span aria-hidden="true">·</span>
-                      <span>{copy.requestCategory[request.category as keyof typeof copy.requestCategory] ?? copy.requests}</span>
+                      <span>
+                        {copy.requestCategory[
+                          request.category as keyof typeof copy.requestCategory
+                        ] ?? copy.requests}
+                      </span>
                       <span aria-hidden="true">·</span>
                       <time dateTime={request.created_at as string}>
                         {formatPortalDate(request.created_at as string, portalLanguage)}
                       </time>
                     </div>
                   </li>
-                )
+                );
               })}
             </ul>
           ) : (
@@ -415,38 +601,52 @@ export default async function ProjectPortalPage({
               compact
               icon={<Inbox className="size-5" aria-hidden="true" />}
               title={copy.allClear}
-              description={portalLanguage === 'ca' ? 'Encara no has enviat cap sol·licitud per a aquest projecte.' : portalLanguage === 'en' ? 'You have not sent any requests for this project yet.' : 'Todavía no has enviado ninguna solicitud para este proyecto.'}
+              description={
+                portalLanguage === "ca"
+                  ? "Encara no has enviat cap sol·licitud per a aquest projecte."
+                  : portalLanguage === "en"
+                    ? "You have not sent any requests for this project yet."
+                    : "Todavía no has enviado ninguna solicitud para este proyecto."
+              }
             />
           )}
         </section>
       </div>
     </div>
-  )
+  );
 }
 
 function TaskStateIcon({ status }: { status: string }) {
-  if (status === 'done') {
+  if (status === "done") {
     return (
       <span className="grid size-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 transition-transform duration-200 group-hover:scale-105 dark:bg-emerald-400/15 dark:text-emerald-300">
         <Check className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
       </span>
-    )
+    );
   }
-  if (status === 'in_progress' || status === 'in_review') {
+  if (status === "in_progress" || status === "in_review") {
     return (
       <span className="grid size-7 shrink-0 place-items-center rounded-full bg-sky-100 text-sky-700 transition-transform duration-200 group-hover:scale-105 dark:bg-sky-400/15 dark:text-sky-300">
         <CircleDot className="size-3.5" aria-hidden="true" />
       </span>
-    )
+    );
   }
   return (
     <span className="grid size-7 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 transition-transform duration-200 group-hover:scale-105 dark:bg-white/[0.08] dark:text-zinc-400">
       <CircleDot className="size-3.5" aria-hidden="true" />
     </span>
-  )
+  );
 }
 
-function InfoItem({ label, date, language }: { label: string; date: string | null; language: 'es' | 'ca' | 'en' }) {
+function InfoItem({
+  label,
+  date,
+  language,
+}: {
+  label: string;
+  date: string | null;
+  language: "es" | "ca" | "en";
+}) {
   return (
     <div className="flex items-center gap-3.5 px-1 py-4 sm:px-5 sm:first:pl-1">
       <div className="text-[#2a4227] dark:text-[#bdff7b]">
@@ -465,7 +665,7 @@ function InfoItem({ label, date, language }: { label: string; date: string | nul
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function EmptyState({
@@ -474,13 +674,13 @@ function EmptyState({
   description,
   compact = false,
 }: {
-  icon: React.ReactNode
-  title: string
-  description: string
-  compact?: boolean
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  compact?: boolean;
 }) {
   return (
-    <div className={`mt-5 grid justify-items-center px-5 text-center ${compact ? 'py-6' : 'py-9'}`}>
+    <div className={`mt-5 grid justify-items-center px-5 text-center ${compact ? "py-6" : "py-9"}`}>
       <div className="grid size-9 place-items-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-white/[0.06] dark:text-zinc-300">
         {icon}
       </div>
@@ -489,5 +689,5 @@ function EmptyState({
         {description}
       </p>
     </div>
-  )
+  );
 }

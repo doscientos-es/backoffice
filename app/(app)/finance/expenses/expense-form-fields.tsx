@@ -1,12 +1,12 @@
-'use client'
-import { useMemo, useState } from 'react'
+"use client";
+import { useMemo, useState } from "react";
 
-import { DateField } from '@/components/ui/date-field'
-import { EntityCombobox } from '@/components/ui/entity-combobox'
-import { FormRow } from '@/components/ui/form-row'
-import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
+import { DateField } from "@/components/ui/date-field";
+import { EntityCombobox } from "@/components/ui/entity-combobox";
+import { FormRow } from "@/components/ui/form-row";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
@@ -18,46 +18,46 @@ import {
   EXPENSE_STATUS_LABELS,
   EXPENSE_STATUSES,
   computeExpenseTotals,
-} from '@/lib/finance'
-import { formatEUR } from '@/lib/utils'
+} from "@/lib/finance";
+import { formatEUR } from "@/lib/utils";
 
 export type VendorSuggestion = {
-  vendor: string
-  vendor_nif: string | null
-  category: string
-  payment_source: string
-}
+  vendor: string;
+  vendor_nif: string | null;
+  category: string;
+  payment_source: string;
+};
 
 export type ExpenseFormDefaults = {
-  vendor?: string
-  description?: string | null
-  category?: string
-  status?: string
-  recurrence?: string
-  expense_date?: string
-  due_date?: string | null
-  paid_at?: string | null
-  currency?: string
-  subtotal?: number | string
-  tax_rate?: number | string
-  vendor_nif?: string | null
-  invoice_reference?: string | null
-  project_id?: string | null
-  notes?: string | null
-  payment_source?: string | null
-  paid_by_member_id?: string | null
-}
+  vendor?: string;
+  description?: string | null;
+  category?: string;
+  status?: string;
+  recurrence?: string;
+  expense_date?: string;
+  due_date?: string | null;
+  paid_at?: string | null;
+  currency?: string;
+  subtotal?: number | string;
+  tax_rate?: number | string;
+  vendor_nif?: string | null;
+  invoice_reference?: string | null;
+  project_id?: string | null;
+  notes?: string | null;
+  payment_source?: string | null;
+  paid_by_member_id?: string | null;
+};
 
 interface Props {
-  defaults?: ExpenseFormDefaults
+  defaults?: ExpenseFormDefaults;
   /** Avoids `id` collisions when create and edit forms coexist on the page. */
-  idPrefix?: string
-  autoFocusVendor?: boolean
-  projects?: Array<{ id: string; name: string; clientName?: string | null }>
-  teamMembers?: Array<{ id: string; name: string }>
+  idPrefix?: string;
+  autoFocusVendor?: boolean;
+  projects?: Array<{ id: string; name: string; clientName?: string | null }>;
+  teamMembers?: Array<{ id: string; name: string }>;
   /** Previously used vendors to power the vendor/NIF autocomplete. */
-  vendorSuggestions?: VendorSuggestion[]
-  onProjectIdChange?: () => void
+  vendorSuggestions?: VendorSuggestion[];
+  onProjectIdChange?: () => void;
 }
 
 /**
@@ -66,37 +66,37 @@ interface Props {
  */
 export function ExpenseFormFields({
   defaults,
-  idPrefix = 'expense',
+  idPrefix = "expense",
   autoFocusVendor = false,
   projects = [],
   teamMembers = [],
   vendorSuggestions = [],
   onProjectIdChange,
 }: Props) {
-  const d = defaults ?? {}
+  const d = defaults ?? {};
   const [paymentSource, setPaymentSource] = useState(
     d.payment_source ?? EXPENSE_FORM_DEFAULTS.payment_source,
-  )
-  const [vendor, setVendor] = useState(d.vendor ?? '')
-  const [vendorNif, setVendorNif] = useState(d.vendor_nif ?? '')
-  const [category, setCategory] = useState(d.category ?? EXPENSE_FORM_DEFAULTS.category)
-  const [projectId, setProjectId] = useState(d.project_id ?? '')
-  const [autofilled, setAutofilled] = useState(false)
+  );
+  const [vendor, setVendor] = useState(d.vendor ?? "");
+  const [vendorNif, setVendorNif] = useState(d.vendor_nif ?? "");
+  const [category, setCategory] = useState(d.category ?? EXPENSE_FORM_DEFAULTS.category);
+  const [projectId, setProjectId] = useState(d.project_id ?? "");
+  const [autofilled, setAutofilled] = useState(false);
   const [subtotal, setSubtotal] = useState(
     () => Number(d.subtotal ?? EXPENSE_FORM_DEFAULTS.subtotal) || 0,
-  )
+  );
   const [taxRate, setTaxRate] = useState(
     () => Number(d.tax_rate ?? EXPENSE_FORM_DEFAULTS.tax_rate) || 0,
-  )
-  const totals = computeExpenseTotals(subtotal, taxRate)
+  );
+  const totals = computeExpenseTotals(subtotal, taxRate);
 
   // Lookup of known vendors (case-insensitive) and the list of distinct NIFs
   // for the native <datalist> autocomplete.
   const vendorByName = useMemo(() => {
-    const map = new Map<string, VendorSuggestion>()
-    for (const s of vendorSuggestions) map.set(s.vendor.trim().toLowerCase(), s)
-    return map
-  }, [vendorSuggestions])
+    const map = new Map<string, VendorSuggestion>();
+    for (const s of vendorSuggestions) map.set(s.vendor.trim().toLowerCase(), s);
+    return map;
+  }, [vendorSuggestions]);
 
   const nifOptions = useMemo(
     () =>
@@ -106,7 +106,7 @@ export function ExpenseFormFields({
         ),
       ),
     [vendorSuggestions],
-  )
+  );
 
   /**
    * When the typed/picked vendor matches a previous one, pre-fill its fiscal
@@ -114,22 +114,22 @@ export function ExpenseFormFields({
    * optional details so the user can see what got filled.
    */
   function handleVendorChange(value: string) {
-    setVendor(value)
-    const match = vendorByName.get(value.trim().toLowerCase())
+    setVendor(value);
+    const match = vendorByName.get(value.trim().toLowerCase());
     if (!match) {
-      setAutofilled(false)
-      return
+      setAutofilled(false);
+      return;
     }
-    let didFill = false
+    let didFill = false;
     if (match.vendor_nif && !vendorNif.trim()) {
-      setVendorNif(match.vendor_nif)
-      didFill = true
+      setVendorNif(match.vendor_nif);
+      didFill = true;
     }
     if (didFill) {
-      setCategory(match.category)
-      setShowDetails(true)
+      setCategory(match.category);
+      setShowDetails(true);
     }
-    setAutofilled(didFill)
+    setAutofilled(didFill);
   }
   const [showDetails, setShowDetails] = useState(
     !!(
@@ -140,9 +140,9 @@ export function ExpenseFormFields({
       d.notes ||
       d.due_date ||
       d.paid_at ||
-      d.recurrence !== 'none'
+      d.recurrence !== "none"
     ),
-  )
+  );
 
   const hasOptionalValues = !!(
     d.vendor_nif ||
@@ -150,12 +150,12 @@ export function ExpenseFormFields({
     d.project_id ||
     d.description ||
     d.notes
-  )
+  );
 
   return (
     <>
       {/* ── Legend ── */}
-      <p className="text-muted-foreground text-xs">
+      <p className="text-xs text-muted-foreground">
         Los campos marcados con <span className="text-destructive">*</span> son obligatorios. El
         resto tienen valores por defecto y puedes dejarlos como están.
       </p>
@@ -166,7 +166,7 @@ export function ExpenseFormFields({
           label="Proveedor"
           htmlFor={`${idPrefix}-vendor`}
           required
-          hint={autofilled ? 'NIF y categoría rellenados desde un gasto anterior' : undefined}
+          hint={autofilled ? "NIF y categoría rellenados desde un gasto anterior" : undefined}
         >
           <Input
             id={`${idPrefix}-vendor`}
@@ -223,7 +223,7 @@ export function ExpenseFormFields({
             ))}
           </Select>
         </FormRow>
-        {paymentSource === 'member' && (
+        {paymentSource === "member" && (
           <FormRow
             label="Socio que pagó"
             htmlFor={`${idPrefix}-paid_by_member_id`}
@@ -233,7 +233,7 @@ export function ExpenseFormFields({
             <Select
               id={`${idPrefix}-paid_by_member_id`}
               name="paid_by_member_id"
-              defaultValue={d.paid_by_member_id ?? ''}
+              defaultValue={d.paid_by_member_id ?? ""}
               required
             >
               <option value="">— Selecciona —</option>
@@ -245,7 +245,7 @@ export function ExpenseFormFields({
             </Select>
           </FormRow>
         )}
-        {paymentSource === 'company' && (
+        {paymentSource === "company" && (
           /* hidden sentinel so the field is always submitted */
           <input type="hidden" name="paid_by_member_id" value="" />
         )}
@@ -299,7 +299,7 @@ export function ExpenseFormFields({
         role="status"
         aria-label="Resumen de importes"
         aria-live="polite"
-        className="bg-muted/30 border-border rounded-md border px-3 py-2.5"
+        className="rounded-md border border-border bg-muted/30 px-3 py-2.5"
       >
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
@@ -309,7 +309,7 @@ export function ExpenseFormFields({
           <span className="text-muted-foreground">IVA ({taxRate} %)</span>
           <span>{formatEUR(totals.taxAmount)}</span>
         </div>
-        <div className="border-border mt-2 flex items-center justify-between border-t pt-2 font-semibold">
+        <div className="mt-2 flex items-center justify-between border-t border-border pt-2 font-semibold">
           <span>Total</span>
           <span>{formatEUR(totals.total)}</span>
         </div>
@@ -319,13 +319,13 @@ export function ExpenseFormFields({
       <div className="mt-4 border-t pt-3">
         <button
           type="button"
-          className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm font-medium"
+          className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
           onClick={() => setShowDetails((v) => !v)}
         >
-          <span>{showDetails ? '▾' : '▸'}</span>
+          <span>{showDetails ? "▾" : "▸"}</span>
           Más detalles (opcional)
           {hasOptionalValues && !showDetails && (
-            <span className="bg-muted ml-1 rounded px-1.5 py-0.5 text-xs">con datos</span>
+            <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-xs">con datos</span>
           )}
         </button>
         {/*
@@ -334,16 +334,16 @@ export function ExpenseFormFields({
           edit the server action would overwrite the existing columns with null,
           silently wiping data the user never touched.
         */}
-        <div className={`mt-4 grid gap-5 sm:grid-cols-2 ${showDetails ? '' : 'hidden'}`}>
+        <div className={`mt-4 grid gap-5 sm:grid-cols-2 ${showDetails ? "" : "hidden"}`}>
           <FormRow label="Vencimiento" htmlFor={`${idPrefix}-due_date`}>
             <DateField
               id={`${idPrefix}-due_date`}
               name="due_date"
-              defaultValue={d.due_date ?? ''}
+              defaultValue={d.due_date ?? ""}
             />
           </FormRow>
           <FormRow label="Fecha de pago" htmlFor={`${idPrefix}-paid_at`}>
-            <DateField id={`${idPrefix}-paid_at`} name="paid_at" defaultValue={d.paid_at ?? ''} />
+            <DateField id={`${idPrefix}-paid_at`} name="paid_at" defaultValue={d.paid_at ?? ""} />
           </FormRow>
           <FormRow label="Recurrencia" htmlFor={`${idPrefix}-recurrence`}>
             <Select
@@ -381,7 +381,7 @@ export function ExpenseFormFields({
               id={`${idPrefix}-invoice_reference`}
               name="invoice_reference"
               maxLength={80}
-              defaultValue={d.invoice_reference ?? ''}
+              defaultValue={d.invoice_reference ?? ""}
             />
           </FormRow>
           <FormRow label="Proyecto" htmlFor={`${idPrefix}-project_id`}>
@@ -395,8 +395,8 @@ export function ExpenseFormFields({
               }))}
               value={projectId}
               onChange={(id) => {
-                setProjectId(id)
-                onProjectIdChange?.()
+                setProjectId(id);
+                onProjectIdChange?.();
               }}
               placeholder="Buscar proyecto…"
             />
@@ -416,7 +416,7 @@ export function ExpenseFormFields({
                 name="description"
                 maxLength={400}
                 placeholder="Hosting mensual, dominio anual…"
-                defaultValue={d.description ?? ''}
+                defaultValue={d.description ?? ""}
               />
             </FormRow>
           </div>
@@ -427,12 +427,12 @@ export function ExpenseFormFields({
                 name="notes"
                 rows={3}
                 maxLength={4000}
-                defaultValue={d.notes ?? ''}
+                defaultValue={d.notes ?? ""}
               />
             </FormRow>
           </div>
         </div>
       </div>
     </>
-  )
+  );
 }

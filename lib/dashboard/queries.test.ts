@@ -1,19 +1,19 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // State controlled per test
 // ---------------------------------------------------------------------------
 const db: {
-  tasks: unknown[]
-  myLeads: unknown[]
-  unassigned: unknown[]
-  proposals: unknown[]
-  invoices: unknown[]
-  payments: unknown[]
-} = { tasks: [], myLeads: [], unassigned: [], proposals: [], invoices: [], payments: [] }
-const filters: Array<{ table: string; column: string; value: unknown }> = []
-const invoiceDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value: unknown }> = []
-const paymentDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value: unknown }> = []
+  tasks: unknown[];
+  myLeads: unknown[];
+  unassigned: unknown[];
+  proposals: unknown[];
+  invoices: unknown[];
+  payments: unknown[];
+} = { tasks: [], myLeads: [], unassigned: [], proposals: [], invoices: [], payments: [] };
+const filters: Array<{ table: string; column: string; value: unknown }> = [];
+const invoiceDateFilters: Array<{ operator: "gte" | "lte"; column: string; value: unknown }> = [];
+const paymentDateFilters: Array<{ operator: "gte" | "lte"; column: string; value: unknown }> = [];
 
 // ---------------------------------------------------------------------------
 // Supabase server mock
@@ -21,96 +21,96 @@ const paymentDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value
 // assigned_to was filtered with eq (owned) or is(null) (unassigned).
 // The terminal .limit() resolves to the appropriate fixture.
 // ---------------------------------------------------------------------------
-vi.mock('@/lib/supabase/server', () => ({
+vi.mock("@/lib/supabase/server", () => ({
   createServerClient: () => ({
     from: (table: string) => {
-      let assignedToMode: 'owned' | 'unassigned' | null = null
-      let isCountQuery = false
-      let invoiceFrom: string | null = null
-      let invoiceTo: string | null = null
-      let paidFrom: string | null = null
-      let paidTo: string | null = null
-      let paymentFrom: string | null = null
-      let paymentTo: string | null = null
+      let assignedToMode: "owned" | "unassigned" | null = null;
+      let isCountQuery = false;
+      let invoiceFrom: string | null = null;
+      let invoiceTo: string | null = null;
+      let paidFrom: string | null = null;
+      let paidTo: string | null = null;
+      let paymentFrom: string | null = null;
+      let paymentTo: string | null = null;
 
       const resolveInvoices = () =>
         db.invoices.filter((row) => {
-          const issueDate = (row as { issue_date?: string }).issue_date
-          const paidAt = (row as { paid_at?: string }).paid_at
-          const date = invoiceFrom || invoiceTo ? issueDate : paidAt
+          const issueDate = (row as { issue_date?: string }).issue_date;
+          const paidAt = (row as { paid_at?: string }).paid_at;
+          const date = invoiceFrom || invoiceTo ? issueDate : paidAt;
           return (
-            typeof date === 'string' &&
+            typeof date === "string" &&
             (!invoiceFrom || date >= invoiceFrom) &&
             (!invoiceTo || date <= invoiceTo) &&
             (!paidFrom || date >= paidFrom) &&
             (!paidTo || date <= paidTo)
-          )
-        })
+          );
+        });
 
       const resolvePayments = () =>
         db.payments.filter((row) => {
-          const confirmedAt = (row as { confirmed_at?: string }).confirmed_at
+          const confirmedAt = (row as { confirmed_at?: string }).confirmed_at;
           return (
-            typeof confirmedAt === 'string' &&
+            typeof confirmedAt === "string" &&
             (!paymentFrom || confirmedAt >= paymentFrom) &&
             (!paymentTo || confirmedAt <= paymentTo)
-          )
-        })
+          );
+        });
 
       const chain: Record<string, unknown> = {
         select: (_cols: unknown, opts?: { count?: string; head?: boolean }) => {
-          if (opts?.head) isCountQuery = true
-          return chain
+          if (opts?.head) isCountQuery = true;
+          return chain;
         },
         eq: (col: string, value: unknown) => {
-          filters.push({ table, column: col, value })
-          if (col === 'assigned_to') assignedToMode = 'owned'
-          return chain
+          filters.push({ table, column: col, value });
+          if (col === "assigned_to") assignedToMode = "owned";
+          return chain;
         },
         is: (col: string, val: unknown) => {
-          if (col === 'assigned_to' && val === null) assignedToMode = 'unassigned'
-          return chain
+          if (col === "assigned_to" && val === null) assignedToMode = "unassigned";
+          return chain;
         },
         not: (col: string, _operator: string, value: unknown) => {
-          filters.push({ table, column: col, value })
-          return chain
+          filters.push({ table, column: col, value });
+          return chain;
         },
         in: () => chain,
         gte: (column: string, value: unknown) => {
-          if (table === 'invoices') {
-            invoiceDateFilters.push({ operator: 'gte', column, value })
-            if (column === 'issue_date') invoiceFrom = String(value)
-            if (column === 'paid_at') paidFrom = String(value)
+          if (table === "invoices") {
+            invoiceDateFilters.push({ operator: "gte", column, value });
+            if (column === "issue_date") invoiceFrom = String(value);
+            if (column === "paid_at") paidFrom = String(value);
           }
-          if (table === 'invoice_payments') {
-            paymentDateFilters.push({ operator: 'gte', column, value })
-            if (column === 'confirmed_at') paymentFrom = String(value)
+          if (table === "invoice_payments") {
+            paymentDateFilters.push({ operator: "gte", column, value });
+            if (column === "confirmed_at") paymentFrom = String(value);
           }
-          return chain
+          return chain;
         },
         lte: (column: string, value: unknown) => {
-          if (table === 'invoices') {
-            invoiceDateFilters.push({ operator: 'lte', column, value })
-            if (column === 'issue_date') invoiceTo = String(value)
-            if (column === 'paid_at') paidTo = String(value)
+          if (table === "invoices") {
+            invoiceDateFilters.push({ operator: "lte", column, value });
+            if (column === "issue_date") invoiceTo = String(value);
+            if (column === "paid_at") paidTo = String(value);
           }
-          if (table === 'invoice_payments') {
-            paymentDateFilters.push({ operator: 'lte', column, value })
-            if (column === 'confirmed_at') paymentTo = String(value)
+          if (table === "invoice_payments") {
+            paymentDateFilters.push({ operator: "lte", column, value });
+            if (column === "confirmed_at") paymentTo = String(value);
           }
-          return chain
+          return chain;
         },
         neq: () => chain,
         lt: () => chain,
         order: () => chain,
         limit: async () => {
-          if (isCountQuery) return { data: null, count: 0, error: null }
-          if (table === 'tasks') return { data: db.tasks, error: null }
-          if (table === 'proposals') return { data: db.proposals, error: null }
-          if (table === 'invoices') return { data: resolveInvoices(), error: null }
-          if (table === 'invoice_payments') return { data: resolvePayments(), error: null }
-          if (assignedToMode === 'unassigned') return { data: db.unassigned, error: null }
-          return { data: db.myLeads, error: null }
+          if (isCountQuery) return { data: null, count: 0, error: null };
+          if (table === "tasks") return { data: db.tasks, error: null };
+          if (table === "proposals") return { data: db.proposals, error: null };
+          if (table === "invoices") return { data: resolveInvoices(), error: null };
+          if (table === "invoice_payments") return { data: resolvePayments(), error: null };
+          if (assignedToMode === "unassigned") return { data: db.unassigned, error: null };
+          return { data: db.myLeads, error: null };
         },
         // Count queries (no .limit()) resolve here via Promise.all awaiting the chain.
         // Return count=0 and data=[] as defaults for test isolation.
@@ -118,274 +118,274 @@ vi.mock('@/lib/supabase/server', () => ({
         then: (resolve: (v: unknown) => void) => {
           const result = isCountQuery
             ? { data: null, count: 0, error: null }
-            : table === 'tasks'
+            : table === "tasks"
               ? { data: db.tasks, error: null }
-              : table === 'proposals'
+              : table === "proposals"
                 ? { data: db.proposals, error: null }
-                : table === 'invoices'
+                : table === "invoices"
                   ? { data: resolveInvoices(), error: null }
-                  : table === 'invoice_payments'
+                  : table === "invoice_payments"
                     ? { data: resolvePayments(), error: null }
-                    : assignedToMode === 'unassigned'
+                    : assignedToMode === "unassigned"
                       ? { data: db.unassigned, error: null }
-                      : { data: db.myLeads, error: null }
-          Promise.resolve(result).then(resolve)
+                      : { data: db.myLeads, error: null };
+          Promise.resolve(result).then(resolve);
         },
         update: () => chain,
         maybeSingle: async () => ({ data: null, error: null }),
-      }
-      return chain
+      };
+      return chain;
     },
   }),
-}))
+}));
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-describe('getMyDay', () => {
+describe("getMyDay", () => {
   beforeEach(() => {
-    db.tasks = []
-    db.myLeads = []
-    db.unassigned = []
-    db.proposals = []
-    db.invoices = []
-    db.payments = []
-    filters.length = 0
-    vi.resetModules()
-  })
+    db.tasks = [];
+    db.myLeads = [];
+    db.unassigned = [];
+    db.proposals = [];
+    db.invoices = [];
+    db.payments = [];
+    filters.length = 0;
+    vi.resetModules();
+  });
 
   afterEach(() => {
-    vi.resetModules()
-  })
+    vi.resetModules();
+  });
 
-  it('returns empty arrays when there is no data', async () => {
-    const { getMyDay } = await import('@/lib/dashboard/queries')
-    const result = await getMyDay({ assigneeId: 'user-1' })
+  it("returns empty arrays when there is no data", async () => {
+    const { getMyDay } = await import("@/lib/dashboard/queries");
+    const result = await getMyDay({ assigneeId: "user-1" });
 
-    expect(result.tasks).toEqual([])
-    expect(result.myLeads).toEqual([])
-    expect(result.unassignedLeads).toEqual([])
-  })
+    expect(result.tasks).toEqual([]);
+    expect(result.myLeads).toEqual([]);
+    expect(result.unassignedLeads).toEqual([]);
+  });
 
-  it('maps a task row into MyTaskRow shape', async () => {
+  it("maps a task row into MyTaskRow shape", async () => {
     db.tasks = [
       {
-        id: 't1',
-        title: 'Preparar propuesta',
-        status: 'todo',
-        priority: 'high',
-        due_date: '2026-06-10',
-        projects: { name: 'Proyecto Alpha' },
+        id: "t1",
+        title: "Preparar propuesta",
+        status: "todo",
+        priority: "high",
+        due_date: "2026-06-10",
+        projects: { name: "Proyecto Alpha" },
         leads: null,
       },
-    ]
+    ];
 
-    const { getMyDay } = await import('@/lib/dashboard/queries')
-    const { tasks } = await getMyDay({ assigneeId: 'user-1' })
+    const { getMyDay } = await import("@/lib/dashboard/queries");
+    const { tasks } = await getMyDay({ assigneeId: "user-1" });
 
-    expect(tasks).toHaveLength(1)
+    expect(tasks).toHaveLength(1);
     expect(tasks[0]).toMatchObject({
-      id: 't1',
-      title: 'Preparar propuesta',
-      status: 'todo',
-      priority: 'high',
-      due_date: '2026-06-10',
-      contextLabel: 'Proyecto Alpha',
-    })
-  })
+      id: "t1",
+      title: "Preparar propuesta",
+      status: "todo",
+      priority: "high",
+      due_date: "2026-06-10",
+      contextLabel: "Proyecto Alpha",
+    });
+  });
 
-  it('uses lead name as contextLabel when task has no project', async () => {
+  it("uses lead name as contextLabel when task has no project", async () => {
     db.tasks = [
       {
-        id: 't2',
-        title: 'Llamar cliente',
-        status: 'in_progress',
-        priority: 'medium',
+        id: "t2",
+        title: "Llamar cliente",
+        status: "in_progress",
+        priority: "medium",
         due_date: null,
         projects: null,
-        leads: { name: 'García SL' },
+        leads: { name: "García SL" },
       },
-    ]
+    ];
 
-    const { getMyDay } = await import('@/lib/dashboard/queries')
-    const { tasks } = await getMyDay({ assigneeId: 'user-1' })
+    const { getMyDay } = await import("@/lib/dashboard/queries");
+    const { tasks } = await getMyDay({ assigneeId: "user-1" });
 
-    expect(tasks[0]?.contextLabel).toBe('García SL')
-  })
+    expect(tasks[0]?.contextLabel).toBe("García SL");
+  });
 
-  it('contextLabel is null when neither project nor lead is present', async () => {
+  it("contextLabel is null when neither project nor lead is present", async () => {
     db.tasks = [
       {
-        id: 't3',
-        title: 'Revisar CRM',
-        status: 'todo',
-        priority: 'low',
+        id: "t3",
+        title: "Revisar CRM",
+        status: "todo",
+        priority: "low",
         due_date: null,
         projects: null,
         leads: null,
       },
-    ]
+    ];
 
-    const { getMyDay } = await import('@/lib/dashboard/queries')
-    const { tasks } = await getMyDay({ assigneeId: 'user-1' })
+    const { getMyDay } = await import("@/lib/dashboard/queries");
+    const { tasks } = await getMyDay({ assigneeId: "user-1" });
 
-    expect(tasks[0]?.contextLabel).toBeNull()
-  })
+    expect(tasks[0]?.contextLabel).toBeNull();
+  });
 
   it("maps a lead row into ActionLeadRow with updated_at as 'since'", async () => {
     db.myLeads = [
       {
-        id: 'l1',
-        name: 'Ana Fernández',
-        company: 'Tech SL',
-        phone: '+34600000001',
-        email: 'ana@tech.com',
-        status: 'qualifying',
-        updated_at: '2026-05-20T10:00:00Z',
+        id: "l1",
+        name: "Ana Fernández",
+        company: "Tech SL",
+        phone: "+34600000001",
+        email: "ana@tech.com",
+        status: "qualifying",
+        updated_at: "2026-05-20T10:00:00Z",
       },
-    ]
+    ];
 
-    const { getMyDay } = await import('@/lib/dashboard/queries')
-    const { myLeads } = await getMyDay({ assigneeId: 'user-1' })
+    const { getMyDay } = await import("@/lib/dashboard/queries");
+    const { myLeads } = await getMyDay({ assigneeId: "user-1" });
 
-    expect(myLeads).toHaveLength(1)
+    expect(myLeads).toHaveLength(1);
     expect(myLeads[0]).toMatchObject({
-      id: 'l1',
-      name: 'Ana Fernández',
-      company: 'Tech SL',
-      status: 'qualifying',
-      since: '2026-05-20T10:00:00Z',
-    })
-  })
+      id: "l1",
+      name: "Ana Fernández",
+      company: "Tech SL",
+      status: "qualifying",
+      since: "2026-05-20T10:00:00Z",
+    });
+  });
 
   it("maps an unassigned lead with created_at as 'since'", async () => {
     db.unassigned = [
       {
-        id: 'l2',
-        name: 'Pedro Ruiz',
+        id: "l2",
+        name: "Pedro Ruiz",
         company: null,
         phone: null,
-        email: 'pedro@example.com',
-        status: 'new',
-        created_at: '2026-06-01T08:00:00Z',
+        email: "pedro@example.com",
+        status: "new",
+        created_at: "2026-06-01T08:00:00Z",
       },
-    ]
+    ];
 
-    const { getMyDay } = await import('@/lib/dashboard/queries')
-    const { unassignedLeads } = await getMyDay({ assigneeId: 'user-1' })
+    const { getMyDay } = await import("@/lib/dashboard/queries");
+    const { unassignedLeads } = await getMyDay({ assigneeId: "user-1" });
 
-    expect(unassignedLeads).toHaveLength(1)
+    expect(unassignedLeads).toHaveLength(1);
     expect(unassignedLeads[0]).toMatchObject({
-      id: 'l2',
-      name: 'Pedro Ruiz',
+      id: "l2",
+      name: "Pedro Ruiz",
       company: null,
-      since: '2026-06-01T08:00:00Z',
-    })
-  })
+      since: "2026-06-01T08:00:00Z",
+    });
+  });
 
-  it('separates myLeads and unassignedLeads correctly', async () => {
+  it("separates myLeads and unassignedLeads correctly", async () => {
     db.myLeads = [
       {
-        id: 'owned',
-        name: 'Owned',
+        id: "owned",
+        name: "Owned",
         company: null,
         phone: null,
         email: null,
-        status: 'new',
-        updated_at: '2026-01-01T00:00:00Z',
+        status: "new",
+        updated_at: "2026-01-01T00:00:00Z",
       },
-    ]
+    ];
     db.unassigned = [
       {
-        id: 'free',
-        name: 'Free',
+        id: "free",
+        name: "Free",
         company: null,
         phone: null,
         email: null,
-        status: 'new',
-        created_at: '2026-01-02T00:00:00Z',
+        status: "new",
+        created_at: "2026-01-02T00:00:00Z",
       },
-    ]
+    ];
 
-    const { getMyDay } = await import('@/lib/dashboard/queries')
-    const result = await getMyDay({ assigneeId: 'user-1' })
+    const { getMyDay } = await import("@/lib/dashboard/queries");
+    const result = await getMyDay({ assigneeId: "user-1" });
 
-    expect(result.myLeads.map((l) => l.id)).toEqual(['owned'])
-    expect(result.unassignedLeads.map((l) => l.id)).toEqual(['free'])
-  })
+    expect(result.myLeads.map((l) => l.id)).toEqual(["owned"]);
+    expect(result.unassignedLeads.map((l) => l.id)).toEqual(["free"]);
+  });
 
-  it('does not constrain tasks or leads to a member for the team scope', async () => {
-    const { getMyDay } = await import('@/lib/dashboard/queries')
-    await getMyDay({ assigneeId: null })
+  it("does not constrain tasks or leads to a member for the team scope", async () => {
+    const { getMyDay } = await import("@/lib/dashboard/queries");
+    await getMyDay({ assigneeId: null });
 
-    expect(filters.some((filter) => filter.column === 'assignee_id')).toBe(false)
-    expect(filters).toContainEqual({ table: 'leads', column: 'assigned_to', value: null })
-  })
-})
+    expect(filters.some((filter) => filter.column === "assignee_id")).toBe(false);
+    expect(filters).toContainEqual({ table: "leads", column: "assigned_to", value: null });
+  });
+});
 
-describe('getDashboardKpis', () => {
+describe("getDashboardKpis", () => {
   beforeEach(() => {
-    invoiceDateFilters.length = 0
-    paymentDateFilters.length = 0
-    vi.resetModules()
-  })
+    invoiceDateFilters.length = 0;
+    paymentDateFilters.length = 0;
+    vi.resetModules();
+  });
 
   afterEach(() => {
-    vi.resetModules()
-  })
+    vi.resetModules();
+  });
 
-  it('filters revenue by the selected current and comparison windows', async () => {
-    const { getDashboardKpis } = await import('@/lib/dashboard/queries')
+  it("filters revenue by the selected current and comparison windows", async () => {
+    const { getDashboardKpis } = await import("@/lib/dashboard/queries");
     await getDashboardKpis({
-      current: { from: new Date('2026-05-08T12:00:00Z'), to: new Date('2026-05-15T12:00:00Z') },
-      previous: { from: new Date('2026-05-01T12:00:00Z'), to: new Date('2026-05-08T12:00:00Z') },
-    })
+      current: { from: new Date("2026-05-08T12:00:00Z"), to: new Date("2026-05-15T12:00:00Z") },
+      previous: { from: new Date("2026-05-01T12:00:00Z"), to: new Date("2026-05-08T12:00:00Z") },
+    });
 
     expect(invoiceDateFilters).toEqual([
-      { operator: 'gte', column: 'issue_date', value: '2026-05-08' },
-      { operator: 'lte', column: 'issue_date', value: '2026-05-15' },
-      { operator: 'gte', column: 'issue_date', value: '2026-05-01' },
-      { operator: 'lte', column: 'issue_date', value: '2026-05-08' },
-    ])
-  })
-})
+      { operator: "gte", column: "issue_date", value: "2026-05-08" },
+      { operator: "lte", column: "issue_date", value: "2026-05-15" },
+      { operator: "gte", column: "issue_date", value: "2026-05-01" },
+      { operator: "lte", column: "issue_date", value: "2026-05-08" },
+    ]);
+  });
+});
 
-describe('getRevenueSeries', () => {
+describe("getRevenueSeries", () => {
   beforeEach(() => {
-    invoiceDateFilters.length = 0
-    paymentDateFilters.length = 0
-    db.invoices = []
-    db.payments = []
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2026-06-15T12:00:00Z'))
-    vi.resetModules()
-  })
+    invoiceDateFilters.length = 0;
+    paymentDateFilters.length = 0;
+    db.invoices = [];
+    db.payments = [];
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-15T12:00:00Z"));
+    vi.resetModules();
+  });
 
   afterEach(() => {
-    vi.useRealTimers()
-    vi.resetModules()
-  })
+    vi.useRealTimers();
+    vi.resetModules();
+  });
 
-  it('uses the selected dashboard range for both revenue queries', async () => {
-    const { getRevenueSeries } = await import('@/lib/dashboard/queries')
-    await getRevenueSeries('30d')
+  it("uses the selected dashboard range for both revenue queries", async () => {
+    const { getRevenueSeries } = await import("@/lib/dashboard/queries");
+    await getRevenueSeries("30d");
 
-    expect(invoiceDateFilters.filter(({ column }) => column === 'issue_date')).toEqual([
-      { operator: 'gte', column: 'issue_date', value: '2026-05-16' },
-      { operator: 'lte', column: 'issue_date', value: '2026-06-15' },
-      { operator: 'gte', column: 'issue_date', value: '2026-04-16' },
-      { operator: 'lte', column: 'issue_date', value: '2026-05-15' },
-    ])
-  })
+    expect(invoiceDateFilters.filter(({ column }) => column === "issue_date")).toEqual([
+      { operator: "gte", column: "issue_date", value: "2026-05-16" },
+      { operator: "lte", column: "issue_date", value: "2026-06-15" },
+      { operator: "gte", column: "issue_date", value: "2026-04-16" },
+      { operator: "lte", column: "issue_date", value: "2026-05-15" },
+    ]);
+  });
 
-  it('keeps current and previous amounts in the same visible slots', async () => {
+  it("keeps current and previous amounts in the same visible slots", async () => {
     db.invoices = [
-      { issue_date: '2026-06-01', total: 300, projects: null, clients: null },
-      { issue_date: '2026-05-01', total: 100, projects: null, clients: null },
-    ]
+      { issue_date: "2026-06-01", total: 300, projects: null, clients: null },
+      { issue_date: "2026-05-01", total: 100, projects: null, clients: null },
+    ];
 
-    const { getRevenueSeries } = await import('@/lib/dashboard/queries')
-    const result = await getRevenueSeries('30d')
+    const { getRevenueSeries } = await import("@/lib/dashboard/queries");
+    const result = await getRevenueSeries("30d");
 
     expect(result.billed.totals.map(({ current, previous }) => [current, previous])).toEqual([
       [0, 0],
@@ -393,100 +393,100 @@ describe('getRevenueSeries', () => {
       [300, 100],
       [0, 0],
       [0, 0],
-    ])
-  })
+    ]);
+  });
 
-  it('uses confirmed payment timestamps for the collected metric', async () => {
+  it("uses confirmed payment timestamps for the collected metric", async () => {
     db.payments = [
       {
-        confirmed_at: '2026-06-12T10:00:00.000Z',
+        confirmed_at: "2026-06-12T10:00:00.000Z",
         amount: 125,
         invoices: { projects: null, clients: null },
       },
-    ]
+    ];
 
-    const { getRevenueSeries } = await import('@/lib/dashboard/queries')
-    const result = await getRevenueSeries('7d')
+    const { getRevenueSeries } = await import("@/lib/dashboard/queries");
+    const result = await getRevenueSeries("7d");
 
-    expect(result.collected.totals.reduce((sum, point) => sum + point.current, 0)).toBe(125)
+    expect(result.collected.totals.reduce((sum, point) => sum + point.current, 0)).toBe(125);
     expect(paymentDateFilters).toEqual([
-      { operator: 'gte', column: 'confirmed_at', value: '2026-06-08T12:00:00.000Z' },
-      { operator: 'lte', column: 'confirmed_at', value: '2026-06-15T12:00:00.000Z' },
-      { operator: 'gte', column: 'confirmed_at', value: '2026-06-01T12:00:00.000Z' },
-      { operator: 'lte', column: 'confirmed_at', value: '2026-06-08T12:00:00.000Z' },
-    ])
-  })
+      { operator: "gte", column: "confirmed_at", value: "2026-06-08T12:00:00.000Z" },
+      { operator: "lte", column: "confirmed_at", value: "2026-06-15T12:00:00.000Z" },
+      { operator: "gte", column: "confirmed_at", value: "2026-06-01T12:00:00.000Z" },
+      { operator: "lte", column: "confirmed_at", value: "2026-06-08T12:00:00.000Z" },
+    ]);
+  });
 
-  it('includes paid invoices without a payment row in the collected metric', async () => {
+  it("includes paid invoices without a payment row in the collected metric", async () => {
     db.invoices = [
       {
-        id: 'palumba-invoice',
-        issue_date: '2026-06-01',
+        id: "palumba-invoice",
+        issue_date: "2026-06-01",
         total: 1948.1,
-        status: 'paid',
-        paid_at: '2026-06-12T10:00:00.000Z',
+        status: "paid",
+        paid_at: "2026-06-12T10:00:00.000Z",
         projects: null,
         clients: null,
       },
-    ]
+    ];
 
-    const { getRevenueSeries } = await import('@/lib/dashboard/queries')
-    const result = await getRevenueSeries('7d')
+    const { getRevenueSeries } = await import("@/lib/dashboard/queries");
+    const result = await getRevenueSeries("7d");
 
-    expect(result.collected.totals.reduce((sum, point) => sum + point.current, 0)).toBe(1948.1)
-  })
-})
+    expect(result.collected.totals.reduce((sum, point) => sum + point.current, 0)).toBe(1948.1);
+  });
+});
 
-describe('getActionCenter', () => {
+describe("getActionCenter", () => {
   beforeEach(() => {
-    db.tasks = []
-    db.myLeads = []
-    db.unassigned = []
-    db.proposals = []
-    vi.resetModules()
-  })
+    db.tasks = [];
+    db.myLeads = [];
+    db.unassigned = [];
+    db.proposals = [];
+    vi.resetModules();
+  });
 
   afterEach(() => {
-    vi.resetModules()
-  })
+    vi.resetModules();
+  });
 
-  it('adds lead context to proposal follow-up items', async () => {
+  it("adds lead context to proposal follow-up items", async () => {
     db.proposals = [
       {
-        id: 'p1',
-        title: 'Web corporativa',
-        number: 'P-001',
-        sent_at: '2026-06-01T08:00:00Z',
-        leads: { name: 'Ana Fernández', company: 'Tech SL' },
+        id: "p1",
+        title: "Web corporativa",
+        number: "P-001",
+        sent_at: "2026-06-01T08:00:00Z",
+        leads: { name: "Ana Fernández", company: "Tech SL" },
         clients: null,
       },
-    ]
+    ];
 
-    const { getActionCenter } = await import('@/lib/dashboard/queries')
-    const result = await getActionCenter({ memberId: 'user-1', showFinance: false })
+    const { getActionCenter } = await import("@/lib/dashboard/queries");
+    const result = await getActionCenter({ memberId: "user-1", showFinance: false });
 
     expect(result.items[0]).toMatchObject({
-      title: 'Web corporativa',
+      title: "Web corporativa",
       detail:
-        'Lead: Ana Fernández · Tech SL · Propuesta enviada hace más de 72 horas sin respuesta.',
-    })
-  })
+        "Lead: Ana Fernández · Tech SL · Propuesta enviada hace más de 72 horas sin respuesta.",
+    });
+  });
 
-  it('falls back to client context when the proposal has no lead', async () => {
+  it("falls back to client context when the proposal has no lead", async () => {
     db.proposals = [
       {
-        id: 'p2',
-        title: 'Web corporativa',
-        number: 'P-002',
-        sent_at: '2026-06-01T08:00:00Z',
+        id: "p2",
+        title: "Web corporativa",
+        number: "P-002",
+        sent_at: "2026-06-01T08:00:00Z",
         leads: null,
-        clients: { name: 'Cliente Demo' },
+        clients: { name: "Cliente Demo" },
       },
-    ]
+    ];
 
-    const { getActionCenter } = await import('@/lib/dashboard/queries')
-    const result = await getActionCenter({ memberId: 'user-1', showFinance: false })
+    const { getActionCenter } = await import("@/lib/dashboard/queries");
+    const result = await getActionCenter({ memberId: "user-1", showFinance: false });
 
-    expect(result.items[0]?.detail).toContain('Cliente: Cliente Demo')
-  })
-})
+    expect(result.items[0]?.detail).toContain("Cliente: Cliente Demo");
+  });
+});

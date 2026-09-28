@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   Archive,
@@ -10,17 +10,17 @@ import {
   Plus,
   Sparkles,
   X,
-} from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { type FormEvent, useEffect, useId, useMemo, useState } from 'react'
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useEffect, useId, useMemo, useState } from "react";
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import type { LeadDiscoveryQuestion } from '@/lib/leads/types'
-import { readJsonResponse } from '@/lib/utils/http'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import type { LeadDiscoveryQuestion } from "@/lib/leads/types";
+import { readJsonResponse } from "@/lib/utils/http";
 
 import {
   acceptLeadDiscoverySuggestion,
@@ -28,44 +28,44 @@ import {
   dismissLeadDiscoverySuggestion,
   saveLeadDiscoveryQuestion,
   setLeadDiscoveryQuestionStatus,
-} from '../actions'
+} from "../actions";
 
 type Props = {
-  leadId: string
-  initialQuestions: LeadDiscoveryQuestion[]
-  aiEnabled: boolean
-  canEdit: boolean
-}
+  leadId: string;
+  initialQuestions: LeadDiscoveryQuestion[];
+  aiEnabled: boolean;
+  canEdit: boolean;
+};
 
-const STATUS_LABEL: Record<LeadDiscoveryQuestion['status'], string> = {
-  open: 'Pendiente',
-  needs_review: 'Revisar propuesta IA',
-  answered: 'Respondida',
-  deferred: 'Pospuesta',
-  not_applicable: 'No aplica',
-  archived: 'Archivada',
-}
+const STATUS_LABEL: Record<LeadDiscoveryQuestion["status"], string> = {
+  open: "Pendiente",
+  needs_review: "Revisar propuesta IA",
+  answered: "Respondida",
+  deferred: "Pospuesta",
+  not_applicable: "No aplica",
+  archived: "Archivada",
+};
 
-const STATUS_TONE: Record<LeadDiscoveryQuestion['status'], string> = {
-  open: 'border-primary/20 bg-primary/5 text-primary',
-  needs_review: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  answered: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-  deferred: 'border-border bg-muted/60 text-muted-foreground',
-  not_applicable: 'border-border bg-muted/60 text-muted-foreground',
-  archived: 'border-border bg-muted/60 text-muted-foreground',
-}
+const STATUS_TONE: Record<LeadDiscoveryQuestion["status"], string> = {
+  open: "border-primary/20 bg-primary/5 text-primary",
+  needs_review: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  answered: "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  deferred: "border-border bg-muted/60 text-muted-foreground",
+  not_applicable: "border-border bg-muted/60 text-muted-foreground",
+  archived: "border-border bg-muted/60 text-muted-foreground",
+};
 
 const CATEGORY_LABEL: Record<string, string> = {
-  workflow: 'Proceso',
-  users: 'Usuarios',
-  scope: 'Alcance',
-  integrations: 'Integraciones',
-  data: 'Datos',
-  budget: 'Presupuesto',
-  decision: 'Decisión',
-  timeline: 'Calendario',
-  other: 'General',
-}
+  workflow: "Proceso",
+  users: "Usuarios",
+  scope: "Alcance",
+  integrations: "Integraciones",
+  data: "Datos",
+  budget: "Presupuesto",
+  decision: "Decisión",
+  timeline: "Calendario",
+  other: "General",
+};
 
 export function LeadDiscoveryQuestionsPanel({
   leadId,
@@ -73,118 +73,118 @@ export function LeadDiscoveryQuestionsPanel({
   aiEnabled,
   canEdit,
 }: Props) {
-  const router = useRouter()
-  const contentId = useId()
-  const [questions, setQuestions] = useState(initialQuestions)
-  const [expanded, setExpanded] = useState(true)
-  const [showResolved, setShowResolved] = useState(false)
-  const [adding, setAdding] = useState(false)
-  const [newQuestion, setNewQuestion] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const contentId = useId();
+  const [questions, setQuestions] = useState(initialQuestions);
+  const [expanded, setExpanded] = useState(true);
+  const [showResolved, setShowResolved] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [newQuestion, setNewQuestion] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => setQuestions(initialQuestions), [initialQuestions])
+  useEffect(() => setQuestions(initialQuestions), [initialQuestions]);
 
   const visibleQuestions = useMemo(
     () =>
       questions.filter(
         (question) =>
-          question.status !== 'archived' &&
-          (showResolved || !['answered', 'not_applicable'].includes(question.status)),
+          question.status !== "archived" &&
+          (showResolved || !["answered", "not_applicable"].includes(question.status)),
       ),
     [questions, showResolved],
-  )
+  );
   const resolvedCount = questions.filter((question) =>
-    ['answered', 'not_applicable'].includes(question.status),
-  ).length
-  const openCount = questions.filter((question) => question.status === 'open').length
-  const reviewCount = questions.filter((question) => question.status === 'needs_review').length
-  const deferredCount = questions.filter((question) => question.status === 'deferred').length
-  const unresolvedCount = openCount + reviewCount + deferredCount
+    ["answered", "not_applicable"].includes(question.status),
+  ).length;
+  const openCount = questions.filter((question) => question.status === "open").length;
+  const reviewCount = questions.filter((question) => question.status === "needs_review").length;
+  const deferredCount = questions.filter((question) => question.status === "deferred").length;
+  const unresolvedCount = openCount + reviewCount + deferredCount;
   const statusSummary = [
-    openCount ? `${openCount} ${openCount === 1 ? 'abierta' : 'abiertas'}` : '',
-    reviewCount ? `${reviewCount} por revisar` : '',
-    deferredCount ? `${deferredCount} ${deferredCount === 1 ? 'pospuesta' : 'pospuestas'}` : '',
+    openCount ? `${openCount} ${openCount === 1 ? "abierta" : "abiertas"}` : "",
+    reviewCount ? `${reviewCount} por revisar` : "",
+    deferredCount ? `${deferredCount} ${deferredCount === 1 ? "pospuesta" : "pospuestas"}` : "",
   ]
     .filter(Boolean)
-    .join(' · ')
+    .join(" · ");
   const headerSummary =
-    statusSummary || (resolvedCount ? 'Guion cubierto por ahora' : 'Prepara la conversación')
+    statusSummary || (resolvedCount ? "Guion cubierto por ahora" : "Prepara la conversación");
 
   async function addQuestion(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!canEdit || !newQuestion.trim()) return
-    setBusy(true)
-    setError(null)
+    event.preventDefault();
+    if (!canEdit || !newQuestion.trim()) return;
+    setBusy(true);
+    setError(null);
     const result = await createLeadDiscoveryQuestion({
       leadId,
       question: newQuestion.trim(),
-      category: 'other',
-      rationale: '',
+      category: "other",
+      rationale: "",
       priority: 2,
-    })
-    setBusy(false)
-    if (!result.ok) return setError(result.error)
-    setNewQuestion('')
-    setAdding(false)
-    router.refresh()
+    });
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setNewQuestion("");
+    setAdding(false);
+    router.refresh();
   }
 
   async function generateScript() {
-    setBusy(true)
-    setError(null)
+    setBusy(true);
+    setError(null);
     try {
-      const response = await fetch('/api/crm/ai/discovery-questions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/crm/ai/discovery-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lead_id: leadId }),
-      })
+      });
       const json = await readJsonResponse<{ error?: string; added?: number }>(
         response,
-        'No se pudo generar el guion.',
-      )
-      if (!response.ok) throw new Error(json.error ?? 'No se pudo generar el guion.')
+        "No se pudo generar el guion.",
+      );
+      if (!response.ok) throw new Error(json.error ?? "No se pudo generar el guion.");
       if (!json.added)
-        setError('No han salido preguntas nuevas; el guion actual ya cubre el contexto conocido.')
-      router.refresh()
+        setError("No han salido preguntas nuevas; el guion actual ya cubre el contexto conocido.");
+      router.refresh();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'No se pudo generar el guion.')
+      setError(reason instanceof Error ? reason.message : "No se pudo generar el guion.");
     } finally {
-      setBusy(false)
+      setBusy(false);
     }
   }
 
   return (
     <Card className="border-border/80 shadow-sm transition-shadow duration-200 hover:shadow-md motion-reduce:transition-none">
-      <CardHeader className="border-border/70 bg-muted/20 flex-row items-center justify-between gap-3 space-y-0 border-b pb-3">
+      <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 border-b border-border/70 bg-muted/20 pb-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <CardTitle className="min-w-0 flex-1">
             <button
               type="button"
-              className="group focus-visible:ring-ring/50 flex w-full min-w-0 items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2"
+              className="group flex w-full min-w-0 items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               aria-expanded={expanded}
               aria-controls={contentId}
               onClick={() => setExpanded((value) => !value)}
             >
-              <span className="bg-primary/10 text-primary ring-primary/10 flex size-9 shrink-0 items-center justify-center rounded-xl ring-1">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10">
                 <ListChecks className="size-4" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="truncate text-sm font-semibold">Preguntas por resolver</span>
                   <Badge
-                    variant={unresolvedCount ? 'secondary' : 'outline'}
+                    variant={unresolvedCount ? "secondary" : "outline"}
                     className="shrink-0 transition-colors duration-200"
                   >
                     {unresolvedCount}
                   </Badge>
                 </span>
-                <span className="text-muted-foreground mt-0.5 block truncate text-xs font-normal">
+                <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">
                   {headerSummary}
                 </span>
               </span>
               <ChevronDown
-                className={`text-muted-foreground size-4 shrink-0 transition-transform duration-200 motion-reduce:transition-none ${expanded ? 'rotate-180' : ''}`}
+                className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
                 aria-hidden="true"
               />
             </button>
@@ -217,8 +217,8 @@ export function LeadDiscoveryQuestionsPanel({
                 aria-label="Añadir pregunta"
                 title="Añadir pregunta"
                 onClick={() => {
-                  setExpanded(true)
-                  setAdding((value) => !value)
+                  setExpanded(true);
+                  setAdding((value) => !value);
                 }}
               >
                 <Plus className="size-4" />
@@ -231,7 +231,7 @@ export function LeadDiscoveryQuestionsPanel({
         id={contentId}
         aria-hidden={!expanded}
         inert={!expanded}
-        className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+        className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
       >
         <div className="min-h-0 overflow-hidden">
           <CardContent className="flex flex-col gap-3 pt-0">
@@ -251,7 +251,7 @@ export function LeadDiscoveryQuestionsPanel({
                     Cancelar
                   </Button>
                   <Button type="submit" size="sm" disabled={busy || newQuestion.trim().length < 3}>
-                    {busy ? 'Guardando…' : 'Añadir'}
+                    {busy ? "Guardando…" : "Añadir"}
                   </Button>
                 </div>
               </form>
@@ -266,9 +266,9 @@ export function LeadDiscoveryQuestionsPanel({
                 aria-expanded={showResolved}
                 onClick={() => setShowResolved((value) => !value)}
               >
-                {showResolved ? 'Ocultar' : 'Mostrar'} resueltas ({resolvedCount})
+                {showResolved ? "Ocultar" : "Mostrar"} resueltas ({resolvedCount})
                 <ChevronDown
-                  className={`size-3 transition-transform duration-200 motion-reduce:transition-none ${showResolved ? 'rotate-180' : ''}`}
+                  className={`size-3 transition-transform duration-200 motion-reduce:transition-none ${showResolved ? "rotate-180" : ""}`}
                   aria-hidden="true"
                 />
               </Button>
@@ -279,7 +279,7 @@ export function LeadDiscoveryQuestionsPanel({
                 {visibleQuestions.map((question, index) => (
                   <div
                     key={question.id}
-                    className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-200"
+                    className="motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in motion-safe:slide-in-from-bottom-1"
                     style={{ animationDelay: `${Math.min(index, 5) * 35}ms` }}
                   >
                     <DiscoveryQuestionCard
@@ -292,27 +292,27 @@ export function LeadDiscoveryQuestionsPanel({
                 ))}
               </div>
             ) : !adding ? (
-              <div className="border-border bg-muted/20 motion-safe:animate-in motion-safe:fade-in rounded-xl border border-dashed px-4 py-5 text-center motion-safe:duration-200">
-                {questions.some((question) => question.status !== 'archived') ? (
+              <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-5 text-center motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in">
+                {questions.some((question) => question.status !== "archived") ? (
                   <CheckCircle2
                     className="mx-auto mb-2 size-5 text-emerald-600"
                     aria-hidden="true"
                   />
                 ) : (
                   <ListChecks
-                    className="text-muted-foreground mx-auto mb-2 size-5"
+                    className="mx-auto mb-2 size-5 text-muted-foreground"
                     aria-hidden="true"
                   />
                 )}
                 <p className="text-sm font-medium">
-                  {questions.some((question) => question.status !== 'archived')
-                    ? 'Todo cubierto por ahora'
-                    : 'Prepara el discovery'}
+                  {questions.some((question) => question.status !== "archived")
+                    ? "Todo cubierto por ahora"
+                    : "Prepara el discovery"}
                 </p>
-                <p className="text-muted-foreground mx-auto mt-1 max-w-56 text-xs leading-relaxed">
-                  {questions.some((question) => question.status !== 'archived')
-                    ? 'No quedan preguntas pendientes. Puedes mostrar las resueltas para repasar.'
-                    : 'Añade una pregunta o genera un guion con IA para empezar.'}
+                <p className="mx-auto mt-1 max-w-56 text-xs leading-relaxed text-muted-foreground">
+                  {questions.some((question) => question.status !== "archived")
+                    ? "No quedan preguntas pendientes. Puedes mostrar las resueltas para repasar."
+                    : "Añade una pregunta o genera un guion con IA para empezar."}
                 </p>
               </div>
             ) : null}
@@ -320,7 +320,7 @@ export function LeadDiscoveryQuestionsPanel({
             {error ? (
               <p
                 role="status"
-                className="bg-destructive/10 text-destructive rounded-md px-2.5 py-2 text-xs"
+                className="rounded-md bg-destructive/10 px-2.5 py-2 text-xs text-destructive"
               >
                 {error}
               </p>
@@ -329,7 +329,7 @@ export function LeadDiscoveryQuestionsPanel({
         </div>
       </div>
     </Card>
-  )
+  );
 }
 
 function DiscoveryQuestionCard({
@@ -338,54 +338,54 @@ function DiscoveryQuestionCard({
   canEdit,
   onChanged,
 }: {
-  leadId: string
-  question: LeadDiscoveryQuestion
-  canEdit: boolean
-  onChanged: () => void
+  leadId: string;
+  question: LeadDiscoveryQuestion;
+  canEdit: boolean;
+  onChanged: () => void;
 }) {
-  const [questionDraft, setQuestionDraft] = useState(question.question)
-  const [answerDraft, setAnswerDraft] = useState(question.answer ?? '')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [questionDraft, setQuestionDraft] = useState(question.question);
+  const [answerDraft, setAnswerDraft] = useState(question.answer ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setQuestionDraft(question.question)
-    setAnswerDraft(question.answer ?? '')
-  }, [question])
+    setQuestionDraft(question.question);
+    setAnswerDraft(question.answer ?? "");
+  }, [question]);
 
   async function run(action: () => Promise<{ ok: boolean; error?: string }>) {
-    setBusy(true)
-    setError(null)
-    const result = await action()
-    setBusy(false)
-    if (!result.ok) return setError(result.error ?? 'No se pudo guardar el cambio.')
-    onChanged()
+    setBusy(true);
+    setError(null);
+    const result = await action();
+    setBusy(false);
+    if (!result.ok) return setError(result.error ?? "No se pudo guardar el cambio.");
+    onChanged();
   }
 
   return (
     <article
       data-status={question.status}
-      className="group/question border-border/80 bg-card hover:border-primary/25 flex flex-col gap-3 rounded-xl border p-3 shadow-sm transition-[border-color,box-shadow] duration-200 hover:shadow-md motion-reduce:transition-none"
+      className="group/question flex flex-col gap-3 rounded-xl border border-border/80 bg-card p-3 shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-primary/25 hover:shadow-md motion-reduce:transition-none"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge
               variant="outline"
-              className="border-border/70 bg-muted/30 h-5 px-1.5 text-[10px] font-medium"
+              className="h-5 border-border/70 bg-muted/30 px-1.5 text-[10px] font-medium"
             >
               {CATEGORY_LABEL[question.category] ?? question.category}
             </Badge>
             <Badge
               variant="outline"
-              className={`h-5 px-1.5 text-[10px] font-medium ${question.priority === 1 ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-border/70 text-muted-foreground'}`}
-              aria-label={`Prioridad ${question.priority === 1 ? 'alta' : question.priority === 3 ? 'baja' : 'media'}`}
+              className={`h-5 px-1.5 text-[10px] font-medium ${question.priority === 1 ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300" : "border-border/70 text-muted-foreground"}`}
+              aria-label={`Prioridad ${question.priority === 1 ? "alta" : question.priority === 3 ? "baja" : "media"}`}
             >
               {question.priority === 1
-                ? 'Prioridad alta'
+                ? "Prioridad alta"
                 : question.priority === 3
-                  ? 'Prioridad baja'
-                  : 'Prioridad media'}
+                  ? "Prioridad baja"
+                  : "Prioridad media"}
             </Badge>
             <Badge
               variant="outline"
@@ -400,37 +400,37 @@ function DiscoveryQuestionCard({
               onChange={(event) => setQuestionDraft(event.target.value)}
               maxLength={500}
               aria-label={`Editar pregunta: ${question.question}`}
-              className="hover:bg-muted/50 focus-visible:bg-background focus-visible:ring-primary/30 -mx-1 h-auto min-h-8 rounded-md border-0 px-1 py-1 leading-snug font-medium shadow-none transition-colors focus-visible:ring-2"
+              className="-mx-1 h-auto min-h-8 rounded-md border-0 px-1 py-1 leading-snug font-medium shadow-none transition-colors hover:bg-muted/50 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/30"
             />
           ) : (
             <p className="text-sm leading-snug font-medium">{question.question}</p>
           )}
         </div>
-        {question.origin === 'ai' ? <Badge variant="outline">IA</Badge> : null}
+        {question.origin === "ai" ? <Badge variant="outline">IA</Badge> : null}
       </div>
 
       {question.rationale ? (
-        <p className="text-muted-foreground border-primary/20 border-l-2 pl-2 text-xs leading-relaxed">
+        <p className="border-l-2 border-primary/20 pl-2 text-xs leading-relaxed text-muted-foreground">
           {question.rationale}
         </p>
       ) : null}
 
       {question.suggested_answer ? (
-        <div className="border-primary/20 bg-primary/5 flex flex-col gap-2.5 rounded-lg border p-3 shadow-sm">
+        <div className="flex flex-col gap-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3 shadow-sm">
           <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-xs font-semibold">
-              <Sparkles className="text-primary size-3.5" aria-hidden="true" />
+              <Sparkles className="size-3.5 text-primary" aria-hidden="true" />
               Propuesta IA · por confirmar
             </span>
             {question.confidence != null ? (
-              <span className="text-muted-foreground bg-background/70 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium">
+              <span className="shrink-0 rounded-full bg-background/70 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                 {Math.round(question.confidence * 100)}% confianza
               </span>
             ) : null}
           </div>
           <p className="text-sm leading-relaxed">{question.suggested_answer}</p>
           {question.evidence_excerpt ? (
-            <blockquote className="text-muted-foreground border-border/70 bg-background/50 rounded-r-md border-l-2 py-1 pl-2.5 text-xs leading-relaxed italic">
+            <blockquote className="rounded-r-md border-l-2 border-border/70 bg-background/50 py-1 pl-2.5 text-xs leading-relaxed text-muted-foreground italic">
               “{question.evidence_excerpt}”
             </blockquote>
           ) : null}
@@ -452,7 +452,7 @@ function DiscoveryQuestionCard({
               <Button
                 type="button"
                 size="xs"
-                disabled={busy || question.answer_source === 'manual'}
+                disabled={busy || question.answer_source === "manual"}
                 onClick={() =>
                   void run(() => acceptLeadDiscoverySuggestion({ leadId, questionId: question.id }))
                 }
@@ -466,7 +466,7 @@ function DiscoveryQuestionCard({
 
       <div className="flex flex-col gap-1.5">
         <label
-          className="text-muted-foreground text-xs font-medium"
+          className="text-xs font-medium text-muted-foreground"
           htmlFor={`answer-${question.id}`}
         >
           Respuesta confirmada
@@ -479,20 +479,20 @@ function DiscoveryQuestionCard({
           rows={2}
           maxLength={2000}
           disabled={!canEdit || busy}
-          className="bg-background/70 min-h-[72px] resize-y text-sm leading-relaxed transition-shadow motion-reduce:transition-none"
+          className="min-h-[72px] resize-y bg-background/70 text-sm leading-relaxed transition-shadow motion-reduce:transition-none"
         />
       </div>
       {question.answer_source ? (
-        <p className="text-muted-foreground -mt-1 flex items-center gap-1.5 text-[11px]">
+        <p className="-mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <CheckCircle2 className="size-3 text-emerald-600" aria-hidden="true" />
-          {question.answer_source === 'manual'
-            ? 'Respuesta editada manualmente'
-            : 'Respuesta confirmada desde sugerencia IA'}
+          {question.answer_source === "manual"
+            ? "Respuesta editada manualmente"
+            : "Respuesta confirmada desde sugerencia IA"}
         </p>
       ) : null}
 
       {canEdit ? (
-        <div className="border-border/60 flex items-center justify-between gap-2 border-t pt-2">
+        <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-2">
           <div className="flex items-center gap-1">
             <Button
               type="button"
@@ -505,7 +505,7 @@ function DiscoveryQuestionCard({
                   setLeadDiscoveryQuestionStatus({
                     leadId,
                     questionId: question.id,
-                    status: 'deferred',
+                    status: "deferred",
                   }),
                 )
               }
@@ -525,7 +525,7 @@ function DiscoveryQuestionCard({
                   setLeadDiscoveryQuestionStatus({
                     leadId,
                     questionId: question.id,
-                    status: 'archived',
+                    status: "archived",
                   }),
                 )
               }
@@ -551,18 +551,18 @@ function DiscoveryQuestionCard({
               )
             }
           >
-            {busy ? <LoaderCircle className="size-3.5 motion-safe:animate-spin" /> : 'Guardar'}
+            {busy ? <LoaderCircle className="size-3.5 motion-safe:animate-spin" /> : "Guardar"}
           </Button>
         </div>
       ) : null}
       {error ? (
         <p
           role="alert"
-          className="bg-destructive/10 text-destructive rounded-md px-2.5 py-2 text-xs"
+          className="rounded-md bg-destructive/10 px-2.5 py-2 text-xs text-destructive"
         >
           {error}
         </p>
       ) : null}
     </article>
-  )
+  );
 }

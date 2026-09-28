@@ -1,13 +1,13 @@
-import { ShieldCheck } from 'lucide-react'
-import { Suspense } from 'react'
+import { ShieldCheck } from "lucide-react";
+import { Suspense } from "react";
 
-import { LogoMark } from '@/components/branding'
-import { PortalLanguageSwitch } from '@/components/portal/language-switch'
+import { LogoMark } from "@/components/branding";
+import { PortalLanguageSwitch } from "@/components/portal/language-switch";
 
 export const metadata = {
-  title: 'Portal · doscientos',
+  title: "Portal · doscientos",
   robots: { index: false, follow: false },
-}
+};
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -49,5 +49,5 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         </div>
       </footer>
     </div>
-  )
+  );
 }

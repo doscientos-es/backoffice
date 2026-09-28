@@ -66,28 +66,28 @@ export function InvoiceAutomationPanel({
 
   return (
     <section
-      className="border-primary/20 bg-primary/[0.03] rounded-xl border p-4"
+      className="rounded-xl border border-primary/20 bg-primary/[0.03] p-4"
       aria-label="Seguimiento automático"
     >
       <div className="flex items-start gap-3">
-        <BellRing className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
+        <BellRing className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-sm font-semibold">Seguimiento automático de cobro</h2>
-              <p className="text-muted-foreground mt-0.5 text-xs">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {active
                   ? `Si sigue pendiente, enviaremos este email el ${formatDate(automation.run_at)}.`
                   : statusLabel}
               </p>
             </div>
-            <span className="text-muted-foreground text-xs font-medium">{statusLabel}</span>
+            <span className="text-xs font-medium text-muted-foreground">{statusLabel}</span>
           </div>
 
-          <div className="bg-background/80 rounded-lg border p-3 text-sm">
-            <p className="text-muted-foreground text-xs">Para {automation.recipient}</p>
+          <div className="rounded-lg border bg-background/80 p-3 text-sm">
+            <p className="text-xs text-muted-foreground">Para {automation.recipient}</p>
             <p className="mt-1 font-medium">{automation.subject}</p>
-            <p className="text-muted-foreground mt-2 whitespace-pre-line text-xs leading-5">
+            <p className="mt-2 text-xs leading-5 whitespace-pre-line text-muted-foreground">
               {automation.message}
             </p>
           </div>
@@ -96,7 +96,7 @@ export function InvoiceAutomationPanel({
             <div className="flex flex-wrap items-end gap-2">
               <label
                 htmlFor="invoice-payment-follow-up-run-at"
-                className="text-muted-foreground flex min-w-52 flex-1 flex-col gap-1 text-xs"
+                className="flex min-w-52 flex-1 flex-col gap-1 text-xs text-muted-foreground"
               >
                 <span className="inline-flex items-center gap-1">
                   <CalendarClock className="size-3" /> Cambiar fecha
@@ -124,9 +124,9 @@ export function InvoiceAutomationPanel({
               </Button>
             </div>
           ) : null}
-          {error ? <p className="text-destructive text-xs">{error}</p> : null}
+          {error ? <p className="text-xs text-destructive">{error}</p> : null}
           {automation.last_error ? (
-            <p className="text-destructive text-xs">{automation.last_error}</p>
+            <p className="text-xs text-destructive">{automation.last_error}</p>
           ) : null}
         </div>
       </div>

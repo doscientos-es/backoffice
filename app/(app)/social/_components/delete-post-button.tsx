@@ -1,14 +1,14 @@
 "use client";
 
-import { Ellipsis as MoreHorizontal, Trash as Trash2 } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@doscientos/ui";
+import { Ellipsis as MoreHorizontal, Trash as Trash2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
 
 import { deletePost, deletePostLocal, restorePost } from "../actions";

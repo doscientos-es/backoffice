@@ -1,27 +1,29 @@
-import { BriefcaseBusiness, FileText, ReceiptText } from 'lucide-react'
-import Link from 'next/link'
-import type { ReactNode } from 'react'
+import { BriefcaseBusiness, FileText, ReceiptText } from "lucide-react";
+import Link from "next/link";
+import type { ReactNode } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { StatusBadge } from '@/components/ui/status-badge'
-import type { LeadRelatedInvoice, LeadRelatedProject, LeadRelatedProposal } from '@/lib/leads/types'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
+import type {
+  LeadRelatedInvoice,
+  LeadRelatedProject,
+  LeadRelatedProposal,
+} from "@/lib/leads/types";
 import {
   INVOICE_STATUS,
   type InvoiceStatus,
   PROJECT_STATUS,
-  PROPOSAL_STATUS,
   type ProjectStatus,
-  type ProposalStatus,
-} from '@/lib/status'
-import { formatEUR } from '@/lib/utils'
+} from "@/lib/status";
+import { formatEUR } from "@/lib/utils";
 
 type LeadCommercialProps = {
-  leadId: string
-  linkedClientId: string | null
-  proposals: LeadRelatedProposal[]
-  projects: LeadRelatedProject[]
-  invoices: LeadRelatedInvoice[]
-}
+  leadId: string;
+  linkedClientId: string | null;
+  proposals: LeadRelatedProposal[];
+  projects: LeadRelatedProject[];
+  invoices: LeadRelatedInvoice[];
+};
 
 /** Shown in place of a list when projects/invoices require a client. */
 function ClientRequiredHint() {
@@ -29,11 +31,11 @@ function ClientRequiredHint() {
     <p className="px-6 py-2 text-sm text-muted-foreground">
       Disponible cuando el lead sea cliente.
     </p>
-  )
+  );
 }
 
 function relationshipSummary(count: number, singular: string, plural: string) {
-  return `${count} ${count === 1 ? singular : plural}`
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function MobileRelationshipRow({
@@ -41,9 +43,9 @@ function MobileRelationshipRow({
   label,
   children,
 }: {
-  icon: ReactNode
-  label: string
-  children: ReactNode
+  icon: ReactNode;
+  label: string;
+  children: ReactNode;
 }) {
   return (
     <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3">
@@ -53,7 +55,7 @@ function MobileRelationshipRow({
       </dt>
       <dd className="flex min-w-0 flex-col gap-1.5">{children}</dd>
     </div>
-  )
+  );
 }
 
 function MobileEmptyLink({ href, children }: { href: string; children: ReactNode }) {
@@ -61,7 +63,7 @@ function MobileEmptyLink({ href, children }: { href: string; children: ReactNode
     <Link href={href} className="text-xs font-medium text-primary hover:underline">
       {children}
     </Link>
-  )
+  );
 }
 
 /**
@@ -84,10 +86,10 @@ export function LeadCommercial({
             <CardTitle className="text-base">Relaciones comerciales</CardTitle>
             <p className="mt-1 text-sm font-normal text-muted-foreground">
               {[
-                relationshipSummary(proposals.length, 'propuesta', 'propuestas'),
-                relationshipSummary(projects.length, 'proyecto', 'proyectos'),
-                relationshipSummary(invoices.length, 'factura', 'facturas'),
-              ].join(' · ')}
+                relationshipSummary(proposals.length, "propuesta", "propuestas"),
+                relationshipSummary(projects.length, "proyecto", "proyectos"),
+                relationshipSummary(invoices.length, "factura", "facturas"),
+              ].join(" · ")}
             </p>
           </CardHeader>
           <CardContent>
@@ -105,7 +107,7 @@ export function LeadCommercial({
                       className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
                     >
                       <span className="truncate font-medium">
-                        {proposal.number ?? proposal.title ?? 'Propuesta'}
+                        {proposal.number ?? proposal.title ?? "Propuesta"}
                       </span>
                       <span className="shrink-0 text-muted-foreground tabular-nums">
                         {formatEUR(Number(proposal.total ?? 0))}
@@ -152,7 +154,7 @@ export function LeadCommercial({
                       className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
                     >
                       <span className="truncate font-medium">
-                        {invoice.full_number ?? 'Factura'}
+                        {invoice.full_number ?? "Factura"}
                       </span>
                       <span className="flex shrink-0 items-center gap-1.5">
                         <StatusBadge
@@ -172,5 +174,5 @@ export function LeadCommercial({
         </Card>
       </section>
     </>
-  )
+  );
 }

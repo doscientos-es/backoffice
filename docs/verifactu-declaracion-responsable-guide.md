@@ -7,7 +7,7 @@ un Sistema Informático de Facturación (SIF) debe incluir una Declaración Resp
 **dentro del propio software**, accesible en cada versión. No se registra ni se envía
 a la AEAT — es autocertificación bajo responsabilidad del productor.
 
-**Quién firma la DR:** Doscientos Estudio S.L. como productor del SIF.
+**Quién firma la DR:** Doscientos Desarrollo Tecnológico, S.L. como productor del SIF.
 **Por producto:** una DR por cada SIF distinto que se comercialice (backoffice, CRM cliente, etc.).
 
 ---
@@ -47,7 +47,7 @@ Conforme al Art. 13 del Real Decreto 1007/2023 y la Orden HAC/1177/2024
 
 1. IDENTIFICACIÓN DEL PRODUCTOR
 
-   Denominación social : Doscientos Estudio S.L.
+   Denominación social : Doscientos Desarrollo Tecnológico, S.L.
    Sitio web           : https://doscientos.es
    Contacto            : hola@doscientos.es
 
@@ -87,7 +87,7 @@ Conforme al Art. 13 del Real Decreto 1007/2023 y la Orden HAC/1177/2024
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Fecha: {{ FECHA_DD_MM_AAAA }}
-Firmado por: Doscientos Estudio S.L.
+Firmado por: Doscientos Desarrollo Tecnológico, S.L.
 ```
 
 ---

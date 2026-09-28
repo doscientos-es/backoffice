@@ -5,66 +5,66 @@ import {
   Pencil,
   Presentation,
   XCircle,
-} from 'lucide-react'
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
+} from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { BackLink } from '@/components/layout/back-link'
-import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
-import { PageHeader } from '@/components/layout/page-header'
-import { PortalAccessControls } from '@/components/portal/portal-access-controls'
+import { BackLink } from "@/components/layout/back-link";
+import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
+import { PageHeader } from "@/components/layout/page-header";
+import { PortalAccessControls } from "@/components/portal/portal-access-controls";
 import {
   type ProposalMessage,
   ProposalMessageThread,
-} from '@/components/proposals/proposal-message-thread'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CopySummaryButton } from '@/components/ui/copy-summary-button'
-import { SectionBoundary } from '@/components/ui/error-boundary'
-import { StatusBadge } from '@/components/ui/status-badge'
-import { requireUser } from '@/lib/auth'
-import { hasCompleteFiscalData } from '@/lib/crm/conversion'
-import { isAIEnabled } from '@/lib/env'
-import { parseKeyPoints, toEditableKeyPoints } from '@/lib/proposals/key-points'
-import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
-import { recurringAmount } from '@/lib/proposals/recurring'
+} from "@/components/proposals/proposal-message-thread";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopySummaryButton } from "@/components/ui/copy-summary-button";
+import { SectionBoundary } from "@/components/ui/error-boundary";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { requireUser } from "@/lib/auth";
+import { hasCompleteFiscalData } from "@/lib/crm/conversion";
+import { isAIEnabled } from "@/lib/env";
+import { parseKeyPoints, toEditableKeyPoints } from "@/lib/proposals/key-points";
+import { parseMaintenanceOffer, selectedMaintenancePlan } from "@/lib/proposals/maintenance";
+import { recurringAmount } from "@/lib/proposals/recurring";
 import {
   type PaymentSchedule,
   parsePaymentPlan,
   parseScopeModules,
   paymentPlanForSchedule,
   paymentScheduleInput,
-} from '@/lib/proposals/scope'
-import { PROPOSAL_STATUS, type ProposalStatus } from '@/lib/status'
-import { createServerClient } from '@/lib/supabase/server'
-import { formatDate, formatEUR } from '@/lib/utils'
+} from "@/lib/proposals/scope";
+import { PROPOSAL_STATUS, type ProposalStatus } from "@/lib/status";
+import { createServerClient } from "@/lib/supabase/server";
+import { formatDate, formatEUR } from "@/lib/utils";
 
-import { updateProposalPortalAccess } from '../actions'
-import { CreateSubscriptionFromProposalButton } from './create-subscription-from-proposal-button'
-import { ProposalMoreActions } from './delete-proposal-button'
-import { GenerateInvoiceButton } from './generate-invoice-button'
-import { LinkProjectButton } from './link-project-button'
-import { MarkAcceptedButton } from './mark-accepted-button'
-import { replyToProposalMessage } from './message-actions'
-import { type EditableItem, ProposalEditor } from './proposal-editor'
-import { ProposalFollowUpAssistant } from './proposal-follow-up-assistant'
-import { ProposalOverview } from './proposal-overview'
-import { ProposalPaymentPlan } from './proposal-payment-plan'
-import { type ProposalSpec, ProposalSpecs } from './proposal-specs'
-import { ReopenProposalButton } from './reopen-proposal-button'
-import { SendPreviewButton } from './send-preview-button'
-import { ShareLinks } from './share-links'
+import { updateProposalPortalAccess } from "../actions";
+import { CreateSubscriptionFromProposalButton } from "./create-subscription-from-proposal-button";
+import { ProposalMoreActions } from "./delete-proposal-button";
+import { GenerateInvoiceButton } from "./generate-invoice-button";
+import { LinkProjectButton } from "./link-project-button";
+import { MarkAcceptedButton } from "./mark-accepted-button";
+import { replyToProposalMessage } from "./message-actions";
+import { type EditableItem, ProposalEditor } from "./proposal-editor";
+import { ProposalFollowUpAssistant } from "./proposal-follow-up-assistant";
+import { ProposalOverview } from "./proposal-overview";
+import { ProposalPaymentPlan } from "./proposal-payment-plan";
+import { type ProposalSpec, ProposalSpecs } from "./proposal-specs";
+import { ReopenProposalButton } from "./reopen-proposal-button";
+import { SendPreviewButton } from "./send-preview-button";
+import { ShareLinks } from "./share-links";
 
-type Surface = 'portal' | 'deck'
+type Surface = "portal" | "deck";
 
 type ProposalViewRow = {
-  id: string
-  viewer_type: 'team' | 'client'
-  viewed_at: string
-  surface: Surface
-  team_members: { name: string } | null
-}
+  id: string;
+  viewer_type: "team" | "client";
+  viewed_at: string;
+  surface: Surface;
+  team_members: { name: string } | null;
+};
 
 function ProposalSidebar({
   proposalId,
@@ -74,14 +74,14 @@ function ProposalSidebar({
   messages,
   views,
 }: {
-  proposalId: string
-  leadId: string | null
-  clientId: string | null
-  aiEnabled: boolean
-  messages: ProposalMessage[]
-  views: ProposalViewRow[]
+  proposalId: string;
+  leadId: string | null;
+  clientId: string | null;
+  aiEnabled: boolean;
+  messages: ProposalMessage[];
+  views: ProposalViewRow[];
 }) {
-  const needsReply = messages.at(-1)?.author_type === 'client'
+  const needsReply = messages.at(-1)?.author_type === "client";
 
   return (
     <>
@@ -106,20 +106,20 @@ function ProposalSidebar({
         </CardHeader>
         <CardContent className="px-0">
           {views.length === 0 ? (
-            <p className="text-muted-foreground px-6 py-4 text-sm">Aún no se ha abierto.</p>
+            <p className="px-6 py-4 text-sm text-muted-foreground">Aún no se ha abierto.</p>
           ) : (
-            <ul className="divide-border divide-y text-sm">
+            <ul className="divide-y divide-border text-sm">
               {views.map((view) => (
                 <li
                   key={view.id}
                   className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <Badge variant={view.viewer_type === 'client' ? 'info' : 'neutral'}>
-                      {view.viewer_type === 'client' ? 'Cliente' : 'Equipo'}
+                    <Badge variant={view.viewer_type === "client" ? "info" : "neutral"}>
+                      {view.viewer_type === "client" ? "Cliente" : "Equipo"}
                     </Badge>
                     <Badge variant="outline">
-                      {view.surface === 'deck' ? (
+                      {view.surface === "deck" ? (
                         <>
                           <Presentation aria-hidden /> Presentación
                         </>
@@ -129,22 +129,22 @@ function ProposalSidebar({
                         </>
                       )}
                     </Badge>
-                    <span className="text-muted-foreground truncate">
-                      {view.viewer_type === 'team'
-                        ? (view.team_members?.name ?? 'Miembro')
-                        : 'Apertura externa'}
+                    <span className="truncate text-muted-foreground">
+                      {view.viewer_type === "team"
+                        ? (view.team_members?.name ?? "Miembro")
+                        : "Apertura externa"}
                     </span>
                   </div>
                   <time
                     dateTime={view.viewed_at}
-                    className="text-muted-foreground shrink-0 text-xs tabular-nums"
+                    className="shrink-0 text-xs text-muted-foreground tabular-nums"
                   >
-                    {new Date(view.viewed_at).toLocaleString('es-ES', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
+                    {new Date(view.viewed_at).toLocaleString("es-ES", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </time>
                 </li>
@@ -154,7 +154,7 @@ function ProposalSidebar({
         </CardContent>
       </Card>
 
-      <Card className={needsReply ? 'border-primary/40 shadow-sm' : undefined}>
+      <Card className={needsReply ? "border-primary/40 shadow-sm" : undefined}>
         <CardHeader>
           <div className="flex items-center justify-between gap-2">
             <CardTitle>Consultas del cliente</CardTitle>
@@ -172,204 +172,204 @@ function ProposalSidebar({
         </CardContent>
       </Card>
     </>
-  )
+  );
 }
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default async function ProposalDetailPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>
-  searchParams: Promise<{ ai_draft?: string; mode?: string }>
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ ai_draft?: string; mode?: string }>;
 }) {
-  const { id } = await params
-  const { ai_draft, mode } = await searchParams
-  const user = await requireUser()
-  const supabase = await createServerClient()
+  const { id } = await params;
+  const { ai_draft, mode } = await searchParams;
+  const user = await requireUser();
+  const supabase = await createServerClient();
 
   const { data: proposal } = await supabase
-    .from('proposals')
+    .from("proposals")
     .select(
-      '*, clients(id, name, nif, billing_address_street, email, phone, contact_person), leads(id, name, company, email, phone), projects(id, name)',
+      "*, clients(id, name, nif, billing_address_street, email, phone, contact_person), leads(id, name, company, email, phone), projects(id, name)",
     )
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle()
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
 
-  if (!proposal) notFound()
+  if (!proposal) notFound();
 
   const { data: items } = await supabase
-    .from('proposal_items')
-    .select('id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle')
-    .eq('proposal_id', id)
-    .order('position')
+    .from("proposal_items")
+    .select("id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle")
+    .eq("proposal_id", id)
+    .order("position");
 
   // Page-level opens (one row per visit). Slide-level rows are excluded.
   const { data: views } = await supabase
-    .from('proposal_view_events')
-    .select('id, viewer_type, viewed_at, surface, team_members(name)')
-    .eq('proposal_id', id)
-    .is('session_id', null)
-    .order('viewed_at', { ascending: false })
-    .limit(10)
+    .from("proposal_view_events")
+    .select("id, viewer_type, viewed_at, surface, team_members(name)")
+    .eq("proposal_id", id)
+    .is("session_id", null)
+    .order("viewed_at", { ascending: false })
+    .limit(10);
 
   // Latest CLIENT open per surface — drives the check + date on each share row.
   // Team previews never set this; they show up in the history list below.
   const [{ data: lastPortalView }, { data: lastDeckView }] = await Promise.all([
     supabase
-      .from('proposal_view_events')
-      .select('viewed_at')
-      .eq('proposal_id', id)
-      .eq('viewer_type', 'client')
-      .eq('surface', 'portal')
-      .is('session_id', null)
-      .order('viewed_at', { ascending: false })
+      .from("proposal_view_events")
+      .select("viewed_at")
+      .eq("proposal_id", id)
+      .eq("viewer_type", "client")
+      .eq("surface", "portal")
+      .is("session_id", null)
+      .order("viewed_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
     supabase
-      .from('proposal_view_events')
-      .select('viewed_at')
-      .eq('proposal_id', id)
-      .eq('viewer_type', 'client')
-      .eq('surface', 'deck')
-      .is('session_id', null)
-      .order('viewed_at', { ascending: false })
+      .from("proposal_view_events")
+      .select("viewed_at")
+      .eq("proposal_id", id)
+      .eq("viewer_type", "client")
+      .eq("surface", "deck")
+      .is("session_id", null)
+      .order("viewed_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
-  ])
+  ]);
 
   const { data: specs } = await supabase
-    .from('proposal_specs')
-    .select('id, title, body_markdown, is_client_visible, portal_token, updated_at, version')
-    .eq('proposal_id', id)
-    .order('created_at', { ascending: true })
+    .from("proposal_specs")
+    .select("id, title, body_markdown, is_client_visible, portal_token, updated_at, version")
+    .eq("proposal_id", id)
+    .order("created_at", { ascending: true });
 
   const { data: attachments } = await supabase
-    .from('attachments')
-    .select('id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link')
-    .eq('proposal_id', id)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
+    .from("attachments")
+    .select("id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link")
+    .eq("proposal_id", id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
   const { data: messages } = await supabase
-    .from('proposal_messages')
-    .select('id, author_type, author_name, body, created_at')
-    .eq('proposal_id', id)
-    .order('created_at', { ascending: true })
+    .from("proposal_messages")
+    .select("id, author_type, author_name, body, created_at")
+    .eq("proposal_id", id)
+    .order("created_at", { ascending: true });
   const { data: latestAcceptance } = await supabase
-    .from('proposal_acceptances')
-    .select('signer_name, signer_role, accepted_at, document_hash')
-    .eq('proposal_id', id)
-    .order('accepted_at', { ascending: false })
+    .from("proposal_acceptances")
+    .select("signer_name, signer_role, accepted_at, document_hash")
+    .eq("proposal_id", id)
+    .order("accepted_at", { ascending: false })
     .limit(1)
-    .maybeSingle()
+    .maybeSingle();
 
   // Projects available to link: same client or a client derived from this lead.
   // This mirrors the database rule which protects the association on every write.
-  const clientId = (proposal.client_id as string | null) ?? null
-  const leadId = (proposal.lead_id as string | null) ?? null
+  const clientId = (proposal.client_id as string | null) ?? null;
+  const leadId = (proposal.lead_id as string | null) ?? null;
   const availableProjectsQuery = supabase
-    .from('projects')
-    .select('id, name, clients!inner(lead_id)')
-    .is('deleted_at', null)
-    .order('name')
+    .from("projects")
+    .select("id, name, clients!inner(lead_id)")
+    .is("deleted_at", null)
+    .order("name");
   const { data: availableProjects } = clientId
-    ? await availableProjectsQuery.eq('client_id', clientId)
+    ? await availableProjectsQuery.eq("client_id", clientId)
     : leadId
-      ? await availableProjectsQuery.eq('clients.lead_id', leadId)
-      : { data: [] }
+      ? await availableProjectsQuery.eq("clients.lead_id", leadId)
+      : { data: [] };
 
   const [{ data: teamMembers }, { data: proposalTeam }] = await Promise.all([
     supabase
-      .from('team_members')
-      .select('id, name, job_title, avatar_url, github_handle')
-      .is('deleted_at', null)
-      .order('name'),
+      .from("team_members")
+      .select("id, name, job_title, avatar_url, github_handle")
+      .is("deleted_at", null)
+      .order("name"),
     supabase
-      .from('proposal_team_members')
-      .select('member_id, position')
-      .eq('proposal_id', id)
-      .order('position'),
-  ])
+      .from("proposal_team_members")
+      .select("member_id, position")
+      .eq("proposal_id", id)
+      .order("position"),
+  ]);
 
   // Deposit payments made from the proposal portal
   const { data: depositPayments } = await supabase
-    .from('invoice_payments')
-    .select('id, amount, status, confirmed_at, created_at, invoice_id')
-    .eq('proposal_id', id)
-    .order('created_at', { ascending: false })
+    .from("invoice_payments")
+    .select("id, amount, status, confirmed_at, created_at, invoice_id")
+    .eq("proposal_id", id)
+    .order("created_at", { ascending: false });
 
   const { data: paymentPlanInvoices } = await supabase
-    .from('invoices')
-    .select('id, full_number, status, proposal_payment_plan_item_id')
-    .eq('proposal_id', id)
-    .is('deleted_at', null)
-    .not('proposal_payment_plan_item_id', 'is', null)
-    .order('created_at', { ascending: true })
+    .from("invoices")
+    .select("id, full_number, status, proposal_payment_plan_item_id")
+    .eq("proposal_id", id)
+    .is("deleted_at", null)
+    .not("proposal_payment_plan_item_id", "is", null)
+    .order("created_at", { ascending: true });
 
   const client = (
     proposal as unknown as {
       clients: {
-        id: string
-        name: string
-        nif: string | null
-        billing_address_street: string | null
-        email: string | null
-        phone: string | null
-        contact_person: string | null
-      } | null
+        id: string;
+        name: string;
+        nif: string | null;
+        billing_address_street: string | null;
+        email: string | null;
+        phone: string | null;
+        contact_person: string | null;
+      } | null;
     }
-  ).clients
+  ).clients;
   const lead = (
     proposal as unknown as {
       leads: {
-        id: string
-        name: string
-        company: string | null
-        email: string | null
-        phone: string | null
-      } | null
+        id: string;
+        name: string;
+        company: string | null;
+        email: string | null;
+        phone: string | null;
+      } | null;
     }
-  ).leads
+  ).leads;
   const project = (proposal as unknown as { projects: { id: string; name: string } | null })
-    .projects
-  const recipientEmail = client?.email ?? lead?.email ?? null
+    .projects;
+  const recipientEmail = client?.email ?? lead?.email ?? null;
 
-  const status = proposal.status as ProposalStatus
-  const needsFiscal = !client || !hasCompleteFiscalData(client)
+  const status = proposal.status as ProposalStatus;
+  const needsFiscal = !client || !hasCompleteFiscalData(client);
   const fiscalPrefill = client
     ? {
-      name: client.name ?? '',
-      nif: client.nif ?? '',
-      billing_address: client.billing_address_street ?? '',
-      contact_person: client.contact_person ?? '',
-      email: client.email ?? '',
-      phone: client.phone ?? '',
-    }
+        name: client.name ?? "",
+        nif: client.nif ?? "",
+        billing_address: client.billing_address_street ?? "",
+        contact_person: client.contact_person ?? "",
+        email: client.email ?? "",
+        phone: client.phone ?? "",
+      }
     : {
-      name: lead?.company ?? lead?.name ?? '',
-      nif: '',
-      billing_address: '',
-      contact_person: lead?.name ?? '',
-      email: lead?.email ?? '',
-      phone: lead?.phone ?? '',
-    }
-  const locked = status === 'accepted' || status === 'rejected'
-  const editing = !locked && (mode === 'edit' || ai_draft === '1')
-  const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan)
-  const paymentSchedule = paymentScheduleInput.safeParse(proposal.payment_schedule)
+        name: lead?.company ?? lead?.name ?? "",
+        nif: "",
+        billing_address: "",
+        contact_person: lead?.name ?? "",
+        email: lead?.email ?? "",
+        phone: lead?.phone ?? "",
+      };
+  const locked = status === "accepted" || status === "rejected";
+  const editing = !locked && (mode === "edit" || ai_draft === "1");
+  const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan);
+  const paymentSchedule = paymentScheduleInput.safeParse(proposal.payment_schedule);
   const paymentPlan =
     configuredPaymentPlan.length > 0
       ? configuredPaymentPlan
       : paymentSchedule.success
         ? paymentPlanForSchedule(paymentSchedule.data)
-        : []
+        : [];
   // Drafts authored against a lead never receive a series number until the
   // first transition to `sent` (see `sendPreviewLink`). The header falls back
   // to a human label so the page never renders `null` in the title.
-  const proposalNumber = (proposal.number as string | null) ?? 'Borrador'
-  const recipientName = client?.name ?? lead?.name ?? 'Sin destinatario'
+  const proposalNumber = (proposal.number as string | null) ?? "Borrador";
+  const recipientName = client?.name ?? lead?.name ?? "Sin destinatario";
 
   const editableItems: EditableItem[] = ((items ?? []) as unknown as EditableItem[]).map((it) => ({
     id: it.id,
@@ -377,38 +377,38 @@ export default async function ProposalDetailPage({
     quantity: Number(it.quantity) || 0,
     unit_price: Number(it.unit_price) || 0,
     vat_rate: Number(it.vat_rate) || 0,
-    billing_cycle: it.billing_cycle ?? 'none',
-  }))
+    billing_cycle: it.billing_cycle ?? "none",
+  }));
 
-  const viewRows = (views ?? []) as unknown as ProposalViewRow[]
+  const viewRows = (views ?? []) as unknown as ProposalViewRow[];
 
-  const token = proposal.portal_token as string | null
-  const portalViewedAt = (lastPortalView?.viewed_at as string | null) ?? null
-  const deckViewedAt = (lastDeckView?.viewed_at as string | null) ?? null
+  const token = proposal.portal_token as string | null;
+  const portalViewedAt = (lastPortalView?.viewed_at as string | null) ?? null;
+  const deckViewedAt = (lastDeckView?.viewed_at as string | null) ?? null;
   const selectedTeamIds = ((proposalTeam ?? []) as Array<{ member_id: string }>).map(
     (member) => member.member_id,
-  )
+  );
   const visibleTeam = (
     (teamMembers ?? []) as Array<{
-      id: string
-      name: string
-      job_title: string | null
+      id: string;
+      name: string;
+      job_title: string | null;
     }>
-  ).filter((member) => selectedTeamIds.includes(member.id))
-  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options)
+  ).filter((member) => selectedTeamIds.includes(member.id));
+  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options);
   const selectedMaintenance = selectedMaintenancePlan(
     maintenanceOffer,
     (proposal.maintenance_selected_plan_id as string | null) ?? null,
-  )
+  );
   const { data: maintenanceSubscription } =
-    status === 'accepted' && selectedMaintenance && proposal.client_id
+    status === "accepted" && selectedMaintenance && proposal.client_id
       ? await supabase
-        .from('subscriptions')
-        .select('id')
-        .eq('proposal_id', id)
-        .is('deleted_at', null)
-        .maybeSingle()
-      : { data: null }
+          .from("subscriptions")
+          .select("id")
+          .eq("proposal_id", id)
+          .is("deleted_at", null)
+          .maybeSingle()
+      : { data: null };
 
   return (
     <div className="flex flex-col gap-6">
@@ -422,19 +422,19 @@ export default async function ProposalDetailPage({
           <div className="flex items-center gap-1.5">
             <CopySummaryButton
               lines={(() => {
-                const parts: string[] = []
-                parts.push(`📋 ${proposalNumber} — ${proposal.title as string}`)
+                const parts: string[] = [];
+                parts.push(`📋 ${proposalNumber} — ${proposal.title as string}`);
                 parts.push(
                   [
                     client ? `Cliente: ${client.name}` : lead ? `Lead: ${lead.name}` : null,
                     `Estado: ${PROPOSAL_STATUS[status]?.label ?? status}`,
                     Number(proposal.total ?? 0) > 0 &&
-                    `Total: ${formatEUR(Number(proposal.total))}`,
+                      `Total: ${formatEUR(Number(proposal.total))}`,
                   ]
                     .filter(Boolean)
-                    .join(' · '),
-                )
-                return parts
+                    .join(" · "),
+                );
+                return parts;
               })()}
               urlPath={`/proposals/${id}`}
             />
@@ -443,13 +443,13 @@ export default async function ProposalDetailPage({
               <Button variant="outline" size="sm" asChild>
                 <Link href={editing ? `/proposals/${id}` : `/proposals/${id}?mode=edit`}>
                   <Pencil aria-hidden />
-                  {editing ? 'Ver' : 'Editar'}
+                  {editing ? "Ver" : "Editar"}
                 </Link>
               </Button>
             ) : null}
             {!editing ? (
               <>
-                {status === 'accepted' ? (
+                {status === "accepted" ? (
                   needsFiscal ? (
                     <MarkAcceptedButton
                       proposalId={id}
@@ -460,11 +460,11 @@ export default async function ProposalDetailPage({
                   ) : (
                     <GenerateInvoiceButton
                       proposalId={id}
-                      canGenerateInvoice={['owner', 'admin'].includes(user.role)}
+                      canGenerateInvoice={["owner", "admin"].includes(user.role)}
                       paymentPlan={paymentPlan}
                     />
                   )
-                ) : status !== 'rejected' ? (
+                ) : status !== "rejected" ? (
                   <MarkAcceptedButton
                     proposalId={id}
                     needsFiscal={needsFiscal}
@@ -475,8 +475,8 @@ export default async function ProposalDetailPage({
                 <ProposalMoreActions
                   proposalId={id}
                   canReject={
-                    ['owner', 'admin'].includes(user.role) &&
-                    ['sent', 'viewed', 'expired'].includes(status)
+                    ["owner", "admin"].includes(user.role) &&
+                    ["sent", "viewed", "expired"].includes(status)
                   }
                 />
               </>
@@ -512,16 +512,16 @@ export default async function ProposalDetailPage({
             initialMaintenanceSelectedPlanId={
               (proposal.maintenance_selected_plan_id as string | null) ?? null
             }
-            teamMembers={(teamMembers ?? []) as Parameters<typeof ProposalEditor>[0]['teamMembers']}
+            teamMembers={(teamMembers ?? []) as Parameters<typeof ProposalEditor>[0]["teamMembers"]}
             initialTeamMemberIds={selectedTeamIds}
             initialItems={editableItems}
             initialCreatedAt={(proposal.created_at as string | null) ?? null}
             initialAttachments={
-              (attachments ?? []) as import('@/components/ui/attachment-section').AttachmentItem[]
+              (attachments ?? []) as import("@/components/ui/attachment-section").AttachmentItem[]
             }
             aiEnabled={isAIEnabled()}
             leadId={lead?.id ?? null}
-            autoGenerateDraft={ai_draft === '1'}
+            autoGenerateDraft={ai_draft === "1"}
             locked={locked}
           />
         </SectionBoundary>
@@ -531,7 +531,7 @@ export default async function ProposalDetailPage({
           validUntil={(proposal.valid_until as string | null) ?? null}
           paymentPlan={paymentPlan}
           paymentTerms={(proposal.payment_terms as string | null) ?? null}
-          items={((items ?? []) as Parameters<typeof ProposalOverview>[0]['items']).map((item) => ({
+          items={((items ?? []) as Parameters<typeof ProposalOverview>[0]["items"]).map((item) => ({
             ...item,
             quantity: Number(item.quantity),
             unit_price: Number(item.unit_price),
@@ -556,7 +556,7 @@ export default async function ProposalDetailPage({
                         token={token}
                         portalViewedAt={portalViewedAt}
                         deckViewedAt={deckViewedAt}
-                        isDraft={status === 'draft'}
+                        isDraft={status === "draft"}
                       />
                       <PortalAccessControls
                         id={id}
@@ -567,7 +567,7 @@ export default async function ProposalDetailPage({
                     </>
                   ) : null}
                   {locked ? (
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-xs text-muted-foreground">
                       La propuesta ya ha sido respondida.
                     </p>
                   ) : (
@@ -580,18 +580,18 @@ export default async function ProposalDetailPage({
                 </CardContent>
               </Card>
 
-              {status === 'accepted' ? (
+              {status === "accepted" ? (
                 <>
                   {selectedMaintenance && !maintenanceSubscription ? (
                     <CreateSubscriptionFromProposalButton
                       proposalId={id}
                       planName={selectedMaintenance.name}
                       cycleLabel={
-                        maintenanceOffer.billing_cycle === 'monthly'
-                          ? 'mes'
-                          : maintenanceOffer.billing_cycle === 'quarterly'
-                            ? 'trimestre'
-                            : 'año'
+                        maintenanceOffer.billing_cycle === "monthly"
+                          ? "mes"
+                          : maintenanceOffer.billing_cycle === "quarterly"
+                            ? "trimestre"
+                            : "año"
                       }
                       amount={recurringAmount(
                         selectedMaintenance.monthly_price,
@@ -604,20 +604,20 @@ export default async function ProposalDetailPage({
                     initialPlan={paymentPlan}
                     initialVersion={Number(proposal.version)}
                     total={Number(proposal.total ?? 0)}
-                    canEdit={user.role !== 'viewer'}
+                    canEdit={user.role !== "viewer"}
                     invoices={(
                       (paymentPlanInvoices ?? []) as Array<Record<string, unknown>>
                     ).flatMap((invoice) => {
-                      const planItemId = invoice.proposal_payment_plan_item_id as string | null
-                      if (!planItemId) return []
+                      const planItemId = invoice.proposal_payment_plan_item_id as string | null;
+                      if (!planItemId) return [];
                       return [
                         {
                           id: invoice.id as string,
                           planItemId,
-                          number: (invoice.full_number as string | null) ?? 'Borrador',
+                          number: (invoice.full_number as string | null) ?? "Borrador",
                           status: invoice.status as string,
                         },
-                      ]
+                      ];
                     })}
                   />
                 </>
@@ -653,17 +653,17 @@ export default async function ProposalDetailPage({
                     <CardTitle>Señal / Pagos de reserva</CardTitle>
                   </CardHeader>
                   <CardContent className="px-0">
-                    <ul className="divide-border divide-y text-sm">
+                    <ul className="divide-y divide-border text-sm">
                       {depositPayments.map((p) => {
-                        const pStatus = p.status as string
+                        const pStatus = p.status as string;
                         const icon =
-                          pStatus === 'confirmed' ? (
+                          pStatus === "confirmed" ? (
                             <CheckCircle2 className="size-4 text-emerald-600" />
-                          ) : pStatus === 'failed' ? (
+                          ) : pStatus === "failed" ? (
                             <XCircle className="size-4 text-red-500" />
                           ) : (
                             <Clock className="size-4 text-amber-500" />
-                          )
+                          );
                         return (
                           <li
                             key={p.id as string}
@@ -676,21 +676,21 @@ export default async function ProposalDetailPage({
                               </span>
                               <Badge
                                 variant={
-                                  pStatus === 'confirmed'
-                                    ? 'success'
-                                    : pStatus === 'failed'
-                                      ? 'danger'
-                                      : 'warning'
+                                  pStatus === "confirmed"
+                                    ? "success"
+                                    : pStatus === "failed"
+                                      ? "danger"
+                                      : "warning"
                                 }
                               >
-                                {pStatus === 'confirmed'
-                                  ? 'Confirmado'
-                                  : pStatus === 'failed'
-                                    ? 'Fallido'
-                                    : 'Pendiente'}
+                                {pStatus === "confirmed"
+                                  ? "Confirmado"
+                                  : pStatus === "failed"
+                                    ? "Fallido"
+                                    : "Pendiente"}
                               </Badge>
                               {p.confirmed_at && (
-                                <span className="text-muted-foreground text-xs">
+                                <span className="text-xs text-muted-foreground">
                                   {formatDate(p.confirmed_at as string)}
                                 </span>
                               )}
@@ -698,13 +698,13 @@ export default async function ProposalDetailPage({
                             {p.invoice_id && (
                               <Link
                                 href={`/invoices/${p.invoice_id}`}
-                                className="text-primary text-xs hover:underline"
+                                className="text-xs text-primary hover:underline"
                               >
                                 Ver factura →
                               </Link>
                             )}
                           </li>
-                        )
+                        );
                       })}
                     </ul>
                   </CardContent>
@@ -722,7 +722,7 @@ export default async function ProposalDetailPage({
                   <DetailRow label="Estado">
                     <StatusBadge meta={PROPOSAL_STATUS} value={status} />
                   </DetailRow>
-                  <DetailRow label={client ? 'Cliente' : 'Lead'}>
+                  <DetailRow label={client ? "Cliente" : "Lead"}>
                     {client ? (
                       <Link href={`/clients/${client.id}`} className="hover:underline">
                         {client.name}
@@ -732,7 +732,7 @@ export default async function ProposalDetailPage({
                         {lead.company ? `${lead.name} · ${lead.company}` : lead.name}
                       </Link>
                     ) : (
-                      '—'
+                      "—"
                     )}
                   </DetailRow>
                   <DetailRow label="Proyecto">
@@ -753,10 +753,10 @@ export default async function ProposalDetailPage({
                   <DetailRow label="Respondida">
                     {formatDate(proposal.responded_at as string | null)}
                   </DetailRow>
-                  {status === 'accepted' && latestAcceptance ? (
+                  {status === "accepted" && latestAcceptance ? (
                     <>
                       <DetailRow label="Firmada por">
-                        {`${latestAcceptance.signer_name as string}${latestAcceptance.signer_role ? ` · ${latestAcceptance.signer_role as string}` : ''}`}
+                        {`${latestAcceptance.signer_name as string}${latestAcceptance.signer_role ? ` · ${latestAcceptance.signer_role as string}` : ""}`}
                       </DetailRow>
                       <DetailRow label="Huella del documento">
                         <span className="font-mono text-xs">
@@ -774,7 +774,7 @@ export default async function ProposalDetailPage({
               proposalId={id}
               leadId={lead?.id ?? null}
               clientId={client?.id ?? null}
-              aiEnabled={isAIEnabled() && ['sent', 'viewed'].includes(status)}
+              aiEnabled={isAIEnabled() && ["sent", "viewed"].includes(status)}
               messages={(messages ?? []) as unknown as ProposalMessage[]}
               views={viewRows}
             />
@@ -782,5 +782,5 @@ export default async function ProposalDetailPage({
         />
       )}
     </div>
-  )
+  );
 }

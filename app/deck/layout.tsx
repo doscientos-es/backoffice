@@ -1,13 +1,13 @@
-import { PortalLanguageSwitch } from '@/components/portal/language-switch'
+import { PortalLanguageSwitch } from "@/components/portal/language-switch";
 
 /**
  * Deck layout — full-screen, no chrome.
  * Intentionally avoids the portal header/footer so slides fill the viewport.
  */
 export const metadata = {
-  title: 'Presentación · doscientos',
+  title: "Presentación · doscientos",
   robots: { index: false, follow: false },
-}
+};
 
 export default function DeckLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,6 +17,5 @@ export default function DeckLayout({ children }: { children: React.ReactNode }) 
       </div>
       {children}
     </>
-  )
+  );
 }
-

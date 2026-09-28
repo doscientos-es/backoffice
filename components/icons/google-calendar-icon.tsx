@@ -1,12 +1,12 @@
-import Image from 'next/image'
+import Image from "next/image";
 
 /** Official 2026 Google Calendar logo, preserving its original aspect ratio. */
 export function GoogleCalendarIcon({
   size = 14,
   className,
 }: {
-  size?: number
-  className?: string
+  size?: number;
+  className?: string;
 }) {
   return (
     <Image
@@ -17,5 +17,5 @@ export function GoogleCalendarIcon({
       className={className}
       aria-hidden="true"
     />
-  )
+  );
 }

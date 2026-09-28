@@ -1,24 +1,24 @@
-'use client'
+"use client";
 
-import { ChevronRight, Mail, Phone } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { ChevronRight, Mail, Phone } from "lucide-react";
+import { type ReactNode, useState } from "react";
 
-import { ListPage, type ListPageProps } from '@/components/layout/list-page'
-import { EntityAvatar } from '@/components/ui/entity-avatar'
-import { useOptimisticRemoval } from '@/lib/hooks/use-optimistic-removal'
-import { cn } from '@/lib/utils'
+import { ListPage, type ListPageProps } from "@/components/layout/list-page";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
+import { cn } from "@/lib/utils";
 
-import { deleteClient } from './actions'
-import { ClientQuickView, type QuickClient } from './client-quick-view'
+import { deleteClient } from "./actions";
+import { ClientQuickView, type QuickClient } from "./client-quick-view";
 
 export function ClientsList({ canEdit = false, ...props }: ListPageProps & { canEdit?: boolean }) {
-  const [selectedClient, setSelectedClient] = useState<QuickClient | null>(null)
-  const { items: rows, remove } = useOptimisticRemoval(props.rows)
+  const [selectedClient, setSelectedClient] = useState<QuickClient | null>(null);
+  const { items: rows, remove } = useOptimisticRemoval(props.rows);
 
   const handleDelete = (id: string) => {
-    setSelectedClient(null)
-    remove(id, () => deleteClient({ id }), { errorMessage: 'No se pudo eliminar el cliente' })
-  }
+    setSelectedClient(null);
+    remove(id, () => deleteClient({ id }), { errorMessage: "No se pudo eliminar el cliente" });
+  };
 
   return (
     <>
@@ -41,56 +41,56 @@ export function ClientsList({ canEdit = false, ...props }: ListPageProps & { can
         onCloseAction={() => setSelectedClient(null)}
       />
     </>
-  )
+  );
 }
 
 function ClientMobileCard({
   client,
   onOpenAction,
 }: {
-  client: QuickClient
-  onOpenAction: () => void
+  client: QuickClient;
+  onOpenAction: () => void;
 }) {
-  const displayName = client.label?.trim() || client.name
-  const hasContact = client.email || client.phone
+  const displayName = client.label?.trim() || client.name;
+  const hasContact = client.email || client.phone;
 
   return (
-    <article className="border-border bg-card active:bg-muted/50 overflow-hidden rounded-xl border shadow-sm transition-colors">
+    <article className="overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-colors active:bg-muted/50">
       <button
         type="button"
         onClick={onOpenAction}
-        className="focus-visible:ring-ring/50 flex min-h-18 w-full items-center gap-3 px-3 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset"
+        className="flex min-h-18 w-full items-center gap-3 px-3 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
         aria-label={`Abrir ficha rápida de ${displayName}`}
       >
         <EntityAvatar name={displayName} logoUrl={client.logo_url} size="md" className="shrink-0" />
         <span className="min-w-0 flex-1">
-          <span className="text-foreground block truncate text-sm font-semibold">
+          <span className="block truncate text-sm font-semibold text-foreground">
             {displayName}
           </span>
-          <span className="text-muted-foreground mt-0.5 block truncate text-xs">
-            {client.nif || 'Sin NIF / CIF'}
+          <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+            {client.nif || "Sin NIF / CIF"}
           </span>
         </span>
-        <ChevronRight className="text-muted-foreground size-5 shrink-0" aria-hidden />
+        <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
       </button>
       {hasContact ? (
-        <div className="border-border/70 divide-border/70 grid grid-cols-2 divide-x border-t">
+        <div className="grid grid-cols-2 divide-x divide-border/70 border-t border-border/70">
           <ContactAction
             href={client.phone ? `tel:${client.phone}` : undefined}
             icon={<Phone className="size-4" />}
           >
-            {client.phone || 'Sin teléfono'}
+            {client.phone || "Sin teléfono"}
           </ContactAction>
           <ContactAction
             href={client.email ? `mailto:${client.email}` : undefined}
             icon={<Mail className="size-4" />}
           >
-            {client.email || 'Sin email'}
+            {client.email || "Sin email"}
           </ContactAction>
         </div>
       ) : null}
     </article>
-  )
+  );
 }
 
 function ContactAction({
@@ -98,20 +98,20 @@ function ContactAction({
   icon,
   children,
 }: {
-  href?: string
-  icon: ReactNode
-  children: ReactNode
+  href?: string;
+  icon: ReactNode;
+  children: ReactNode;
 }) {
   const className = cn(
-    'flex min-h-11 min-w-0 items-center gap-2 px-3 text-xs transition-colors',
-    href ? 'text-primary hover:bg-primary/5' : 'text-muted-foreground/60',
-  )
+    "flex min-h-11 min-w-0 items-center gap-2 px-3 text-xs transition-colors",
+    href ? "text-primary hover:bg-primary/5" : "text-muted-foreground/60",
+  );
   const content = (
     <>
       <span className="shrink-0">{icon}</span>
       <span className="truncate">{children}</span>
     </>
-  )
+  );
 
   return href ? (
     <a className={className} href={href}>
@@ -119,5 +119,5 @@ function ContactAction({
     </a>
   ) : (
     <span className={className}>{content}</span>
-  )
+  );
 }

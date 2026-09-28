@@ -84,7 +84,7 @@ describe('formatOutboxError', () => {
 
 describe('resolveVerifactuSoftwareSnapshot', () => {
   const fallback = {
-    producerName: 'Doscientos',
+    producerName: 'Doscientos Desarrollo Tecnológico, S.L.',
     producerNif: 'B12345678',
     name: 'Backoffice',
     id: 'D1',

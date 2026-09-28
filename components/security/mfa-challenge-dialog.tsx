@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   Dialog,
@@ -8,29 +8,29 @@ import {
   DialogHeader,
   DialogTitle,
   OtpInput,
-} from '@doscientos/ui'
-import { Fingerprint, LoaderCircle as Loader2, ShieldCheck } from 'lucide-react'
-import { useEffect, useState } from 'react'
+} from "@doscientos/ui";
+import { Fingerprint, LoaderCircle as Loader2, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import {
   trustCurrentMfaDevice,
   trustCurrentMfaDeviceAfterPasskey,
-} from '@/lib/security/mfa-actions'
-import type { UserVerificationScope } from '@/lib/security/user-verification-scope'
-import { getBrowserClient } from '@/lib/supabase/browser'
+} from "@/lib/security/mfa-actions";
+import type { UserVerificationScope } from "@/lib/security/user-verification-scope";
+import { getBrowserClient } from "@/lib/supabase/browser";
 
-import { usePasskeyVerification } from './use-passkey-verification'
+import { usePasskeyVerification } from "./use-passkey-verification";
 
 type Props = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onVerified: () => void
-  dismissible?: boolean
-  setupHref?: string
-  passkeyScope?: UserVerificationScope
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onVerified: () => void;
+  dismissible?: boolean;
+  setupHref?: string;
+  passkeyScope?: UserVerificationScope;
+};
 
 export function MfaChallengeDialog({
   open,
@@ -40,70 +40,70 @@ export function MfaChallengeDialog({
   setupHref,
   passkeyScope,
 }: Props) {
-  const [factorId, setFactorId] = useState<string | null>(null)
-  const [code, setCode] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [biometricLoading, setBiometricLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const { challenge: passkeyChallenge, verifyWithPasskey } = usePasskeyVerification()
-  const hasPasskeyScope = Boolean(passkeyScope)
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { challenge: passkeyChallenge, verifyWithPasskey } = usePasskeyVerification();
+  const hasPasskeyScope = Boolean(passkeyScope);
 
   useEffect(() => {
-    if (!open) return
-    setCode('')
-    setError(null)
-    setLoading(true)
+    if (!open) return;
+    setCode("");
+    setError(null);
+    setLoading(true);
     void getBrowserClient()
       .auth.mfa.listFactors()
       .then(({ data, error: factorsError }) => {
-        const factor = data?.totp.find((candidate) => candidate.status === 'verified')
-        setFactorId(factor?.id ?? null)
+        const factor = data?.totp.find((candidate) => candidate.status === "verified");
+        setFactorId(factor?.id ?? null);
         if ((factorsError || !factor) && !hasPasskeyScope) {
-          setError('No hay una aplicación Authenticator configurada para esta cuenta.')
+          setError("No hay una aplicación Authenticator configurada para esta cuenta.");
         }
       })
-      .finally(() => setLoading(false))
-  }, [hasPasskeyScope, open])
+      .finally(() => setLoading(false));
+  }, [hasPasskeyScope, open]);
 
   async function verify(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!factorId) return
-    setError(null)
-    setLoading(true)
+    event.preventDefault();
+    if (!factorId) return;
+    setError(null);
+    setLoading(true);
     const { error: verifyError } = await getBrowserClient().auth.mfa.challengeAndVerify({
       factorId,
       code,
-    })
-    setLoading(false)
+    });
+    setLoading(false);
     if (verifyError) {
-      setError('El código no es válido. Comprueba la hora de tu dispositivo e inténtalo de nuevo.')
-      return
+      setError("El código no es válido. Comprueba la hora de tu dispositivo e inténtalo de nuevo.");
+      return;
     }
-    const trust = await trustCurrentMfaDevice()
+    const trust = await trustCurrentMfaDevice();
     if (!trust.ok) {
-      setError(trust.error)
-      return
+      setError(trust.error);
+      return;
     }
-    onVerified()
+    onVerified();
   }
 
   async function verifyWithBiometric() {
-    if (!passkeyScope) return
-    setError(null)
-    setBiometricLoading(true)
-    const verification = await verifyWithPasskey(passkeyScope)
+    if (!passkeyScope) return;
+    setError(null);
+    setBiometricLoading(true);
+    const verification = await verifyWithPasskey(passkeyScope);
     if (!verification.ok) {
-      setBiometricLoading(false)
-      setError(verification.error)
-      return
+      setBiometricLoading(false);
+      setError(verification.error);
+      return;
     }
-    const trust = await trustCurrentMfaDeviceAfterPasskey()
-    setBiometricLoading(false)
+    const trust = await trustCurrentMfaDeviceAfterPasskey();
+    setBiometricLoading(false);
     if (!trust.ok) {
-      setError(trust.error)
-      return
+      setError(trust.error);
+      return;
     }
-    onVerified()
+    onVerified();
   }
 
   return (
@@ -115,12 +115,12 @@ export function MfaChallengeDialog({
         <DialogContent className="sm:max-w-sm" showCloseButton={dismissible}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="text-primary size-5" /> Confirmar acción
+              <ShieldCheck className="size-5 text-primary" /> Confirmar acción
             </DialogTitle>
             <DialogDescription>
               {passkeyScope
-                ? 'Usa la biometría de este dispositivo o introduce el código de Authenticator para continuar.'
-                : 'Introduce el código de Authenticator para continuar.'}{' '}
+                ? "Usa la biometría de este dispositivo o introduce el código de Authenticator para continuar."
+                : "Introduce el código de Authenticator para continuar."}{" "}
               No saldrás de esta página.
             </DialogDescription>
           </DialogHeader>
@@ -139,10 +139,10 @@ export function MfaChallengeDialog({
                 )}
                 Usar biometría
               </Button>
-              <div className="text-muted-foreground flex items-center gap-3 text-xs">
-                <span className="bg-border h-px flex-1" />
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="h-px flex-1 bg-border" />
                 <span>o usa Authenticator</span>
-                <span className="bg-border h-px flex-1" />
+                <span className="h-px flex-1 bg-border" />
               </div>
             </div>
           ) : null}
@@ -156,17 +156,17 @@ export function MfaChallengeDialog({
                 onChange={setCode}
                 disabled={loading || biometricLoading || !factorId}
                 aria-invalid={Boolean(error)}
-                aria-describedby={error ? 'invoice-mfa-code-error' : undefined}
+                aria-describedby={error ? "invoice-mfa-code-error" : undefined}
                 required
               />
             </Field>
             {error ? (
-              <p id="invoice-mfa-code-error" role="alert" className="text-destructive text-sm">
+              <p id="invoice-mfa-code-error" role="alert" className="text-sm text-destructive">
                 {error}
               </p>
             ) : null}
             {error && setupHref ? (
-              <a className="text-primary text-sm underline underline-offset-4" href={setupHref}>
+              <a className="text-sm text-primary underline underline-offset-4" href={setupHref}>
                 Configurar MFA en Seguridad
               </a>
             ) : null}
@@ -193,5 +193,5 @@ export function MfaChallengeDialog({
       </Dialog>
       {passkeyScope ? passkeyChallenge : null}
     </>
-  )
+  );
 }

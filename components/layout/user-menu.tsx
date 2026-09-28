@@ -1,6 +1,13 @@
 "use client";
 
 import {
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@doscientos/ui";
+import {
   CircleAlert as AlertCircle,
   ChevronRight,
   LogOut,
@@ -15,13 +22,6 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@doscientos/ui";
 import type { CurrentUser, MemberRole } from "@/lib/auth";
 import { clearTrustedMfaDevice } from "@/lib/security/mfa-actions";
 import { getBrowserClient } from "@/lib/supabase/browser";
@@ -94,7 +94,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
         </Avatar>
       </Button>
       <DropdownMenuContent placement="bottom end" offset={8} className="w-72 p-2">
-        <DropdownMenuLabel className="bg-muted/50 rounded-lg p-3 font-normal">
+        <DropdownMenuLabel className="rounded-lg bg-muted/50 p-3 font-normal">
           <div className="flex min-w-0 items-center gap-3">
             <Avatar size="lg" className="shrink-0">
               {avatarSrc ? (
@@ -103,10 +103,10 @@ export function UserMenu({ user }: { user: CurrentUser }) {
               <AvatarFallback>{initials(user.name)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <span className="text-foreground block truncate text-sm font-semibold">
+              <span className="block truncate text-sm font-semibold text-foreground">
                 {user.name}
               </span>
-              <span className="text-muted-foreground block truncate text-xs">{user.email}</span>
+              <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
               <Badge variant={ROLE_VARIANT[user.role]} className="mt-1.5">
                 <ShieldCheck className="size-3" aria-hidden />
                 {ROLE_LABELS[user.role]}
@@ -118,28 +118,28 @@ export function UserMenu({ user }: { user: CurrentUser }) {
           Mi cuenta
         </DropdownMenuLabel>
         <DropdownMenuItem href="/settings/profile" className="rounded-lg p-2">
-          <span className="bg-muted text-muted-foreground grid size-8 shrink-0 place-items-center rounded-full">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
             <UserRound className="size-4" aria-hidden />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="text-foreground block font-medium">Mi perfil</span>
-            <span className="text-muted-foreground block truncate text-xs">
+            <span className="block font-medium text-foreground">Mi perfil</span>
+            <span className="block truncate text-xs text-muted-foreground">
               Datos personales y firma
             </span>
           </span>
-          <ChevronRight className="text-muted-foreground size-4" aria-hidden />
+          <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
         </DropdownMenuItem>
         <DropdownMenuItem href="/settings/security" className="rounded-lg p-2">
-          <span className="bg-muted text-muted-foreground grid size-8 shrink-0 place-items-center rounded-full">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
             <Shield className="size-4" aria-hidden />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="text-foreground block font-medium">Seguridad</span>
-            <span className="text-muted-foreground block truncate text-xs">
+            <span className="block font-medium text-foreground">Seguridad</span>
+            <span className="block truncate text-xs text-muted-foreground">
               MFA, passkeys y acceso
             </span>
           </span>
-          <ChevronRight className="text-muted-foreground size-4" aria-hidden />
+          <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
         </DropdownMenuItem>
         {canManageTeam ? (
           <>
@@ -147,16 +147,16 @@ export function UserMenu({ user }: { user: CurrentUser }) {
               Organización
             </DropdownMenuLabel>
             <DropdownMenuItem href="/settings/team" className="rounded-lg p-2">
-              <span className="bg-muted text-muted-foreground grid size-8 shrink-0 place-items-center rounded-full">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
                 <Users className="size-4" aria-hidden />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="text-foreground block font-medium">Equipo</span>
-                <span className="text-muted-foreground block truncate text-xs">
+                <span className="block font-medium text-foreground">Equipo</span>
+                <span className="block truncate text-xs text-muted-foreground">
                   Miembros, roles y permisos
                 </span>
               </span>
-              <ChevronRight className="text-muted-foreground size-4" aria-hidden />
+              <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
             </DropdownMenuItem>
           </>
         ) : null}
@@ -168,7 +168,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
         {signOutError ? (
           <div
             role="alert"
-            className="bg-destructive/10 text-destructive mx-1 mt-1 flex items-start gap-1.5 rounded-sm px-2 py-1.5 text-xs"
+            className="mx-1 mt-1 flex items-start gap-1.5 rounded-sm bg-destructive/10 px-2 py-1.5 text-xs text-destructive"
           >
             <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             <span>{signOutError}</span>

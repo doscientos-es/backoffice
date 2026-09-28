@@ -1,5 +1,6 @@
 "use client";
 
+import { Button as PopoverButton, PopoverContent, PopoverTrigger } from "@doscientos/ui";
 import {
   Bookmark,
   ChevronLeft,
@@ -18,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { Input } from "@/components/ui/input";
 import { type AvatarMember, MemberAvatar } from "@/components/ui/member-avatar";
-import { Button as PopoverButton, PopoverContent, PopoverTrigger } from "@doscientos/ui";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
@@ -136,7 +136,7 @@ function SavedViewsMenu({
         <Bookmark className="size-3.5" />
         Vistas
         {views.length > 0 ? (
-          <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-px text-[10px] leading-4">
+          <span className="rounded-full bg-muted px-1.5 py-px text-[10px] leading-4 text-muted-foreground">
             {views.length}
           </span>
         ) : null}
@@ -144,16 +144,16 @@ function SavedViewsMenu({
       <PopoverContent placement="bottom start" className="w-[min(22rem,calc(100vw-2rem))] p-3">
         <div className="mb-3">
           <p className="text-sm font-semibold">Vistas guardadas</p>
-          <p className="text-muted-foreground text-xs">Se guardan solo en este navegador.</p>
+          <p className="text-xs text-muted-foreground">Se guardan solo en este navegador.</p>
         </div>
         {views.length > 0 ? (
           <div className="mb-3 space-y-1">
             {views.map((view) => (
-              <div key={view.id} className="hover:bg-muted/60 flex items-center gap-1 rounded-md">
+              <div key={view.id} className="flex items-center gap-1 rounded-md hover:bg-muted/60">
                 <button
                   type="button"
                   onClick={() => onApply(view)}
-                  className="focus-visible:ring-ring/50 min-w-0 flex-1 truncate px-2 py-1.5 text-left text-sm font-medium focus-visible:ring-2 focus-visible:outline-none"
+                  className="min-w-0 flex-1 truncate px-2 py-1.5 text-left text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
                   {view.name}
                 </button>
@@ -171,7 +171,7 @@ function SavedViewsMenu({
             ))}
           </div>
         ) : (
-          <p className="bg-muted/50 text-muted-foreground mb-3 rounded-md px-2 py-3 text-xs">
+          <p className="mb-3 rounded-md bg-muted/50 px-2 py-3 text-xs text-muted-foreground">
             Guarda un conjunto de filtros para recuperarlo con un clic.
           </p>
         )}
@@ -391,7 +391,7 @@ export function ListControls({
           {searchKey ? (
             <div className="relative w-full min-w-0 sm:w-auto sm:max-w-sm sm:min-w-60 sm:flex-1">
               <Search
-                className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
               />
               <Input
@@ -399,13 +399,13 @@ export function ListControls({
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="border-border bg-background focus-visible:ring-primary/25 h-9 rounded-lg pr-8 pl-10! text-sm shadow-xs"
+                className="h-9 rounded-lg border-border bg-background pr-8 pl-10! text-sm shadow-xs focus-visible:ring-primary/25"
               />
               {q ? (
                 <button
                   type="button"
                   onClick={() => setQ("")}
-                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 absolute top-1/2 right-2 -translate-y-1/2 rounded-sm p-0.5 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                   aria-label="Limpiar búsqueda"
                 >
                   <X className="size-3.5" />
@@ -419,7 +419,7 @@ export function ListControls({
             return (
               <div
                 key={filter.key}
-                className="border-border bg-background flex h-9 shrink-0 items-center gap-1 rounded-lg border px-1.5 shadow-xs"
+                className="flex h-9 shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-1.5 shadow-xs"
               >
                 {filter.options.map((option) => {
                   const isSelected = selectedValue === option.value;
@@ -435,7 +435,7 @@ export function ListControls({
                       }
                       title={option.label}
                       onClick={() => setFilter(filter.key, isSelected ? "" : option.value)}
-                      className="focus-visible:ring-ring/50 rounded-full focus-visible:ring-2 focus-visible:outline-none"
+                      className="rounded-full focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                     >
                       <MemberAvatar
                         member={option.avatar ?? null}
@@ -468,7 +468,7 @@ export function ListControls({
                 <SlidersHorizontal className="size-3.5" />
                 Filtros
                 {activeSecondaryFilterCount > 0 ? (
-                  <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-px text-[10px] leading-4">
+                  <span className="rounded-full bg-primary px-1.5 py-px text-[10px] leading-4 text-primary-foreground">
                     {activeSecondaryFilterCount}
                   </span>
                 ) : null}
@@ -480,7 +480,7 @@ export function ListControls({
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold">Filtrar el listado</p>
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-xs text-muted-foreground">
                       Acota los resultados por sus atributos.
                     </p>
                   </div>
@@ -498,7 +498,7 @@ export function ListControls({
                         key={filter.key}
                         className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2"
                       >
-                        <span className="text-muted-foreground text-xs font-medium">
+                        <span className="text-xs font-medium text-muted-foreground">
                           {filter.label}
                         </span>
                         <EntityCombobox
@@ -518,7 +518,7 @@ export function ListControls({
                         key={filter.key}
                         className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2"
                       >
-                        <span className="text-muted-foreground text-xs font-medium">
+                        <span className="text-xs font-medium text-muted-foreground">
                           {filter.label}
                         </span>
                         <Select
@@ -571,7 +571,7 @@ export function ListControls({
             ) : null}
             {pagination ? (
               <>
-                <span className="text-muted-foreground text-xs tabular-nums">
+                <span className="text-xs text-muted-foreground tabular-nums">
                   {pagination.total === 0
                     ? "Sin resultados"
                     : `${from}–${to} de ${pagination.total}`}
@@ -629,7 +629,7 @@ export function ListControls({
           >
             <Search
               className={cn(
-                "pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground",
+                "pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground",
                 isPanel && "size-4",
               )}
               aria-hidden
@@ -642,7 +642,7 @@ export function ListControls({
               className={cn(
                 "text-sm",
                 isPanel
-                  ? "h-9 rounded-lg border-border bg-background pl-10! pr-8 shadow-xs focus-visible:ring-primary/25"
+                  ? "h-9 rounded-lg border-border bg-background pr-8 pl-10! shadow-xs focus-visible:ring-primary/25"
                   : "h-8 pl-10!",
               )}
             />
@@ -650,7 +650,7 @@ export function ListControls({
               <button
                 type="button"
                 onClick={() => setQ("")}
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 absolute top-1/2 right-2 -translate-y-1/2 rounded-sm p-0.5 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                className="absolute top-1/2 right-2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                 aria-label="Limpiar búsqueda"
               >
                 <X className="size-3.5" />
@@ -666,7 +666,7 @@ export function ListControls({
           )}
         >
           {isPanel ? (
-            <span className="text-muted-foreground col-span-full inline-flex items-center gap-1 text-xs font-medium">
+            <span className="col-span-full inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
               <SlidersHorizontal className="size-3.5" aria-hidden />
               Filtros
             </span>
@@ -684,7 +684,7 @@ export function ListControls({
                       "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
                   )}
                 >
-                  <span className="text-muted-foreground mr-0.5 text-xs font-medium">
+                  <span className="mr-0.5 text-xs font-medium text-muted-foreground">
                     {f.label}
                   </span>
                   {f.options.map((option) => {
@@ -701,7 +701,7 @@ export function ListControls({
                         }
                         title={option.label}
                         onClick={() => setFilter(f.key, isSelected ? "" : option.value)}
-                        className="focus-visible:ring-ring/50 rounded-full focus-visible:ring-2 focus-visible:outline-none"
+                        className="rounded-full focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                       >
                         <MemberAvatar
                           member={option.avatar ?? null}
@@ -729,7 +729,7 @@ export function ListControls({
                 placeholder={`${f.label}: todos`}
                 aria-label={f.label}
                 className={cn(
-                  "min-w-30 max-w-45 flex-1 text-xs sm:flex-none",
+                  "max-w-45 min-w-30 flex-1 text-xs sm:flex-none",
                   isPanel &&
                     "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
                   !isPanel && "h-8",
@@ -742,7 +742,7 @@ export function ListControls({
                 onChange={(e) => setFilter(f.key, e.target.value)}
                 aria-label={f.label}
                 className={cn(
-                  "min-w-30 max-w-45 flex-1 text-xs font-medium sm:flex-none",
+                  "max-w-45 min-w-30 flex-1 text-xs font-medium sm:flex-none",
                   isPanel && [
                     "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs hover:border-primary/30 lg:w-auto lg:max-w-45",
                     selectedValue && "border-primary/30 bg-primary/5 text-primary",
@@ -794,7 +794,7 @@ export function ListControls({
           ) : null}
           {pagination ? (
             <>
-              <span className="text-muted-foreground text-xs tabular-nums">
+              <span className="text-xs text-muted-foreground tabular-nums">
                 {pagination.total === 0 ? "Sin resultados" : `${from}–${to} de ${pagination.total}`}
               </span>
               <Button
@@ -823,8 +823,8 @@ export function ListControls({
       </div>
 
       {isPanel && activeFilters.length > 0 ? (
-        <div className="border-border/70 flex flex-wrap items-center gap-1.5 border-t px-3 py-2 sm:px-4">
-          <span className="text-muted-foreground mr-1 text-xs">Activos:</span>
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-border/70 px-3 py-2 sm:px-4">
+          <span className="mr-1 text-xs text-muted-foreground">Activos:</span>
           {urlQ ? (
             <button
               type="button"
@@ -832,7 +832,7 @@ export function ListControls({
                 setQ("");
                 setFilter(searchKey, "");
               }}
-              className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 focus-visible:ring-ring/50 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               Búsqueda: {urlQ}
               <X className="size-3" aria-hidden />
@@ -843,7 +843,7 @@ export function ListControls({
               key={filter.key}
               type="button"
               onClick={() => setFilter(filter.key, "")}
-              className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 focus-visible:ring-ring/50 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               {filter.label}
               <X className="size-3" aria-hidden />

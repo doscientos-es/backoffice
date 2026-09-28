@@ -217,7 +217,12 @@ export type InvoiceForEmail = {
   status: string;
   portal_token: string | null;
   is_client_visible: boolean;
-  client: { name: string; email: string | null; phone: string | null; leads: { language: 'es' | 'ca' | 'en' | null } | null } | null;
+  client: {
+    name: string;
+    email: string | null;
+    phone: string | null;
+    leads: { language: "es" | "ca" | "en" | null } | null;
+  } | null;
 };
 
 /** Channels the invoice portal link can be delivered through. */

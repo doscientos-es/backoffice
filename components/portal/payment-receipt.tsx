@@ -1,31 +1,31 @@
-import { CircleCheck as CheckCircle2 } from 'lucide-react'
+import { CircleCheck as CheckCircle2 } from "lucide-react";
 
-import { LogoMark } from '@/components/branding'
-import { ReceiptPrintButton } from '@/components/portal/receipt-print-button'
-import { formatPortalDate, formatPortalEUR } from '@/lib/portal/language'
+import { LogoMark } from "@/components/branding";
+import { ReceiptPrintButton } from "@/components/portal/receipt-print-button";
+import { formatPortalDate, formatPortalEUR } from "@/lib/portal/language";
 
 interface PaymentReceiptProps {
   /** Redsys order reference shown under the title. */
-  orderRef: string | null
+  orderRef: string | null;
   /** Issuer company data from settings. */
   company: {
-    name?: string | null
-    nif?: string | null
-    address?: string | null
-  }
+    name?: string | null;
+    nif?: string | null;
+    address?: string | null;
+  };
   /** Who paid (client/lead) and their fiscal id. */
-  recipientName: string
-  recipientNif?: string | null
+  recipientName: string;
+  recipientNif?: string | null;
   /** "En concepto de" block: main line and supporting detail. */
-  conceptTitle: string
-  conceptSubtitle: string
+  conceptTitle: string;
+  conceptSubtitle: string;
   /** Confirmed payment data. */
-  confirmedAt: string | null
-  authorisationCode?: string | null
-  amount: number
+  confirmedAt: string | null;
+  authorisationCode?: string | null;
+  amount: number;
   /** Closing legal note tailored to invoice vs proposal. */
-  footerNote: string
-  language?: 'es' | 'ca' | 'en'
+  footerNote: string;
+  language?: "es" | "ca" | "en";
 }
 
 /**
@@ -44,13 +44,44 @@ export function PaymentReceipt({
   authorisationCode,
   amount,
   footerNote,
-  language = 'es',
+  language = "es",
 }: PaymentReceiptProps) {
-  const copy = language === 'ca'
-    ? { paymentConfirmed: 'Pagament confirmat', title: 'Justificant de pagament', paidBy: 'Pagat per', concept: 'En concepte de', details: 'Detalls del pagament', date: 'Data:', method: 'Mètode:', authorization: 'Autorització:', amount: 'Import pagat' }
-    : language === 'en'
-      ? { paymentConfirmed: 'Payment confirmed', title: 'Payment receipt', paidBy: 'Paid by', concept: 'For', details: 'Payment details', date: 'Date:', method: 'Method:', authorization: 'Authorization:', amount: 'Amount paid' }
-      : { paymentConfirmed: 'Pago confirmado', title: 'Justificante de Pago', paidBy: 'Pagado por', concept: 'En concepto de', details: 'Detalles del pago', date: 'Fecha:', method: 'Método:', authorization: 'Autorización:', amount: 'Importe abonado' }
+  const copy =
+    language === "ca"
+      ? {
+          paymentConfirmed: "Pagament confirmat",
+          title: "Justificant de pagament",
+          paidBy: "Pagat per",
+          concept: "En concepte de",
+          details: "Detalls del pagament",
+          date: "Data:",
+          method: "Mètode:",
+          authorization: "Autorització:",
+          amount: "Import pagat",
+        }
+      : language === "en"
+        ? {
+            paymentConfirmed: "Payment confirmed",
+            title: "Payment receipt",
+            paidBy: "Paid by",
+            concept: "For",
+            details: "Payment details",
+            date: "Date:",
+            method: "Method:",
+            authorization: "Authorization:",
+            amount: "Amount paid",
+          }
+        : {
+            paymentConfirmed: "Pago confirmado",
+            title: "Justificante de Pago",
+            paidBy: "Pagado por",
+            concept: "En concepto de",
+            details: "Detalles del pago",
+            date: "Fecha:",
+            method: "Método:",
+            authorization: "Autorización:",
+            amount: "Importe abonado",
+          };
   return (
     <div className="min-h-screen bg-zinc-50 p-4 sm:p-8 dark:bg-zinc-950 print:bg-white print:p-0">
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -132,7 +163,7 @@ export function PaymentReceipt({
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-500">{copy.authorization}</span>
                     <span className="font-mono text-xs text-zinc-900 dark:text-zinc-100">
-                      {authorisationCode ?? '—'}
+                      {authorisationCode ?? "—"}
                     </span>
                   </div>
                 </div>
@@ -157,5 +188,5 @@ export function PaymentReceipt({
         </article>
       </div>
     </div>
-  )
+  );
 }

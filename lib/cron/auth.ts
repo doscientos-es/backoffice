@@ -1,15 +1,15 @@
-import { timingSafeEqual } from 'node:crypto'
+import { timingSafeEqual } from "node:crypto";
 
 type RequestWithHeaders = {
-  headers: Pick<Headers, 'get'>
-}
+  headers: Pick<Headers, "get">;
+};
 
 function matchesToken(candidate: string, secret: string): boolean {
-  const candidateBuffer = Buffer.from(candidate)
-  const secretBuffer = Buffer.from(secret)
+  const candidateBuffer = Buffer.from(candidate);
+  const secretBuffer = Buffer.from(secret);
   return (
     candidateBuffer.length === secretBuffer.length && timingSafeEqual(candidateBuffer, secretBuffer)
-  )
+  );
 }
 
 /**
@@ -21,13 +21,13 @@ export function isAuthorizedCronRequest(
   request: RequestWithHeaders,
   allowedSecrets: readonly (string | null | undefined)[],
 ): boolean {
-  const authorization = request.headers.get('authorization') ?? ''
-  const candidate = authorization.startsWith('Bearer ')
-    ? authorization.slice('Bearer '.length)
-    : authorization
-  if (!candidate) return false
+  const authorization = request.headers.get("authorization") ?? "";
+  const candidate = authorization.startsWith("Bearer ")
+    ? authorization.slice("Bearer ".length)
+    : authorization;
+  if (!candidate) return false;
 
   return allowedSecrets
     .filter((secret): secret is string => Boolean(secret))
-    .some((secret) => matchesToken(candidate, secret))
+    .some((secret) => matchesToken(candidate, secret));
 }

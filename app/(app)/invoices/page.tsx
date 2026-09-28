@@ -20,9 +20,9 @@ import { formatDate, formatEUR } from "@/lib/utils";
 import { parsePage, parseSortParam, parseStringParam } from "@/lib/utils/search-params";
 import { getVerifactuOperationalHealth } from "@/lib/verifactu/health";
 
-import { InvoiceRegisterExport } from "./monthly-register-export";
 import { InvoiceListRowActions } from "./invoice-list-row-actions";
 import { InvoicesList } from "./invoices-list";
+import { InvoiceRegisterExport } from "./monthly-register-export";
 
 export const metadata: Metadata = { title: "Facturas · doscientos" };
 export const dynamic = "force-dynamic";
@@ -206,7 +206,7 @@ export default async function InvoicesPage({
             <Link
               key="client"
               href={`/clients/${i.client_id}`}
-              className="text-foreground hover:text-primary block max-w-48 transition-colors hover:underline"
+              className="block max-w-48 text-foreground transition-colors hover:text-primary hover:underline"
               title={`Abrir ficha de ${i.client_name}`}
             >
               <span className="line-clamp-2 text-sm leading-5 font-medium">{i.client_name}</span>
@@ -215,7 +215,7 @@ export default async function InvoicesPage({
           i.concepts.length > 0 ? (
             <span
               key="concepts"
-              className="text-foreground/80 line-clamp-2 max-w-80 text-sm leading-5"
+              className="line-clamp-2 max-w-80 text-sm leading-5 text-foreground/80"
               title={i.concepts.join("\n")}
             >
               {i.concepts.join(" · ")}
@@ -224,7 +224,7 @@ export default async function InvoicesPage({
           i.idfact ? (
             <span
               key="idfact"
-              className="text-muted-foreground line-clamp-2 max-w-28 font-mono text-[10px] leading-4 break-all"
+              className="line-clamp-2 max-w-28 font-mono text-[10px] leading-4 break-all text-muted-foreground"
               title={i.idfact}
             >
               {i.idfact}
@@ -236,7 +236,7 @@ export default async function InvoicesPage({
           ),
           <StatusBadge key="status" meta={INVOICE_STATUS} value={i.status ?? ""} />,
           <StatusBadge key="verifactu" meta={VERIFACTU_STATUS} value={i.verifactu_status ?? ""} />,
-          <span key="total" className="text-foreground font-medium whitespace-nowrap tabular-nums">
+          <span key="total" className="font-medium whitespace-nowrap text-foreground tabular-nums">
             {formatEUR(i.total ?? 0)}
           </span>,
           <span key="issue-date" className="whitespace-nowrap tabular-nums">

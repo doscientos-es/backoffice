@@ -1,41 +1,41 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
+import type { Metadata } from "next";
+import Link from "next/link";
 
-import { BackLink } from '@/components/layout/back-link'
-import { PageHeader } from '@/components/layout/page-header'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { SubmitButton } from '@/components/ui/submit-button'
-import { requireUser } from '@/lib/auth'
-import { githubDefaultInstallationId } from '@/lib/env'
-import { createServerClient } from '@/lib/supabase/server'
-import { addDaysIsoLocal, todayIsoLocal } from '@/lib/utils/date'
+import { BackLink } from "@/components/layout/back-link";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { requireUser } from "@/lib/auth";
+import { githubDefaultInstallationId } from "@/lib/env";
+import { createServerClient } from "@/lib/supabase/server";
+import { addDaysIsoLocal, todayIsoLocal } from "@/lib/utils/date";
 
-import { createProject } from '../actions'
-import { ProjectFormFields } from '../project-form-fields'
+import { createProject } from "../actions";
+import { ProjectFormFields } from "../project-form-fields";
 
-export const metadata: Metadata = { title: 'Nuevo proyecto · doscientos' }
-export const dynamic = 'force-dynamic'
+export const metadata: Metadata = { title: "Nuevo proyecto · doscientos" };
+export const dynamic = "force-dynamic";
 
 export default async function NewProjectPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client_id?: string }>
+  searchParams: Promise<{ client_id?: string }>;
 }) {
-  await requireUser()
-  const { client_id } = await searchParams
-  const supabase = await createServerClient()
+  await requireUser();
+  const { client_id } = await searchParams;
+  const supabase = await createServerClient();
 
   const [{ data: clients }, { data: templates }] = await Promise.all([
-    supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
+    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
     supabase
-      .from('onboarding_templates')
-      .select('id, name, description')
-      .is('deleted_at', null)
-      .order('position'),
-  ])
+      .from("onboarding_templates")
+      .select("id, name, description")
+      .is("deleted_at", null)
+      .order("position"),
+  ]);
 
-  type Template = { id: string; name: string; description: string | null }
+  type Template = { id: string; name: string; description: string | null };
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,7 +52,7 @@ export default async function NewProjectPage({
               autoFocusName
               orgDefaultInstallationId={githubDefaultInstallationId()}
               defaults={{
-                client_id: client_id ?? '',
+                client_id: client_id ?? "",
                 starts_at: todayIsoLocal(),
                 ends_at: addDaysIsoLocal(42),
               }}
@@ -60,24 +60,24 @@ export default async function NewProjectPage({
 
             {/* Onboarding checklist template selector */}
             {(templates as Template[] | null)?.length ? (
-              <div className="border-border flex flex-col gap-2 border-t pt-4">
+              <div className="flex flex-col gap-2 border-t border-border pt-4">
                 <p className="text-sm font-medium">Checklist de onboarding</p>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-xs text-muted-foreground">
                   Elige una plantilla para generar la lista de tareas de inicio del proyecto.
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {/* Empty option */}
-                  <label className="border-border hover:bg-muted/40 has-checked:border-primary has-checked:bg-primary/5 flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted/40 has-checked:border-primary has-checked:bg-primary/5">
                     <input
                       type="radio"
                       name="template_id"
                       value=""
                       defaultChecked
-                      className="accent-primary mt-0.5"
+                      className="mt-0.5 accent-primary"
                     />
                     <span className="text-sm">
                       <span className="font-medium">Sin plantilla</span>
-                      <span className="text-muted-foreground block text-xs">
+                      <span className="block text-xs text-muted-foreground">
                         Empezar con checklist vacío
                       </span>
                     </span>
@@ -85,18 +85,18 @@ export default async function NewProjectPage({
                   {(templates as Template[]).map((t) => (
                     <label
                       key={t.id}
-                      className="border-border hover:bg-muted/40 has-checked:border-primary has-checked:bg-primary/5 flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors"
+                      className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted/40 has-checked:border-primary has-checked:bg-primary/5"
                     >
                       <input
                         type="radio"
                         name="template_id"
                         value={t.id}
-                        className="accent-primary mt-0.5"
+                        className="mt-0.5 accent-primary"
                       />
                       <span className="text-sm">
                         <span className="font-medium">{t.name}</span>
                         {t.description ? (
-                          <span className="text-muted-foreground block text-xs">
+                          <span className="block text-xs text-muted-foreground">
                             {t.description}
                           </span>
                         ) : null}
@@ -107,7 +107,7 @@ export default async function NewProjectPage({
               </div>
             ) : null}
 
-            <div className="border-border flex items-center justify-end gap-2 border-t pt-4">
+            <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
               <Button asChild variant="ghost" size="sm">
                 <Link href="/projects">Cancelar</Link>
               </Button>
@@ -117,5 +117,5 @@ export default async function NewProjectPage({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

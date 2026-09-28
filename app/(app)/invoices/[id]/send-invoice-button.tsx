@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   Dialog,
@@ -7,23 +7,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@doscientos/ui'
-import { LoaderCircle as Loader2, Mail } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { type FormEvent, useState } from 'react'
+} from "@doscientos/ui";
+import { LoaderCircle as Loader2, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
 
-import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
-import { IconButton } from '@/components/ui/icon-button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { buildInvoiceWhatsAppMessage, buildWhatsAppUrl } from '@/lib/leads/whatsapp'
-import { formatDate } from '@/lib/utils'
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { IconButton } from "@/components/ui/icon-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { buildInvoiceWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
+import { formatDate } from "@/lib/utils";
 
-import { logInvoiceWhatsappShare, previewInvoiceEmail, sendInvoiceEmail } from '../actions'
+import { logInvoiceWhatsappShare, previewInvoiceEmail, sendInvoiceEmail } from "../actions";
 
 /**
  * Opens a dialog to share the public portal link of an invoice with the client.
@@ -45,112 +45,112 @@ export function SendInvoiceButton({
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: {
-  invoiceId: string
-  defaultEmail?: string | null
-  defaultPhone?: string | null
+  invoiceId: string;
+  defaultEmail?: string | null;
+  defaultPhone?: string | null;
   /** Timestamp of the most recent delivery, used to offer a re-send. */
-  lastSentAt?: string | null
+  lastSentAt?: string | null;
   /** Render the trigger as a square icon-only button (no label text). */
-  iconOnly?: boolean
+  iconOnly?: boolean;
   /** Lets another control (such as a row-actions menu) open the dialog. */
-  hideTrigger?: boolean
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
+  hideTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const router = useRouter()
-  const feedback = useFormFeedback()
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
-  const open = controlledOpen ?? uncontrolledOpen
-  const [to, setTo] = useState(defaultEmail ?? '')
-  const [phone, setPhone] = useState(defaultPhone ?? '')
-  const [clientName, setClientName] = useState<string | null>(null)
-  const [invoiceNumber, setInvoiceNumber] = useState('—')
-  const [message, setMessage] = useState('')
-  const [attachPdf, setAttachPdf] = useState(true)
-  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
-  const [portalUrl, setPortalUrl] = useState<string | null>(null)
-  const [previewMessage, setPreviewMessage] = useState('')
-  const [loadingPreview, setLoadingPreview] = useState(false)
-  const [sharingWhatsapp, setSharingWhatsapp] = useState(false)
+  const router = useRouter();
+  const feedback = useFormFeedback();
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const [to, setTo] = useState(defaultEmail ?? "");
+  const [phone, setPhone] = useState(defaultPhone ?? "");
+  const [clientName, setClientName] = useState<string | null>(null);
+  const [invoiceNumber, setInvoiceNumber] = useState("—");
+  const [message, setMessage] = useState("");
+  const [attachPdf, setAttachPdf] = useState(true);
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+  const [portalUrl, setPortalUrl] = useState<string | null>(null);
+  const [previewMessage, setPreviewMessage] = useState("");
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [sharingWhatsapp, setSharingWhatsapp] = useState(false);
 
   const loadPreview = async () => {
-    setLoadingPreview(true)
-    const messageForPreview = message.trim()
+    setLoadingPreview(true);
+    const messageForPreview = message.trim();
     const res = await previewInvoiceEmail({
       id: invoiceId,
       message: messageForPreview || undefined,
-    })
+    });
     if (res.ok) {
-      setPreview({ subject: res.subject, html: res.html })
-      setPortalUrl(res.portalUrl)
-      setClientName(res.clientName)
-      setInvoiceNumber(res.invoiceNumber)
-      setPreviewMessage(message)
-      if (!to.trim() && res.clientEmail) setTo(res.clientEmail)
-      if (!phone.trim() && res.clientPhone) setPhone(res.clientPhone)
+      setPreview({ subject: res.subject, html: res.html });
+      setPortalUrl(res.portalUrl);
+      setClientName(res.clientName);
+      setInvoiceNumber(res.invoiceNumber);
+      setPreviewMessage(message);
+      if (!to.trim() && res.clientEmail) setTo(res.clientEmail);
+      if (!phone.trim() && res.clientPhone) setPhone(res.clientPhone);
     } else {
-      feedback.setError(res.error)
+      feedback.setError(res.error);
     }
-    setLoadingPreview(false)
-  }
+    setLoadingPreview(false);
+  };
 
   const onOpenChange = (next: boolean) => {
-    if (setControlledOpen) setControlledOpen(next)
-    else setUncontrolledOpen(next)
-    if (next) void loadPreview()
-  }
+    if (setControlledOpen) setControlledOpen(next);
+    else setUncontrolledOpen(next);
+    if (next) void loadPreview();
+  };
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!preview || previewMessage !== message) {
-      feedback.setError('Actualiza la vista previa antes de enviar el email.')
-      return
+      feedback.setError("Actualiza la vista previa antes de enviar el email.");
+      return;
     }
-    feedback.setPending()
+    feedback.setPending();
     const result = await sendInvoiceEmail({
       id: invoiceId,
       to: to.trim() || undefined,
       message: message.trim() || undefined,
       attachPdf,
-    })
+    });
     if (result.ok) {
-      feedback.setSuccess(result.mocked ? 'Email simulado (sin Resend)' : 'Email enviado')
-      onOpenChange(false)
-      router.refresh()
+      feedback.setSuccess(result.mocked ? "Email simulado (sin Resend)" : "Email enviado");
+      onOpenChange(false);
+      router.refresh();
     } else {
-      feedback.setError(result.error)
+      feedback.setError(result.error);
     }
-  }
+  };
 
   // WhatsApp is delivered by the team member from their own account: we open the
   // prefilled chat and only record that the link was shared.
   const handleWhatsapp = async () => {
-    const digits = phone.replace(/\D/g, '')
+    const digits = phone.replace(/\D/g, "");
     if (!digits) {
-      feedback.setError('Añade un teléfono para compartir por WhatsApp.')
-      return
+      feedback.setError("Añade un teléfono para compartir por WhatsApp.");
+      return;
     }
     if (!portalUrl) {
-      feedback.setError('Espera a que cargue la vista previa para obtener el enlace.')
-      return
+      feedback.setError("Espera a que cargue la vista previa para obtener el enlace.");
+      return;
     }
-    const note = message.trim()
+    const note = message.trim();
     const text = note
       ? `${note}\n\n${portalUrl}`
-      : buildInvoiceWhatsAppMessage(clientName, invoiceNumber, portalUrl)
-    window.open(buildWhatsAppUrl(digits, text), '_blank', 'noopener,noreferrer')
-    setSharingWhatsapp(true)
-    const result = await logInvoiceWhatsappShare({ id: invoiceId, phone: phone.trim() })
-    setSharingWhatsapp(false)
+      : buildInvoiceWhatsAppMessage(clientName, invoiceNumber, portalUrl);
+    window.open(buildWhatsAppUrl(digits, text), "_blank", "noopener,noreferrer");
+    setSharingWhatsapp(true);
+    const result = await logInvoiceWhatsappShare({ id: invoiceId, phone: phone.trim() });
+    setSharingWhatsapp(false);
     if (result.ok) {
-      feedback.setSuccess('Envío por WhatsApp registrado')
-      router.refresh()
+      feedback.setSuccess("Envío por WhatsApp registrado");
+      router.refresh();
     } else {
-      feedback.setError(result.error)
+      feedback.setError(result.error);
     }
-  }
+  };
 
-  const triggerLabel = lastSentAt ? 'Reenviar al cliente' : 'Enviar al cliente'
+  const triggerLabel = lastSentAt ? "Reenviar al cliente" : "Enviar al cliente";
 
   return (
     <>
@@ -171,7 +171,7 @@ export function SendInvoiceButton({
             <DialogDescription>
               {lastSentAt
                 ? `Ya se envió el ${formatDate(lastSentAt)}. Puedes volver a enviarla cuando quieras.`
-                : 'Comprueba el destinatario y el contenido exacto que recibirá el cliente.'}
+                : "Comprueba el destinatario y el contenido exacto que recibirá el cliente."}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -186,7 +186,7 @@ export function SendInvoiceButton({
                   type="email"
                   value={to}
                   onChange={(e) => setTo(e.target.value)}
-                  placeholder={defaultEmail ?? 'cliente@ejemplo.com'}
+                  placeholder={defaultEmail ?? "cliente@ejemplo.com"}
                   required
                   autoComplete="email"
                   disabled={feedback.pending}
@@ -211,7 +211,7 @@ export function SendInvoiceButton({
               </div>
               <label
                 htmlFor="invoice-email-attach-pdf"
-                className="hover:bg-muted/50 flex cursor-pointer items-start gap-2 rounded p-1.5"
+                className="flex cursor-pointer items-start gap-2 rounded p-1.5 hover:bg-muted/50"
               >
                 <Checkbox
                   id="invoice-email-attach-pdf"
@@ -221,7 +221,7 @@ export function SendInvoiceButton({
                 />
                 <span className="min-w-0">
                   <span className="block text-sm">Adjuntar el PDF de la factura</span>
-                  <span className="text-muted-foreground block text-xs">
+                  <span className="block text-xs text-muted-foreground">
                     El email siempre incluye el enlace al portal de pago.
                   </span>
                 </span>
@@ -235,14 +235,14 @@ export function SendInvoiceButton({
                 {loadingPreview ? <Loader2 className="animate-spin" aria-hidden /> : null}
                 Actualizar vista previa
               </Button>
-              <div className="border-border flex flex-col gap-1.5 border-t pt-4">
+              <div className="flex flex-col gap-1.5 border-t border-border pt-4">
                 <Label htmlFor="invoice-whatsapp-phone">Teléfono para WhatsApp</Label>
                 <Input
                   id="invoice-whatsapp-phone"
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder={defaultPhone ?? '+34600000000'}
+                  placeholder={defaultPhone ?? "+34600000000"}
                   autoComplete="tel"
                   disabled={feedback.pending || sharingWhatsapp}
                 />
@@ -255,21 +255,21 @@ export function SendInvoiceButton({
                   <WhatsAppIcon className="mr-2" />
                   Compartir por WhatsApp
                 </Button>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-xs text-muted-foreground">
                   Se abre WhatsApp con el enlace y la nota; el envío queda registrado.
                 </p>
               </div>
             </div>
-            <div className="border-border bg-muted/30 overflow-hidden rounded-lg border">
-              <div className="bg-background border-b px-4 py-3">
-                <p className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
+            <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
+              <div className="border-b bg-background px-4 py-3">
+                <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
                   Asunto
                 </p>
-                <p className="mt-1 text-sm font-medium">{preview?.subject ?? 'Cargando email…'}</p>
+                <p className="mt-1 text-sm font-medium">{preview?.subject ?? "Cargando email…"}</p>
               </div>
               <div className="h-105 bg-white">
                 {loadingPreview ? (
-                  <div className="text-muted-foreground flex h-full items-center justify-center">
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
                     <Loader2 className="animate-spin" aria-label="Cargando vista previa" />
                   </div>
                 ) : preview ? (
@@ -280,7 +280,7 @@ export function SendInvoiceButton({
                     className="h-full w-full border-0"
                   />
                 ) : (
-                  <p className="text-muted-foreground p-4 text-sm">
+                  <p className="p-4 text-sm text-muted-foreground">
                     No se pudo cargar la vista previa.
                   </p>
                 )}
@@ -305,12 +305,12 @@ export function SendInvoiceButton({
                 }
               >
                 <Mail className="h-4 w-4" aria-hidden />
-                {feedback.pending ? 'Enviando…' : 'Enviar email'}
+                {feedback.pending ? "Enviando…" : "Enviar email"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

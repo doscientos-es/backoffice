@@ -72,12 +72,13 @@ export default async function LegalPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="prose prose-sm dark:prose-invert text-sm leading-relaxed">
-          <p className="text-muted-foreground mb-4 text-xs">Generado el {today}</p>
+          <p className="mb-4 text-xs text-muted-foreground">Generado el {today}</p>
 
           <h3 className="mb-2 text-base font-semibold">1. Identificación del productor del SIF</h3>
           <ul className="mb-4 list-none space-y-1 pl-0">
             <li>
-              <span className="text-muted-foreground">Denominación social:</span> Doscientos Estudio S.L.
+              <span className="text-muted-foreground">Denominación social:</span> Doscientos
+              Desarrollo Tecnológico, S.L.
             </li>
             <li>
               <span className="text-muted-foreground">Sitio web:</span>{' '}
@@ -85,7 +86,7 @@ export default async function LegalPage() {
                 href="https://doscientos.es"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary inline-flex items-center gap-1 hover:underline"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
               >
                 doscientos.es <ExternalLink className="h-3 w-3" />
               </a>
@@ -140,7 +141,7 @@ export default async function LegalPage() {
                 href="https://sede.agenciatributaria.gob.es/Sede/iva/sistemas-informaticos-facturacion-verifactu.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary inline-flex items-center gap-1 hover:underline"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
               >
                 Información AEAT sobre Verifactu <ExternalLink className="h-3 w-3" />
               </a>
@@ -150,7 +151,7 @@ export default async function LegalPage() {
                 href="https://www.boe.es/buscar/act.php?id=BOE-A-2023-24840"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary inline-flex items-center gap-1 hover:underline"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
               >
                 RD 1007/2023 en el BOE <ExternalLink className="h-3 w-3" />
               </a>

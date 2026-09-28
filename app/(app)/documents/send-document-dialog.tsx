@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   Dialog,
@@ -7,42 +7,42 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@doscientos/ui'
-import { Mail } from 'lucide-react'
-import { useState } from 'react'
+} from "@doscientos/ui";
+import { Mail } from "lucide-react";
+import { useState } from "react";
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-import { sendDocumentEmail } from './actions'
+import { sendDocumentEmail } from "./actions";
 
 export function SendDocumentDialog({ id, name }: { id: string; name: string }) {
-  const [open, setOpen] = useState(false)
-  const [to, setTo] = useState('')
-  const [recipientName, setRecipientName] = useState('')
-  const [subject, setSubject] = useState(`Documento · ${name}`)
-  const [message, setMessage] = useState('')
-  const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [open, setOpen] = useState(false);
+  const [to, setTo] = useState("");
+  const [recipientName, setRecipientName] = useState("");
+  const [subject, setSubject] = useState(`Documento · ${name}`);
+  const [message, setMessage] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setPending(true)
-    setError(null)
+    event.preventDefault();
+    setPending(true);
+    setError(null);
     const result = await sendDocumentEmail({
       id,
       to,
       recipientName: recipientName || undefined,
       subject,
       message: message || undefined,
-    })
+    });
     if (result.ok) {
-      setOpen(false)
-      setTo('')
-      setMessage('')
-    } else setError(result.error)
-    setPending(false)
+      setOpen(false);
+      setTo("");
+      setMessage("");
+    } else setError(result.error);
+    setPending(false);
   }
 
   return (
@@ -96,7 +96,7 @@ export function SendDocumentDialog({ id, name }: { id: string; name: string }) {
                 maxLength={2000}
               />
             </label>
-            {error ? <p className="text-destructive text-sm">{error}</p> : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <DialogFooter>
               <Button
                 type="button"
@@ -107,12 +107,12 @@ export function SendDocumentDialog({ id, name }: { id: string; name: string }) {
                 Cancelar
               </Button>
               <Button type="submit" disabled={pending}>
-                {pending ? 'Enviando…' : 'Enviar PDF'}
+                {pending ? "Enviando…" : "Enviar PDF"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

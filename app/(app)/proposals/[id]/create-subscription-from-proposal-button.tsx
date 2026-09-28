@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { formatEUR } from '@/lib/utils'
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { formatEUR } from "@/lib/utils";
 
-import { createSubscriptionFromProposal } from '../actions'
+import { createSubscriptionFromProposal } from "../actions";
 
 type Props = {
-  proposalId: string
-  planName: string
-  cycleLabel: string
-  amount: number
-}
+  proposalId: string;
+  planName: string;
+  cycleLabel: string;
+  amount: number;
+};
 
 export function CreateSubscriptionFromProposalButton({
   proposalId,
@@ -22,33 +22,33 @@ export function CreateSubscriptionFromProposalButton({
   cycleLabel,
   amount,
 }: Props) {
-  const router = useRouter()
-  const [pending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleCreate() {
-    setError(null)
+    setError(null);
     startTransition(async () => {
-      const result = await createSubscriptionFromProposal({ id: proposalId })
+      const result = await createSubscriptionFromProposal({ id: proposalId });
       if (!result.ok) {
-        setError(result.error)
-        return
+        setError(result.error);
+        return;
       }
-      router.refresh()
-    })
+      router.refresh();
+    });
   }
 
   return (
-    <div className="border-primary/20 bg-primary/5 flex flex-col gap-3 rounded-lg border p-4">
+    <div className="flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
       <div>
         <p className="text-sm font-medium">Preparar suscripción de mantenimiento</p>
-        <p className="text-muted-foreground mt-1 text-xs">
+        <p className="mt-1 text-xs text-muted-foreground">
           {planName} · {formatEUR(amount)} / {cycleLabel}. Se creará pausada y no empezará a
           facturar hasta activarla al finalizar el proyecto.
         </p>
       </div>
       <Button type="button" size="sm" onClick={handleCreate} disabled={pending} className="w-fit">
-        {pending ? 'Preparando…' : 'Preparar suscripción'}
+        {pending ? "Preparando…" : "Preparar suscripción"}
       </Button>
       {error ? (
         <Alert variant="destructive">
@@ -56,5 +56,5 @@ export function CreateSubscriptionFromProposalButton({
         </Alert>
       ) : null}
     </div>
-  )
+  );
 }

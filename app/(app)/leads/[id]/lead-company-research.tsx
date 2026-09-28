@@ -156,12 +156,12 @@ export function LeadCompanyResearch({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex gap-3">
-          <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Globe2 className="size-4" />
           </span>
           <div>
             <p className="text-sm font-medium">Inteligencia de empresa</p>
-            <p className="text-muted-foreground text-xs leading-5">
+            <p className="text-xs leading-5 text-muted-foreground">
               Datos públicos contrastados, separados de la información declarada por el lead.
             </p>
           </div>
@@ -180,7 +180,7 @@ export function LeadCompanyResearch({
       </div>
 
       {!research ? (
-        <div className="border-border bg-muted/30 text-muted-foreground rounded-xl border border-dashed px-4 py-5 text-sm">
+        <div className="rounded-xl border border-dashed border-border bg-muted/30 px-4 py-5 text-sm text-muted-foreground">
           {!available
             ? "La investigación de empresa estará disponible cuando termine de actualizarse esta sección."
             : aiEnabled && !hasCorporateEmail(email)
@@ -190,7 +190,7 @@ export function LeadCompanyResearch({
                 : "La investigación estará disponible cuando se active la IA interna."}
         </div>
       ) : (
-        <div className="animate-in fade-in slide-in-from-bottom-2 flex flex-col gap-4 duration-500">
+        <div className="flex animate-in flex-col gap-4 duration-500 fade-in slide-in-from-bottom-2">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={PRIORITY[research.priority].variant}>
               {PRIORITY[research.priority].label}
@@ -198,7 +198,7 @@ export function LeadCompanyResearch({
             <Badge variant="outline">Confianza {Math.round(research.confidence * 100)}%</Badge>
             {research.sector ? <Badge variant="outline">{research.sector}</Badge> : null}
             {updated ? (
-              <span className="text-muted-foreground ml-auto text-xs">Actualizado {updated}</span>
+              <span className="ml-auto text-xs text-muted-foreground">Actualizado {updated}</span>
             ) : null}
           </div>
           <p className="text-sm leading-6">{research.description}</p>
@@ -223,8 +223,8 @@ export function LeadCompanyResearch({
           ) : null}
           <ResearchList title="Por qué puede encajar" items={research.reasons} tone="positive" />
           <ResearchList title="Para validar" items={research.cautions} tone="neutral" />
-          <div className="border-border bg-muted/25 rounded-xl border p-3">
-            <p className="text-muted-foreground mb-2 text-[11px] font-semibold tracking-wide uppercase">
+          <div className="rounded-xl border border-border bg-muted/25 p-3">
+            <p className="mb-2 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
               Fuentes consultadas
             </p>
             <div className="space-y-1.5">
@@ -234,9 +234,9 @@ export function LeadCompanyResearch({
                   href={source.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:bg-background flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors"
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors hover:bg-background"
                 >
-                  <ExternalLink className="text-muted-foreground size-3 shrink-0" />
+                  <ExternalLink className="size-3 shrink-0 text-muted-foreground" />
                   <span className="truncate">{source.title}</span>
                 </a>
               ))}
@@ -246,7 +246,7 @@ export function LeadCompanyResearch({
       )}
 
       {error && !open ? (
-        <p className="text-destructive flex items-center gap-1.5 text-xs">
+        <p className="flex items-center gap-1.5 text-xs text-destructive">
           <CircleAlert className="size-3.5" />
           {error}
         </p>
@@ -254,10 +254,10 @@ export function LeadCompanyResearch({
 
       <Dialog open={open} onOpenChange={(next) => !loading && setOpen(next)}>
         <DialogContent className="gap-5 sm:max-w-lg" showCloseButton={!loading}>
-          <div className="bg-primary/10 pointer-events-none absolute -top-16 right-0 size-48 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -top-16 right-0 size-48 rounded-full bg-primary/10 blur-3xl" />
           <DialogHeader className="relative">
             <DialogTitle className="flex items-center gap-2">
-              <Search className="text-primary size-5" />
+              <Search className="size-5 text-primary" />
               Investigando la empresa
             </DialogTitle>
             <DialogDescription>
@@ -272,7 +272,7 @@ export function LeadCompanyResearch({
                 <li
                   key={item.url ?? item.label}
                   className={cn(
-                    "animate-in fade-in slide-in-from-bottom-1 flex items-start gap-3 rounded-xl border px-3 py-2.5 duration-300",
+                    "flex animate-in items-start gap-3 rounded-xl border px-3 py-2.5 duration-300 fade-in slide-in-from-bottom-1",
                     active
                       ? "border-primary/25 bg-primary/5"
                       : failed
@@ -281,9 +281,9 @@ export function LeadCompanyResearch({
                   )}
                 >
                   {active ? (
-                    <Loader2 className="text-primary mt-0.5 size-4 shrink-0 animate-spin" />
+                    <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
                   ) : failed ? (
-                    <CircleAlert className="text-destructive mt-0.5 size-4 shrink-0" />
+                    <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
                   ) : (
                     <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
                   )}
@@ -292,7 +292,7 @@ export function LeadCompanyResearch({
                   </span>
                   <span className="min-w-0 flex-1 text-sm break-words">{item.label}</span>
                   {item.url ? (
-                    <span className="text-muted-foreground max-w-28 text-[11px] break-all">
+                    <span className="max-w-28 text-[11px] break-all text-muted-foreground">
                       {new URL(item.url).hostname}
                     </span>
                   ) : null}
@@ -303,13 +303,13 @@ export function LeadCompanyResearch({
           {error ? (
             <p
               role="alert"
-              className="text-destructive border-destructive/30 bg-destructive/5 relative flex items-start gap-2 rounded-lg border p-3 text-sm break-words"
+              className="relative flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm break-words text-destructive"
             >
               <CircleAlert className="mt-0.5 size-4 shrink-0" />
               {error}
             </p>
           ) : null}
-          <p className="text-muted-foreground relative text-center text-xs">
+          <p className="relative text-center text-xs text-muted-foreground">
             La IA sintetiza evidencias; revisa siempre los resultados antes de actuar.
           </p>
         </DialogContent>
@@ -320,8 +320,8 @@ export function LeadCompanyResearch({
 
 function Insight({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-border bg-muted/30 rounded-lg border px-3 py-2.5">
-      <p className="text-muted-foreground text-[11px] font-medium">{label}</p>
+    <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+      <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm leading-5">{value}</p>
     </div>
   );
@@ -339,7 +339,7 @@ function ResearchList({
   if (items.length === 0) return null;
   return (
     <div>
-      <p className="text-muted-foreground mb-1.5 text-[11px] font-semibold tracking-wide uppercase">
+      <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
         {title}
       </p>
       <ul className="space-y-1.5">

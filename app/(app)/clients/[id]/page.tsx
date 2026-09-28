@@ -1,19 +1,19 @@
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { RemindersSection } from '@/app/(app)/inicio/_components/reminders-section'
-import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
-import { PageHeader } from '@/components/layout/page-header'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CopyButton } from '@/components/ui/copy-button'
-import { CopySummaryButton } from '@/components/ui/copy-summary-button'
-import { EntityAvatar } from '@/components/ui/entity-avatar'
-import { StatusBadge } from '@/components/ui/status-badge'
-import { formatAddress } from '@/lib/address'
-import { requireUser } from '@/lib/auth'
-import { getClientDetail } from '@/lib/clients/queries'
-import { listActiveMembers } from '@/lib/members/queries'
+import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
+import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
+import { CopySummaryButton } from "@/components/ui/copy-summary-button";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { formatAddress } from "@/lib/address";
+import { requireUser } from "@/lib/auth";
+import { getClientDetail } from "@/lib/clients/queries";
+import { listActiveMembers } from "@/lib/members/queries";
 import {
   INVOICE_STATUS,
   type InvoiceStatus,
@@ -23,29 +23,29 @@ import {
   type ProposalStatus,
   TASK_STATUS,
   type TaskStatus,
-} from '@/lib/status'
-import { formatDate, formatEUR } from '@/lib/utils'
+} from "@/lib/status";
+import { formatDate, formatEUR } from "@/lib/utils";
 
-import { ScheduleReminderDialog } from '../../reminders/schedule-reminder-dialog'
-import { TaskCreateDialog } from '../../tasks/task-create-dialog'
-import { ClientEditDialog } from './client-edit-dialog'
-import { DeleteClientButton } from './delete-client-button'
-import { FiscalVerificationCard } from './fiscal-verification-card'
+import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
+import { TaskCreateDialog } from "../../tasks/task-create-dialog";
+import { ClientEditDialog } from "./client-edit-dialog";
+import { DeleteClientButton } from "./delete-client-button";
+import { FiscalVerificationCard } from "./fiscal-verification-card";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const user = await requireUser()
-  const canEdit = user.role !== 'viewer'
+  const { id } = await params;
+  const user = await requireUser();
+  const canEdit = user.role !== "viewer";
 
   const [result, members] = await Promise.all([
     getClientDetail(id),
     canEdit ? listActiveMembers() : Promise.resolve([]),
-  ])
-  if (!result) notFound()
+  ]);
+  if (!result) notFound();
 
-  const { client, originLead, projects, proposals, invoices, tasks, reminders } = result
+  const { client, originLead, projects, proposals, invoices, tasks, reminders } = result;
 
   return (
     <div className="flex flex-col gap-6">
@@ -60,11 +60,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           />
         }
         breadcrumbs={[
-          { label: 'Clientes', href: '/clients' },
+          { label: "Clientes", href: "/clients" },
           { label: (client.label as string | null)?.trim() || (client.name as string) },
         ]}
         actions={
-          user.role !== 'viewer' ? (
+          user.role !== "viewer" ? (
             <div className="flex items-center gap-2">
               <Button asChild size="sm" variant="outline">
                 <Link href={`/document-templates/generate?client_id=${client.id as string}`}>
@@ -78,7 +78,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     (client.nif as string | null) ? `(${client.nif as string})` : null,
                   ]
                     .filter(Boolean)
-                    .join(' '),
+                    .join(" "),
                   ...((
                     [
                       (client.email as string | null) ? `Email: ${client.email as string}` : null,
@@ -91,7 +91,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                           (client.phone as string | null) && `Tel: ${client.phone as string}`,
                         ]
                           .filter(Boolean)
-                          .join(' · '),
+                          .join(" · "),
                       ]
                     : []),
                   (client.contact_person as string | null)
@@ -110,7 +110,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                         city: client.billing_address_city as string | null,
                         province: client.billing_address_province as string | null,
                         country: client.billing_address_country as string | null,
-                      }).replace(/\n/g, ', ')}`
+                      }).replace(/\n/g, ", ")}`
                     : null,
                 ].filter((x): x is string => Boolean(x))}
                 urlPath={`/clients/${client.id as string}`}
@@ -148,10 +148,10 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </CardHeader>
         <CardContent>
           <DetailGrid>
-            <DetailRow label="Email">{(client.email as string | null) ?? '—'}</DetailRow>
-            <DetailRow label="Teléfono">{(client.phone as string | null) ?? '—'}</DetailRow>
+            <DetailRow label="Email">{(client.email as string | null) ?? "—"}</DetailRow>
+            <DetailRow label="Teléfono">{(client.phone as string | null) ?? "—"}</DetailRow>
             <DetailRow label="Contacto">
-              {(client.contact_person as string | null) ?? '—'}
+              {(client.contact_person as string | null) ?? "—"}
             </DetailRow>
             {originLead ? (
               <DetailRow label="Lead de origen">
@@ -171,9 +171,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             province: client.billing_address_province as string | null,
             country: client.billing_address_country as string | null,
           }) ? (
-            <div className="border-border mt-4 border-t pt-3">
+            <div className="mt-4 border-t border-border pt-3">
               <div className="mb-1 flex items-center gap-1.5">
-                <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                   Dirección
                 </p>
                 <CopyButton
@@ -183,7 +183,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     city: client.billing_address_city as string | null,
                     province: client.billing_address_province as string | null,
                     country: client.billing_address_country as string | null,
-                  }).replace(/\n/g, ', ')}
+                  }).replace(/\n/g, ", ")}
                   successMessage="Dirección copiada"
                   label="Copiar dirección completa"
                 />
@@ -200,8 +200,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             </div>
           ) : null}
           {client.notes ? (
-            <div className="border-border mt-4 border-t pt-3">
-              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
+            <div className="mt-4 border-t border-border pt-3">
+              <p className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 Notas
               </p>
               <p className="text-sm whitespace-pre-wrap">{client.notes as string}</p>
@@ -244,7 +244,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             {reminders.length > 0 ? (
               <RemindersSection reminders={reminders} />
             ) : (
-              <p className="text-muted-foreground text-sm">Sin avisos programados.</p>
+              <p className="text-sm text-muted-foreground">Sin avisos programados.</p>
             )}
           </CardContent>
         </Card>
@@ -265,7 +265,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </CardHeader>
           <CardContent className="px-0">
             {tasks.length > 0 ? (
-              <ul className="divide-border divide-y">
+              <ul className="divide-y divide-border">
                 {tasks.map((task) => (
                   <li
                     key={task.id}
@@ -277,7 +277,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     >
                       {task.title}
                     </Link>
-                    <div className="text-muted-foreground flex shrink-0 items-center gap-3 text-xs">
+                    <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
                       <StatusBadge meta={TASK_STATUS} value={task.status as TaskStatus} />
                       {task.due_date ? <span>{formatDate(task.due_date)}</span> : null}
                     </div>
@@ -285,7 +285,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                 ))}
               </ul>
             ) : (
-              <p className="text-muted-foreground px-6 py-2 text-sm">Sin tareas.</p>
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
             )}
           </CardContent>
         </Card>
@@ -302,9 +302,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </CardHeader>
           <CardContent className="px-0">
             {!projects || projects.length === 0 ? (
-              <p className="text-muted-foreground px-6 py-2 text-sm">Sin proyectos.</p>
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin proyectos.</p>
             ) : (
-              <ul className="divide-border divide-y">
+              <ul className="divide-y divide-border">
                 {projects.map((p) => (
                   <li
                     key={p.id as string}
@@ -334,9 +334,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </CardHeader>
           <CardContent className="px-0">
             {!proposals || proposals.length === 0 ? (
-              <p className="text-muted-foreground px-6 py-2 text-sm">Sin propuestas.</p>
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin propuestas.</p>
             ) : (
-              <ul className="divide-border divide-y">
+              <ul className="divide-y divide-border">
                 {proposals.map((p) => (
                   <li
                     key={p.id as string}
@@ -350,7 +350,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     </Link>
                     <div className="flex shrink-0 items-center gap-2">
                       <StatusBadge meta={PROPOSAL_STATUS} value={p.status as ProposalStatus} />
-                      <span className="text-muted-foreground text-xs tabular-nums">
+                      <span className="text-xs text-muted-foreground tabular-nums">
                         {formatEUR(Number(p.total ?? 0))}
                       </span>
                     </div>
@@ -368,9 +368,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </CardHeader>
           <CardContent className="px-0">
             {!invoices || invoices.length === 0 ? (
-              <p className="text-muted-foreground px-6 py-2 text-sm">Sin facturas.</p>
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin facturas.</p>
             ) : (
-              <ul className="divide-border divide-y">
+              <ul className="divide-y divide-border">
                 {invoices.map((inv) => (
                   <li
                     key={inv.id as string}
@@ -384,7 +384,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     </Link>
                     <div className="flex shrink-0 items-center gap-2">
                       <StatusBadge meta={INVOICE_STATUS} value={inv.status as InvoiceStatus} />
-                      <span className="text-muted-foreground text-xs tabular-nums">
+                      <span className="text-xs text-muted-foreground tabular-nums">
                         {formatEUR(Number(inv.total ?? 0))}
                       </span>
                     </div>
@@ -396,5 +396,5 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </Card>
       </div>
     </div>
-  )
+  );
 }

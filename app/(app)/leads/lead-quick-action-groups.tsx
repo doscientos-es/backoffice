@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { ListTodo } from 'lucide-react'
-import { useState } from 'react'
+import { ListTodo } from "lucide-react";
+import { useState } from "react";
 
-import { GoogleCalendarIcon } from '@/components/icons/google-calendar-icon'
+import { GoogleCalendarIcon } from "@/components/icons/google-calendar-icon";
 
-import { ScheduleReminderDialog, type ScheduleMember } from '../reminders/schedule-reminder-dialog'
-import { ExtractTasksDialog, type ExtractTasksDialogProps } from './[id]/extract-tasks-dialog'
-import { GmailSyncButton } from './[id]/gmail-sync-button'
+import { ScheduleReminderDialog, type ScheduleMember } from "../reminders/schedule-reminder-dialog";
+import { ExtractTasksDialog, type ExtractTasksDialogProps } from "./[id]/extract-tasks-dialog";
+import { GmailSyncButton } from "./[id]/gmail-sync-button";
 import {
   type MeetMember,
   QCallDialog,
@@ -18,27 +18,27 @@ import {
   QSendEmailDialog,
   QWhatsAppDialog,
   QuickActionTile,
-} from './lead-quick-action-dialogs'
+} from "./lead-quick-action-dialogs";
 
 type Props = {
-  leadId: string
-  leadName: string
-  leadEmail: string | null
-  leadPhone: string | null
-  leadLanguage?: string | null
-  senderName: string
-  aiEnabled?: boolean
-  googleEnabled?: boolean
-  projects?: Array<{ id: string; name: string }>
-  meetMembers?: MeetMember[]
-  scheduleMembers?: ScheduleMember[]
-  openCallInitially?: boolean
-  openScheduleInitially?: boolean
-  defaultDurationMinutes?: number | null
-  defaultCallOutcome?: 'connected' | 'no_answer'
-  callSessionId?: string
-  createTaskAction?: ExtractTasksDialogProps['createTaskAction']
-}
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  leadPhone: string | null;
+  leadLanguage?: string | null;
+  senderName: string;
+  aiEnabled?: boolean;
+  googleEnabled?: boolean;
+  projects?: Array<{ id: string; name: string }>;
+  meetMembers?: MeetMember[];
+  scheduleMembers?: ScheduleMember[];
+  openCallInitially?: boolean;
+  openScheduleInitially?: boolean;
+  defaultDurationMinutes?: number | null;
+  defaultCallOutcome?: "connected" | "no_answer";
+  callSessionId?: string;
+  createTaskAction?: ExtractTasksDialogProps["createTaskAction"];
+};
 
 /** Shared, always-visible action layout for the lead detail page and side drawer. */
 export function LeadQuickActionGroups({
@@ -60,8 +60,8 @@ export function LeadQuickActionGroups({
   callSessionId,
   createTaskAction,
 }: Props) {
-  const [scheduleOpen, setScheduleOpen] = useState(openScheduleInitially ?? false)
-  const hasTools = googleEnabled || Boolean(aiEnabled && createTaskAction)
+  const [scheduleOpen, setScheduleOpen] = useState(openScheduleInitially ?? false);
+  const hasTools = googleEnabled || Boolean(aiEnabled && createTaskAction);
 
   return (
     <section aria-label="Acciones rápidas" className="grid grid-cols-2 gap-1.5">
@@ -87,7 +87,12 @@ export function LeadQuickActionGroups({
         senderName={senderName}
         aiEnabled={aiEnabled}
       />
-      <QSendEmailDialog leadId={leadId} leadEmail={leadEmail} defaultLanguage={leadLanguage} aiEnabled={aiEnabled} />
+      <QSendEmailDialog
+        leadId={leadId}
+        leadEmail={leadEmail}
+        defaultLanguage={leadLanguage}
+        aiEnabled={aiEnabled}
+      />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
 
       <ScheduleReminderDialog
@@ -133,7 +138,7 @@ export function LeadQuickActionGroups({
               createTaskAction={createTaskAction}
               trigger={
                 <QuickActionTile
-                  icon={<ListTodo className="text-muted-foreground size-3.5" />}
+                  icon={<ListTodo className="size-3.5 text-muted-foreground" />}
                   label="Tareas"
                 />
               }
@@ -142,5 +147,5 @@ export function LeadQuickActionGroups({
         </>
       ) : null}
     </section>
-  )
+  );
 }

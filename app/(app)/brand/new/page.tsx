@@ -1,24 +1,24 @@
-import type { Metadata } from 'next'
+import type { Metadata } from "next";
 
-import { BackLink } from '@/components/layout/back-link'
-import { PageHeader } from '@/components/layout/page-header'
-import { Card, CardContent } from '@/components/ui/card'
-import { requireUser } from '@/lib/auth'
+import { BackLink } from "@/components/layout/back-link";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { requireUser } from "@/lib/auth";
 
-import { UploadAssetForm } from '../upload-form'
+import { UploadAssetForm } from "../upload-form";
 
-export const metadata: Metadata = { title: 'Subir asset · doscientos' }
+export const metadata: Metadata = { title: "Subir asset · doscientos" };
 
 export default async function NewAssetPage() {
-  const user = await requireUser()
+  const user = await requireUser();
 
-  if (user.role === 'viewer') {
+  if (user.role === "viewer") {
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title="Subir asset" back={<BackLink href="/brand" label="Volver" />} />
-        <p className="text-muted-foreground text-sm">No tienes permiso para subir assets.</p>
+        <p className="text-sm text-muted-foreground">No tienes permiso para subir assets.</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -34,5 +34,5 @@ export default async function NewAssetPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

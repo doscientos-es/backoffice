@@ -1,25 +1,25 @@
-import { FileText } from 'lucide-react'
-import type { Metadata } from 'next'
+import { FileText } from "lucide-react";
+import type { Metadata } from "next";
 
-import { PageHeader } from '@/components/layout/page-header'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { requirePageRole } from '@/lib/auth'
-import { createServerClient } from '@/lib/supabase/server'
+import { PageHeader } from "@/components/layout/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { requirePageRole } from "@/lib/auth";
+import { createServerClient } from "@/lib/supabase/server";
 
-import { TemplateUploadForm } from './template-upload-form'
+import { TemplateUploadForm } from "./template-upload-form";
 
-export const metadata: Metadata = { title: 'Plantillas de documentos · doscientos' }
-export const dynamic = 'force-dynamic'
+export const metadata: Metadata = { title: "Plantillas de documentos · doscientos" };
+export const dynamic = "force-dynamic";
 
 export default async function DocumentTemplatesPage() {
-  await requirePageRole(['owner', 'admin'])
-  const supabase = await createServerClient()
+  await requirePageRole(["owner", "admin"]);
+  const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from('document_templates')
-    .select('id, name, slug, description, fields, version, is_active, created_at')
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
+    .from("document_templates")
+    .select("id, name, slug, description, fields, version, is_active, created_at")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,7 +33,7 @@ export default async function DocumentTemplatesPage() {
           <CardTitle>Subir PDF rellenable</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground mb-4 text-sm">
+          <p className="mb-4 text-sm text-muted-foreground">
             El PDF debe tener campos de formulario AcroForm. Los campos con nombres conocidos se
             rellenarán automáticamente con los datos de la empresa y del lead; los demás quedarán
             editables en el PDF generado.
@@ -46,15 +46,15 @@ export default async function DocumentTemplatesPage() {
           <CardTitle>Documentos disponibles</CardTitle>
         </CardHeader>
         <CardContent>
-          {error ? <p className="text-destructive text-sm">{error.message}</p> : null}
+          {error ? <p className="text-sm text-destructive">{error.message}</p> : null}
           {!data?.length && !error ? (
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               Todavía no hay plantillas. Empieza por un NDA.
             </p>
           ) : (
-            <div className="divide-border divide-y">
+            <div className="divide-y divide-border">
               {(data ?? []).map((template) => {
-                const fields = Array.isArray(template.fields) ? template.fields : []
+                const fields = Array.isArray(template.fields) ? template.fields : [];
                 return (
                   <div
                     key={template.id as string}
@@ -62,21 +62,21 @@ export default async function DocumentTemplatesPage() {
                   >
                     <div>
                       <p className="font-medium">{template.name as string}</p>
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-xs text-muted-foreground">
                         {template.slug as string} · {fields.length} campos · v
                         {template.version as number}
                       </p>
                     </div>
-                    <Badge variant={template.is_active ? 'success' : 'neutral'}>
-                      {template.is_active ? 'Activa' : 'Archivada'}
+                    <Badge variant={template.is_active ? "success" : "neutral"}>
+                      {template.is_active ? "Activa" : "Archivada"}
                     </Badge>
                   </div>
-                )
+                );
               })}
             </div>
           )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

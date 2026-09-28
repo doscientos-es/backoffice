@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   Dialog,
@@ -7,42 +7,42 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@doscientos/ui'
-import { LoaderCircle as Loader2, Mail, Rocket } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { type FormEvent, useState } from 'react'
+} from "@doscientos/ui";
+import { LoaderCircle as Loader2, Mail, Rocket } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
 
-import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
-import { CopyPortalLink } from '@/components/portal/copy-portal-link'
-import { PortalAccessControls } from '@/components/portal/portal-access-controls'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { buildProjectWhatsAppMessage, buildWhatsAppUrl } from '@/lib/leads/whatsapp'
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
+import { CopyPortalLink } from "@/components/portal/copy-portal-link";
+import { PortalAccessControls } from "@/components/portal/portal-access-controls";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { buildProjectWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
 
 import {
   previewProjectPortalEmail,
   publishProjectPortal,
   sendProjectPortalEmail,
   updateProjectPortalAccess,
-} from '../actions'
+} from "../actions";
 
 type Props = {
-  projectId: string
-  projectName: string
-  portalToken: string
-  visible: boolean
-  hasPassword: boolean
-  inviteSentAt: string | null
-  clientEmail: string | null
-  clientPhone: string | null
-  canEdit: boolean
-  canPublish: boolean
-}
+  projectId: string;
+  projectName: string;
+  portalToken: string;
+  visible: boolean;
+  hasPassword: boolean;
+  inviteSentAt: string | null;
+  clientEmail: string | null;
+  clientPhone: string | null;
+  canEdit: boolean;
+  canPublish: boolean;
+};
 
 export function ProjectPortalSection({
   projectId,
@@ -56,29 +56,29 @@ export function ProjectPortalSection({
   canEdit,
   canPublish,
 }: Props) {
-  const router = useRouter()
-  const feedback = useFormFeedback({ successResetMs: 5000 })
-  const [publishing, setPublishing] = useState(false)
+  const router = useRouter();
+  const feedback = useFormFeedback({ successResetMs: 5000 });
+  const [publishing, setPublishing] = useState(false);
 
   const activate = async () => {
-    feedback.setPending()
-    setPublishing(true)
-    const result = await publishProjectPortal({ id: projectId })
-    setPublishing(false)
+    feedback.setPending();
+    setPublishing(true);
+    const result = await publishProjectPortal({ id: projectId });
+    setPublishing(false);
     if (!result.ok) {
-      feedback.setError(result.error)
-      return
+      feedback.setError(result.error);
+      return;
     }
-    feedback.setSuccess('Portal activado y email enviado')
-    router.refresh()
-  }
+    feedback.setSuccess("Portal activado y email enviado");
+    router.refresh();
+  };
 
   return (
-    <Card className={!visible ? 'border-primary/30 shadow-sm' : undefined}>
+    <Card className={!visible ? "border-primary/30 shadow-sm" : undefined}>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle>Portal del cliente</CardTitle>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="mt-1 text-sm text-muted-foreground">
             Comparte el seguimiento del proyecto y recibe solicitudes del cliente en un único lugar.
           </p>
         </div>
@@ -90,14 +90,14 @@ export function ProjectPortalSection({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {!visible ? (
-          <div className="border-primary/25 bg-primary/5 flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-lg border border-primary/25 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <span className="bg-primary/10 text-primary mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full">
+              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Rocket className="size-4" aria-hidden />
               </span>
               <div>
                 <p className="font-medium">Activa el portal cuando empiece el proyecto</p>
-                <p className="text-muted-foreground mt-1 text-sm">
+                <p className="mt-1 text-sm text-muted-foreground">
                   El cliente podrá ver el seguimiento y recibirá automáticamente el email de
                   arranque con su enlace privado.
                 </p>
@@ -115,19 +115,19 @@ export function ProjectPortalSection({
                 ) : (
                   <Rocket aria-hidden />
                 )}
-                {publishing ? 'Activando…' : 'Activar y avisar al cliente'}
+                {publishing ? "Activando…" : "Activar y avisar al cliente"}
               </Button>
             ) : (
-              <p className="text-muted-foreground shrink-0 text-xs">
+              <p className="shrink-0 text-xs text-muted-foreground">
                 Solo un administrador puede activarlo.
               </p>
             )}
           </div>
         ) : (
-          <div className="border-border/60 bg-muted/20 flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium">El cliente ya tiene acceso al portal</p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-xs text-muted-foreground">
                 Puedes volver a enviarle el acceso por email o abrir WhatsApp con un mensaje
                 preparado.
               </p>
@@ -157,7 +157,7 @@ export function ProjectPortalSection({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function SendProjectPortalButton({
@@ -167,81 +167,81 @@ function SendProjectPortalButton({
   defaultPhone,
   lastSentAt,
 }: {
-  projectId: string
-  projectName: string
-  defaultEmail: string | null
-  defaultPhone: string | null
-  lastSentAt: string | null
+  projectId: string;
+  projectName: string;
+  defaultEmail: string | null;
+  defaultPhone: string | null;
+  lastSentAt: string | null;
 }) {
-  const router = useRouter()
-  const feedback = useFormFeedback()
-  const [open, setOpen] = useState(false)
-  const [to, setTo] = useState(defaultEmail ?? '')
-  const [phone, setPhone] = useState(defaultPhone ?? '')
-  const [clientName, setClientName] = useState('cliente')
-  const [message, setMessage] = useState('')
-  const [previewMessage, setPreviewMessage] = useState('')
-  const [portalUrl, setPortalUrl] = useState<string | null>(null)
-  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
-  const [loadingPreview, setLoadingPreview] = useState(false)
+  const router = useRouter();
+  const feedback = useFormFeedback();
+  const [open, setOpen] = useState(false);
+  const [to, setTo] = useState(defaultEmail ?? "");
+  const [phone, setPhone] = useState(defaultPhone ?? "");
+  const [clientName, setClientName] = useState("cliente");
+  const [message, setMessage] = useState("");
+  const [previewMessage, setPreviewMessage] = useState("");
+  const [portalUrl, setPortalUrl] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
 
   const loadPreview = async () => {
-    setLoadingPreview(true)
+    setLoadingPreview(true);
     const result = await previewProjectPortalEmail({
       id: projectId,
       message: message.trim() || undefined,
-    })
+    });
     if (result.ok) {
-      setPreview({ subject: result.subject, html: result.html })
-      setPreviewMessage(message)
-      setClientName(result.clientName)
-      setPortalUrl(result.portalUrl)
-      if (!to.trim() && result.clientEmail) setTo(result.clientEmail)
-      if (!phone.trim() && result.clientPhone) setPhone(result.clientPhone)
+      setPreview({ subject: result.subject, html: result.html });
+      setPreviewMessage(message);
+      setClientName(result.clientName);
+      setPortalUrl(result.portalUrl);
+      if (!to.trim() && result.clientEmail) setTo(result.clientEmail);
+      if (!phone.trim() && result.clientPhone) setPhone(result.clientPhone);
     } else {
-      feedback.setError(result.error)
+      feedback.setError(result.error);
     }
-    setLoadingPreview(false)
-  }
+    setLoadingPreview(false);
+  };
 
   const onOpenChange = (next: boolean) => {
-    setOpen(next)
-    if (next) void loadPreview()
-  }
+    setOpen(next);
+    if (next) void loadPreview();
+  };
 
   const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault()
+    event.preventDefault();
     if (!preview || previewMessage !== message) {
-      feedback.setError('Actualiza la vista previa antes de enviar el email.')
-      return
+      feedback.setError("Actualiza la vista previa antes de enviar el email.");
+      return;
     }
-    feedback.setPending()
+    feedback.setPending();
     const result = await sendProjectPortalEmail({
       id: projectId,
       to: to.trim() || undefined,
       message: message.trim() || undefined,
-    })
+    });
     if (!result.ok) {
-      feedback.setError(result.error)
-      return
+      feedback.setError(result.error);
+      return;
     }
-    feedback.setSuccess(result.mocked ? 'Email simulado (modo dev)' : 'Email enviado')
-    setOpen(false)
-    router.refresh()
-  }
+    feedback.setSuccess(result.mocked ? "Email simulado (modo dev)" : "Email enviado");
+    setOpen(false);
+    router.refresh();
+  };
 
   const handleWhatsapp = () => {
-    if (!phone.trim() || !portalUrl) return
+    if (!phone.trim() || !portalUrl) return;
     const text = message.trim()
       ? `${message.trim()}\n\n${portalUrl}`
-      : buildProjectWhatsAppMessage(clientName, projectName, portalUrl)
-    window.open(buildWhatsAppUrl(phone, text), '_blank', 'noopener,noreferrer')
-  }
+      : buildProjectWhatsAppMessage(clientName, projectName, portalUrl);
+    window.open(buildWhatsAppUrl(phone, text), "_blank", "noopener,noreferrer");
+  };
 
   return (
     <>
       <Button type="button" size="sm" variant="outline" onClick={() => onOpenChange(true)}>
-        <Mail aria-hidden /> {lastSentAt ? 'Reenviar acceso' : 'Enviar acceso'}
+        <Mail aria-hidden /> {lastSentAt ? "Reenviar acceso" : "Enviar acceso"}
       </Button>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-4xl">
@@ -295,7 +295,7 @@ function SendProjectPortalButton({
                 {loadingPreview ? <Loader2 className="animate-spin" aria-hidden /> : null}
                 Actualizar vista previa
               </Button>
-              <div className="border-border flex flex-col gap-1.5 border-t pt-4">
+              <div className="flex flex-col gap-1.5 border-t border-border pt-4">
                 <Label htmlFor="project-portal-phone">Teléfono para WhatsApp</Label>
                 <Input
                   id="project-portal-phone"
@@ -314,21 +314,21 @@ function SendProjectPortalButton({
                 >
                   <WhatsAppIcon className="mr-2" /> Compartir por WhatsApp
                 </Button>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-xs text-muted-foreground">
                   Se abre WhatsApp con un mensaje preparado y el enlace del portal.
                 </p>
               </div>
             </div>
-            <div className="border-border bg-muted/30 overflow-hidden rounded-lg border">
-              <div className="bg-background border-b px-4 py-3">
-                <p className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
+            <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
+              <div className="border-b bg-background px-4 py-3">
+                <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
                   Asunto
                 </p>
-                <p className="mt-1 text-sm font-medium">{preview?.subject ?? 'Cargando email…'}</p>
+                <p className="mt-1 text-sm font-medium">{preview?.subject ?? "Cargando email…"}</p>
               </div>
               <div className="h-105 bg-white">
                 {loadingPreview ? (
-                  <div className="text-muted-foreground flex h-full items-center justify-center">
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
                     <Loader2 className="animate-spin" aria-label="Cargando vista previa" />
                   </div>
                 ) : preview ? (
@@ -339,7 +339,7 @@ function SendProjectPortalButton({
                     className="h-full w-full border-0"
                   />
                 ) : (
-                  <p className="text-muted-foreground p-4 text-sm">
+                  <p className="p-4 text-sm text-muted-foreground">
                     No se pudo cargar la vista previa.
                   </p>
                 )}
@@ -363,12 +363,12 @@ function SendProjectPortalButton({
                   feedback.pending || loadingPreview || !preview || previewMessage !== message
                 }
               >
-                <Mail aria-hidden /> {feedback.pending ? 'Enviando…' : 'Enviar email'}
+                <Mail aria-hidden /> {feedback.pending ? "Enviando…" : "Enviar email"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

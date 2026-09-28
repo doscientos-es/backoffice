@@ -1,40 +1,40 @@
-'use client'
+"use client";
 
-import { LoaderCircle } from 'lucide-react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState, useTransition } from 'react'
+import { LoaderCircle } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 
-import { Select } from '@/components/ui/select'
+import { Select } from "@/components/ui/select";
 
-import type { MyDayScope } from './my-day-types'
+import type { MyDayScope } from "./my-day-types";
 
 export function MyDayScopeSelector({ scope }: { scope: MyDayScope }) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const [pending, startTransition] = useTransition()
-  const [selectedValue, setSelectedValue] = useState(scope.value)
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [pending, startTransition] = useTransition();
+  const [selectedValue, setSelectedValue] = useState(scope.value);
 
   useEffect(() => {
-    setSelectedValue(scope.value)
-  }, [scope.value])
+    setSelectedValue(scope.value);
+  }, [scope.value]);
 
   function updateScope(value: string) {
-    if (value === scope.value) return
+    if (value === scope.value) return;
 
-    setSelectedValue(value)
-    const params = new URLSearchParams(searchParams.toString())
-    if (value) params.set('member', value)
-    else params.delete('member')
-    const query = params.toString()
+    setSelectedValue(value);
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("member", value);
+    else params.delete("member");
+    const query = params.toString();
     startTransition(() => {
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
-    })
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    });
   }
 
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="my-day-scope" className="text-muted-foreground text-xs font-medium">
+      <label htmlFor="my-day-scope" className="text-xs font-medium text-muted-foreground">
         Ver
       </label>
       <Select
@@ -55,7 +55,7 @@ export function MyDayScopeSelector({ scope }: { scope: MyDayScope }) {
         ))}
       </Select>
       <span
-        className="text-muted-foreground inline-flex min-w-24 items-center gap-1 text-xs"
+        className="inline-flex min-w-24 items-center gap-1 text-xs text-muted-foreground"
         aria-live="polite"
       >
         {pending ? (
@@ -66,5 +66,5 @@ export function MyDayScopeSelector({ scope }: { scope: MyDayScope }) {
         ) : null}
       </span>
     </div>
-  )
+  );
 }

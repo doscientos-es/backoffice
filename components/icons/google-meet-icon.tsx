@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import Image from "next/image";
 
 /** Official 2026 Google Meet logo, preserving its original aspect ratio. */
 export function GoogleMeetIcon({ size = 14, className }: { size?: number; className?: string }) {
@@ -11,5 +11,5 @@ export function GoogleMeetIcon({ size = 14, className }: { size?: number; classN
       className={className}
       aria-hidden="true"
     />
-  )
+  );
 }

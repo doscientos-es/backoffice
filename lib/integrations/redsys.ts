@@ -1,6 +1,6 @@
-import { createCipheriv, createHmac, timingSafeEqual } from 'node:crypto'
+import { createCipheriv, createHmac, timingSafeEqual } from "node:crypto";
 
-import { serverEnv } from '@/lib/env'
+import { serverEnv } from "@/lib/env";
 
 /**
  * Redsys / Paygold (BBVA) integration helper.
@@ -10,51 +10,51 @@ import { serverEnv } from '@/lib/env'
  */
 
 export type RedsysParams = {
-  Ds_Merchant_Amount: string // Centavos (ej. "100" para 1.00 EUR)
-  Ds_Merchant_Order: string // Alphanumeric, 4-12 chars (ej. "202406250001")
-  Ds_Merchant_MerchantCode: string // FUC
-  Ds_Merchant_Terminal: string
-  Ds_Merchant_Currency: string // 978 para EUR
-  Ds_Merchant_TransactionType: string // "0" para Pago Simple
-  Ds_Merchant_MerchantURL: string // Webhook (Notificación Online)
-  Ds_Merchant_UrlOK: string // Redirect on success
-  Ds_Merchant_UrlKO: string // Redirect on failure
-  Ds_Merchant_PayMethods?: string // "T" (tarjeta), "z" (bizum), etc.
-  Ds_Merchant_MerchantData?: string // Optional metadata returned in webhook
-}
+  Ds_Merchant_Amount: string; // Centavos (ej. "100" para 1.00 EUR)
+  Ds_Merchant_Order: string; // Alphanumeric, 4-12 chars (ej. "202406250001")
+  Ds_Merchant_MerchantCode: string; // FUC
+  Ds_Merchant_Terminal: string;
+  Ds_Merchant_Currency: string; // 978 para EUR
+  Ds_Merchant_TransactionType: string; // "0" para Pago Simple
+  Ds_Merchant_MerchantURL: string; // Webhook (Notificación Online)
+  Ds_Merchant_UrlOK: string; // Redirect on success
+  Ds_Merchant_UrlKO: string; // Redirect on failure
+  Ds_Merchant_PayMethods?: string; // "T" (tarjeta), "z" (bizum), etc.
+  Ds_Merchant_MerchantData?: string; // Optional metadata returned in webhook
+};
 
 const REDSYS_URLS = {
-  test: 'https://sis-t.redsys.es:25443/sis/realizarPago',
-  prod: 'https://sis.redsys.es/sis/realizarPago',
-}
+  test: "https://sis-t.redsys.es:25443/sis/realizarPago",
+  prod: "https://sis.redsys.es/sis/realizarPago",
+};
 
 export function getRedsysUrl(): string {
-  const env = serverEnv()
-  return REDSYS_URLS[env.REDSYS_ENVIRONMENT]
+  const env = serverEnv();
+  return REDSYS_URLS[env.REDSYS_ENVIRONMENT];
 }
 
 function redsysSecretKey(): Buffer {
-  const env = serverEnv()
-  if (process.env.NODE_ENV === 'production' && env.REDSYS_ENVIRONMENT !== 'prod') {
-    throw new Error('Redsys debe usar REDSYS_ENVIRONMENT=prod en producción')
+  const env = serverEnv();
+  if (process.env.NODE_ENV === "production" && env.REDSYS_ENVIRONMENT !== "prod") {
+    throw new Error("Redsys debe usar REDSYS_ENVIRONMENT=prod en producción");
   }
 
-  const configuredSecret = env.REDSYS_SECRET_KEY.trim()
+  const configuredSecret = env.REDSYS_SECRET_KEY.trim();
   if (!configuredSecret) {
-    throw new Error('Redsys no está configurado: falta REDSYS_SECRET_KEY')
+    throw new Error("Redsys no está configurado: falta REDSYS_SECRET_KEY");
   }
 
-  const decodedKey = Buffer.from(configuredSecret, 'base64')
+  const decodedKey = Buffer.from(configuredSecret, "base64");
   if (decodedKey.length !== 24) {
-    throw new Error('Redsys no está configurado: REDSYS_SECRET_KEY no es válida')
+    throw new Error("Redsys no está configurado: REDSYS_SECRET_KEY no es válida");
   }
 
-  return decodedKey
+  return decodedKey;
 }
 
 /** Fails fast before creating payment state when Redsys is unavailable. */
 export function assertRedsysConfigured(): void {
-  redsysSecretKey()
+  redsysSecretKey();
 }
 
 /**
@@ -64,17 +64,17 @@ export function assertRedsysConfigured(): void {
  * to a multiple of the 8-byte DES block before encryption.
  */
 function deriveOrderKey(order: string): Buffer {
-  const decodedKey = redsysSecretKey()
-  const iv = Buffer.alloc(8, 0)
-  const cipher = createCipheriv('des-ede3-cbc', decodedKey, iv)
-  cipher.setAutoPadding(false)
+  const decodedKey = redsysSecretKey();
+  const iv = Buffer.alloc(8, 0);
+  const cipher = createCipheriv("des-ede3-cbc", decodedKey, iv);
+  cipher.setAutoPadding(false);
 
-  const orderBuf = Buffer.from(order, 'utf8')
-  const remainder = orderBuf.length % 8
+  const orderBuf = Buffer.from(order, "utf8");
+  const remainder = orderBuf.length % 8;
   const padded =
-    remainder === 0 ? orderBuf : Buffer.concat([orderBuf, Buffer.alloc(8 - remainder, 0)])
+    remainder === 0 ? orderBuf : Buffer.concat([orderBuf, Buffer.alloc(8 - remainder, 0)]);
 
-  return Buffer.concat([cipher.update(padded), cipher.final()])
+  return Buffer.concat([cipher.update(padded), cipher.final()]);
 }
 
 /**
@@ -85,60 +85,60 @@ export function createRedsysPayment(params: RedsysParams) {
   // padding. Redsys includes the padded representation in its HMAC input.
   const toBase64Url = (value: Buffer | string) =>
     (Buffer.isBuffer(value) ? value : Buffer.from(value))
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
 
-  const merchantParameters = toBase64Url(JSON.stringify(params))
+  const merchantParameters = toBase64Url(JSON.stringify(params));
 
   // HMAC_SHA256_V1: derive a per-order key with 3DES, then HMAC the params.
-  const derivedKey = deriveOrderKey(params.Ds_Merchant_Order)
+  const derivedKey = deriveOrderKey(params.Ds_Merchant_Order);
   const signature = toBase64Url(
-    createHmac('sha256', derivedKey).update(merchantParameters).digest(),
-  )
+    createHmac("sha256", derivedKey).update(merchantParameters).digest(),
+  );
 
   return {
-    Ds_SignatureVersion: 'HMAC_SHA256_V1',
+    Ds_SignatureVersion: "HMAC_SHA256_V1",
     Ds_MerchantParameters: merchantParameters,
     Ds_Signature: signature,
-  }
+  };
 }
 
 /**
  * Validates a Redsys notification signature.
  */
 export function verifyRedsysSignature(merchantParameters: string, signature: string): boolean {
-  let params: { Ds_Order?: string; Ds_Merchant_Order?: string }
+  let params: { Ds_Order?: string; Ds_Merchant_Order?: string };
   try {
-    params = JSON.parse(Buffer.from(merchantParameters, 'base64').toString('utf-8'))
+    params = JSON.parse(Buffer.from(merchantParameters, "base64").toString("utf-8"));
   } catch {
-    return false
+    return false;
   }
-  const order = params.Ds_Order || params.Ds_Merchant_Order
+  const order = params.Ds_Order || params.Ds_Merchant_Order;
 
-  if (!order) return false
+  if (!order) return false;
 
-  const derivedKey = deriveOrderKey(order)
-  const expected = createHmac('sha256', derivedKey).update(merchantParameters).digest()
+  const derivedKey = deriveOrderKey(order);
+  const expected = createHmac("sha256", derivedKey).update(merchantParameters).digest();
 
   // Redsys sends URL-safe base64 in notifications; normalize both before comparing.
-  const normalize = (s: string) => s.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
-  const expectedBytes = Buffer.from(normalize(expected.toString('base64')), 'base64')
-  const receivedBytes = Buffer.from(normalize(signature), 'base64')
+  const normalize = (s: string) => s.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  const expectedBytes = Buffer.from(normalize(expected.toString("base64")), "base64");
+  const receivedBytes = Buffer.from(normalize(signature), "base64");
   return (
     expectedBytes.length === receivedBytes.length && timingSafeEqual(expectedBytes, receivedBytes)
-  )
+  );
 }
 
 export function parseRedsysResponse(merchantParameters: string) {
-  const raw = Buffer.from(merchantParameters, 'base64').toString('utf-8')
-  return JSON.parse(raw)
+  const raw = Buffer.from(merchantParameters, "base64").toString("utf-8");
+  return JSON.parse(raw);
 }
 
 /**
  * DS_Response 0000 a 0099 indicate success.
  */
 export function isRedsysSuccess(responseCode: string | number): boolean {
-  const code = Number(responseCode)
-  return code >= 0 && code <= 99
+  const code = Number(responseCode);
+  return code >= 0 && code <= 99;
 }

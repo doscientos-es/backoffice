@@ -332,27 +332,27 @@ export const bulkAssignLeadsToMe = defineAction({
 
 /** Applies one pipeline status to the selected leads and keeps their timeline useful. */
 export const bulkUpdateLeadStatus = defineAction({
-  name: 'leads.bulkUpdateStatus',
+  name: "leads.bulkUpdateStatus",
   schema: z.object({
     ids: z.array(z.string().uuid()).min(1).max(100),
     status: LeadStatus,
   }),
-  roles: ['owner', 'admin', 'member'],
-  revalidate: ['/leads', '/inicio'],
+  roles: ["owner", "admin", "member"],
+  revalidate: ["/leads", "/inicio"],
   handler: async ({ ids, status }, { user }) => {
     const supabase = await createServerClient();
     const now = new Date().toISOString();
     const { data: current, error: readError } = await supabase
-      .from('leads')
-      .select('id, status')
-      .in('id', ids)
-      .is('deleted_at', null);
+      .from("leads")
+      .select("id, status")
+      .in("id", ids)
+      .is("deleted_at", null);
     if (readError) throw new Error(readError.message);
 
     for (const lead of current ?? []) {
       if (lead.status === status) continue;
       const { error } = await supabase
-        .from('leads')
+        .from("leads")
         .update(
           buildLeadStatusPatch({
             status,
@@ -360,13 +360,13 @@ export const bulkUpdateLeadStatus = defineAction({
             now,
           }),
         )
-        .eq('id', lead.id as string)
-        .is('deleted_at', null);
+        .eq("id", lead.id as string)
+        .is("deleted_at", null);
       if (error) throw new Error(error.message);
 
-      const { error: interactionError } = await supabase.from('lead_interactions').insert({
+      const { error: interactionError } = await supabase.from("lead_interactions").insert({
         lead_id: lead.id,
-        type: 'status_change',
+        type: "status_change",
         subject: `Estado: ${lead.status} → ${status}`,
         performed_by: user.id,
         payload: { from: lead.status, to: status, bulk: true },
@@ -378,23 +378,23 @@ export const bulkUpdateLeadStatus = defineAction({
 
 /** Creates a one-day follow-up task for every selected lead. */
 export const bulkCreateLeadTasks = defineAction({
-  name: 'leads.bulkCreateTasks',
+  name: "leads.bulkCreateTasks",
   schema: z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }),
-  roles: ['owner', 'admin', 'member'],
-  revalidate: ['/leads', '/tasks', '/inicio'],
+  roles: ["owner", "admin", "member"],
+  revalidate: ["/leads", "/tasks", "/inicio"],
   handler: async ({ ids }, { user }) => {
     const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const supabase = await createServerClient();
-    const { error } = await supabase.from('tasks').insert(
+    const { error } = await supabase.from("tasks").insert(
       ids.map((leadId) => ({
-        kind: 'task',
-        title: 'Seguimiento comercial',
-        description: 'Revisar el lead y decidir la siguiente acción.',
+        kind: "task",
+        title: "Seguimiento comercial",
+        description: "Revisar el lead y decidir la siguiente acción.",
         lead_id: leadId,
         created_by: user.id,
         assignee_id: user.id,
-        status: 'todo',
-        priority: 'medium',
+        status: "todo",
+        priority: "medium",
         due_date: dueDate,
         is_client_visible: false,
       })),
@@ -405,25 +405,25 @@ export const bulkCreateLeadTasks = defineAction({
 
 /** Schedules a durable reminder for every selected lead for the next working day. */
 export const bulkScheduleLeadReminders = defineAction({
-  name: 'leads.bulkScheduleReminders',
+  name: "leads.bulkScheduleReminders",
   schema: z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }),
-  roles: ['owner', 'admin', 'member'],
-  revalidate: ['/leads', '/reminders', '/inicio'],
+  roles: ["owner", "admin", "member"],
+  revalidate: ["/leads", "/reminders", "/inicio"],
   handler: async ({ ids }, { user }) => {
     const remindAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const supabase = await createServerClient();
-    const { error } = await supabase.from('tasks').insert(
+    const { error } = await supabase.from("tasks").insert(
       ids.map((leadId) => ({
-        kind: 'reminder',
-        title: 'Seguimiento comercial',
-        description: 'Recordatorio creado en bloque desde la lista de leads.',
+        kind: "reminder",
+        title: "Seguimiento comercial",
+        description: "Recordatorio creado en bloque desde la lista de leads.",
         start_at: remindAt,
-        action_type: 'other',
+        action_type: "other",
         lead_id: leadId,
         created_by: user.id,
         assignee_id: user.id,
-        status: 'todo',
-        priority: 'medium',
+        status: "todo",
+        priority: "medium",
       })),
     );
     if (error) throw new Error(error.message);
@@ -620,7 +620,9 @@ export const acceptLeadDiscoverySuggestion = defineAction({
       .maybeSingle();
     if (readError) throw new Error(readError.message);
     if (!current?.suggested_answer || current.answer_source === "manual") {
-      throw new Error("La sugerencia ya no está disponible o la respuesta fue editada manualmente.");
+      throw new Error(
+        "La sugerencia ya no está disponible o la respuesta fue editada manualmente.",
+      );
     }
 
     const { data: updated, error } = await supabase
@@ -639,7 +641,8 @@ export const acceptLeadDiscoverySuggestion = defineAction({
       .select("id")
       .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!updated) throw new Error("La pregunta cambió mientras revisabas la sugerencia. Actualiza la ficha.");
+    if (!updated)
+      throw new Error("La pregunta cambió mientras revisabas la sugerencia. Actualiza la ficha.");
   },
 });
 
@@ -890,7 +893,10 @@ const CALL_OUTCOME_LABEL: Record<string, string> = {
 };
 
 /** Creates a durable, self-expiring reminder when the rep starts a call. */
-export const startLeadCall = defineAction<typeof StartLeadCallInput, { id: string; mobileToken: string }>({
+export const startLeadCall = defineAction<
+  typeof StartLeadCallInput,
+  { id: string; mobileToken: string }
+>({
   name: "leads.startCall",
   schema: StartLeadCallInput,
   revalidate: (_payload, input) => [`/leads/${input.leadId}`],
@@ -943,7 +949,11 @@ type CallSessionStatus = "started" | "dialing" | "awaiting_log" | "logged" | "ab
 
 export const getLeadCallSession = defineAction<
   typeof CallSessionInput,
-  { status: CallSessionStatus; durationMinutes: number | null; defaultOutcome: "connected" | "no_answer" | null }
+  {
+    status: CallSessionStatus;
+    durationMinutes: number | null;
+    defaultOutcome: "connected" | "no_answer" | null;
+  }
 >({
   name: "leads.getCallSession",
   schema: CallSessionInput,
@@ -956,12 +966,17 @@ export const getLeadCallSession = defineAction<
       .eq("lead_id", leadId)
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
-    if (error || !data) throw new Error(error?.message ?? "Sesión de llamada no encontrada o caducada");
+    if (error || !data)
+      throw new Error(error?.message ?? "Sesión de llamada no encontrada o caducada");
 
     const isFinished = data.status === "awaiting_log" || data.status === "logged";
     const completion =
       isFinished && data.finished_at
-        ? completeCallSession(data.started_at as string, (data.dialed_at as string | null) ?? null, data.finished_at as string)
+        ? completeCallSession(
+            data.started_at as string,
+            (data.dialed_at as string | null) ?? null,
+            data.finished_at as string,
+          )
         : null;
     return {
       status: data.status as CallSessionStatus,
@@ -996,7 +1011,10 @@ export const finishLeadCall = defineAction<
 >({
   name: "leads.finishCall",
   schema: CallSessionInput,
-  revalidate: (_payload, input) => [`/leads/${input.leadId}`, `/leads/${input.leadId}/call/${input.sessionId}`],
+  revalidate: (_payload, input) => [
+    `/leads/${input.leadId}`,
+    `/leads/${input.leadId}/call/${input.sessionId}`,
+  ],
   handler: async ({ leadId, sessionId }) => {
     const supabase = await createServerClient();
     const { data: session, error: sessionError } = await supabase
@@ -1005,7 +1023,8 @@ export const finishLeadCall = defineAction<
       .eq("id", sessionId)
       .eq("lead_id", leadId)
       .maybeSingle();
-    if (sessionError || !session) throw new Error(sessionError?.message ?? "Sesión de llamada no encontrada");
+    if (sessionError || !session)
+      throw new Error(sessionError?.message ?? "Sesión de llamada no encontrada");
     if (!["started", "dialing"].includes(session.status as string))
       throw new Error("La sesión de llamada ya está cerrada");
 
@@ -1106,11 +1125,7 @@ export const logLeadCall = defineAction<
 >({
   name: "leads.logCall",
   schema: LogCallInput,
-  revalidate: (_payload, input) => [
-    `/leads/${input.leadId}`,
-    "/reminders",
-    "/inicio",
-  ],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`, "/reminders", "/inicio"],
   handler: async (data, { user }) => {
     const { leadId, notes, transcript, callSessionId, durationMinutes, outcome, callDate } = data;
 
@@ -1138,7 +1153,8 @@ export const logLeadCall = defineAction<
         .eq("id", callSessionId)
         .eq("lead_id", leadId)
         .eq("status", "awaiting_log");
-      if (sessionError) log.warn({ err: sessionError, callSessionId }, "call_session_log_link_failed");
+      if (sessionError)
+        log.warn({ err: sessionError, callSessionId }, "call_session_log_link_failed");
     }
 
     // A missed call is an attempt, not a real first contact. A real conversation
@@ -1270,7 +1286,8 @@ export const logLeadCall = defineAction<
       tried_solutions: (lead.mom_test_tried_solutions as boolean | null) ?? null,
       decision_power_or_budget: (lead.mom_test_decision_power_or_budget as boolean | null) ?? null,
       accessible,
-      comparing_other_companies: (lead.mom_test_comparing_other_companies as boolean | null) ?? null,
+      comparing_other_companies:
+        (lead.mom_test_comparing_other_companies as boolean | null) ?? null,
     };
 
     return {

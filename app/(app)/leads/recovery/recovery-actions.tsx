@@ -1,12 +1,5 @@
 "use client";
 
-import { Archive, Ban, Mail, Undo2 as RotateCcw } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { sileo } from "sileo";
-
-import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +8,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@doscientos/ui";
+import { Archive, Ban, Mail, Undo2 as RotateCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { sileo } from "sileo";
+
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { publicEnv } from "@/lib/env";
 import { leadDisplayName } from "@/lib/leads/utils";
 import { getRecoveryTemplate } from "@/lib/recovery/templates";
@@ -130,7 +130,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
         <Button
           variant="ghost"
           size="sm"
-          className="text-muted-foreground gap-1.5"
+          className="gap-1.5 text-muted-foreground"
           disabled={isPending}
           onClick={() => setPendingNotInterested(true)}
         >
@@ -142,7 +142,7 @@ export function RecoveryActions({ lead, aiEnabled }: { lead: RecoveryLead; aiEna
       <Button
         variant="ghost"
         size="sm"
-        className="text-muted-foreground gap-1.5"
+        className="gap-1.5 text-muted-foreground"
         disabled={isPending}
         onClick={() => setPendingArchive(true)}
       >

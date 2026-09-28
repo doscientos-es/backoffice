@@ -1,10 +1,5 @@
 "use client";
 
-import { Briefcase, FileText, ListChecks, Plus, User, Users } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenuContent,
   DropdownMenuItem,
@@ -12,6 +7,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@doscientos/ui";
+import { Briefcase, FileText, ListChecks, Plus, User, Users } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import { CREATE_SHORTCUTS } from "@/lib/navigation/shortcuts";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +41,7 @@ export function QuickCreateButton() {
           <DropdownMenuContent placement="top end" offset={8} className="min-w-56">
             <DropdownMenuLabel className="flex items-center justify-between">
               Crear nuevo
-              <span className="text-muted-foreground text-[10px] font-normal uppercase">
+              <span className="text-[10px] font-normal text-muted-foreground uppercase">
                 Atajos: C + …
               </span>
             </DropdownMenuLabel>
@@ -58,7 +58,7 @@ export function QuickCreateButton() {
                     <Icon className="h-4 w-4" />
                     {action.label}
                   </div>
-                  <span className="text-muted-foreground font-mono text-[10px] uppercase">
+                  <span className="font-mono text-[10px] text-muted-foreground uppercase">
                     C {action.key}
                   </span>
                 </DropdownMenuItem>

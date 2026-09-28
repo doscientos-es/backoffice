@@ -4,84 +4,84 @@ import {
   FileText,
   Presentation,
   XCircle,
-} from 'lucide-react'
-import type { Metadata } from 'next'
-import { headers } from 'next/headers'
-import { notFound } from 'next/navigation'
+} from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 
-import { PortalPasswordGate } from '@/components/portal/password-gate'
-import { ProposalPaymentOptions } from '@/components/portal/proposal-payment-options'
+import { PortalPasswordGate } from "@/components/portal/password-gate";
+import { ProposalPaymentOptions } from "@/components/portal/proposal-payment-options";
 import {
   type ProposalMessage,
   ProposalMessageThread,
-} from '@/components/proposals/proposal-message-thread'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Markdown } from '@/components/ui/markdown'
-import { formatAddress } from '@/lib/address'
-import { getCurrentUser } from '@/lib/auth'
+} from "@/components/proposals/proposal-message-thread";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Markdown } from "@/components/ui/markdown";
+import { formatAddress } from "@/lib/address";
+import { getCurrentUser } from "@/lib/auth";
 import {
   BILLING_CYCLE_LABELS,
   type BillingCycle,
   computeLineSubtotal,
   computeProposalTotals,
-} from '@/lib/finance'
-import { scopedLogger } from '@/lib/logger'
-import { isPortalUnlocked } from '@/lib/portal/access'
-import { formatPortalDate, formatPortalEUR, resolvePortalLanguage } from '@/lib/portal/language'
-import { parseKeyPoints } from '@/lib/proposals/key-points'
-import { recordClientProposalView } from '@/lib/proposals/record-client-view'
+} from "@/lib/finance";
+import { scopedLogger } from "@/lib/logger";
+import { isPortalUnlocked } from "@/lib/portal/access";
+import { formatPortalDate, formatPortalEUR, resolvePortalLanguage } from "@/lib/portal/language";
+import { parseKeyPoints } from "@/lib/proposals/key-points";
 import {
   maintenancePlanAsLineItem,
   parseMaintenanceOffer,
   selectedMaintenancePlan,
-} from '@/lib/proposals/maintenance'
-import { effectiveProposalTerms } from '@/lib/proposals/proposal-acceptance'
-import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
+} from "@/lib/proposals/maintenance";
+import { effectiveProposalTerms } from "@/lib/proposals/proposal-acceptance";
+import { recordClientProposalView } from "@/lib/proposals/record-client-view";
+import { ensureCalendarYearProration, recurringPaymentTerms } from "@/lib/proposals/recurring";
 import {
   type PaymentSchedule,
   parseScopeModules,
   paymentInitialPercentage,
   scopeModuleDurationText,
-} from '@/lib/proposals/scope'
-import type { ProposalStatus } from '@/lib/status'
-import { createAdminClient } from '@/lib/supabase/admin'
+} from "@/lib/proposals/scope";
+import type { ProposalStatus } from "@/lib/status";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-import { sendProposalQuestion, unlockProposalPortal } from './actions'
-import { PortalKeyPointsList, PortalNarrativeBlock } from './narrative'
-import { ProposalActions } from './proposal-actions'
-import { ProposalMaintenanceOptions } from './proposal-maintenance-options'
+import { sendProposalQuestion, unlockProposalPortal } from "./actions";
+import { PortalKeyPointsList, PortalNarrativeBlock } from "./narrative";
+import { ProposalActions } from "./proposal-actions";
+import { ProposalMaintenanceOptions } from "./proposal-maintenance-options";
 
-const log = scopedLogger('portal.proposal')
+const log = scopedLogger("portal.proposal");
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: 'Propuesta · doscientos',
+  title: "Propuesta · doscientos",
   robots: { index: false, follow: false },
-}
+};
 
 type ProposalItem = {
-  id: string
-  description: string
-  quantity: number
-  unit_price: number
-  vat_rate: number
-  subtotal: number
-  billing_cycle: BillingCycle | null
-}
+  id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  vat_rate: number;
+  subtotal: number;
+  billing_cycle: BillingCycle | null;
+};
 
 function ScopeBullets({
   label,
   items,
   tone,
 }: {
-  label: string
-  items: string[]
-  tone: 'included' | 'excluded'
+  label: string;
+  items: string[];
+  tone: "included" | "excluded";
 }) {
   return (
     <div>
       <p
-        className={`text-xs font-semibold ${tone === 'included' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}`}
+        className={`text-xs font-semibold ${tone === "included" ? "text-emerald-700 dark:text-emerald-400" : "text-zinc-600 dark:text-zinc-400"}`}
       >
         {label}
       </p>
@@ -94,7 +94,7 @@ function ScopeBullets({
         ))}
       </ul>
     </div>
-  )
+  );
 }
 
 function ProposalTextBlock({ label, source }: { label: string; source: string }) {
@@ -103,15 +103,28 @@ function ProposalTextBlock({ label, source }: { label: string; source: string })
       <p className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">{label}</p>
       <Markdown source={source} className="text-sm text-zinc-600 dark:text-zinc-400" />
     </section>
-  )
+  );
 }
 
-function PresentationLink({ token, language }: { token: string; language: 'es' | 'ca' | 'en' }) {
-  const copy = language === 'ca'
-    ? { title: 'Presentació del projecte', details: 'Consulta la proposta en format visual', open: 'Obrir' }
-    : language === 'en'
-      ? { title: 'Project presentation', details: 'Explore the proposal in a visual format', open: 'Open' }
-      : { title: 'Presentación del proyecto', details: 'Recorre la propuesta en formato visual', open: 'Abrir' }
+function PresentationLink({ token, language }: { token: string; language: "es" | "ca" | "en" }) {
+  const copy =
+    language === "ca"
+      ? {
+          title: "Presentació del projecte",
+          details: "Consulta la proposta en format visual",
+          open: "Obrir",
+        }
+      : language === "en"
+        ? {
+            title: "Project presentation",
+            details: "Explore the proposal in a visual format",
+            open: "Open",
+          }
+        : {
+            title: "Presentación del proyecto",
+            details: "Recorre la propuesta en formato visual",
+            open: "Abrir",
+          };
   return (
     <a
       href={`/deck/${token}?lang=${language}`}
@@ -130,125 +143,165 @@ function PresentationLink({ token, language }: { token: string; language: 'es' |
         {copy.open} <span aria-hidden>→</span>
       </span>
     </a>
-  )
+  );
 }
 
 export default async function PortalProposalPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ token: string }>
-  searchParams: Promise<{ success?: string; error?: string; lang?: string }>
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ success?: string; error?: string; lang?: string }>;
 }) {
-  const { token } = await params
-  const { success, error, lang } = await searchParams
-  const admin = createAdminClient()
+  const { token } = await params;
+  const { success, error, lang } = await searchParams;
+  const admin = createAdminClient();
 
   // Resolve auth first so team members can preview drafts.
-  const auth = await getCurrentUser()
-  const isTeam = auth.ok
+  const auth = await getCurrentUser();
+  const isTeam = auth.ok;
 
   const { data: proposal, error: proposalError } = await admin
-    .from('proposals')
+    .from("proposals")
     .select(
-      '*, clients(name, nif, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, email, phone, contact_person, logo_url, lead_id, leads(language)), leads(name, email, phone, company, language)',
+      "*, clients(name, nif, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, email, phone, contact_person, logo_url, lead_id, leads(language)), leads(name, email, phone, company, language)",
     )
-    .eq('portal_token', token)
-    .is('deleted_at', null)
-    .maybeSingle()
+    .eq("portal_token", token)
+    .is("deleted_at", null)
+    .maybeSingle();
 
   // Drafts are only accessible to authenticated team members.
   if (proposalError) {
-    log.error({ err: proposalError }, 'portal_proposal_lookup_failed')
-    notFound()
+    log.error({ err: proposalError }, "portal_proposal_lookup_failed");
+    notFound();
   }
   if (!proposal) {
-    log.error({ token }, 'portal_proposal_not_found — query returned null')
-    notFound()
+    log.error({ token }, "portal_proposal_not_found — query returned null");
+    notFound();
   }
-  if (proposal.status === 'draft' && !isTeam) {
-    log.warn({ proposalId: proposal.id, status: proposal.status }, 'portal_draft_blocked_non_team')
-    notFound()
+  if (proposal.status === "draft" && !isTeam) {
+    log.warn({ proposalId: proposal.id, status: proposal.status }, "portal_draft_blocked_non_team");
+    notFound();
   }
 
-  const isDraft = proposal.status === 'draft'
+  const isDraft = proposal.status === "draft";
   const portalLanguage = resolvePortalLanguage(
     (proposal.leads as { language?: string | null } | null)?.language ??
       (proposal.clients as { leads?: { language?: string | null } | null } | null)?.leads?.language,
     lang,
-  )
-  const copy = portalLanguage === 'ca'
-    ? { proposal: 'Proposta', validUntil: 'Vàlida fins al', download: 'Descarregar PDF', recipient: 'Adreçada a', subtotal: 'Subtotal', vat: 'IVA', total: 'Total', draft: 'Esborrany', teamOnly: 'Vista prèvia — només visible per a l’equip', confirmed: 'Pagament confirmat', paymentError: 'Error en el pagament' }
-    : portalLanguage === 'en'
-      ? { proposal: 'Proposal', validUntil: 'Valid until', download: 'Download PDF', recipient: 'Prepared for', subtotal: 'Subtotal', vat: 'VAT', total: 'Total', draft: 'Draft', teamOnly: 'Preview — visible to the team only', confirmed: 'Payment confirmed', paymentError: 'Payment error' }
-      : { proposal: 'Propuesta', validUntil: 'Válida hasta el', download: 'Descargar PDF', recipient: 'Dirigido a', subtotal: 'Subtotal', vat: 'IVA', total: 'Total', draft: 'Borrador', teamOnly: 'Vista previa — solo visible para el equipo', confirmed: 'Pago confirmado', paymentError: 'Error en el pago' }
-  const tr = (es: string, ca: string, en: string) => portalLanguage === 'ca' ? ca : portalLanguage === 'en' ? en : es
+  );
+  const copy =
+    portalLanguage === "ca"
+      ? {
+          proposal: "Proposta",
+          validUntil: "Vàlida fins al",
+          download: "Descarregar PDF",
+          recipient: "Adreçada a",
+          subtotal: "Subtotal",
+          vat: "IVA",
+          total: "Total",
+          draft: "Esborrany",
+          teamOnly: "Vista prèvia — només visible per a l’equip",
+          confirmed: "Pagament confirmat",
+          paymentError: "Error en el pagament",
+        }
+      : portalLanguage === "en"
+        ? {
+            proposal: "Proposal",
+            validUntil: "Valid until",
+            download: "Download PDF",
+            recipient: "Prepared for",
+            subtotal: "Subtotal",
+            vat: "VAT",
+            total: "Total",
+            draft: "Draft",
+            teamOnly: "Preview — visible to the team only",
+            confirmed: "Payment confirmed",
+            paymentError: "Payment error",
+          }
+        : {
+            proposal: "Propuesta",
+            validUntil: "Válida hasta el",
+            download: "Descargar PDF",
+            recipient: "Dirigido a",
+            subtotal: "Subtotal",
+            vat: "IVA",
+            total: "Total",
+            draft: "Borrador",
+            teamOnly: "Vista previa — solo visible para el equipo",
+            confirmed: "Pago confirmado",
+            paymentError: "Error en el pago",
+          };
+  const tr = (es: string, ca: string, en: string) =>
+    portalLanguage === "ca" ? ca : portalLanguage === "en" ? en : es;
 
   // Client-facing access gate: hidden proposals 404 and password-protected
   // ones show the unlock form until the visitor presents a valid cookie. Team
   // members always bypass so they can preview the link.
   if (!isTeam) {
     if ((proposal.is_client_visible as boolean | null) === false) {
-      log.warn({ proposalId: proposal.id }, 'portal_proposal_hidden_from_client')
-      notFound()
+      log.warn({ proposalId: proposal.id }, "portal_proposal_hidden_from_client");
+      notFound();
     }
     const unlocked = await isPortalUnlocked(
       token,
       (proposal.portal_password_hash as string | null) ?? null,
-    )
+    );
     if (!unlocked) {
-      return <PortalPasswordGate token={token} action={unlockProposalPortal} language={portalLanguage} />
+      return (
+        <PortalPasswordGate token={token} action={unlockProposalPortal} language={portalLanguage} />
+      );
     }
   }
 
   const { data: items } = await admin
-    .from('proposal_items')
-    .select('id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle')
-    .eq('proposal_id', proposal.id as string)
-    .order('position')
+    .from("proposal_items")
+    .select("id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle")
+    .eq("proposal_id", proposal.id as string)
+    .order("position");
 
   const { data: specs } = await admin
-    .from('proposal_specs')
-    .select('id, title, portal_token')
-    .eq('proposal_id', proposal.id as string)
-    .eq('is_client_visible', true)
-    .not('portal_token', 'is', null)
+    .from("proposal_specs")
+    .select("id, title, portal_token")
+    .eq("proposal_id", proposal.id as string)
+    .eq("is_client_visible", true)
+    .not("portal_token", "is", null);
   const { data: messages } = await admin
-    .from('proposal_messages')
-    .select('id, author_type, author_name, body, created_at')
-    .eq('proposal_id', proposal.id as string)
-    .order('created_at', { ascending: true })
+    .from("proposal_messages")
+    .select("id, author_type, author_name, body, created_at")
+    .eq("proposal_id", proposal.id as string)
+    .order("created_at", { ascending: true });
   const { data: settings } = await admin
-    .from('settings')
-    .select('company_name, iban')
-    .eq('id', 1)
-    .maybeSingle()
+    .from("settings")
+    .select("company_name, iban")
+    .eq("id", 1)
+    .maybeSingle();
 
   // Bump status from 'sent' to 'viewed' only on the first external (client)
   // view. Team previews and drafts never transition the status.
-  if (!isTeam && !isDraft && proposal.status === 'sent') {
+  if (!isTeam && !isDraft && proposal.status === "sent") {
     await admin
-      .from('proposals')
-      .update({ status: 'viewed', viewed_at: new Date().toISOString() })
-      .eq('id', proposal.id as string)
-      .eq('status', 'sent')
+      .from("proposals")
+      .update({ status: "viewed", viewed_at: new Date().toISOString() })
+      .eq("id", proposal.id as string)
+      .eq("status", "sent");
   }
 
   // Best-effort view tracking. Skipped for draft previews.
   if (!isDraft) {
     try {
-      const h = await headers()
-      const forwarded = h.get('x-forwarded-for')
-      const ip = forwarded ? forwarded.split(',')[0]?.trim() : (h.get('x-real-ip') ?? null)
-      const userAgent = h.get('user-agent')
-      await admin.from('proposal_view_events').insert({
+      const h = await headers();
+      const forwarded = h.get("x-forwarded-for");
+      const ip = forwarded ? forwarded.split(",")[0]?.trim() : (h.get("x-real-ip") ?? null);
+      const userAgent = h.get("user-agent");
+      await admin.from("proposal_view_events").insert({
         proposal_id: proposal.id as string,
-        viewer_type: isTeam ? 'team' : 'client',
+        viewer_type: isTeam ? "team" : "client",
         team_member_id: isTeam ? auth.user.id : null,
-        surface: 'portal',
+        surface: "portal",
         ip,
         user_agent: userAgent,
-      })
+      });
       if (!isTeam) {
         await recordClientProposalView(
           {
@@ -259,73 +312,73 @@ export default async function PortalProposalPage({
             client_id: (proposal.client_id as string | null) ?? null,
             created_by: (proposal.created_by as string | null) ?? null,
           },
-          'portal',
-        )
+          "portal",
+        );
       }
     } catch (err) {
-      log.warn({ err, proposalId: proposal.id }, 'proposal_view_insert_failed')
+      log.warn({ err, proposalId: proposal.id }, "proposal_view_insert_failed");
     }
   }
 
   const client = (
     proposal as unknown as {
       clients: {
-        name: string
-        nif: string | null
-        billing_address_street: string | null
-        billing_address_zip: string | null
-        billing_address_city: string | null
-        billing_address_province: string | null
-        billing_address_country: string | null
-        email: string | null
-        phone: string | null
-        contact_person: string | null
-        logo_url: string | null
-      } | null
+        name: string;
+        nif: string | null;
+        billing_address_street: string | null;
+        billing_address_zip: string | null;
+        billing_address_city: string | null;
+        billing_address_province: string | null;
+        billing_address_country: string | null;
+        email: string | null;
+        phone: string | null;
+        contact_person: string | null;
+        logo_url: string | null;
+      } | null;
     }
-  ).clients
+  ).clients;
   const lead = (
     proposal as unknown as {
       leads: {
-        name: string
-        email: string | null
-        phone: string | null
-        company: string | null
-      } | null
+        name: string;
+        email: string | null;
+        phone: string | null;
+        company: string | null;
+      } | null;
     }
-  ).leads
-  const status = proposal.status as ProposalStatus
-  const responded = status === 'accepted' || status === 'rejected'
+  ).leads;
+  const status = proposal.status as ProposalStatus;
+  const responded = status === "accepted" || status === "rejected";
   const statusLabel =
-    portalLanguage === 'ca'
-      ? status === 'draft'
-        ? 'Vista prèvia de l’equip'
-        : status === 'accepted'
-          ? 'Acceptada'
-          : status === 'rejected'
-            ? 'No acceptada'
-            : status === 'expired'
-              ? 'Vençuda'
-              : 'Pendent de resposta'
-      : portalLanguage === 'en'
-        ? status === 'draft'
-          ? 'Team preview'
-          : status === 'accepted'
-            ? 'Accepted'
-            : status === 'rejected'
-              ? 'Declined'
-              : status === 'expired'
-                ? 'Expired'
-                : 'Awaiting your response'
-        : status === 'draft'
-      ? 'Vista previa del equipo'
-      : status === 'accepted'
-        ? 'Aceptada'
-        : status === 'rejected'
-          ? 'No aceptada'
-          : status === 'expired'
-            ? 'Caducada'
-            : 'Pendiente de tu respuesta'
+    portalLanguage === "ca"
+      ? status === "draft"
+        ? "Vista prèvia de l’equip"
+        : status === "accepted"
+          ? "Acceptada"
+          : status === "rejected"
+            ? "No acceptada"
+            : status === "expired"
+              ? "Vençuda"
+              : "Pendent de resposta"
+      : portalLanguage === "en"
+        ? status === "draft"
+          ? "Team preview"
+          : status === "accepted"
+            ? "Accepted"
+            : status === "rejected"
+              ? "Declined"
+              : status === "expired"
+                ? "Expired"
+                : "Awaiting your response"
+        : status === "draft"
+          ? "Vista previa del equipo"
+          : status === "accepted"
+            ? "Aceptada"
+            : status === "rejected"
+              ? "No aceptada"
+              : status === "expired"
+                ? "Caducada"
+                : "Pendiente de tu respuesta";
 
   // The lead branch always asks for fiscal data (no `clients` row exists yet).
   // The client branch only asks when the legal minimum (name + NIF + billing
@@ -333,76 +386,76 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-      street: client.billing_address_street,
-      zip: client.billing_address_zip,
-      city: client.billing_address_city,
-      province: client.billing_address_province,
-      country: client.billing_address_country,
-    })
-    : ''
-  const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim()
+        street: client.billing_address_street,
+        zip: client.billing_address_zip,
+        city: client.billing_address_city,
+        province: client.billing_address_province,
+        country: client.billing_address_country,
+      })
+    : "";
+  const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim();
   const fiscalPrefill = client
     ? {
-      name: client.name ?? '',
-      nif: client.nif ?? '',
-      billing_address: clientBillingAddress,
-      contact_person: client.contact_person ?? '',
-      email: client.email ?? '',
-      phone: client.phone ?? '',
-    }
+        name: client.name ?? "",
+        nif: client.nif ?? "",
+        billing_address: clientBillingAddress,
+        contact_person: client.contact_person ?? "",
+        email: client.email ?? "",
+        phone: client.phone ?? "",
+      }
     : {
-      name: lead?.company ?? lead?.name ?? '',
-      nif: '',
-      billing_address: '',
-      contact_person: lead?.name ?? '',
-      email: lead?.email ?? '',
-      phone: lead?.phone ?? '',
-    }
-  const recipientName = client?.name ?? lead?.company ?? lead?.name ?? '—'
-  const proposalNumber = (proposal.number as string | null) ?? 'Borrador'
-  const rawItems = (items ?? []) as unknown as ProposalItem[]
+        name: lead?.company ?? lead?.name ?? "",
+        nif: "",
+        billing_address: "",
+        contact_person: lead?.name ?? "",
+        email: lead?.email ?? "",
+        phone: lead?.phone ?? "",
+      };
+  const recipientName = client?.name ?? lead?.company ?? lead?.name ?? "—";
+  const proposalNumber = (proposal.number as string | null) ?? "Borrador";
+  const rawItems = (items ?? []) as unknown as ProposalItem[];
   const baseItems =
-    proposal.status === 'accepted'
+    proposal.status === "accepted"
       ? rawItems
       : (ensureCalendarYearProration(
-        rawItems,
-        (proposal.created_at as string | null) ?? null,
-      ) as ProposalItem[])
+          rawItems,
+          (proposal.created_at as string | null) ?? null,
+        ) as ProposalItem[]);
   const displayBaseItems = baseItems.map((item) => ({
     ...item,
     subtotal: computeLineSubtotal(item),
-  }))
+  }));
   const safeSpecs = (specs ?? []) as unknown as Array<{
-    id: string
-    title: string
-    portal_token: string
-  }>
-  const proposalMessages = (messages ?? []) as unknown as ProposalMessage[]
-  const contextMarkdown = ((proposal.context_markdown as string | null) ?? '').trim()
-  const problems = parseKeyPoints(proposal.problems)
-  const solutions = parseKeyPoints(proposal.solutions)
-  const terms = (proposal.terms as string | null) ?? null
-  const legalTerms = (proposal.legal_terms as string | null) ?? null
-  const contractualAnnex = effectiveProposalTerms(terms, legalTerms)
-  const scopeModules = parseScopeModules(proposal.scope_modules)
-  const deliverables = ((proposal.deliverables as string | null) ?? '').trim()
-  const acceptanceCriteria = ((proposal.acceptance_criteria as string | null) ?? '').trim()
-  const paymentSchedule = (proposal.payment_schedule as PaymentSchedule | null) ?? 'half_half'
+    id: string;
+    title: string;
+    portal_token: string;
+  }>;
+  const proposalMessages = (messages ?? []) as unknown as ProposalMessage[];
+  const contextMarkdown = ((proposal.context_markdown as string | null) ?? "").trim();
+  const problems = parseKeyPoints(proposal.problems);
+  const solutions = parseKeyPoints(proposal.solutions);
+  const terms = (proposal.terms as string | null) ?? null;
+  const legalTerms = (proposal.legal_terms as string | null) ?? null;
+  const contractualAnnex = effectiveProposalTerms(terms, legalTerms);
+  const scopeModules = parseScopeModules(proposal.scope_modules);
+  const deliverables = ((proposal.deliverables as string | null) ?? "").trim();
+  const acceptanceCriteria = ((proposal.acceptance_criteria as string | null) ?? "").trim();
+  const paymentSchedule = (proposal.payment_schedule as PaymentSchedule | null) ?? "half_half";
   const paymentTerms =
     (proposal.payment_terms as string | null) ??
-    recurringPaymentTerms(baseItems, (proposal.created_at as string | null) ?? null)
-  const changeManagementTerms = (proposal.change_management_terms as string | null) ?? null
-  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options)
+    recurringPaymentTerms(baseItems, (proposal.created_at as string | null) ?? null);
+  const changeManagementTerms = (proposal.change_management_terms as string | null) ?? null;
+  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options);
   const maintenancePlan = selectedMaintenancePlan(
     maintenanceOffer,
     (proposal.maintenance_selected_plan_id as string | null) ?? null,
-  )
+  );
   const safeItems = maintenancePlan
     ? [
-      ...displayBaseItems,
-      maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle),
-    ]
-    : displayBaseItems
+        ...displayBaseItems,
+        maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle),
+      ]
+    : displayBaseItems;
 
   // Recompute totals on the fly so we can show separate buckets for one-time
   // and recurring lines. The stored `proposals.total` reflects the one-time
@@ -412,26 +465,26 @@ export default async function PortalProposalPage({
       quantity: it.quantity,
       unit_price: it.unit_price,
       vat_rate: it.vat_rate,
-      billing_cycle: it.billing_cycle ?? 'none',
+      billing_cycle: it.billing_cycle ?? "none",
     })),
-  )
+  );
   const hasRecurring =
-    totals.monthly.total > 0 || totals.quarterly.total > 0 || totals.yearly.total > 0
+    totals.monthly.total > 0 || totals.quarterly.total > 0 || totals.yearly.total > 0;
 
   // Fetch confirmed payments for this proposal (signal/deposit)
   const { data: proposalPayments } = await admin
-    .from('invoice_payments')
-    .select('id, amount, status, created_at')
-    .eq('proposal_id', proposal.id as string)
-    .eq('status', 'confirmed')
+    .from("invoice_payments")
+    .select("id, amount, status, created_at")
+    .eq("proposal_id", proposal.id as string)
+    .eq("status", "confirmed");
 
-  const confirmedPayments = proposalPayments ?? []
-  const signalPaid = confirmedPayments.length > 0
-  const initialPaymentPercentage = paymentInitialPercentage(paymentSchedule)
+  const confirmedPayments = proposalPayments ?? [];
+  const signalPaid = confirmedPayments.length > 0;
+  const initialPaymentPercentage = paymentInitialPercentage(paymentSchedule);
   const depositAmount =
     initialPaymentPercentage === null
       ? null
-      : Math.round(Number(proposal.total) * initialPaymentPercentage) / 100
+      : Math.round(Number(proposal.total) * initialPaymentPercentage) / 100;
 
   return (
     <div className="flex flex-col gap-4">
@@ -449,7 +502,11 @@ export default async function PortalProposalPage({
             {copy.confirmed}
           </AlertTitle>
           <AlertDescription className="text-emerald-700 dark:text-emerald-400">
-            {tr('Hemos recibido el pago de la señal. El proyecto se pondrá en marcha en breve.', 'Hem rebut el pagament de la bestreta. El projecte es posarà en marxa aviat.', 'We received the deposit. The project will get underway shortly.')}
+            {tr(
+              "Hemos recibido el pago de la señal. El proyecto se pondrá en marcha en breve.",
+              "Hem rebut el pagament de la bestreta. El projecte es posarà en marxa aviat.",
+              "We received the deposit. The project will get underway shortly.",
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -458,7 +515,11 @@ export default async function PortalProposalPage({
           <XCircle className="h-4 w-4" />
           <AlertTitle>{copy.paymentError}</AlertTitle>
           <AlertDescription>
-            {tr('No se ha podido procesar el pago. Por favor, inténtalo de nuevo o contacta con nosotros.', 'No s’ha pogut processar el pagament. Torna-ho a provar o contacta amb nosaltres.', 'We could not process the payment. Please try again or contact us.')}
+            {tr(
+              "No se ha podido procesar el pago. Por favor, inténtalo de nuevo o contacta con nosotros.",
+              "No s’ha pogut processar el pagament. Torna-ho a provar o contacta amb nosaltres.",
+              "We could not process the payment. Please try again or contact us.",
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -483,9 +544,9 @@ export default async function PortalProposalPage({
                 </h1>
                 {proposal.valid_until ? (
                   <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-                    {copy.validUntil}{' '}
+                    {copy.validUntil}{" "}
                     <strong className="text-zinc-700 dark:text-zinc-300">
-                    {formatPortalDate(proposal.valid_until as string, portalLanguage)}
+                      {formatPortalDate(proposal.valid_until as string, portalLanguage)}
                     </strong>
                   </p>
                 ) : null}
@@ -524,17 +585,21 @@ export default async function PortalProposalPage({
           {contextMarkdown || problems.length > 0 || solutions.length > 0 ? (
             <div className="flex flex-col divide-y divide-zinc-100 border-b border-zinc-100 dark:divide-zinc-800/60 dark:border-zinc-800/60">
               {contextMarkdown ? (
-                <PortalNarrativeBlock label={tr('Contexto', 'Context', 'Context')}>
+                <PortalNarrativeBlock label={tr("Contexto", "Context", "Context")}>
                   <Markdown source={contextMarkdown} />
                 </PortalNarrativeBlock>
               ) : null}
               {problems.length > 0 ? (
-                <PortalNarrativeBlock label={tr('Problemas detectados', 'Reptes detectats', 'Challenges identified')}>
+                <PortalNarrativeBlock
+                  label={tr("Problemas detectados", "Reptes detectats", "Challenges identified")}
+                >
                   <PortalKeyPointsList items={problems} variant="problems" />
                 </PortalNarrativeBlock>
               ) : null}
               {solutions.length > 0 ? (
-                <PortalNarrativeBlock label={tr('Cómo lo abordamos', 'Com ho abordem', 'Our approach')}>
+                <PortalNarrativeBlock
+                  label={tr("Cómo lo abordamos", "Com ho abordem", "Our approach")}
+                >
                   <PortalKeyPointsList items={solutions} variant="solutions" />
                 </PortalNarrativeBlock>
               ) : null}
@@ -544,7 +609,7 @@ export default async function PortalProposalPage({
           {(scopeModules.length > 0 || deliverables || acceptanceCriteria) && (
             <div className="border-b border-zinc-100 px-6 py-7 sm:px-8 dark:border-zinc-800/60">
               <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                {tr('Alcance del proyecto', 'Abast del projecte', 'Project scope')}
+                {tr("Alcance del proyecto", "Abast del projecte", "Project scope")}
               </p>
               <div className="mt-4 flex flex-col gap-4">
                 {scopeModules.map((module, index) => (
@@ -553,7 +618,7 @@ export default async function PortalProposalPage({
                     className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
                   >
                     <p className="text-[11px] font-semibold tracking-widest text-[#2A4227] uppercase dark:text-[#9CC196]">
-                      {tr('Módulo', 'Mòdul', 'Module')} {String(index + 1).padStart(2, '0')}
+                      {tr("Módulo", "Mòdul", "Module")} {String(index + 1).padStart(2, "0")}
                     </p>
                     <h2 className="mt-1 text-base font-semibold text-zinc-900 dark:text-zinc-100">
                       {module.title}
@@ -565,17 +630,22 @@ export default async function PortalProposalPage({
                     ) : null}
                     {scopeModuleDurationText(module) ? (
                       <p className="mt-3 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                        {tr('Plazo estimado:', 'Termini estimat:', 'Estimated timeline:')} {scopeModuleDurationText(module)}
+                        {tr("Plazo estimado:", "Termini estimat:", "Estimated timeline:")}{" "}
+                        {scopeModuleDurationText(module)}
                       </p>
                     ) : null}
                     {(module.included.length > 0 || module.excluded.length > 0) && (
                       <div className="mt-4 grid gap-4 sm:grid-cols-2">
                         {module.included.length > 0 ? (
-                          <ScopeBullets label={tr('Incluido', 'Inclòs', 'Included')} items={module.included} tone="included" />
+                          <ScopeBullets
+                            label={tr("Incluido", "Inclòs", "Included")}
+                            items={module.included}
+                            tone="included"
+                          />
                         ) : null}
                         {module.excluded.length > 0 ? (
                           <ScopeBullets
-                            label={tr('No incluido', 'No inclòs', 'Not included')}
+                            label={tr("No incluido", "No inclòs", "Not included")}
                             items={module.excluded}
                             tone="excluded"
                           />
@@ -584,7 +654,7 @@ export default async function PortalProposalPage({
                     )}
                     {module.notes ? (
                       <p className="mt-4 border-t border-zinc-100 pt-3 text-xs leading-relaxed text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                        <strong>{tr('Notas:', 'Notes:', 'Notes:')}</strong> {module.notes}
+                        <strong>{tr("Notas:", "Notes:", "Notes:")}</strong> {module.notes}
                       </p>
                     ) : null}
                   </section>
@@ -592,11 +662,18 @@ export default async function PortalProposalPage({
                 {deliverables || acceptanceCriteria ? (
                   <div className="grid gap-4 lg:grid-cols-2">
                     {deliverables ? (
-                      <ProposalTextBlock label={tr('Entregables', 'Lliurables', 'Deliverables')} source={deliverables} />
+                      <ProposalTextBlock
+                        label={tr("Entregables", "Lliurables", "Deliverables")}
+                        source={deliverables}
+                      />
                     ) : null}
                     {acceptanceCriteria ? (
                       <ProposalTextBlock
-                        label={tr('Criterios de aceptación', 'Criteris d’acceptació', 'Acceptance criteria')}
+                        label={tr(
+                          "Criterios de aceptación",
+                          "Criteris d’acceptació",
+                          "Acceptance criteria",
+                        )}
                         source={acceptanceCriteria}
                       />
                     ) : null}
@@ -612,21 +689,21 @@ export default async function PortalProposalPage({
               <thead>
                 <tr className="border-b border-zinc-200 dark:border-zinc-800">
                   <th className="px-8 py-3 text-left text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('Descripción', 'Descripció', 'Description')}
+                    {tr("Descripción", "Descripció", "Description")}
                   </th>
                   {hasRecurring ? (
                     <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                      {tr('Cadencia', 'Periodicitat', 'Billing cycle')}
+                      {tr("Cadencia", "Periodicitat", "Billing cycle")}
                     </th>
                   ) : null}
                   <th className="px-4 py-3 text-right text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('Cant.', 'Quant.', 'Qty.')}
+                    {tr("Cant.", "Quant.", "Qty.")}
                   </th>
                   <th className="px-4 py-3 text-right text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('Precio', 'Preu', 'Price')}
+                    {tr("Precio", "Preu", "Price")}
                   </th>
                   <th className="px-4 py-3 text-right text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('IVA', 'IVA', 'VAT')}
+                    {tr("IVA", "IVA", "VAT")}
                   </th>
                   <th className="px-8 py-3 text-right text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
                     {copy.subtotal}
@@ -640,29 +717,41 @@ export default async function PortalProposalPage({
                       colSpan={hasRecurring ? 6 : 5}
                       className="px-8 py-6 text-sm text-zinc-400 dark:text-zinc-600"
                     >
-                      {tr('Sin líneas.', 'Sense línies.', 'No line items.')}
+                      {tr("Sin líneas.", "Sense línies.", "No line items.")}
                     </td>
                   </tr>
                 ) : (
                   safeItems.map((item, i) => {
-                    const cycle: BillingCycle = item.billing_cycle ?? 'none'
+                    const cycle: BillingCycle = item.billing_cycle ?? "none";
                     return (
                       <tr
                         key={item.id}
-                        className={i > 0 ? 'border-t border-zinc-100 dark:border-zinc-800/60' : ''}
+                        className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}
                       >
                         <td className="px-8 py-3.5 text-zinc-800 dark:text-zinc-200">
                           {item.description}
                         </td>
                         {hasRecurring ? (
                           <td className="px-4 py-3.5 text-left text-xs">
-                            {cycle === 'none' ? (
+                            {cycle === "none" ? (
                               <span className="text-zinc-400 dark:text-zinc-600">
-                                {tr('Único', 'Únic', 'One-time')}
+                                {tr("Único", "Únic", "One-time")}
                               </span>
                             ) : (
                               <span className="inline-flex items-center rounded-full bg-[#2A4227]/10 px-2 py-0.5 font-medium text-[#2A4227] dark:bg-[#9CC196]/10 dark:text-[#9CC196]">
-                                {tr(BILLING_CYCLE_LABELS[cycle], cycle === 'monthly' ? 'Mensual' : cycle === 'quarterly' ? 'Trimestral' : 'Anual', cycle === 'monthly' ? 'Monthly' : cycle === 'quarterly' ? 'Quarterly' : 'Yearly')}
+                                {tr(
+                                  BILLING_CYCLE_LABELS[cycle],
+                                  cycle === "monthly"
+                                    ? "Mensual"
+                                    : cycle === "quarterly"
+                                      ? "Trimestral"
+                                      : "Anual",
+                                  cycle === "monthly"
+                                    ? "Monthly"
+                                    : cycle === "quarterly"
+                                      ? "Quarterly"
+                                      : "Yearly",
+                                )}
                               </span>
                             )}
                           </td>
@@ -680,7 +769,7 @@ export default async function PortalProposalPage({
                           {formatPortalEUR(item.subtotal, portalLanguage)}
                         </td>
                       </tr>
-                    )
+                    );
                   })
                 )}
               </tbody>
@@ -693,31 +782,41 @@ export default async function PortalProposalPage({
               <div className="flex flex-col gap-1.5">
                 {hasRecurring ? (
                   <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('Inversión inicial', 'Inversió inicial', 'Initial investment')}
+                    {tr("Inversión inicial", "Inversió inicial", "Initial investment")}
                   </p>
                 ) : null}
                 <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
                   <span>{copy.subtotal}</span>
-                  <span className="tabular-nums">{formatPortalEUR(totals.oneTime.subtotal, portalLanguage)}</span>
+                  <span className="tabular-nums">
+                    {formatPortalEUR(totals.oneTime.subtotal, portalLanguage)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
                   <span>{copy.vat}</span>
-                  <span className="tabular-nums">{formatPortalEUR(totals.oneTime.taxAmount, portalLanguage)}</span>
+                  <span className="tabular-nums">
+                    {formatPortalEUR(totals.oneTime.taxAmount, portalLanguage)}
+                  </span>
                 </div>
                 <div className="mt-1 flex justify-between border-t border-zinc-200 pt-2 text-sm font-bold text-zinc-900 dark:border-zinc-700 dark:text-zinc-100">
                   <span>{copy.total}</span>
-                  <span className="tabular-nums">{formatPortalEUR(totals.oneTime.total, portalLanguage)}</span>
+                  <span className="tabular-nums">
+                    {formatPortalEUR(totals.oneTime.total, portalLanguage)}
+                  </span>
                 </div>
               </div>
 
               {hasRecurring ? (
                 <div className="flex flex-col gap-1.5 border-t border-zinc-200 pt-3 dark:border-zinc-800">
                   <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('Mantenimiento recurrente', 'Manteniment recurrent', 'Recurring maintenance')}
+                    {tr(
+                      "Mantenimiento recurrente",
+                      "Manteniment recurrent",
+                      "Recurring maintenance",
+                    )}
                   </p>
                   {totals.monthly.total > 0 ? (
                     <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                      <span>{tr('Mensual', 'Mensual', 'Monthly')}</span>
+                      <span>{tr("Mensual", "Mensual", "Monthly")}</span>
                       <span className="font-medium tabular-nums">
                         {formatPortalEUR(totals.monthly.total, portalLanguage)}
                       </span>
@@ -725,7 +824,7 @@ export default async function PortalProposalPage({
                   ) : null}
                   {totals.quarterly.total > 0 ? (
                     <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                      <span>{tr('Trimestral', 'Trimestral', 'Quarterly')}</span>
+                      <span>{tr("Trimestral", "Trimestral", "Quarterly")}</span>
                       <span className="font-medium tabular-nums">
                         {formatPortalEUR(totals.quarterly.total, portalLanguage)}
                       </span>
@@ -733,7 +832,7 @@ export default async function PortalProposalPage({
                   ) : null}
                   {totals.yearly.total > 0 ? (
                     <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                      <span>{tr('Anual', 'Anual', 'Yearly')}</span>
+                      <span>{tr("Anual", "Anual", "Yearly")}</span>
                       <span className="font-medium tabular-nums">
                         {formatPortalEUR(totals.yearly.total, portalLanguage)}
                       </span>
@@ -747,22 +846,42 @@ export default async function PortalProposalPage({
           {paymentTerms || changeManagementTerms ? (
             <div className="border-t border-zinc-100 bg-zinc-50 px-8 py-6 dark:border-zinc-800/60 dark:bg-zinc-900/50">
               <p className="mb-4 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                {tr('Condiciones', 'Condicions', 'Terms')}
+                {tr("Condiciones", "Condicions", "Terms")}
               </p>
               <div className="grid gap-5 lg:grid-cols-2">
                 {paymentTerms ? (
                   <div>
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                      {tr('Forma de pago', 'Forma de pagament', 'Payment method')}
+                      {tr("Forma de pago", "Forma de pagament", "Payment method")}
                     </p>
                     <p className="mt-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
-                      {({
-                        upfront: tr('100 % al aceptar', '100 % en acceptar', '100% on acceptance'),
-                        half_half: tr('50 % al aceptar · 50 % a la entrega', '50 % en acceptar · 50 % en el lliurament', '50% on acceptance · 50% on delivery'),
-                        '30_40_30': tr('30 % al aceptar · 40 % durante el proyecto · 30 % a la entrega', '30 % en acceptar · 40 % durant el projecte · 30 % en el lliurament', '30% on acceptance · 40% during the project · 30% on delivery'),
-                        per_module_upfront: tr('Pago adelantado por módulo', 'Pagament avançat per mòdul', 'Upfront payment per module'),
-                        custom: tr('Personalizado', 'Personalitzat', 'Custom'),
-                      } as Record<PaymentSchedule, string>)[paymentSchedule]}
+                      {
+                        (
+                          {
+                            upfront: tr(
+                              "100 % al aceptar",
+                              "100 % en acceptar",
+                              "100% on acceptance",
+                            ),
+                            half_half: tr(
+                              "50 % al aceptar · 50 % a la entrega",
+                              "50 % en acceptar · 50 % en el lliurament",
+                              "50% on acceptance · 50% on delivery",
+                            ),
+                            "30_40_30": tr(
+                              "30 % al aceptar · 40 % durante el proyecto · 30 % a la entrega",
+                              "30 % en acceptar · 40 % durant el projecte · 30 % en el lliurament",
+                              "30% on acceptance · 40% during the project · 30% on delivery",
+                            ),
+                            per_module_upfront: tr(
+                              "Pago adelantado por módulo",
+                              "Pagament avançat per mòdul",
+                              "Upfront payment per module",
+                            ),
+                            custom: tr("Personalizado", "Personalitzat", "Custom"),
+                          } as Record<PaymentSchedule, string>
+                        )[paymentSchedule]
+                      }
                     </p>
                     <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                       {paymentTerms}
@@ -772,7 +891,7 @@ export default async function PortalProposalPage({
                 {changeManagementTerms ? (
                   <div>
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                      {tr('Cambios de alcance', 'Canvis d’abast', 'Scope changes')}
+                      {tr("Cambios de alcance", "Canvis d’abast", "Scope changes")}
                     </p>
                     <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                       {changeManagementTerms}
@@ -787,7 +906,7 @@ export default async function PortalProposalPage({
           {(proposal.notes as string | null) ? (
             <div className="border-t border-zinc-100 bg-zinc-50 px-8 py-5 dark:border-zinc-800/60 dark:bg-zinc-900/50">
               <p className="mb-2 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                {tr('Notas', 'Notes', 'Notes')}
+                {tr("Notas", "Notes", "Notes")}
               </p>
               <Markdown
                 source={proposal.notes as string}
@@ -800,7 +919,7 @@ export default async function PortalProposalPage({
           {safeSpecs.length > 0 ? (
             <div className="flex flex-col gap-4 border-t border-zinc-200 px-8 py-6 dark:border-zinc-800">
               <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                {tr('Documentación técnica', 'Documentació tècnica', 'Technical documentation')}
+                {tr("Documentación técnica", "Documentació tècnica", "Technical documentation")}
               </p>
               <ul className="flex flex-col gap-2">
                 {safeSpecs.map((spec) => (
@@ -811,7 +930,9 @@ export default async function PortalProposalPage({
                     >
                       <FileText className="size-4 shrink-0 text-zinc-400 dark:text-zinc-600" />
                       <span className="flex-1 truncate font-medium">{spec.title}</span>
-                      <span className="text-xs text-zinc-400 dark:text-zinc-600">{tr('Abrir', 'Obrir', 'Open')} →</span>
+                      <span className="text-xs text-zinc-400 dark:text-zinc-600">
+                        {tr("Abrir", "Obrir", "Open")} →
+                      </span>
                     </a>
                   </li>
                 ))}
@@ -827,7 +948,7 @@ export default async function PortalProposalPage({
                 language={portalLanguage}
                 needsFiscal={needsFiscal}
                 fiscalPrefill={fiscalPrefill}
-                signerPrefill={client?.contact_person ?? lead?.name ?? ''}
+                signerPrefill={client?.contact_person ?? lead?.name ?? ""}
                 legalTerms={contractualAnnex}
               />
             </div>
@@ -839,7 +960,7 @@ export default async function PortalProposalPage({
             sticky={false}
             language={portalLanguage}
           />
-          {portalLanguage === 'es' ? (
+          {portalLanguage === "es" ? (
             <section className="hidden rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 lg:block dark:bg-zinc-900 dark:ring-zinc-800">
               <p className="mb-3 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
                 Presentación
@@ -858,7 +979,7 @@ export default async function PortalProposalPage({
             language={portalLanguage}
           />
         ) : null}
-        {portalLanguage === 'es' ? (
+        {portalLanguage === "es" ? (
           <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 lg:hidden dark:bg-zinc-900 dark:ring-zinc-800">
             <p className="mb-3 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
               Presentación
@@ -872,10 +993,15 @@ export default async function PortalProposalPage({
       {!isDraft && responded ? (
         <div className="flex flex-col items-center gap-4 py-4">
           <p className="text-center text-xs text-zinc-400 dark:text-zinc-600">
-            {portalLanguage === 'ca' ? 'Resposta el ' : portalLanguage === 'en' ? 'Answered on ' : 'Respondida el '}{formatPortalDate(proposal.responded_at as string | null, portalLanguage)}.
+            {portalLanguage === "ca"
+              ? "Resposta el "
+              : portalLanguage === "en"
+                ? "Answered on "
+                : "Respondida el "}
+            {formatPortalDate(proposal.responded_at as string | null, portalLanguage)}.
           </p>
 
-          {status === 'accepted' && !signalPaid && !isTeam && depositAmount !== null && (
+          {status === "accepted" && !signalPaid && !isTeam && depositAmount !== null && (
             <ProposalPaymentOptions
               proposalId={proposal.id as string}
               token={token}
@@ -888,12 +1014,17 @@ export default async function PortalProposalPage({
             />
           )}
 
-          {status === 'accepted' && signalPaid && confirmedPayments[0] && (
+          {status === "accepted" && signalPaid && confirmedPayments[0] && (
             <div className="flex flex-col items-center gap-3">
               <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 dark:border-emerald-800/50 dark:bg-emerald-950/20">
                 <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
                 <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                  {portalLanguage === 'ca' ? 'Primer pagament abonat' : portalLanguage === 'en' ? 'First payment received' : 'Primer pago abonado'} ({formatPortalEUR(confirmedPayments[0].amount, portalLanguage)})
+                  {portalLanguage === "ca"
+                    ? "Primer pagament abonat"
+                    : portalLanguage === "en"
+                      ? "First payment received"
+                      : "Primer pago abonado"}{" "}
+                  ({formatPortalEUR(confirmedPayments[0].amount, portalLanguage)})
                 </span>
               </div>
               <a
@@ -903,7 +1034,11 @@ export default async function PortalProposalPage({
                 className="flex items-center gap-1.5 text-xs font-medium text-[#2A4227] hover:underline dark:text-[#9CC196]"
               >
                 <FileText className="size-3.5" />
-                {portalLanguage === 'ca' ? 'Veure el justificant de pagament' : portalLanguage === 'en' ? 'View payment receipt' : 'Ver justificante de pago'}
+                {portalLanguage === "ca"
+                  ? "Veure el justificant de pagament"
+                  : portalLanguage === "en"
+                    ? "View payment receipt"
+                    : "Ver justificante de pago"}
               </a>
             </div>
           )}
@@ -915,11 +1050,11 @@ export default async function PortalProposalPage({
             language={portalLanguage}
             needsFiscal={needsFiscal}
             fiscalPrefill={fiscalPrefill}
-            signerPrefill={client?.contact_person ?? lead?.name ?? ''}
+            signerPrefill={client?.contact_person ?? lead?.name ?? ""}
             legalTerms={contractualAnnex}
           />
         </div>
       ) : null}
     </div>
-  )
+  );
 }

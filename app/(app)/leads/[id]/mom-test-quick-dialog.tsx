@@ -1,32 +1,32 @@
-'use client'
+"use client";
 
-import { Check, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { sileo } from 'sileo'
-import { ButtonGroup } from '@doscientos/ui'
-
-import { Button } from '@/components/ui/button'
+import { ButtonGroup } from "@doscientos/ui";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@doscientos/ui'
-import { cn } from '@/lib/utils'
+} from "@doscientos/ui";
+import { Check, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { sileo } from "sileo";
 
-import { updateLeadMomTestSignal } from '../actions'
-import type { MomTestValues } from './mom-test-checklist'
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+import { updateLeadMomTestSignal } from "../actions";
+import type { MomTestValues } from "./mom-test-checklist";
 
 const SIGNALS = [
-  { key: 'real_problem', label: 'Problema real', positiveWhen: true },
-  { key: 'aware_problem', label: 'Es consciente', positiveWhen: true },
-  { key: 'tried_solutions', label: 'Ha probado soluciones', positiveWhen: true },
-  { key: 'decision_power_or_budget', label: 'Decide o tiene presupuesto', positiveWhen: true },
-  { key: 'accessible', label: 'Es accesible', positiveWhen: true },
+  { key: "real_problem", label: "Problema real", positiveWhen: true },
+  { key: "aware_problem", label: "Es consciente", positiveWhen: true },
+  { key: "tried_solutions", label: "Ha probado soluciones", positiveWhen: true },
+  { key: "decision_power_or_budget", label: "Decide o tiene presupuesto", positiveWhen: true },
+  { key: "accessible", label: "Es accesible", positiveWhen: true },
   // Comparar con otras empresas es una señal negativa: el check suma cuando la respuesta es no.
-  { key: 'comparing_other_companies', label: 'Comparando con otras empresas', positiveWhen: false },
-] as const
+  { key: "comparing_other_companies", label: "Comparando con otras empresas", positiveWhen: false },
+] as const;
 
 const EMPTY_VALUES: MomTestValues = {
   real_problem: null,
@@ -35,10 +35,10 @@ const EMPTY_VALUES: MomTestValues = {
   decision_power_or_budget: null,
   accessible: null,
   comparing_other_companies: null,
-}
+};
 
 const POSITIVE_SIGNAL_CLASS =
-  'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300'
+  "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300";
 
 export function MomTestQuickDialog({
   leadId,
@@ -46,34 +46,34 @@ export function MomTestQuickDialog({
   onOpenChange,
   initialValues,
 }: {
-  leadId: string
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  initialValues: MomTestValues | null
+  leadId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialValues: MomTestValues | null;
 }) {
-  const [values, setValues] = useState<MomTestValues>(EMPTY_VALUES)
-  const [pendingSignals, setPendingSignals] = useState<Set<keyof MomTestValues>>(new Set())
+  const [values, setValues] = useState<MomTestValues>(EMPTY_VALUES);
+  const [pendingSignals, setPendingSignals] = useState<Set<keyof MomTestValues>>(new Set());
 
   useEffect(() => {
-    if (open && initialValues) setValues(initialValues)
-  }, [initialValues, open])
+    if (open && initialValues) setValues(initialValues);
+  }, [initialValues, open]);
 
   function setSignal(key: keyof MomTestValues, next: boolean | null) {
-    const previous = values[key]
-    setValues((current) => ({ ...current, [key]: next }))
-    setPendingSignals((current) => new Set(current).add(key))
+    const previous = values[key];
+    setValues((current) => ({ ...current, [key]: next }));
+    setPendingSignals((current) => new Set(current).add(key));
     void (async () => {
-      const result = await updateLeadMomTestSignal({ leadId, signal: key, value: next })
+      const result = await updateLeadMomTestSignal({ leadId, signal: key, value: next });
       if (!result.ok) {
-        setValues((current) => ({ ...current, [key]: previous }))
-        sileo.error({ title: result.error })
+        setValues((current) => ({ ...current, [key]: previous }));
+        sileo.error({ title: result.error });
       }
       setPendingSignals((current) => {
-        const updated = new Set(current)
-        updated.delete(key)
-        return updated
-      })
-    })()
+        const updated = new Set(current);
+        updated.delete(key);
+        return updated;
+      });
+    })();
   }
 
   return (
@@ -87,9 +87,9 @@ export function MomTestQuickDialog({
         </DialogHeader>
         <ul className="flex flex-col gap-3">
           {SIGNALS.map((signal) => {
-            const value = values[signal.key]
-            const pending = pendingSignals.has(signal.key)
-            const yesIsPositive = signal.positiveWhen === true
+            const value = values[signal.key];
+            const pending = pendingSignals.has(signal.key);
+            const yesIsPositive = signal.positiveWhen === true;
             return (
               <li key={signal.key} className="flex items-center justify-between gap-3">
                 <span className="text-sm">{signal.label}</span>
@@ -97,7 +97,7 @@ export function MomTestQuickDialog({
                   <Button
                     type="button"
                     size="sm"
-                    variant={value === true && !yesIsPositive ? 'destructive' : 'outline'}
+                    variant={value === true && !yesIsPositive ? "destructive" : "outline"}
                     disabled={pending}
                     className={cn(value === true && yesIsPositive && POSITIVE_SIGNAL_CLASS)}
                     aria-pressed={value === true}
@@ -109,7 +109,7 @@ export function MomTestQuickDialog({
                   <Button
                     type="button"
                     size="sm"
-                    variant={value === false && yesIsPositive ? 'destructive' : 'outline'}
+                    variant={value === false && yesIsPositive ? "destructive" : "outline"}
                     disabled={pending}
                     className={cn(value === false && !yesIsPositive && POSITIVE_SIGNAL_CLASS)}
                     aria-pressed={value === false}
@@ -120,7 +120,7 @@ export function MomTestQuickDialog({
                   </Button>
                 </ButtonGroup>
               </li>
-            )
+            );
           })}
         </ul>
         <div className="flex justify-end">
@@ -130,5 +130,5 @@ export function MomTestQuickDialog({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

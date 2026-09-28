@@ -1,13 +1,12 @@
-import 'server-only'
+import "server-only";
+import { scopedLogger } from "@/lib/logger";
 
-import { scopedLogger } from '@/lib/logger'
-
-const log = scopedLogger('internal-documents.supplementary-data')
+const log = scopedLogger("internal-documents.supplementary-data");
 
 type QueryResult<T> = {
-  data: T | null
-  error: { code?: string | null } | null
-}
+  data: T | null;
+  error: { code?: string | null } | null;
+};
 
 /**
  * Loads data that enriches a document page but must not block access to the
@@ -15,24 +14,24 @@ type QueryResult<T> = {
  */
 export async function loadOptionalInternalDocData<T>(
   documentId: string,
-  source: 'events' | 'extraction',
+  source: "events" | "extraction",
   query: PromiseLike<QueryResult<T>>,
 ): Promise<T | null> {
   try {
-    const { data, error } = await query
+    const { data, error } = await query;
     if (error) {
       log.warn(
-        { documentId, source, errorCode: error.code ?? 'unknown' },
-        'could not load optional internal document data',
-      )
-      return null
+        { documentId, source, errorCode: error.code ?? "unknown" },
+        "could not load optional internal document data",
+      );
+      return null;
     }
-    return data
+    return data;
   } catch (error) {
     log.error(
       { documentId, source, errorType: error instanceof Error ? error.name : typeof error },
-      'unexpected error loading optional internal document data',
-    )
-    return null
+      "unexpected error loading optional internal document data",
+    );
+    return null;
   }
 }

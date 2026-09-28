@@ -1,9 +1,9 @@
 "use client";
 
+import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@doscientos/ui";
 import { Ellipsis as MoreHorizontal, Trash as Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@doscientos/ui";
 import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
 
 import { deleteClient, restoreClient } from "../actions";

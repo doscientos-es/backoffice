@@ -1,38 +1,38 @@
-'use client'
+"use client";
 
-import { Hand } from 'lucide-react'
-import { useState, useTransition } from 'react'
-import { sileo } from 'sileo'
+import { Hand } from "lucide-react";
+import { useState, useTransition } from "react";
+import { sileo } from "sileo";
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 
-import type { ScheduleMember } from '../../reminders/schedule-reminder-dialog'
-import { claimLead } from '../actions'
-import type { MeetMember } from '../lead-quick-action-dialogs'
-import { LeadQuickActionGroups } from '../lead-quick-action-groups'
-import type { ExtractTasksDialogProps } from './extract-tasks-dialog'
+import type { ScheduleMember } from "../../reminders/schedule-reminder-dialog";
+import { claimLead } from "../actions";
+import type { MeetMember } from "../lead-quick-action-dialogs";
+import { LeadQuickActionGroups } from "../lead-quick-action-groups";
+import type { ExtractTasksDialogProps } from "./extract-tasks-dialog";
 
 type Props = {
-  leadId: string
-  leadName: string
-  leadEmail: string | null
-  leadPhone: string | null
-  leadLanguage?: string | null
-  senderName: string
-  openCallInitially?: boolean
-  openScheduleInitially?: boolean
-  defaultDurationMinutes?: number | null
-  defaultCallOutcome?: 'connected' | 'no_answer'
-  callSessionId?: string
-  claimable?: boolean
-  aiEnabled?: boolean
-  googleEnabled?: boolean
-  projects?: Array<{ id: string; name: string }>
-  meetMembers?: MeetMember[]
+  leadId: string;
+  leadName: string;
+  leadEmail: string | null;
+  leadPhone: string | null;
+  leadLanguage?: string | null;
+  senderName: string;
+  openCallInitially?: boolean;
+  openScheduleInitially?: boolean;
+  defaultDurationMinutes?: number | null;
+  defaultCallOutcome?: "connected" | "no_answer";
+  callSessionId?: string;
+  claimable?: boolean;
+  aiEnabled?: boolean;
+  googleEnabled?: boolean;
+  projects?: Array<{ id: string; name: string }>;
+  meetMembers?: MeetMember[];
   /** Team members for the "Agendar" assignee picker. */
-  scheduleMembers?: ScheduleMember[]
-  createTaskAction?: ExtractTasksDialogProps['createTaskAction']
-}
+  scheduleMembers?: ScheduleMember[];
+  createTaskAction?: ExtractTasksDialogProps["createTaskAction"];
+};
 
 export function LeadQuickActions({
   leadId,
@@ -77,25 +77,25 @@ export function LeadQuickActions({
         createTaskAction={createTaskAction}
       />
     </div>
-  )
+  );
 }
 
 function ClaimButton({ leadId }: { leadId: string }) {
-  const [claimed, setClaimed] = useState(false)
-  const [, startTransition] = useTransition()
+  const [claimed, setClaimed] = useState(false);
+  const [, startTransition] = useTransition();
 
-  if (claimed) return null
+  if (claimed) return null;
 
   const onClick = () => {
-    setClaimed(true) // optimistic: hide button immediately
+    setClaimed(true); // optimistic: hide button immediately
     startTransition(async () => {
-      const res = await claimLead({ leadId })
+      const res = await claimLead({ leadId });
       if (!res.ok) {
-        setClaimed(false) // revert
-        sileo.error({ title: res.error })
+        setClaimed(false); // revert
+        sileo.error({ title: res.error });
       }
-    })
-  }
+    });
+  };
 
   return (
     <Button
@@ -110,5 +110,5 @@ function ClaimButton({ leadId }: { leadId: string }) {
       </span>
       <span className="text-sm font-medium">Asignármelo</span>
     </Button>
-  )
+  );
 }

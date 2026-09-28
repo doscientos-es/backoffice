@@ -1,5 +1,6 @@
 "use client";
 
+import { Button as PopoverButton, PopoverContent, PopoverTrigger } from "@doscientos/ui";
 import {
   AtSign,
   Bell,
@@ -35,7 +36,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty-state";
-import { Button as PopoverButton, PopoverContent, PopoverTrigger } from "@doscientos/ui";
 import { useBrowserNotifications } from "@/lib/hooks/use-browser-notifications";
 import { useWebPush } from "@/lib/hooks/use-web-push";
 import { getBrowserClient } from "@/lib/supabase/browser";
@@ -295,19 +295,19 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
         aria-label={`Notificaciones${unread.length > 0 ? ` (${unread.length} sin leer)` : ""}`}
         className="relative border-0"
       >
-        <Bell className="text-muted-foreground h-4 w-4" />
+        <Bell className="h-4 w-4 text-muted-foreground" />
         {unread.length > 0 && (
-          <span className="bg-destructive text-destructive-foreground absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold">
+          <span className="text-destructive-foreground absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-none font-bold">
             {unread.length > 9 ? "9+" : unread.length}
           </span>
         )}
       </PopoverButton>
       <PopoverContent placement="bottom end" offset={8} className="z-50 w-96 p-0">
-        <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2">
+        <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
           <div className="flex items-baseline gap-2">
             <span className="text-sm font-semibold">Notificaciones</span>
             {unread.length > 0 && (
-              <span className="text-muted-foreground text-xs">{unread.length} sin leer</span>
+              <span className="text-xs text-muted-foreground">{unread.length} sin leer</span>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -352,10 +352,10 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
             </EmptyHeader>
           </Empty>
         ) : (
-          <ul className="scroll-fade no-scrollbar max-h-96 overflow-y-auto py-1">
+          <ul className="no-scrollbar max-h-96 scroll-fade overflow-y-auto py-1">
             {groups.map((group) => (
               <li key={group.key}>
-                <p className="text-muted-foreground px-3 pt-2 pb-1 text-[10px] font-semibold tracking-wider uppercase">
+                <p className="px-3 pt-2 pb-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
                   {group.label}
                 </p>
                 <ul>
@@ -379,7 +379,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
                           </Avatar>
                           <span
                             className={cn(
-                              "absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-background ring-2 ring-background",
+                              "absolute -right-0.5 -bottom-0.5 flex size-4 items-center justify-center rounded-full bg-background ring-2 ring-background",
                               meta.tint,
                             )}
                           >
@@ -387,7 +387,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
                           </span>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-foreground line-clamp-2 text-xs leading-relaxed">
+                          <p className="line-clamp-2 text-xs leading-relaxed text-foreground">
                             {n.actor?.name ? (
                               <span className="font-medium">{n.actor.name}</span>
                             ) : null}
@@ -396,13 +396,13 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
                               {n.body ?? n.event_type}
                             </span>
                           </p>
-                          <span className="text-muted-foreground text-[10px]">
+                          <span className="text-[10px] text-muted-foreground">
                             {relativeTime(n.created_at)}
                           </span>
                         </div>
                         {isUnread && (
                           <span
-                            className="bg-primary mt-1.5 size-1.5 shrink-0 rounded-full"
+                            className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary"
                             role="img"
                             aria-label="Sin leer"
                           />
@@ -420,7 +420,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
                                 e.preventDefault();
                                 handleItemClick(n);
                               }}
-                              className="focus-visible:ring-ring block rounded-md focus-visible:ring-2 focus-visible:outline-none"
+                              className="block rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                             >
                               {content}
                             </Link>
@@ -431,7 +431,7 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
                             <button
                               type="button"
                               onClick={() => handleItemClick(n)}
-                              className="focus-visible:ring-ring block w-full rounded-md focus-visible:ring-2 focus-visible:outline-none"
+                              className="block w-full rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                             >
                               {content}
                             </button>

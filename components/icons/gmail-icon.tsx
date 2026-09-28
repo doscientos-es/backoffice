@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import Image from "next/image";
 
 /** Official 2026 Gmail logo, preserving its original aspect ratio. */
 export function GmailIcon({ size = 14, className }: { size?: number; className?: string }) {
@@ -11,5 +11,5 @@ export function GmailIcon({ size = 14, className }: { size?: number; className?:
       className={className}
       aria-hidden="true"
     />
-  )
+  );
 }

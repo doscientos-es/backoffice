@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  deleteInvoicePaymentFollowUp,
-  scheduleInvoicePaymentFollowUp,
-} from "./payment-follow-ups";
+import { deleteInvoicePaymentFollowUp, scheduleInvoicePaymentFollowUp } from "./payment-follow-ups";
 
 const INVOICE_ID = "11111111-1111-1111-1111-111111111111";
 

@@ -1,70 +1,81 @@
-import { ProposalAcceptedEmail } from '@/components/email'
-import { externalAppUrl } from '@/lib/email/app-url'
-import { renderEmail } from '@/lib/email/render'
-import { sendEmail } from '@/lib/email/resend'
-import { publicEnv } from '@/lib/env'
-import { scopedLogger } from '@/lib/logger'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { ProposalAcceptedEmail } from "@/components/email";
+import { externalAppUrl } from "@/lib/email/app-url";
+import { renderEmail } from "@/lib/email/render";
+import { sendEmail } from "@/lib/email/resend";
+import { publicEnv } from "@/lib/env";
+import { scopedLogger } from "@/lib/logger";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-const log = scopedLogger('proposal-accepted-email')
+const log = scopedLogger("proposal-accepted-email");
 
 export async function sendProposalAcceptedEmail(proposalId: string): Promise<void> {
-  const admin = createAdminClient()
+  const admin = createAdminClient();
   const { data } = await admin
-    .from('proposals')
-    .select('id, title, acceptance_email_sent_at, clients(name, email, lead_id, leads(language)), leads(name, email, language)')
-    .eq('id', proposalId)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (!data || data.acceptance_email_sent_at) return
+    .from("proposals")
+    .select(
+      "id, title, acceptance_email_sent_at, clients(name, email, lead_id, leads(language)), leads(name, email, language)",
+    )
+    .eq("id", proposalId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!data || data.acceptance_email_sent_at) return;
 
   const relations = data as unknown as {
-    clients: { name: string; email: string | null; leads: { language: 'es' | 'ca' | 'en' | null } | null } | null
-    leads: { name: string; email: string | null; language: 'es' | 'ca' | 'en' | null } | null
-  }
-  const recipient = relations.clients?.email ?? relations.leads?.email ?? null
-  const clientName = relations.clients?.name ?? relations.leads?.name ?? 'Hola'
-  const language = relations.leads?.language ?? relations.clients?.leads?.language ?? 'es'
-  if (!recipient) return
+    clients: {
+      name: string;
+      email: string | null;
+      leads: { language: "es" | "ca" | "en" | null } | null;
+    } | null;
+    leads: { name: string; email: string | null; language: "es" | "ca" | "en" | null } | null;
+  };
+  const recipient = relations.clients?.email ?? relations.leads?.email ?? null;
+  const clientName = relations.clients?.name ?? relations.leads?.name ?? "Hola";
+  const language = relations.leads?.language ?? relations.clients?.leads?.language ?? "es";
+  if (!recipient) return;
 
-  const claimedAt = new Date().toISOString()
+  const claimedAt = new Date().toISOString();
   const { data: claimed } = await admin
-    .from('proposals')
+    .from("proposals")
     .update({ acceptance_email_sent_at: claimedAt, acceptance_email_recipient: recipient })
-    .eq('id', proposalId)
-    .is('acceptance_email_sent_at', null)
-    .select('id')
-    .maybeSingle()
-  if (!claimed) return
+    .eq("id", proposalId)
+    .is("acceptance_email_sent_at", null)
+    .select("id")
+    .maybeSingle();
+  if (!claimed) return;
 
   try {
-    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
+    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL);
     const html = await renderEmail(
       ProposalAcceptedEmail({ clientName, proposalTitle: data.title as string, appUrl, language }),
-    )
+    );
     const sent = await sendEmail({
-      fromName: 'doscientos',
-      fromAlias: 'hola',
+      fromName: "doscientos",
+      fromAlias: "hola",
       to: recipient,
-      replyTo: 'hola@doscientos.es',
-      subject: language === 'ca' ? `Proposta aprovada · ${data.title as string}` : language === 'en' ? `Proposal approved · ${data.title as string}` : `Propuesta aprobada · ${data.title as string}`,
+      replyTo: "hola@doscientos.es",
+      subject:
+        language === "ca"
+          ? `Proposta aprovada · ${data.title as string}`
+          : language === "en"
+            ? `Proposal approved · ${data.title as string}`
+            : `Propuesta aprobada · ${data.title as string}`,
       html,
-      tags: { proposal_id: proposalId, kind: 'proposal_accepted' },
-    })
+      tags: { proposal_id: proposalId, kind: "proposal_accepted" },
+    });
     await admin
-      .from('proposals')
+      .from("proposals")
       .update({ acceptance_email_resend_id: sent.id })
-      .eq('id', proposalId)
+      .eq("id", proposalId);
   } catch (err) {
     await admin
-      .from('proposals')
+      .from("proposals")
       .update({
         acceptance_email_sent_at: null,
         acceptance_email_recipient: null,
         acceptance_email_resend_id: null,
       })
-      .eq('id', proposalId)
-      .eq('acceptance_email_sent_at', claimedAt)
-    log.warn({ err, proposalId }, 'proposal acceptance email failed')
+      .eq("id", proposalId)
+      .eq("acceptance_email_sent_at", claimedAt);
+    log.warn({ err, proposalId }, "proposal acceptance email failed");
   }
 }

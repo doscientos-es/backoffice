@@ -1,59 +1,59 @@
-import { CalendarDays } from 'lucide-react'
-import type { Metadata } from 'next'
+import { CalendarDays } from "lucide-react";
+import type { Metadata } from "next";
 
 import {
   AccountsReceivableSkeleton,
   AccountsReceivableWidget,
-} from '@/components/finance/accounts-receivable-card'
+} from "@/components/finance/accounts-receivable-card";
 import {
   MonthExpensesSkeleton,
   MonthExpensesWidget,
-} from '@/components/finance/month-expenses-card'
-import { PasskeyStatusCard } from '@/components/security/passkey-status-card'
-import { SectionBoundary } from '@/components/ui/error-boundary'
-import { canViewFinance, requireUser } from '@/lib/auth'
-import { hasRegisteredPasskey } from '@/lib/security/webauthn'
-import { getGreeting, parseDashboardRange } from '@/lib/utils/date'
+} from "@/components/finance/month-expenses-card";
+import { PasskeyStatusCard } from "@/components/security/passkey-status-card";
+import { SectionBoundary } from "@/components/ui/error-boundary";
+import { canViewFinance, requireUser } from "@/lib/auth";
+import { hasRegisteredPasskey } from "@/lib/security/webauthn";
+import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
 
-import { AvisosWidget } from './_components/avisos-widget'
-import { EnablePushBanner } from './_components/enable-push-banner'
-import { KpiGrid } from './_components/kpi-grid'
-import { getMyDayScope } from './_components/my-day-scope'
-import { MyDayScopeSelector } from './_components/my-day-scope-selector'
-import { MyDayWidget } from './_components/my-day-widget'
-import { RangeSelector } from './_components/range-selector'
-import { RevenueWidget } from './_components/revenue-widget'
+import { AvisosWidget } from "./_components/avisos-widget";
+import { EnablePushBanner } from "./_components/enable-push-banner";
+import { KpiGrid } from "./_components/kpi-grid";
+import { getMyDayScope } from "./_components/my-day-scope";
+import { MyDayScopeSelector } from "./_components/my-day-scope-selector";
+import { MyDayWidget } from "./_components/my-day-widget";
+import { RangeSelector } from "./_components/range-selector";
+import { RevenueWidget } from "./_components/revenue-widget";
 import {
   AvisosWidgetSkeleton,
   KpiGridSkeleton,
   MyDayWidgetSkeleton,
   RangeSelectorSkeleton,
   RevenueWidgetSkeleton,
-} from './_components/widget-skeletons'
-import { ActionCenterWidget } from './action-center-widget'
+} from "./_components/widget-skeletons";
+import { ActionCenterWidget } from "./action-center-widget";
 
-export const metadata: Metadata = { title: 'Inicio · doscientos' }
-export const dynamic = 'force-dynamic'
+export const metadata: Metadata = { title: "Inicio · doscientos" };
+export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ range?: string | string[]; member?: string | string[] }>
-}
+  searchParams: Promise<{ range?: string | string[]; member?: string | string[] }>;
+};
 
 export default async function InicioPage({ searchParams }: PageProps) {
-  const [user, params] = await Promise.all([requireUser(), searchParams])
+  const [user, params] = await Promise.all([requireUser(), searchParams]);
   const [passkeyConfigured, myDayScope] = await Promise.all([
     hasRegisteredPasskey(user.id),
     getMyDayScope({ user, member: params.member }),
-  ])
-  const range = parseDashboardRange(params.range)
-  const greeting = getGreeting()
-  const firstName = user.name.split(' ')[0]
-  const showFinance = canViewFinance(user.role)
-  const today = new Intl.DateTimeFormat('es-ES', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }).format(new Date())
+  ]);
+  const range = parseDashboardRange(params.range);
+  const greeting = getGreeting();
+  const firstName = user.name.split(" ")[0];
+  const showFinance = canViewFinance(user.role);
+  const today = new Intl.DateTimeFormat("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date());
 
   return (
     <div className="flex flex-col gap-10 pb-4">
@@ -63,12 +63,12 @@ export default async function InicioPage({ searchParams }: PageProps) {
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
               {greeting}, {firstName}
             </h1>
-            <p className="text-muted-foreground mt-2 max-w-xl text-sm leading-6">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
               Empieza por lo urgente y mantén el pulso del negocio en una sola vista.
             </p>
           </div>
-          <div className="border-border/70 bg-background/70 text-muted-foreground inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm backdrop-blur-sm">
-            <CalendarDays aria-hidden="true" className="text-primary size-3.5" />
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
+            <CalendarDays aria-hidden="true" className="size-3.5 text-primary" />
             <span className="capitalize">{today}</span>
           </div>
         </div>
@@ -87,7 +87,7 @@ export default async function InicioPage({ searchParams }: PageProps) {
             <h2 id="inicio-prioridades" className="mt-1 text-xl font-semibold tracking-tight">
               Prioridades para avanzar
             </h2>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <p className="mt-1 text-sm text-muted-foreground">
               Tareas, conversaciones y avisos que no conviene dejar pasar.
             </p>
           </div>
@@ -115,7 +115,7 @@ export default async function InicioPage({ searchParams }: PageProps) {
               <h2 id="inicio-negocio" className="mt-1 text-xl font-semibold tracking-tight">
                 La salud del negocio
               </h2>
-              <p className="text-muted-foreground mt-1 text-sm">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Una lectura clara de la actividad comercial y financiera.
               </p>
             </header>
@@ -163,5 +163,5 @@ export default async function InicioPage({ searchParams }: PageProps) {
         </div>
       </section>
     </div>
-  )
+  );
 }

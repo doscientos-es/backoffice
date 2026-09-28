@@ -77,7 +77,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
               <h2 className="flex items-center gap-2 text-sm font-medium">
                 <MessageSquare className="size-4" />
                 Comentarios
-                <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs tabular-nums">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground tabular-nums">
                   {post.comments.length}
                 </span>
               </h2>
@@ -90,7 +90,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
               </div>
             ) : (
               <Card>
-                <CardContent className="text-muted-foreground py-8 text-center text-sm">
+                <CardContent className="py-8 text-center text-sm text-muted-foreground">
                   No hay comentarios sincronizados para esta publicación.
                 </CardContent>
               </Card>
@@ -106,7 +106,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-border text-muted-foreground border-b">
+                    <tr className="border-b border-border text-muted-foreground">
                       <th className="pr-4 pb-2 font-medium">Red</th>
                       <th className="pr-4 pb-2 font-medium">Estado</th>
                       <th className="pr-4 pb-2 text-right font-medium">Alcance</th>
@@ -116,7 +116,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                       <th className="pb-2 text-right font-medium">Enlace</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-border/50 divide-y">
+                  <tbody className="divide-y divide-border/50">
                     {post.targets.map((t) => (
                       <tr key={t.id} className="group">
                         <td className="py-3 pr-4">
@@ -131,7 +131,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                             />
                             {t.status === "failed" && t.error && (
                               <span
-                                className="text-destructive max-w-50 text-[10px] leading-tight wrap-break-word"
+                                className="max-w-50 text-[10px] leading-tight wrap-break-word text-destructive"
                                 title={t.error}
                               >
                                 {t.error.length > 80 ? `${t.error.slice(0, 80)}…` : t.error}
@@ -157,7 +157,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                               href={t.remoteUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-muted-foreground hover:text-primary inline-flex items-center gap-1 text-xs"
+                              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
                             >
                               Ver <ExternalLink className="size-3" />
                             </a>
@@ -188,7 +188,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                 <DetailRow label="Creado">
                   <div className="flex flex-col">
                     <span>{formatDateTime(post.createdAt)}</span>
-                    <span className="text-muted-foreground text-[10px]">
+                    <span className="text-[10px] text-muted-foreground">
                       {relativeTime(post.createdAt)}
                     </span>
                   </div>
@@ -206,7 +206,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
               </DetailGrid>
 
               {canEdit && post.status === "scheduled" && (
-                <div className="border-border mt-6 border-t pt-4">
+                <div className="mt-6 border-t border-border pt-4">
                   <Button asChild variant="outline" size="default" className="w-full">
                     <Link href={`/social/${post.id}/edit`}>
                       <Pencil className="size-4" />
@@ -217,7 +217,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
               )}
 
               {canEdit && (post.status === "draft" || post.status === "scheduled") && (
-                <div className="border-border mt-6 border-t pt-4">
+                <div className="mt-6 border-t border-border pt-4">
                   <PublishButton
                     postId={post.id}
                     label={post.status === "scheduled" ? "Publicar ahora" : undefined}
@@ -227,7 +227,7 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
                 </div>
               )}
               {(post.status === "failed" || post.status === "partially_failed") && (
-                <div className="border-border mt-6 border-t pt-4">
+                <div className="mt-6 border-t border-border pt-4">
                   <PublishButton postId={post.id} retry size="default" className="w-full" />
                 </div>
               )}
@@ -245,45 +245,45 @@ async function PostDetail({ id, canEdit }: { id: string; canEdit: boolean }) {
               {/* Aggregate stats from the latest successful sync. */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-muted-foreground text-[10px] uppercase">Reach Total</span>
+                  <span className="text-[10px] text-muted-foreground uppercase">Reach Total</span>
                   <span className="text-xl font-bold tabular-nums">
                     {totalReach > 0 ? totalReach.toLocaleString() : "—"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-muted-foreground text-[10px] uppercase">Interacciones</span>
+                  <span className="text-[10px] text-muted-foreground uppercase">Interacciones</span>
                   <span className="text-xl font-bold tabular-nums">
                     {totalInteractions.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-muted-foreground text-[10px] uppercase">Me gusta</span>
+                  <span className="text-[10px] text-muted-foreground uppercase">Me gusta</span>
                   <span className="text-xl font-bold tabular-nums">
                     {totalLikes.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-muted-foreground text-[10px] uppercase">Comentarios</span>
+                  <span className="text-[10px] text-muted-foreground uppercase">Comentarios</span>
                   <span className="text-xl font-bold tabular-nums">
                     {totalComments.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-muted-foreground text-[10px] uppercase">Acciones</span>
+                  <span className="text-[10px] text-muted-foreground uppercase">Acciones</span>
                   <span className="text-xl font-bold tabular-nums">
                     {totalActions.toLocaleString()}
                   </span>
                 </div>
               </div>
-              <div className="border-border/60 border-t pt-3">
+              <div className="border-t border-border/60 pt-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground text-xs">Engagement medio</span>
+                  <span className="text-xs text-muted-foreground">Engagement medio</span>
                   <span className="font-semibold tabular-nums">
                     {engagementRate === null ? "—" : `${engagementRate.toFixed(1)}%`}
                   </span>
                 </div>
                 {engagementRate === null && (
-                  <p className="text-muted-foreground mt-1 text-[11px]">
+                  <p className="mt-1 text-[11px] text-muted-foreground">
                     La red todavía no ha devuelto datos de alcance.
                   </p>
                 )}

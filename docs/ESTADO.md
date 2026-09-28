@@ -59,13 +59,13 @@ Ya existen, con el alcance cerrado en `DECISIONS.md` donde aplica:
 
 Todos los cron exigen `Authorization: Bearer <CRON_SECRET>`.
 
-| Ruta | Qué hace |
-| --- | --- |
-| `/api/cron/verifactu-outbox` | Reintenta registros AEAT vencidos |
-| `/api/cron/subscription-invoices` | Factura suscripciones vencidas y aplica IPC |
-| `/api/cron/invoice-payment-follow-ups` | Reclama facturas impagadas |
-| `/api/cron/backoffice-backup` | Copia de base de datos y Storage |
-| `/api/cron/web-backups` | Copias de las webs gestionadas |
-| `/api/cron/daily-responsibilities` | Avisos diarios de responsabilidades |
-| `/api/cron/privacy-retention` | Borrados de privacidad y anonimización de leads |
-| `/api/cron/social-publish` | Publica lo programado en social |
+| Ruta                                   | Qué hace                                        |
+| -------------------------------------- | ----------------------------------------------- |
+| `/api/cron/verifactu-outbox`           | Reintenta registros AEAT vencidos               |
+| `/api/cron/subscription-invoices`      | Factura suscripciones vencidas y aplica IPC     |
+| `/api/cron/invoice-payment-follow-ups` | Reclama facturas impagadas                      |
+| `/api/cron/backoffice-backup`          | Copia de base de datos y Storage                |
+| `/api/cron/web-backups`                | Copias de las webs gestionadas                  |
+| `/api/cron/daily-responsibilities`     | Avisos diarios de responsabilidades             |
+| `/api/cron/privacy-retention`          | Borrados de privacidad y anonimización de leads |
+| `/api/cron/social-publish`             | Publica lo programado en social                 |

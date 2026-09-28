@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -11,50 +11,50 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts'
+} from "recharts";
 
 import type {
   RevenueBreakdown,
   RevenueChartData,
   RevenueMetricData,
   RevenuePoint,
-} from '@/lib/dashboard/types'
-import { formatEUR } from '@/lib/utils'
+} from "@/lib/dashboard/types";
+import { formatEUR } from "@/lib/utils";
 
-export type { RevenuePoint }
+export type { RevenuePoint };
 
 const SERIES_LABEL: Record<string, string> = {
-  current: 'Periodo seleccionado',
-  previous: 'Periodo anterior',
-}
+  current: "Periodo seleccionado",
+  previous: "Periodo anterior",
+};
 
 const BREAKDOWN_PALETTE = [
-  '#2563eb',
-  '#0f766e',
-  '#c2410c',
-  '#7c3aed',
-  '#be185d',
-  '#15803d',
-  '#b45309',
-  '#0369a1',
-  '#4338ca',
-  '#a21caf',
-  '#047857',
-  '#b91c1c',
-]
-const OTHERS_COLOR = 'var(--muted-foreground)'
+  "#2563eb",
+  "#0f766e",
+  "#c2410c",
+  "#7c3aed",
+  "#be185d",
+  "#15803d",
+  "#b45309",
+  "#0369a1",
+  "#4338ca",
+  "#a21caf",
+  "#047857",
+  "#b91c1c",
+];
+const OTHERS_COLOR = "var(--muted-foreground)";
 
-type RevenueView = 'total' | 'project' | 'lead'
-type RevenueMetric = 'billed' | 'collected'
+type RevenueView = "total" | "project" | "lead";
+type RevenueMetric = "billed" | "collected";
 
 type RevenueTooltipEntry = {
-  dataKey?: string | number
-  value?: number | string | null
-  color?: string
-}
+  dataKey?: string | number;
+  value?: number | string | null;
+  color?: string;
+};
 
 export function filterZeroRevenueTooltipEntries(entries: RevenueTooltipEntry[]) {
-  return entries.filter((entry) => Number(entry.value) > 0)
+  return entries.filter((entry) => Number(entry.value) > 0);
 }
 
 export function RevenueTooltip({
@@ -68,50 +68,50 @@ export function RevenueTooltip({
   currentTotal,
   previousTotal,
 }: {
-  active?: boolean
-  payload?: RevenueTooltipEntry[]
-  label?: string | number
-  seriesLabels: Map<string, string>
-  seriesLinks: Map<string, string>
-  breakdown: boolean
-  metricLabel: string
-  currentTotal: number
-  previousTotal: number
+  active?: boolean;
+  payload?: RevenueTooltipEntry[];
+  label?: string | number;
+  seriesLabels: Map<string, string>;
+  seriesLinks: Map<string, string>;
+  breakdown: boolean;
+  metricLabel: string;
+  currentTotal: number;
+  previousTotal: number;
 }) {
-  if (!active || !payload) return null
-  const visibleEntries = filterZeroRevenueTooltipEntries(payload)
-  if (visibleEntries.length === 0) return null
-  const pointTotal = visibleEntries.reduce((total, entry) => total + Number(entry.value ?? 0), 0)
+  if (!active || !payload) return null;
+  const visibleEntries = filterZeroRevenueTooltipEntries(payload);
+  if (visibleEntries.length === 0) return null;
+  const pointTotal = visibleEntries.reduce((total, entry) => total + Number(entry.value ?? 0), 0);
 
   return (
-    <div className="border-border bg-background rounded-lg border p-2 text-xs shadow-sm">
+    <div className="rounded-lg border border-border bg-background p-2 text-xs shadow-sm">
       <p className="mb-1 font-medium">{label}</p>
       <ul className="flex flex-col gap-1">
         {visibleEntries.map((entry) => {
-          const key = String(entry.dataKey)
-          const value = Number(entry.value ?? 0)
+          const key = String(entry.dataKey);
+          const value = Number(entry.value ?? 0);
           const denominator = breakdown
             ? pointTotal
-            : key === 'previous'
+            : key === "previous"
               ? previousTotal
-              : currentTotal
-          const percentage = denominator > 0 ? Math.round((value / denominator) * 100) : 0
+              : currentTotal;
+          const percentage = denominator > 0 ? Math.round((value / denominator) * 100) : 0;
           const labelContent = seriesLinks.has(key) ? (
             <Link
               className="truncate underline-offset-2 hover:underline"
-              href={seriesLinks.get(key) ?? '#'}
+              href={seriesLinks.get(key) ?? "#"}
             >
               {seriesLabels.get(key) ?? key}
             </Link>
           ) : (
             <span className="truncate">{seriesLabels.get(key) ?? key}</span>
-          )
+          );
           return (
             <li key={key} className="flex items-center justify-between gap-4">
               <span className="flex min-w-0 items-center gap-1.5">
                 <span
                   className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: entry.color ?? 'var(--muted-foreground)' }}
+                  style={{ backgroundColor: entry.color ?? "var(--muted-foreground)" }}
                 />
                 {labelContent}
               </span>
@@ -119,10 +119,10 @@ export function RevenueTooltip({
                 {formatEUR(value)} <span className="text-muted-foreground">({percentage}%)</span>
               </span>
             </li>
-          )
+          );
         })}
       </ul>
-      <div className="border-border text-muted-foreground mt-2 border-t pt-2">
+      <div className="mt-2 border-t border-border pt-2 text-muted-foreground">
         {breakdown ? (
           <span>
             Total {metricLabel.toLowerCase()} en {String(label)}: {formatEUR(pointTotal)}
@@ -134,48 +134,48 @@ export function RevenueTooltip({
         )}
       </div>
     </div>
-  )
+  );
 }
 
 const VIEW_OPTIONS: Array<{ value: RevenueView; label: string }> = [
-  { value: 'total', label: 'Total' },
-  { value: 'project', label: 'Por proyecto' },
-  { value: 'lead', label: 'Por lead' },
-]
+  { value: "total", label: "Total" },
+  { value: "project", label: "Por proyecto" },
+  { value: "lead", label: "Por lead" },
+];
 
 const METRIC_OPTIONS: Array<{ value: RevenueMetric; label: string }> = [
-  { value: 'billed', label: 'Facturación emitida' },
-  { value: 'collected', label: 'Cobros recibidos' },
-]
+  { value: "billed", label: "Facturación emitida" },
+  { value: "collected", label: "Cobros recibidos" },
+];
 
 function stablePaletteIndex(key: string): number {
-  let hash = 0
-  for (const character of key) hash = (hash * 31 + character.charCodeAt(0)) >>> 0
-  return hash % BREAKDOWN_PALETTE.length
+  let hash = 0;
+  for (const character of key) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  return hash % BREAKDOWN_PALETTE.length;
 }
 
 export function RevenueChart({ data }: { data: RevenueChartData }) {
   // ResponsiveContainer reads DOM dimensions — skip SSR to prevent hydration mismatch.
-  const [mounted, setMounted] = useState(false)
-  const [view, setView] = useState<RevenueView>('total')
-  const [metric, setMetric] = useState<RevenueMetric>('billed')
-  useEffect(() => setMounted(true), [])
+  const [mounted, setMounted] = useState(false);
+  const [view, setView] = useState<RevenueView>("total");
+  const [metric, setMetric] = useState<RevenueMetric>("billed");
+  useEffect(() => setMounted(true), []);
 
-  if (!mounted) return <div className="h-56 w-full" />
+  if (!mounted) return <div className="h-56 w-full" />;
 
-  const metricData: RevenueMetricData = data[metric]
+  const metricData: RevenueMetricData = data[metric];
   const breakdown: RevenueBreakdown | null =
-    view === 'project' ? metricData.byProject : view === 'lead' ? metricData.byLead : null
-  const seriesLabels = new Map(breakdown?.series.map((series) => [series.key, series.label]))
+    view === "project" ? metricData.byProject : view === "lead" ? metricData.byLead : null;
+  const seriesLabels = new Map(breakdown?.series.map((series) => [series.key, series.label]));
   const seriesLinks = new Map(
     breakdown?.series
       .filter((series) => series.href)
-      .map((series) => [series.key, series.href ?? '']) ?? [],
-  )
-  const currentTotal = metricData.totals.reduce((sum, point) => sum + point.current, 0)
-  const previousTotal = metricData.totals.reduce((sum, point) => sum + point.previous, 0)
-  const metricLabel = METRIC_OPTIONS.find((option) => option.value === metric)?.label ?? 'Ingresos'
-  const chartData = breakdown?.points ?? metricData.totals
+      .map((series) => [series.key, series.href ?? ""]) ?? [],
+  );
+  const currentTotal = metricData.totals.reduce((sum, point) => sum + point.current, 0);
+  const previousTotal = metricData.totals.reduce((sum, point) => sum + point.previous, 0);
+  const metricLabel = METRIC_OPTIONS.find((option) => option.value === metric)?.label ?? "Ingresos";
+  const chartData = breakdown?.points ?? metricData.totals;
   const totalBars = [
     <Bar
       key="previous"
@@ -196,7 +196,7 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
       radius={[4, 4, 0, 0]}
       maxBarSize={20}
     />,
-  ]
+  ];
 
   return (
     <div className="flex flex-col gap-3">
@@ -224,7 +224,7 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
               width={40}
             />
             <Tooltip
-              cursor={{ fill: 'color-mix(in oklab, var(--muted) 60%, transparent)' }}
+              cursor={{ fill: "color-mix(in oklab, var(--muted) 60%, transparent)" }}
               content={
                 <RevenueTooltip
                   seriesLabels={breakdown ? seriesLabels : new Map(Object.entries(SERIES_LABEL))}
@@ -240,7 +240,7 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
               verticalAlign="top"
               height={24}
               iconSize={8}
-              wrapperStyle={{ fontSize: 11, color: 'var(--muted-foreground)' }}
+              wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }}
               formatter={(value) =>
                 breakdown
                   ? (seriesLabels.get(String(value)) ?? String(value))
@@ -254,7 +254,7 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
                     dataKey={series.key}
                     stackId="revenue"
                     fill={
-                      series.key === 'others'
+                      series.key === "others"
                         ? OTHERS_COLOR
                         : BREAKDOWN_PALETTE[stablePaletteIndex(series.key)]
                     }
@@ -266,12 +266,12 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
         </ResponsiveContainer>
       </div>
       <div
-        className="bg-card inline-flex w-fit items-center rounded-lg border p-0.5 text-xs"
+        className="inline-flex w-fit items-center rounded-lg border bg-card p-0.5 text-xs"
         role="tablist"
         aria-label="Métrica de ingresos"
       >
         {METRIC_OPTIONS.map((option) => {
-          const active = option.value === metric
+          const active = option.value === metric;
           return (
             <button
               key={option.value}
@@ -281,22 +281,22 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
               onClick={() => setMetric(option.value)}
               className={
                 active
-                  ? 'bg-foreground text-background rounded-md px-2.5 py-1 font-medium'
-                  : 'text-muted-foreground hover:text-foreground rounded-md px-2.5 py-1 font-medium'
+                  ? "rounded-md bg-foreground px-2.5 py-1 font-medium text-background"
+                  : "rounded-md px-2.5 py-1 font-medium text-muted-foreground hover:text-foreground"
               }
             >
               {option.label}
             </button>
-          )
+          );
         })}
       </div>
       <div
-        className="bg-card inline-flex w-fit items-center rounded-lg border p-0.5 text-xs"
+        className="inline-flex w-fit items-center rounded-lg border bg-card p-0.5 text-xs"
         role="tablist"
         aria-label="Desglose de ingresos"
       >
         {VIEW_OPTIONS.map((option) => {
-          const active = option.value === view
+          const active = option.value === view;
           return (
             <button
               key={option.value}
@@ -306,15 +306,15 @@ export function RevenueChart({ data }: { data: RevenueChartData }) {
               onClick={() => setView(option.value)}
               className={
                 active
-                  ? 'bg-foreground text-background rounded-md px-2.5 py-1 font-medium'
-                  : 'text-muted-foreground hover:text-foreground rounded-md px-2.5 py-1 font-medium'
+                  ? "rounded-md bg-foreground px-2.5 py-1 font-medium text-background"
+                  : "rounded-md px-2.5 py-1 font-medium text-muted-foreground hover:text-foreground"
               }
             >
               {option.label}
             </button>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }

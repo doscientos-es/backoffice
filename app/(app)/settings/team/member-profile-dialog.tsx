@@ -1,80 +1,74 @@
-'use client'
+"use client";
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@doscientos/ui";
 import {
   CircleAlert as AlertCircle,
   CircleCheck as CheckCircle2,
   LoaderCircle as Loader2,
   Pencil,
   XCircle,
-} from 'lucide-react'
-import { useMemo, useState } from 'react'
+} from "lucide-react";
+import { useMemo, useState } from "react";
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@doscientos/ui'
-import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
-import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
-import { Input } from '@/components/ui/input'
-import { SubmitButton } from '@/components/ui/submit-button'
-import { useGithubHandle } from '@/lib/hooks/use-github-handle'
-import { cn } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { Input } from "@/components/ui/input";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { useGithubHandle } from "@/lib/hooks/use-github-handle";
+import { cn } from "@/lib/utils";
 
-import { updateMemberProfile } from '../actions'
+import { updateMemberProfile } from "../actions";
 
 export interface MemberProfileData {
-  id: string
-  name: string
-  email: string
-  avatarUrl: string | null
-  githubHandle: string | null
-  jobTitle: string | null
-  phone: string | null
-  contactEmail: string | null
-  emailAlias: string | null
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  githubHandle: string | null;
+  jobTitle: string | null;
+  phone: string | null;
+  contactEmail: string | null;
+  emailAlias: string | null;
 }
 
 export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
-  const [open, setOpen] = useState(false)
-  const feedback = useFormFeedback()
-  const [handle, setHandle] = useState(member.githubHandle ?? '')
-  const handleState = useGithubHandle(handle)
+  const [open, setOpen] = useState(false);
+  const feedback = useFormFeedback();
+  const [handle, setHandle] = useState(member.githubHandle ?? "");
+  const handleState = useGithubHandle(handle);
 
   const initials = useMemo(() => {
-    const source = member.name.trim() || member.email
+    const source = member.name.trim() || member.email;
     return source
       .split(/\s+/)
       .map((part) => part[0])
       .filter(Boolean)
       .slice(0, 2)
-      .join('')
-      .toUpperCase()
-  }, [member.name, member.email])
+      .join("")
+      .toUpperCase();
+  }, [member.name, member.email]);
 
   const avatarSrc = useMemo(() => {
-    if (member.avatarUrl) return member.avatarUrl
-    const trimmed = handle.trim()
+    if (member.avatarUrl) return member.avatarUrl;
+    const trimmed = handle.trim();
     if (/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38})$/.test(trimmed)) {
-      return `https://github.com/${trimmed}.png?size=200`
+      return `https://github.com/${trimmed}.png?size=200`;
     }
-    return handleState.avatarUrl ?? undefined
-  }, [member.avatarUrl, handle, handleState.avatarUrl])
+    return handleState.avatarUrl ?? undefined;
+  }, [member.avatarUrl, handle, handleState.avatarUrl]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-    feedback.setPending()
-    const result = await updateMemberProfile(fd)
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    feedback.setPending();
+    const result = await updateMemberProfile(fd);
     if (result.ok) {
-      feedback.setSuccess('Perfil guardado')
-      setTimeout(() => setOpen(false), 900)
+      feedback.setSuccess("Perfil guardado");
+      setTimeout(() => setOpen(false), 900);
     } else {
-      feedback.setError(result.error)
+      feedback.setError(result.error);
     }
   }
 
@@ -84,7 +78,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
         <Button
           variant="ghost"
           size="icon"
-          className="text-muted-foreground hover:text-foreground size-7 shrink-0"
+          className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
         >
           <Pencil className="size-3.5" />
           <span className="sr-only">Editar perfil de {member.name}</span>
@@ -92,7 +86,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
       </DialogTrigger>
 
       <DialogContent className="flex max-h-[90vh] max-w-lg flex-col gap-0 p-0">
-        <DialogHeader className="border-border shrink-0 border-b px-6 py-4">
+        <DialogHeader className="shrink-0 border-b border-border px-6 py-4">
           <DialogTitle>Editar perfil · {member.name}</DialogTitle>
         </DialogHeader>
 
@@ -100,7 +94,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
           <input type="hidden" name="member_id" value={member.id} />
 
           {/* Scrollable body */}
-          <div className="scroll-fade no-scrollbar flex-1 overflow-y-auto px-6 py-4">
+          <div className="no-scrollbar flex-1 scroll-fade overflow-y-auto px-6 py-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor="mp-name" className="text-xs font-medium">
@@ -117,7 +111,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
               </Field>
 
               <Field>
-                <FieldLabel className="text-muted-foreground text-xs font-medium">Email</FieldLabel>
+                <FieldLabel className="text-xs font-medium text-muted-foreground">Email</FieldLabel>
                 <Input value={member.email} disabled aria-readonly />
                 <FieldDescription>No editable desde aquí.</FieldDescription>
               </Field>
@@ -129,7 +123,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
                 <Input
                   id="mp-job"
                   name="job_title"
-                  defaultValue={member.jobTitle ?? ''}
+                  defaultValue={member.jobTitle ?? ""}
                   placeholder="Account Executive"
                   maxLength={160}
                 />
@@ -143,7 +137,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
                   id="mp-phone"
                   name="phone"
                   type="tel"
-                  defaultValue={member.phone ?? ''}
+                  defaultValue={member.phone ?? ""}
                   placeholder="+34 600 000 000"
                   maxLength={30}
                 />
@@ -157,7 +151,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
                   id="mp-contact"
                   name="contact_email"
                   type="email"
-                  defaultValue={member.contactEmail ?? ''}
+                  defaultValue={member.contactEmail ?? ""}
                 />
                 <FieldDescription>Aparece en la firma.</FieldDescription>
               </Field>
@@ -170,7 +164,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
                   id="mp-alias"
                   name="email_alias"
                   type="email"
-                  defaultValue={member.emailAlias ?? ''}
+                  defaultValue={member.emailAlias ?? ""}
                 />
                 <FieldDescription>Dirección desde la que envía emails.</FieldDescription>
               </Field>
@@ -218,7 +212,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
                   id="mp-avatar"
                   name="avatar_url"
                   type="url"
-                  defaultValue={member.avatarUrl ?? ''}
+                  defaultValue={member.avatarUrl ?? ""}
                   placeholder="https://..."
                 />
                 <FieldDescription>
@@ -229,7 +223,7 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
           </div>
 
           {/* Sticky footer — always visible */}
-          <div className="border-border shrink-0 border-t px-6 py-3">
+          <div className="shrink-0 border-t border-border px-6 py-3">
             <div className="flex items-center justify-end gap-3">
               <FormFeedback state={feedback.state} successLabel="Perfil guardado" />
               <SubmitButton pendingLabel="Guardando…" loading={feedback.pending}>
@@ -240,17 +234,17 @@ export function MemberProfileDialog({ member }: { member: MemberProfileData }) {
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
-function GithubHandleIcon({ status }: { status: ReturnType<typeof useGithubHandle>['status'] }) {
-  const cls = 'size-4'
-  if (status === 'checking')
-    return <Loader2 className={cn(cls, 'animate-spin text-muted-foreground')} aria-hidden />
-  if (status === 'valid') return <CheckCircle2 className={cn(cls, 'text-success')} aria-hidden />
-  if (status === 'not_found' || status === 'invalid')
-    return <XCircle className={cn(cls, 'text-destructive')} aria-hidden />
-  if (status === 'rate_limited' || status === 'error')
-    return <AlertCircle className={cn(cls, 'text-muted-foreground')} aria-hidden />
-  return null
+function GithubHandleIcon({ status }: { status: ReturnType<typeof useGithubHandle>["status"] }) {
+  const cls = "size-4";
+  if (status === "checking")
+    return <Loader2 className={cn(cls, "animate-spin text-muted-foreground")} aria-hidden />;
+  if (status === "valid") return <CheckCircle2 className={cn(cls, "text-success")} aria-hidden />;
+  if (status === "not_found" || status === "invalid")
+    return <XCircle className={cn(cls, "text-destructive")} aria-hidden />;
+  if (status === "rate_limited" || status === "error")
+    return <AlertCircle className={cn(cls, "text-muted-foreground")} aria-hidden />;
+  return null;
 }

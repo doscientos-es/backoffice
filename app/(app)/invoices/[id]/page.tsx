@@ -1,18 +1,18 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@doscientos/ui'
-import { TriangleAlert as AlertTriangle, ExternalLink } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import type { ReactNode } from 'react'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@doscientos/ui";
+import { TriangleAlert as AlertTriangle, ExternalLink } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 
 import {
   type InvoiceDisplayItem,
   InvoiceItemsSummary,
-} from '@/components/finance/invoice-items-summary'
-import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
-import { PageHeader } from '@/components/layout/page-header'
-import { CopyPortalLink } from '@/components/portal/copy-portal-link'
-import { PortalAccessControls } from '@/components/portal/portal-access-controls'
+} from "@/components/finance/invoice-items-summary";
+import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
+import { PageHeader } from "@/components/layout/page-header";
+import { CopyPortalLink } from "@/components/portal/copy-portal-link";
+import { PortalAccessControls } from "@/components/portal/portal-access-controls";
 import {
   Card,
   CardAction,
@@ -20,27 +20,30 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { CopyButton } from '@/components/ui/copy-button'
-import { requireUser } from '@/lib/auth'
-import { buildVatBreakdown } from '@/lib/finance'
-import type { InvoicePaymentFollowUp } from '@/lib/invoices/payment-follow-ups'
-import { findInvoiceDeliveries } from '@/lib/invoices/queries'
-import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from '@/lib/schemas/invoice'
-import { createServerClient } from '@/lib/supabase/server'
-import { cn, formatDate, formatEUR } from '@/lib/utils'
-import { AEAT_VERIFACTU_ERROR_CATALOG_URL, getAeatErrorMetadata } from '@/lib/verifactu/aeat-errors'
-import { verifactuInvoiceConfigFromEnv } from '@/lib/verifactu/config'
+} from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
+import { requireUser } from "@/lib/auth";
+import { buildVatBreakdown } from "@/lib/finance";
+import type { InvoicePaymentFollowUp } from "@/lib/invoices/payment-follow-ups";
+import { findInvoiceDeliveries } from "@/lib/invoices/queries";
+import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from "@/lib/schemas/invoice";
+import { createServerClient } from "@/lib/supabase/server";
+import { cn, formatDate, formatEUR } from "@/lib/utils";
+import {
+  AEAT_VERIFACTU_ERROR_CATALOG_URL,
+  getAeatErrorMetadata,
+} from "@/lib/verifactu/aeat-errors";
+import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
 
-import { updateInvoicePortalAccess } from '../actions'
-import { InvoiceActions } from './invoice-actions'
-import { InvoiceAutomationPanel } from './invoice-automation-panel'
-import { InvoiceStatus } from './invoice-status'
-import { InvoiceTimeline } from './invoice-timeline'
-import { RefreshClientSnapshotButton } from './refresh-client-snapshot-button'
+import { updateInvoicePortalAccess } from "../actions";
+import { InvoiceActions } from "./invoice-actions";
+import { InvoiceAutomationPanel } from "./invoice-automation-panel";
+import { InvoiceStatus } from "./invoice-status";
+import { InvoiceTimeline } from "./invoice-timeline";
+import { RefreshClientSnapshotButton } from "./refresh-client-snapshot-button";
 
-export const dynamic = 'force-dynamic'
-const PAYMENTS_GRID_CLASS = 'md:grid-cols-[minmax(12rem,0.7fr)_minmax(0,1.3fr)] md:items-start'
+export const dynamic = "force-dynamic";
+const PAYMENTS_GRID_CLASS = "md:grid-cols-[minmax(12rem,0.7fr)_minmax(0,1.3fr)] md:items-start";
 
 function InvoiceInfoField({
   label,
@@ -48,163 +51,164 @@ function InvoiceInfoField({
   className,
   valueClassName,
 }: {
-  label: string
-  children: ReactNode
-  className?: string
-  valueClassName?: string
+  label: string;
+  children: ReactNode;
+  className?: string;
+  valueClassName?: string;
 }) {
   return (
-    <div className={cn('min-w-0', className)}>
-      <dt className="text-muted-foreground text-xs font-medium">{label}</dt>
-      <dd className={cn('mt-1 min-w-0 text-sm leading-5 text-foreground', valueClassName)}>
-        {children ?? '—'}
+    <div className={cn("min-w-0", className)}>
+      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+      <dd className={cn("mt-1 min-w-0 text-sm leading-5 text-foreground", valueClassName)}>
+        {children ?? "—"}
       </dd>
     </div>
-  )
+  );
 }
 
 function verifactuWarnings(value: unknown): Array<{ code: string | null; message: string }> {
   if (
     !value ||
-    typeof value !== 'object' ||
+    typeof value !== "object" ||
     !Array.isArray((value as { warnings?: unknown }).warnings)
   ) {
-    return []
+    return [];
   }
   return (value as { warnings: unknown[] }).warnings.flatMap((warning) => {
-    if (!warning || typeof warning !== 'object') return []
-    const message = (warning as { message?: unknown }).message
-    if (typeof message !== 'string' || message.trim().length === 0) return []
-    const code = (warning as { code?: unknown }).code
-    return [{ code: typeof code === 'string' ? code : null, message }]
-  })
+    if (!warning || typeof warning !== "object") return [];
+    const message = (warning as { message?: unknown }).message;
+    if (typeof message !== "string" || message.trim().length === 0) return [];
+    const code = (warning as { code?: unknown }).code;
+    return [{ code: typeof code === "string" ? code : null, message }];
+  });
 }
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const user = await requireUser()
-  const supabase = await createServerClient()
+  const { id } = await params;
+  const user = await requireUser();
+  const supabase = await createServerClient();
 
   const { data: invoice } = await supabase
-    .from('invoices')
+    .from("invoices")
     .select(
-      '*, clients(id, name, email, phone, nif, billing_address_country, fiscal_verification_status, fiscal_verified_at, fiscal_verified_nif, fiscal_verified_name), projects(id, name)',
+      "*, clients(id, name, email, phone, nif, billing_address_country, fiscal_verification_status, fiscal_verified_at, fiscal_verified_nif, fiscal_verified_name), projects(id, name)",
     )
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle()
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
 
-  if (!invoice) notFound()
+  if (!invoice) notFound();
 
   const { data: items } = await supabase
-    .from('invoice_items')
-    .select('id, position, description, quantity, unit_price, vat_rate, subtotal')
-    .eq('invoice_id', id)
-    .order('position')
+    .from("invoice_items")
+    .select("id, position, description, quantity, unit_price, vat_rate, subtotal")
+    .eq("invoice_id", id)
+    .order("position");
 
-  const { data: settings } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle()
+  const { data: settings } = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
 
   const { data: payments } = await supabase
-    .from('invoice_payments')
-    .select('id, amount, status, payment_method, ds_authorisation_code, created_at, confirmed_at')
-    .eq('invoice_id', id)
-    .order('created_at', { ascending: false })
+    .from("invoice_payments")
+    .select("id, amount, status, payment_method, ds_authorisation_code, created_at, confirmed_at")
+    .eq("invoice_id", id)
+    .order("created_at", { ascending: false });
 
   const { data: workLogs } = await supabase
-    .from('work_logs')
-    .select('id, work_date, hours, start_time, end_time, note')
-    .eq('invoice_id', id)
-    .is('deleted_at', null)
-    .order('work_date', { ascending: true })
+    .from("work_logs")
+    .select("id, work_date, hours, start_time, end_time, note")
+    .eq("invoice_id", id)
+    .is("deleted_at", null)
+    .order("work_date", { ascending: true });
 
-  const deliveries = await findInvoiceDeliveries(id)
+  const deliveries = await findInvoiceDeliveries(id);
 
   const { data: paymentFollowUp } = await supabase
-    .from('invoice_automations')
+    .from("invoice_automations")
     .select(
-      'id, invoice_id, kind, status, run_at, recipient, subject, message, attempt_count, sent_at, cancelled_at, last_error',
+      "id, invoice_id, kind, status, run_at, recipient, subject, message, attempt_count, sent_at, cancelled_at, last_error",
     )
-    .eq('invoice_id', id)
-    .eq('kind', 'payment_follow_up')
-    .maybeSingle()
+    .eq("invoice_id", id)
+    .eq("kind", "payment_follow_up")
+    .maybeSingle();
 
   const { data: latestFiscalRecord } = await supabase
-    .from('verifactu_ledger')
-    .select('id, record_payload')
-    .eq('invoice_id', id)
-    .order('chain_sequence', { ascending: false })
+    .from("verifactu_ledger")
+    .select("id, record_payload")
+    .eq("invoice_id", id)
+    .order("chain_sequence", { ascending: false })
     .limit(1)
-    .maybeSingle()
+    .maybeSingle();
 
-  let latestFiscalOutbox = null
+  let latestFiscalOutbox = null;
   if (latestFiscalRecord?.id) {
     const result = await supabase
-      .from('verifactu_outbox')
-      .select('state, next_attempt_at, last_error')
-      .eq('ledger_id', latestFiscalRecord.id)
-      .maybeSingle()
-    latestFiscalOutbox = result.data
+      .from("verifactu_outbox")
+      .select("state, next_attempt_at, last_error")
+      .eq("ledger_id", latestFiscalRecord.id)
+      .maybeSingle();
+    latestFiscalOutbox = result.data;
   }
 
-  const confirmedPayments = (payments ?? []).filter((p) => p.status === 'confirmed')
-  const amountPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0)
-  const amountDue = Math.max(0, Number(invoice.total ?? 0) - amountPaid)
-  const aeatWarnings = verifactuWarnings(invoice.verifactu_response)
-  const responseAeatCode = (invoice.verifactu_response as { aeatCode?: unknown } | null)?.aeatCode
-  const verifactuAeatCode = typeof responseAeatCode === 'string' ? responseAeatCode : null
+  const confirmedPayments = (payments ?? []).filter((p) => p.status === "confirmed");
+  const amountPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
+  const amountDue = Math.max(0, Number(invoice.total ?? 0) - amountPaid);
+  const aeatWarnings = verifactuWarnings(invoice.verifactu_response);
+  const responseAeatCode = (invoice.verifactu_response as { aeatCode?: unknown } | null)?.aeatCode;
+  const verifactuAeatCode = typeof responseAeatCode === "string" ? responseAeatCode : null;
   const hasOfficialAeatWarnings = aeatWarnings.some((warning) =>
     getAeatErrorMetadata(warning.code, warning.message),
-  )
+  );
   const fiscalPayload = latestFiscalRecord?.record_payload as
     | { subsanacion?: unknown; rechazoPrevio?: unknown }
-    | undefined
+    | undefined;
   const isRegularizationPending =
-    invoice.verifactu_status === 'submitted' &&
-    fiscalPayload?.subsanacion === 'S' &&
-    (fiscalPayload.rechazoPrevio === 'S' || fiscalPayload.rechazoPrevio === 'X')
+    invoice.verifactu_status === "submitted" &&
+    fiscalPayload?.subsanacion === "S" &&
+    (fiscalPayload.rechazoPrevio === "S" || fiscalPayload.rechazoPrevio === "X");
 
   const client = (
     invoice as unknown as {
       clients: {
-        id: string
-        name: string
-        email: string | null
-        phone: string | null
-        nif: string | null
-        billing_address_country: string | null
-        fiscal_verification_status: string | null
-        fiscal_verified_at: string | null
-        fiscal_verified_nif: string | null
-        fiscal_verified_name: string | null
-      } | null
+        id: string;
+        name: string;
+        email: string | null;
+        phone: string | null;
+        nif: string | null;
+        billing_address_country: string | null;
+        fiscal_verification_status: string | null;
+        fiscal_verified_at: string | null;
+        fiscal_verified_nif: string | null;
+        fiscal_verified_name: string | null;
+      } | null;
     }
-  ).clients
+  ).clients;
   const normalizedClientNif = client?.nif
     ?.trim()
     .toUpperCase()
-    .replace(/[\s.-]/g, '')
-    .replace(/^ES/, '')
+    .replace(/[\s.-]/g, "")
+    .replace(/^ES/, "");
   const recipientFiscalReady =
-    invoice.invoice_type !== 'F1' ||
-    (client?.billing_address_country?.trim().toUpperCase() === 'ES' &&
-      client.fiscal_verification_status === 'verified' &&
+    invoice.invoice_type !== "F1" ||
+    (client?.billing_address_country?.trim().toUpperCase() === "ES" &&
+      client.fiscal_verification_status === "verified" &&
       client.fiscal_verified_at !== null &&
       client.fiscal_verified_nif === normalizedClientNif &&
-      client.fiscal_verified_name === client.name.trim())
-  const project = (invoice as unknown as { projects: { id: string; name: string } | null }).projects
+      client.fiscal_verified_name === client.name.trim());
+  const project = (invoice as unknown as { projects: { id: string; name: string } | null })
+    .projects;
   const issuerCopyText = [
-    `Razón social: ${(settings?.company_name as string | null) ?? '—'}`,
+    `Razón social: ${(settings?.company_name as string | null) ?? "—"}`,
     settings?.company_nif ? `NIF: ${settings.company_nif as string}` : null,
     settings?.company_address ? `Domicilio: ${settings.company_address as string}` : null,
     settings?.iban ? `IBAN: ${settings.iban as string}` : null,
   ]
     .filter((line): line is string => Boolean(line))
-    .join('\n')
+    .join("\n");
   const fiscalCopyText = [
-    `Nº factura: ${(invoice.full_number as string | null) ?? (invoice.status === 'draft' ? 'Se asigna al emitir' : '—')}`,
+    `Nº factura: ${(invoice.full_number as string | null) ?? (invoice.status === "draft" ? "Se asigna al emitir" : "—")}`,
     invoice.idfact ? `IDFACT: ${invoice.idfact as string}` : null,
     `Tipo: ${invoice.invoice_type as string}`,
-    `Cliente: ${client?.name ?? '—'}`,
+    `Cliente: ${client?.name ?? "—"}`,
     project ? `Proyecto: ${project.name}` : null,
     `Emisión: ${formatDate(invoice.issue_date as string)}`,
     `Vencimiento: ${formatDate(invoice.due_date as string | null)}`,
@@ -212,34 +216,34 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     invoice.verifactu_csv ? `CSV AEAT: ${invoice.verifactu_csv as string}` : null,
   ]
     .filter((line): line is string => Boolean(line))
-    .join('\n')
+    .join("\n");
 
   // Group line items by VAT rate so we can show a proper desglose por tipo.
   const vatBreakdown = buildVatBreakdown(
     (items ?? []) as Array<{ vat_rate: number | string | null; subtotal: number | string | null }>,
-  )
+  );
 
   // New issued invoices persist the QR URL from their immutable RegistroAlta.
   // Rebuilding it is a legacy fallback only after AEAT accepts the record.
-  let qrDataUrl: string | null = null
-  if (invoice.verifactu_status === 'accepted') {
+  let qrDataUrl: string | null = null;
+  if (invoice.verifactu_status === "accepted") {
     try {
-      const persistedQrUrl = typeof invoice.qr_url === 'string' ? invoice.qr_url.trim() : ''
+      const persistedQrUrl = typeof invoice.qr_url === "string" ? invoice.qr_url.trim() : "";
       if (persistedQrUrl) {
-        const { buildQrDataUrl } = await import('@doscientos/verifactu')
-        qrDataUrl = await buildQrDataUrl(persistedQrUrl)
+        const { buildQrDataUrl } = await import("@doscientos/verifactu");
+        qrDataUrl = await buildQrDataUrl(persistedQrUrl);
       } else {
-        const emisorNif = (settings?.company_nif as string | null) ?? ''
+        const emisorNif = (settings?.company_nif as string | null) ?? "";
         if (
           !emisorNif ||
-          invoice.status === 'draft' ||
+          invoice.status === "draft" ||
           !invoice.full_number ||
           !invoice.issue_date ||
           invoice.total == null
         ) {
-          throw new Error('No hay datos para reconstruir el QR histórico')
+          throw new Error("No hay datos para reconstruir el QR histórico");
         }
-        const { buildQrDataUrl, buildQrUrl } = await import('@doscientos/verifactu')
+        const { buildQrDataUrl, buildQrUrl } = await import("@doscientos/verifactu");
         const qrUrl = buildQrUrl(
           {
             nif: emisorNif,
@@ -248,8 +252,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             total: invoice.total as number,
           },
           verifactuInvoiceConfigFromEnv(),
-        )
-        qrDataUrl = await buildQrDataUrl(qrUrl)
+        );
+        qrDataUrl = await buildQrDataUrl(qrUrl);
       }
     } catch {
       // QR rendering is non-critical; a historic QR without its persisted URL
@@ -259,26 +263,26 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="flex flex-col gap-6">
-      {invoice.verifactu_status === 'accepted' && aeatWarnings.length > 0 ? (
+      {invoice.verifactu_status === "accepted" && aeatWarnings.length > 0 ? (
         <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           <div className="min-w-0">
             <p className="font-semibold">AEAT aceptó la factura con avisos</p>
             <ul className="mt-1 list-disc pl-4">
               {aeatWarnings.map((warning) => {
-                const metadata = getAeatErrorMetadata(warning.code, warning.message)
+                const metadata = getAeatErrorMetadata(warning.code, warning.message);
                 return (
                   <li
-                    key={`${warning.code ?? 'warning'}-${warning.message}`}
+                    key={`${warning.code ?? "warning"}-${warning.message}`}
                     className="wrap-break-word"
                   >
-                    {warning.code ? `${warning.code}: ` : ''}
+                    {warning.code ? `${warning.code}: ` : ""}
                     {warning.message}
                     {metadata ? (
                       <span className="block text-xs">{metadata.effectLabel}</span>
                     ) : null}
                   </li>
-                )
+                );
               })}
             </ul>
             <p className="mt-1 text-xs text-amber-800/80 dark:text-amber-300/80">
@@ -301,7 +305,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       ) : null}
 
       <PageHeader
-        title={`Factura ${(invoice.full_number as string | null) ?? 'Borrador'}`}
+        title={`Factura ${(invoice.full_number as string | null) ?? "Borrador"}`}
         description={client?.name}
         meta={
           <InvoiceStatus
@@ -312,10 +316,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           />
         }
         breadcrumbs={[
-          { label: 'Facturas', href: '/invoices' },
+          { label: "Facturas", href: "/invoices" },
           ...(client ? [{ label: client.name, href: `/clients/${client.id}` }] : []),
           ...(project ? [{ label: project.name, href: `/projects/${project.id}` }] : []),
-          { label: (invoice.full_number as string | null) ?? 'Borrador' },
+          { label: (invoice.full_number as string | null) ?? "Borrador" },
         ]}
         actions={
           <InvoiceActions
@@ -342,7 +346,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       <InvoiceAutomationPanel
         invoiceId={id}
         automation={paymentFollowUp as unknown as InvoicePaymentFollowUp | null}
-        canEdit={user.role !== 'viewer'}
+        canEdit={user.role !== "viewer"}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -352,7 +356,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             <CardHeader className="border-b">
               <CardTitle>Conceptos</CardTitle>
               <CardDescription>
-                {items?.length ?? 0} {(items?.length ?? 0) === 1 ? 'concepto' : 'conceptos'}
+                {items?.length ?? 0} {(items?.length ?? 0) === 1 ? "concepto" : "conceptos"}
               </CardDescription>
             </CardHeader>
             <CardContent className="px-0">
@@ -371,12 +375,12 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               <CardTitle>Cobros</CardTitle>
               <CardDescription>
                 {payments && payments.length > 0
-                  ? `${payments.length} ${payments.length === 1 ? 'movimiento' : 'movimientos'}`
-                  : 'Sin movimientos registrados'}
+                  ? `${payments.length} ${payments.length === 1 ? "movimiento" : "movimientos"}`
+                  : "Sin movimientos registrados"}
               </CardDescription>
             </CardHeader>
             <CardContent
-              className={cn('grid gap-4', Boolean(payments?.length) && PAYMENTS_GRID_CLASS)}
+              className={cn("grid gap-4", Boolean(payments?.length) && PAYMENTS_GRID_CLASS)}
             >
               <DetailGrid className="max-w-sm grid-cols-[minmax(5rem,1fr)_auto]">
                 <DetailRow label="Cobrado">
@@ -389,21 +393,21 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 </DetailRow>
               </DetailGrid>
               {payments && payments.length > 0 ? (
-                <ul className="divide-border border-border flex min-w-0 flex-col divide-y border-t md:border-t-0 md:border-l md:pl-4">
+                <ul className="flex min-w-0 flex-col divide-y divide-border border-t border-border md:border-t-0 md:border-l md:pl-4">
                   {payments.map((p) => {
-                    const status = p.status as string
+                    const status = p.status as string;
                     const tone =
-                      status === 'confirmed'
-                        ? 'text-emerald-700 dark:text-emerald-400'
-                        : status === 'failed'
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-muted-foreground'
+                      status === "confirmed"
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : status === "failed"
+                          ? "text-red-600 dark:text-red-400"
+                          : "text-muted-foreground";
                     const label =
-                      status === 'confirmed'
-                        ? 'Confirmado'
-                        : status === 'failed'
-                          ? 'Rechazado'
-                          : 'Pendiente'
+                      status === "confirmed"
+                        ? "Confirmado"
+                        : status === "failed"
+                          ? "Rechazado"
+                          : "Pendiente";
                     return (
                       <li
                         key={p.id as string}
@@ -413,23 +417,23 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                           <span className="font-medium tabular-nums">
                             {formatEUR(p.amount as number)}
                           </span>
-                          <span className="text-muted-foreground ml-2 text-xs">
+                          <span className="ml-2 text-xs text-muted-foreground">
                             {formatDate((p.confirmed_at ?? p.created_at) as string)}
                           </span>
                           {(p.ds_authorisation_code as string | null) ? (
-                            <span className="text-muted-foreground ml-2 font-mono text-[10px]">
+                            <span className="ml-2 font-mono text-[10px] text-muted-foreground">
                               aut. {p.ds_authorisation_code as string}
                             </span>
                           ) : null}
                           {(p.payment_method as PaymentMethodType | null) ? (
-                            <span className="text-muted-foreground ml-2 text-xs">
+                            <span className="ml-2 text-xs text-muted-foreground">
                               {PAYMENT_METHOD_LABELS[p.payment_method as PaymentMethodType]}
                             </span>
                           ) : null}
                         </div>
                         <span className={`shrink-0 text-xs font-medium ${tone}`}>{label}</span>
                       </li>
-                    )
+                    );
                   })}
                 </ul>
               ) : null}
@@ -472,7 +476,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                   successMessage="Información fiscal copiada"
                   showLabel
                 />
-                {invoice.status === 'draft' && client?.id ? (
+                {invoice.status === "draft" && client?.id ? (
                   <RefreshClientSnapshotButton invoiceId={invoice.id as string} />
                 ) : null}
               </CardAction>
@@ -481,7 +485,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               <dl className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-4">
                 <InvoiceInfoField label="Nº factura">
                   {(invoice.full_number as string | null) ??
-                    (invoice.status === 'draft' ? 'Se asigna al emitir' : '—')}
+                    (invoice.status === "draft" ? "Se asigna al emitir" : "—")}
                 </InvoiceInfoField>
                 <InvoiceInfoField label="Tipo">{invoice.invoice_type as string}</InvoiceInfoField>
                 {(invoice.idfact as string | null) ? (
@@ -499,7 +503,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                       {client.name}
                     </Link>
                   ) : (
-                    '—'
+                    "—"
                   )}
                 </InvoiceInfoField>
                 {project ? (
@@ -550,7 +554,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               <CardContent>
                 <dl className="grid min-w-0 gap-4">
                   <InvoiceInfoField label="Razón social">
-                    {(settings.company_name as string | null) ?? '—'}
+                    {(settings.company_name as string | null) ?? "—"}
                   </InvoiceInfoField>
                   {(settings.company_nif as string | null) ? (
                     <InvoiceInfoField label="NIF">
@@ -591,28 +595,28 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                   hasPassword={Boolean(invoice.portal_password_hash)}
                   action={updateInvoicePortalAccess}
                 />
-                <div className="border-border border-t pt-4">
-                  <p className="text-muted-foreground text-xs font-medium">Envíos al cliente</p>
+                <div className="border-t border-border pt-4">
+                  <p className="text-xs font-medium text-muted-foreground">Envíos al cliente</p>
                   {deliveries.length > 0 ? (
                     <ul className="mt-2 flex flex-col gap-1.5">
                       {deliveries.map((delivery) => (
                         <li key={delivery.id} className="min-w-0 text-xs">
                           <span className="font-medium">
-                            {delivery.channel === 'whatsapp' ? 'WhatsApp' : 'Email'}
+                            {delivery.channel === "whatsapp" ? "WhatsApp" : "Email"}
                           </span>
                           <span className="text-muted-foreground">
-                            {' · '}
+                            {" · "}
                             {formatDate(delivery.created_at)}
-                            {delivery.recipient ? ` · ${delivery.recipient}` : ''}
-                            {delivery.attached_pdf ? ' · PDF adjunto' : ''}
-                            {delivery.mocked ? ' · simulado' : ''}
-                            {delivery.sent_by_name ? ` · ${delivery.sent_by_name}` : ''}
+                            {delivery.recipient ? ` · ${delivery.recipient}` : ""}
+                            {delivery.attached_pdf ? " · PDF adjunto" : ""}
+                            {delivery.mocked ? " · simulado" : ""}
+                            {delivery.sent_by_name ? ` · ${delivery.sent_by_name}` : ""}
                           </span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-muted-foreground mt-2 text-xs">
+                    <p className="mt-2 text-xs text-muted-foreground">
                       Todavía no se ha enviado al cliente.
                     </p>
                   )}
@@ -629,7 +633,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-3">
                 <Image src={qrDataUrl} alt="QR Verifactu" width={200} height={200} unoptimized />
-                <p className="text-muted-foreground text-center text-xs">
+                <p className="text-center text-xs text-muted-foreground">
                   Escanea para verificar la factura en la AEAT.
                 </p>
               </CardContent>
@@ -640,22 +644,22 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
       {/* Work log breakdown */}
       {workLogs && workLogs.length > 0 ? (
-        <div className="bg-card ring-foreground/10 overflow-hidden rounded-xl ring-1">
+        <div className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
           <Accordion allowsMultipleExpanded={false}>
             <AccordionItem id="work-logs" className="border-b-0">
-              <AccordionTrigger className="hover:bg-muted/50 active:bg-muted/80 cursor-pointer rounded-none border-0 px-6 py-4 transition-colors select-none hover:no-underline">
+              <AccordionTrigger className="cursor-pointer rounded-none border-0 px-6 py-4 transition-colors select-none hover:bg-muted/50 hover:no-underline active:bg-muted/80">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-base font-semibold">Desglose de actividad</span>
-                  <span className="text-muted-foreground text-xs font-normal">
-                    {workLogs.length} {workLogs.length === 1 ? 'registro' : 'registros'} ·{' '}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {workLogs.length} {workLogs.length === 1 ? "registro" : "registros"} ·{" "}
                     {workLogs.reduce((s, l) => s + Number(l.hours), 0).toFixed(2)} h
                   </span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-0 pb-0">
-                <div className="border-border overflow-x-auto border-t">
+                <div className="overflow-x-auto border-t border-border">
                   <table className="w-full text-sm">
-                    <thead className="bg-muted/40 text-muted-foreground text-left text-xs tracking-wide uppercase">
+                    <thead className="bg-muted/40 text-left text-xs tracking-wide text-muted-foreground uppercase">
                       <tr>
                         <th className="px-5 py-2 font-medium">Fecha</th>
                         <th className="px-5 py-2 font-medium">Horario</th>
@@ -665,29 +669,29 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                     </thead>
                     <tbody>
                       {workLogs.map((log) => (
-                        <tr key={log.id as string} className="border-border border-t">
+                        <tr key={log.id as string} className="border-t border-border">
                           <td className="px-5 py-2.5 whitespace-nowrap tabular-nums">
                             {formatDate(log.work_date as string)}
                           </td>
-                          <td className="text-muted-foreground px-5 py-2.5 whitespace-nowrap tabular-nums">
+                          <td className="px-5 py-2.5 whitespace-nowrap text-muted-foreground tabular-nums">
                             {log.start_time && log.end_time
                               ? `${(log.start_time as string).slice(0, 5)} – ${(log.end_time as string).slice(0, 5)}`
-                              : '—'}
+                              : "—"}
                           </td>
                           <td className="px-5 py-2.5 text-right tabular-nums">
                             {Number(log.hours).toFixed(2)} h
                           </td>
-                          <td className="text-muted-foreground px-5 py-2.5">
-                            {(log.note as string | null) ?? '—'}
+                          <td className="px-5 py-2.5 text-muted-foreground">
+                            {(log.note as string | null) ?? "—"}
                           </td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="border-border border-t-2">
+                    <tfoot className="border-t-2 border-border">
                       <tr className="font-semibold">
                         <td
                           colSpan={2}
-                          className="text-muted-foreground px-5 py-2.5 text-right text-xs"
+                          className="px-5 py-2.5 text-right text-xs text-muted-foreground"
                         >
                           Total horas
                         </td>
@@ -706,12 +710,12 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       ) : null}
 
       {qrDataUrl ? (
-        <p className="text-muted-foreground border-border border-t pt-4 text-[11px] leading-relaxed">
+        <p className="border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
           Factura verificable en la sede electrónica de la AEAT mediante el código QR. Sistema de
           emisión conforme al Reglamento Verifactu (RD 1007/2023). Conserve esta factura conforme a
           la normativa fiscal aplicable.
         </p>
       ) : null}
     </div>
-  )
+  );
 }

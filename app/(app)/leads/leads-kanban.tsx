@@ -11,6 +11,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { Button as PopoverButton, PopoverContent, PopoverTrigger } from "@doscientos/ui";
 import {
   TriangleAlert as AlertTriangle,
   CalendarDays as CalendarClock,
@@ -36,7 +37,7 @@ import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { MemberAvatar } from "@/components/ui/member-avatar";
-import { Button as PopoverButton, PopoverContent, PopoverTrigger } from "@doscientos/ui";
+import { requiresCyaProspectSoftwareCommission } from "@/lib/leads/attribution";
 import {
   boardColumnForLead,
   countLeadsNeedingAttention,
@@ -59,7 +60,6 @@ import {
   STAGE_ROT_DAYS,
   waitingForReplySince,
 } from "@/lib/leads/pipeline";
-import { requiresCyaProspectSoftwareCommission } from "@/lib/leads/attribution";
 import type { LeadListItem, LeadMemberRef } from "@/lib/leads/types";
 import { leadDisplayName } from "@/lib/leads/utils";
 import type { MemberOption } from "@/lib/members/queries";
@@ -293,7 +293,7 @@ export function LeadsKanban({
         onDragCancel={() => setActiveId(null)}
       >
         <div className="flex h-full min-h-0 flex-col">
-          <div className="scroll-fade-x no-scrollbar flex min-h-0 flex-1 gap-4 overflow-x-auto overflow-y-hidden pb-2">
+          <div className="no-scrollbar flex min-h-0 flex-1 scroll-fade-x gap-4 overflow-x-auto overflow-y-hidden pb-2">
             {LEAD_KANBAN_COLUMNS.map((col) => (
               <Column
                 key={col.id}
@@ -317,7 +317,7 @@ export function LeadsKanban({
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="text-muted-foreground hover:text-foreground flex items-center transition-colors disabled:opacity-50"
+              className="flex items-center text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
               aria-label={refreshLabel}
               title={refreshLabel}
             >
@@ -456,7 +456,7 @@ function Column({
               title={compact ? "Mantener siempre visible" : "Colapsar cuando no esté en uso"}
               aria-label={compact ? "Mantener siempre visible" : "Colapsar cuando no esté en uso"}
               className={cn(
-                "hidden shrink-0 rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                "hidden shrink-0 rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
                 isHovered && "md:inline-flex",
               )}
             >
@@ -475,7 +475,7 @@ function Column({
         {total > 0 ? (
           <p
             className={cn(
-              "mt-2 pl-4 text-xs font-medium tabular-nums text-foreground/80",
+              "mt-2 pl-4 text-xs font-medium text-foreground/80 tabular-nums",
               collapsed && "md:hidden",
             )}
           >
@@ -485,12 +485,12 @@ function Column({
       </header>
       <div
         className={cn(
-          "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5 scroll-fade no-scrollbar",
+          "no-scrollbar flex min-h-0 flex-1 scroll-fade flex-col gap-2 overflow-y-auto p-2.5",
           collapsed && "md:hidden",
         )}
       >
         {leads.length === 0 ? (
-          <p className="text-muted-foreground px-2 py-6 text-center text-xs">
+          <p className="px-2 py-6 text-center text-xs text-muted-foreground">
             {isDragging ? "Soltar aquí" : "Sin leads"}
           </p>
         ) : (
@@ -508,7 +508,7 @@ function AddLeadCard() {
   return (
     <Link
       href="/leads/new"
-      className="border-border text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs transition-colors"
+      className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
     >
       <Plus className="size-3.5 shrink-0" />
       Añadir lead
@@ -564,7 +564,7 @@ function Card({
             {...listeners}
             aria-label={`Arrastrar ${leadDisplayName(lead)}`}
             title="Arrastrar lead"
-            className="text-muted-foreground/45 hover:text-foreground focus-visible:ring-ring/50 mt-0.5 shrink-0 cursor-grab touch-none rounded focus-visible:ring-2 focus-visible:outline-none active:cursor-grabbing"
+            className="mt-0.5 shrink-0 cursor-grab touch-none rounded text-muted-foreground/45 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none active:cursor-grabbing"
           >
             <GripVertical className="size-3.5" aria-hidden />
           </button>
@@ -575,7 +575,7 @@ function Card({
             <button
               type="button"
               onClick={() => onOpenQuickView(lead.id)}
-              className="hover:text-primary focus-visible:ring-ring/50 block max-w-full truncate text-left text-sm leading-tight font-medium underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
+              className="block max-w-full truncate text-left text-sm leading-tight font-medium underline-offset-2 hover:text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
               title="Abrir panel rápido"
             >
               {leadDisplayName(lead)}
@@ -586,7 +586,7 @@ function Card({
             </span>
           )}
           {lead.alias?.trim() && lead.alias.trim() !== lead.name ? (
-            <p className="text-muted-foreground truncate text-[11px] leading-tight">{lead.name}</p>
+            <p className="truncate text-[11px] leading-tight text-muted-foreground">{lead.name}</p>
           ) : null}
         </div>
         {rotting && !isOverlay && (
@@ -603,13 +603,13 @@ function Card({
       {!isOverlay && <NextActionChip lead={lead} />}
       {!isOverlay && (lead.company || lead.phone || lead.email) && (
         <div className="flex min-w-0 flex-col gap-0.5 pl-8 text-xs">
-          {lead.company ? <p className="text-muted-foreground truncate">{lead.company}</p> : null}
+          {lead.company ? <p className="truncate text-muted-foreground">{lead.company}</p> : null}
           {lead.phone ? (
             <LeadCallLink
               leadId={lead.id}
               phone={lead.phone}
               aria-label={`Llamar a ${leadDisplayName(lead)}`}
-              className="text-muted-foreground hover:text-primary focus-visible:ring-ring/50 inline-flex min-w-0 items-center gap-1 truncate transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              className="inline-flex min-w-0 items-center gap-1 truncate text-muted-foreground transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               <Phone className="size-3 shrink-0" aria-hidden />
               <span className="truncate">{lead.phone}</span>
@@ -619,7 +619,7 @@ function Card({
             <a
               href={`mailto:${lead.email}`}
               aria-label={`Enviar email a ${leadDisplayName(lead)}`}
-              className="text-muted-foreground hover:text-primary focus-visible:ring-ring/50 inline-flex min-w-0 items-center gap-1 truncate transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              className="inline-flex min-w-0 items-center gap-1 truncate text-muted-foreground transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               <Mail className="size-3 shrink-0" aria-hidden />
               <span className="truncate">{lead.email}</span>
@@ -641,7 +641,7 @@ function Card({
       )}
       {!isOverlay && lead.status === "lost" && lead.lost_reason ? (
         <p
-          className="text-destructive/75 truncate pl-8 text-[11px]"
+          className="truncate pl-8 text-[11px] text-destructive/75"
           title={`Motivo de pérdida: ${lead.lost_reason}`}
         >
           <span className="font-medium">Pérdida:</span> {lead.lost_reason}
@@ -691,7 +691,7 @@ function NextActionChip({ lead }: { lead: KanbanLead }) {
   const waiting =
     waitingSince && state !== "overdue" ? (
       <span
-        className="text-muted-foreground inline-flex items-center gap-1 text-[10px]"
+        className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"
         title={`Última salida nuestra ${relativeTime(waitingSince)}`}
       >
         <Hourglass className="size-2.5 shrink-0" aria-hidden />
@@ -759,7 +759,7 @@ function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
         aria-label={`Opciones de ${member.name}`}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        className="focus-visible:ring-ring/50 shrink-0 rounded-full focus-visible:ring-2 focus-visible:outline-none"
+        className="shrink-0 rounded-full focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
       >
         <MemberAvatar member={member} size="sm" className="size-5 shrink-0" />
       </PopoverButton>
@@ -772,13 +772,13 @@ function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
         <div className="flex items-center gap-2 px-1 py-1.5">
           <MemberAvatar member={member} size="default" className="size-8" />
           <div className="min-w-0">
-            <p className="text-foreground truncate text-sm font-semibold">{member.name}</p>
-            <p className="text-muted-foreground text-xs">Responsable del lead</p>
+            <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
+            <p className="text-xs text-muted-foreground">Responsable del lead</p>
           </div>
         </div>
         <Link
           href={`/team/${member.id}`}
-          className="text-foreground hover:bg-muted mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors"
+          className="mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
         >
           <User className="size-3.5" aria-hidden />
           Ver perfil
@@ -786,7 +786,7 @@ function MemberFilterPopover({ member }: { member: LeadMemberRef }) {
         <button
           type="button"
           onClick={filterByAssignee}
-          className="text-foreground hover:bg-muted flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors"
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-foreground transition-colors hover:bg-muted"
         >
           <Filter className="size-3.5" aria-hidden />
           Filtrar sus tareas
@@ -811,7 +811,7 @@ function RecentActivity({ lead }: { lead: KanbanLead }) {
             e.stopPropagation();
             setOpen((v) => !v);
           }}
-          className="text-muted-foreground/70 hover:text-foreground focus-visible:ring-ring/50 inline-flex size-4 shrink-0 items-center justify-center rounded transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          className="inline-flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
           <HistoryIcon className="size-3" aria-hidden />
         </button>
@@ -822,15 +822,15 @@ function RecentActivity({ lead }: { lead: KanbanLead }) {
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-foreground mb-1.5 text-xs font-semibold">Últimas acciones</p>
+        <p className="mb-1.5 text-xs font-semibold text-foreground">Últimas acciones</p>
         {interactions.length === 0 ? (
-          <p className="text-muted-foreground/80 text-[11px]">Sin interacciones registradas.</p>
+          <p className="text-[11px] text-muted-foreground/80">Sin interacciones registradas.</p>
         ) : (
           <ul className="flex flex-col gap-1.5">
             {interactions.slice(0, 3).map((i) => (
               <li key={i.id} className="flex flex-col gap-0.5">
                 <div className="flex items-center justify-between gap-2 text-[11px]">
-                  <span className="text-foreground font-medium">
+                  <span className="font-medium text-foreground">
                     {INTERACTION_LABEL[i.type] ?? i.type}
                   </span>
                   <span className="text-muted-foreground tabular-nums">
@@ -838,7 +838,7 @@ function RecentActivity({ lead }: { lead: KanbanLead }) {
                   </span>
                 </div>
                 {i.subject ? (
-                  <p className="text-muted-foreground line-clamp-2 text-[11px]">{i.subject}</p>
+                  <p className="line-clamp-2 text-[11px] text-muted-foreground">{i.subject}</p>
                 ) : null}
               </li>
             ))}

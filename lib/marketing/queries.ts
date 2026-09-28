@@ -4,6 +4,7 @@ import { normalizeLeadSource } from "@/lib/leads/constants";
 import { scopedLogger } from "@/lib/logger";
 import { notDeleted } from "@/lib/supabase/filters";
 import { createServerClient } from "@/lib/supabase/server";
+
 import {
   type AdCommercialPerformance,
   buildAdCommercialPerformance,

@@ -1,29 +1,29 @@
-'use client'
+"use client";
 
-import { FileText } from 'lucide-react'
-import Link from 'next/link'
-
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@doscientos/ui'
+} from "@doscientos/ui";
+import { FileText } from "lucide-react";
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 
 export function QuotedSuggestionDialog({
   lead,
   onClose,
 }: {
-  lead: { id: string; name: string } | null
-  onClose: () => void
+  lead: { id: string; name: string } | null;
+  onClose: () => void;
 }) {
   return (
     <Dialog
       open={!!lead}
       onOpenChange={(v) => {
-        if (!v) onClose()
+        if (!v) onClose();
       }}
     >
       <DialogContent className="sm:max-w-sm">
@@ -38,7 +38,7 @@ export function QuotedSuggestionDialog({
             Ahora no
           </Button>
           <Button asChild size="sm" onClick={onClose}>
-            <Link href={`/proposals/new?lead_id=${lead?.id ?? ''}`}>
+            <Link href={`/proposals/new?lead_id=${lead?.id ?? ""}`}>
               <FileText className="size-3.5" />
               Crear propuesta
             </Link>
@@ -46,5 +46,5 @@ export function QuotedSuggestionDialog({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

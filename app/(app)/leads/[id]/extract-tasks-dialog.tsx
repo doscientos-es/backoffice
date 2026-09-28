@@ -1,12 +1,5 @@
-'use client'
+"use client";
 
-import { CircleAlert as AlertCircle, CheckCheck, ListTodo, Sparkle as Sparkles } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { sileo } from 'sileo'
-
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -14,107 +7,119 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@doscientos/ui'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
-import { readJsonResponse } from '@/lib/utils/http'
+} from "@doscientos/ui";
+import {
+  CircleAlert as AlertCircle,
+  CheckCheck,
+  ListTodo,
+  Sparkle as Sparkles,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { sileo } from "sileo";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { readJsonResponse } from "@/lib/utils/http";
 
 type SuggestedTask = {
-  title: string
-  description: string
-  priority: 'low' | 'medium' | 'high' | 'urgent'
-}
+  title: string;
+  description: string;
+  priority: "low" | "medium" | "high" | "urgent";
+};
 
-const PRIORITY_LABEL: Record<SuggestedTask['priority'], string> = {
-  low: 'Baja',
-  medium: 'Media',
-  high: 'Alta',
-  urgent: 'Urgente',
-}
+const PRIORITY_LABEL: Record<SuggestedTask["priority"], string> = {
+  low: "Baja",
+  medium: "Media",
+  high: "Alta",
+  urgent: "Urgente",
+};
 
 const PRIORITY_VARIANT: Record<
-  SuggestedTask['priority'],
-  'neutral' | 'info' | 'warning' | 'danger'
+  SuggestedTask["priority"],
+  "neutral" | "info" | "warning" | "danger"
 > = {
-  low: 'neutral',
-  medium: 'info',
-  high: 'warning',
-  urgent: 'danger',
-}
+  low: "neutral",
+  medium: "info",
+  high: "warning",
+  urgent: "danger",
+};
 
 type CreateTaskFn = (input: {
-  title: string
-  description?: string
-  lead_id: string
-  priority: 'low' | 'medium' | 'high' | 'urgent'
-  status: 'todo'
-}) => Promise<{ ok: true; id: string; projectId: string | null } | { ok: false; error: string }>
+  title: string;
+  description?: string;
+  lead_id: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  status: "todo";
+}) => Promise<{ ok: true; id: string; projectId: string | null } | { ok: false; error: string }>;
 
 export type ExtractTasksDialogProps = {
-  leadId: string
-  trigger?: React.ReactNode
-  createTaskAction: CreateTaskFn
-}
+  leadId: string;
+  trigger?: React.ReactNode;
+  createTaskAction: CreateTaskFn;
+};
 
 export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: ExtractTasksDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [tasks, setTasks] = useState<SuggestedTask[]>([])
-  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tasks, setTasks] = useState<SuggestedTask[]>([]);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    if (!open) return
-    setLoading(true)
-    setError(null)
-    setTasks([])
-    setSelected(new Set())
+    if (!open) return;
+    setLoading(true);
+    setError(null);
+    setTasks([]);
+    setSelected(new Set());
 
-    fetch('/api/crm/ai/extract-tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    fetch("/api/crm/ai/extract-tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ lead_id: leadId }),
     })
-      .then((r) => readJsonResponse<any>(r, 'No se pudieron extraer las tareas.'))
+      .then((r) => readJsonResponse<any>(r, "No se pudieron extraer las tareas."))
       .then((json) => {
-        if (!json.ok) throw new Error(json.error ?? 'Error al extraer tareas.')
-        const all = json.tasks as SuggestedTask[]
-        setTasks(all)
-        setSelected(new Set(all.map((_, i) => i)))
+        if (!json.ok) throw new Error(json.error ?? "Error al extraer tareas.");
+        const all = json.tasks as SuggestedTask[];
+        setTasks(all);
+        setSelected(new Set(all.map((_, i) => i)));
       })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Error desconocido'))
-      .finally(() => setLoading(false))
-  }, [open, leadId])
+      .catch((err) => setError(err instanceof Error ? err.message : "Error desconocido"))
+      .finally(() => setLoading(false));
+  }, [open, leadId]);
 
   function toggleTask(index: number) {
     setSelected((prev) => {
-      const next = new Set(prev)
-      next.has(index) ? next.delete(index) : next.add(index)
-      return next
-    })
+      const next = new Set(prev);
+      next.has(index) ? next.delete(index) : next.add(index);
+      return next;
+    });
   }
 
   async function handleCreate() {
-    const toCreate = tasks.filter((_, i) => selected.has(i))
-    if (toCreate.length === 0) return
-    setCreating(true)
-    let created = 0
+    const toCreate = tasks.filter((_, i) => selected.has(i));
+    if (toCreate.length === 0) return;
+    setCreating(true);
+    let created = 0;
     for (const t of toCreate) {
       const res = await createTaskAction({
         title: t.title,
         description: t.description || undefined,
         lead_id: leadId,
         priority: t.priority,
-        status: 'todo',
-      })
-      if (res.ok) created++
+        status: "todo",
+      });
+      if (res.ok) created++;
     }
-    setCreating(false)
+    setCreating(false);
     sileo.success({
-      title: `${created} tarea${created !== 1 ? 's' : ''} creada${created !== 1 ? 's' : ''}`,
-    })
-    setOpen(false)
+      title: `${created} tarea${created !== 1 ? "s" : ""} creada${created !== 1 ? "s" : ""}`,
+    });
+    setOpen(false);
   }
 
   return (
@@ -122,7 +127,7 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
       <DialogTrigger asChild>
         {trigger ?? (
           <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-            <ListTodo className="text-muted-foreground size-4" />
+            <ListTodo className="size-4 text-muted-foreground" />
             <span className="text-sm font-medium">Extraer tareas IA</span>
           </Button>
         )}
@@ -148,7 +153,7 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
           )}
 
           {error && (
-            <div className="text-destructive flex items-center gap-1.5 text-xs">
+            <div className="flex items-center gap-1.5 text-xs text-destructive">
               <AlertCircle className="size-3.5 shrink-0" />
               {error}
             </div>
@@ -161,10 +166,10 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
                   // biome-ignore lint/suspicious/noArrayIndexKey: task list is replaced wholesale, never reordered in place
                   key={`${task.title}-${i}`}
                   className={cn(
-                    'flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors',
+                    "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
                     selected.has(i)
-                      ? 'border-primary/40 bg-primary/5'
-                      : 'border-border bg-muted/20',
+                      ? "border-primary/40 bg-primary/5"
+                      : "border-border bg-muted/20",
                   )}
                   onClick={() => toggleTask(i)}
                 >
@@ -177,7 +182,7 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
                   <div className="min-w-0 flex-1">
                     <p className="text-sm leading-snug font-medium">{task.title}</p>
                     {task.description && (
-                      <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
+                      <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                         {task.description}
                       </p>
                     )}
@@ -190,7 +195,7 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
             </ul>
           )}
           {!loading && !error && tasks.length === 0 && (
-            <p className="bg-muted/40 text-muted-foreground rounded-md p-3 text-sm">
+            <p className="rounded-md bg-muted/40 p-3 text-sm text-muted-foreground">
               No hay acciones concretas que crear con la información actual. Añade una nota,
               registra la llamada o programa el siguiente paso cuando lo tengas claro.
             </p>
@@ -199,18 +204,18 @@ export function ExtractTasksDialog({ leadId, trigger, createTaskAction }: Extrac
 
         {!loading && tasks.length > 0 && (
           <div className="flex items-center justify-between gap-3 border-t pt-4">
-            <span className="text-muted-foreground text-xs">
+            <span className="text-xs text-muted-foreground">
               {selected.size} de {tasks.length} seleccionadas
             </span>
             <Button onClick={handleCreate} disabled={selected.size === 0 || creating} size="sm">
               <CheckCheck className="size-3.5" />
               {creating
-                ? 'Creando…'
-                : `Crear ${selected.size > 0 ? selected.size : ''} tarea${selected.size !== 1 ? 's' : ''}`}
+                ? "Creando…"
+                : `Crear ${selected.size > 0 ? selected.size : ""} tarea${selected.size !== 1 ? "s" : ""}`}
             </Button>
           </div>
         )}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

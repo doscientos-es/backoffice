@@ -1,20 +1,20 @@
-import { render, screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { render, screen, within } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 
-import { LeadCommercial } from './lead-commercial'
+import { LeadCommercial } from "./lead-commercial";
 
-describe('LeadCommercial', () => {
-  it('keeps commercial records compact and directly linked on mobile', () => {
+describe("LeadCommercial", () => {
+  it("keeps commercial records compact and directly linked on mobile", () => {
     render(
       <LeadCommercial
         leadId="lead-1"
         linkedClientId="client-1"
         proposals={[
           {
-            id: 'proposal-1',
-            number: 'P-2026-001',
-            title: 'Automatización',
-            status: 'draft',
+            id: "proposal-1",
+            number: "P-2026-001",
+            title: "Automatización",
+            status: "draft",
             total: 1200,
             valid_until: null,
             sent_at: null,
@@ -26,17 +26,17 @@ describe('LeadCommercial', () => {
         projects={[]}
         invoices={[]}
       />,
-    )
+    );
 
-    const mobileSection = screen.getByRole('region', { name: 'Relaciones comerciales' })
+    const mobileSection = screen.getByRole("region", { name: "Relaciones comerciales" });
 
     expect(
       within(mobileSection)
-        .getByRole('link', { name: /P-2026-001/ })
-        .getAttribute('href'),
-    ).toBe('/proposals/proposal-1')
+        .getByRole("link", { name: /P-2026-001/ })
+        .getAttribute("href"),
+    ).toBe("/proposals/proposal-1");
     expect(
-      within(mobileSection).getByRole('link', { name: 'Crear proyecto' }).getAttribute('href'),
-    ).toBe('/projects/new?client_id=client-1')
-  })
-})
+      within(mobileSection).getByRole("link", { name: "Crear proyecto" }).getAttribute("href"),
+    ).toBe("/projects/new?client_id=client-1");
+  });
+});

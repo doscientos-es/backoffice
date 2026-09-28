@@ -14,7 +14,7 @@ const operationalEnv = {
   VERIFACTU_CERT_P12_BASE64: 'certificate',
   VERIFACTU_CERT_PASSWORD: 'password',
   VERIFACTU_CERT_EXPIRES_AT: '2099-01-01T00:00:00.000Z',
-  VERIFACTU_PRODUCER_NAME: 'Doscientos',
+  VERIFACTU_PRODUCER_NAME: 'Doscientos Desarrollo Tecnológico, S.L.',
   VERIFACTU_SOFTWARE_NAME: 'Backoffice',
   VERIFACTU_SOFTWARE_ID: 'D1',
   VERIFACTU_SOFTWARE_VERSION: '1.0.0',
@@ -30,5 +30,14 @@ describe('VERI*FACTU environment selection', () => {
   it('uses AEAT production for operational invoices and AEAT test for diagnostics', () => {
     expect(verifactuInvoiceConfigFromEnv().environment).toBe('prod')
     expect(verifactuDiagnosticConfigFromEnv().environment).toBe('test')
+  })
+
+  it('uses the registered legal name as the SIF producer', () => {
+    expect(verifactuInvoiceConfigFromEnv().software.producerName).toBe(
+      'Doscientos Desarrollo Tecnológico, S.L.',
+    )
+    expect(verifactuDiagnosticConfigFromEnv().software.producerName).toBe(
+      'Doscientos Desarrollo Tecnológico, S.L.',
+    )
   })
 })

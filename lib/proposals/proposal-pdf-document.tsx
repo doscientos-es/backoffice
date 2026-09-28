@@ -7,92 +7,92 @@ import {
   StyleSheet,
   Text,
   View,
-} from '@react-pdf/renderer'
+} from "@react-pdf/renderer";
 
-import type { KeyPoint } from '@/lib/proposals/key-points'
-import type { MaintenanceOffer } from '@/lib/proposals/maintenance'
+import type { KeyPoint } from "@/lib/proposals/key-points";
+import type { MaintenanceOffer } from "@/lib/proposals/maintenance";
 import {
   PAYMENT_SCHEDULE_LABELS,
   type PaymentSchedule,
   paymentInitialPercentage,
   type ScopeModule,
   scopeModuleDurationText,
-} from '@/lib/proposals/scope'
+} from "@/lib/proposals/scope";
 
-const BRAND = '#2A4227'
-const INK = '#183017'
-const ACCENT = '#BDFF7B'
-const PAPER = '#FAFAF7'
-const MIST = '#E9F1E6'
-const MUTED = '#657067'
+const BRAND = "#2A4227";
+const INK = "#183017";
+const ACCENT = "#BDFF7B";
+const PAPER = "#FAFAF7";
+const MIST = "#E9F1E6";
+const MUTED = "#657067";
 
-Font.registerHyphenationCallback((word) => [word])
+Font.registerHyphenationCallback((word) => [word]);
 
 const styles = StyleSheet.create({
-  cover: { backgroundColor: BRAND, color: '#FFFFFF', fontFamily: 'Helvetica', padding: 48 },
+  cover: { backgroundColor: BRAND, color: "#FFFFFF", fontFamily: "Helvetica", padding: 48 },
   page: {
     backgroundColor: PAPER,
     color: INK,
-    fontFamily: 'Helvetica',
+    fontFamily: "Helvetica",
     fontSize: 9.5,
     paddingBottom: 60,
     paddingHorizontal: 48,
     paddingTop: 82,
   },
-  brand: { fontFamily: 'Helvetica-Bold', fontSize: 11, letterSpacing: 1.2 },
-  brandLight: { color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 11, letterSpacing: 1.2 },
-  coverHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  brand: { fontFamily: "Helvetica-Bold", fontSize: 11, letterSpacing: 1.2 },
+  brandLight: { color: "#FFFFFF", fontFamily: "Helvetica-Bold", fontSize: 11, letterSpacing: 1.2 },
+  coverHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   coverTag: {
-    borderColor: '#FFFFFF',
+    borderColor: "#FFFFFF",
     borderRadius: 12,
     borderWidth: 1,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 7,
     letterSpacing: 0.9,
     paddingHorizontal: 9,
     paddingVertical: 5,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   coverHero: { marginTop: 104 },
   eyebrow: {
     color: ACCENT,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 8,
     letterSpacing: 1.3,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   coverTitle: {
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 31,
     lineHeight: 1.08,
     marginTop: 13,
     maxWidth: 420,
   },
-  coverRecipient: { color: '#DDE9DB', fontSize: 12, lineHeight: 1.45, marginTop: 16 },
-  metricCard: { backgroundColor: '#355332', borderRadius: 16, marginTop: 50, padding: 21 },
+  coverRecipient: { color: "#DDE9DB", fontSize: 12, lineHeight: 1.45, marginTop: 16 },
+  metricCard: { backgroundColor: "#355332", borderRadius: 16, marginTop: 50, padding: 21 },
   metricLabel: {
-    color: '#DDE9DB',
-    fontFamily: 'Helvetica-Bold',
+    color: "#DDE9DB",
+    fontFamily: "Helvetica-Bold",
     fontSize: 8,
     letterSpacing: 0.9,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
-  metricValue: { color: ACCENT, fontFamily: 'Helvetica-Bold', fontSize: 30, marginTop: 7 },
-  metricText: { color: '#DDE9DB', fontSize: 9, lineHeight: 1.4, marginTop: 6 },
+  metricValue: { color: ACCENT, fontFamily: "Helvetica-Bold", fontSize: 30, marginTop: 7 },
+  metricText: { color: "#DDE9DB", fontSize: 9, lineHeight: 1.4, marginTop: 6 },
   coverFooter: {
     bottom: 45,
-    color: '#DDE9DB',
+    color: "#DDE9DB",
     fontSize: 8,
     left: 48,
-    position: 'absolute',
+    position: "absolute",
     right: 48,
   },
   header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
     left: 48,
-    position: 'absolute',
+    position: "absolute",
     right: 48,
     top: 35,
   },
@@ -100,211 +100,217 @@ const styles = StyleSheet.create({
   section: { marginTop: 24 },
   sectionLabel: {
     color: BRAND,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 8,
     letterSpacing: 1.05,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
-  sectionTitle: { fontFamily: 'Helvetica-Bold', fontSize: 18, lineHeight: 1.18, marginTop: 7 },
+  sectionTitle: { fontFamily: "Helvetica-Bold", fontSize: 18, lineHeight: 1.18, marginTop: 7 },
   body: { color: MUTED, fontSize: 9.5, lineHeight: 1.55, marginTop: 10 },
   point: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#D9E1D7',
+    backgroundColor: "#FFFFFF",
+    borderColor: "#D9E1D7",
     borderRadius: 10,
     borderWidth: 1,
     marginTop: 9,
     padding: 12,
   },
-  pointTitle: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 10 },
+  pointTitle: { color: INK, fontFamily: "Helvetica-Bold", fontSize: 10 },
   pointText: { color: MUTED, fontSize: 8.5, lineHeight: 1.45, marginTop: 4 },
   maintenanceTable: {
-    borderColor: '#D9E1D7',
+    borderColor: "#D9E1D7",
     borderRadius: 10,
     borderWidth: 1,
     marginTop: 13,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   maintenanceRow: {
-    borderTopColor: '#E5EAE3',
+    borderTopColor: "#E5EAE3",
     borderTopWidth: 1,
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 11,
     paddingVertical: 10,
   },
-  maintenancePlanName: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 9.5 },
+  maintenancePlanName: { color: INK, fontFamily: "Helvetica-Bold", fontSize: 9.5 },
   maintenanceSelection: {
     color: BRAND,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 7.5,
     letterSpacing: 0.6,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   maintenanceSummary: { color: MUTED, fontSize: 8, lineHeight: 1.4, marginTop: 3 },
   maintenanceListLabel: {
     color: BRAND,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 7,
     letterSpacing: 0.5,
     marginTop: 7,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   maintenanceList: { color: MUTED, fontSize: 7.5, lineHeight: 1.4, marginTop: 2 },
   maintenancePrice: {
     color: BRAND,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 11,
-    textAlign: 'right',
+    textAlign: "right",
   },
-  maintenanceVat: { color: MUTED, fontSize: 7.5, marginTop: 2, textAlign: 'right' },
+  maintenanceVat: { color: MUTED, fontSize: 7.5, marginTop: 2, textAlign: "right" },
   investment: { backgroundColor: BRAND, borderRadius: 14, marginTop: 13, padding: 18 },
   investmentLabel: {
     color: ACCENT,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 8,
     letterSpacing: 1,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
-  investmentValue: { color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 23, marginTop: 6 },
-  investmentText: { color: '#DDE9DB', fontSize: 8.5, marginTop: 5 },
+  investmentValue: { color: "#FFFFFF", fontFamily: "Helvetica-Bold", fontSize: 23, marginTop: 6 },
+  investmentText: { color: "#DDE9DB", fontSize: 8.5, marginTop: 5 },
   table: {
-    borderColor: '#D9E1D7',
+    borderColor: "#D9E1D7",
     borderRadius: 10,
     borderWidth: 1,
     marginTop: 13,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   tableHeader: {
     backgroundColor: MIST,
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 11,
     paddingVertical: 8,
   },
   tableHeaderText: {
     color: BRAND,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: "Helvetica-Bold",
     fontSize: 7,
     letterSpacing: 0.6,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   row: {
-    borderTopColor: '#E5EAE3',
+    borderTopColor: "#E5EAE3",
     borderTopWidth: 1,
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 11,
     paddingVertical: 9,
   },
-  itemDescription: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 8.5 },
+  itemDescription: { color: INK, fontFamily: "Helvetica-Bold", fontSize: 8.5 },
   itemMeta: { color: MUTED, fontSize: 7.5, marginTop: 3 },
-  amount: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 8.5, textAlign: 'right' },
+  amount: { color: INK, fontFamily: "Helvetica-Bold", fontSize: 8.5, textAlign: "right" },
   totalRow: {
-    alignItems: 'flex-end',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: "flex-end",
+    flexDirection: "row",
+    justifyContent: "flex-end",
     marginTop: 14,
   },
   totalLabel: { color: MUTED, fontSize: 9, marginRight: 12 },
-  totalValue: { color: BRAND, fontFamily: 'Helvetica-Bold', fontSize: 18 },
-  footer: { bottom: 25, color: MUTED, fontSize: 7.5, left: 48, position: 'absolute', right: 48 },
-  footerLine: { borderTopColor: '#D9E1D7', borderTopWidth: 1, paddingTop: 8 },
+  totalValue: { color: BRAND, fontFamily: "Helvetica-Bold", fontSize: 18 },
+  footer: { bottom: 25, color: MUTED, fontSize: 7.5, left: 48, position: "absolute", right: 48 },
+  footerLine: { borderTopColor: "#D9E1D7", borderTopWidth: 1, paddingTop: 8 },
   bullet: { color: MUTED, fontSize: 8.5, lineHeight: 1.45, marginTop: 3 },
   cta: { backgroundColor: BRAND, borderRadius: 10, marginTop: 20, padding: 15 },
-  ctaText: { color: '#DDE9DB', fontSize: 8.5, lineHeight: 1.45 },
-  ctaLink: { color: ACCENT, fontFamily: 'Helvetica-Bold', fontSize: 10, marginTop: 7 },
+  ctaText: { color: "#DDE9DB", fontSize: 8.5, lineHeight: 1.45 },
+  ctaLink: { color: ACCENT, fontFamily: "Helvetica-Bold", fontSize: 10, marginTop: 7 },
   acceptance: { borderColor: BRAND, borderRadius: 10, borderWidth: 1, marginTop: 20, padding: 16 },
   acceptanceHash: { color: MUTED, fontSize: 6.5, lineHeight: 1.35, marginTop: 8 },
-})
+});
 
 export type ProposalPdfItem = {
-  id: string
-  description: string
-  quantity: number
-  unitPrice: number
-  vatRate: number
-  subtotal: number
-  billingCycle: string | null
-}
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  vatRate: number;
+  subtotal: number;
+  billingCycle: string | null;
+};
 
 export type ProposalPdfData = {
-  language?: 'es' | 'ca' | 'en'
-  number: string | null
-  title: string
-  recipientName: string
-  validUntil: string | null
-  context: string | null
-  problems: KeyPoint[]
-  solutions: KeyPoint[]
-  scopeModules: ScopeModule[]
-  deliverables: string | null
-  acceptanceCriteria: string | null
-  paymentSchedule: PaymentSchedule
-  paymentTerms: string | null
-  changeManagementTerms: string | null
-  legalTerms: string
-  notes: string | null
-  subtotal: number
-  taxAmount: number
-  total: number
-  items: ProposalPdfItem[]
-  maintenanceOffer: MaintenanceOffer
-  maintenanceSelectedPlanId: string | null
-  portalUrl: string
-  companyName: string | null
-  companyNif?: string | null
-  iban: string | null
+  language?: "es" | "ca" | "en";
+  number: string | null;
+  title: string;
+  recipientName: string;
+  validUntil: string | null;
+  context: string | null;
+  problems: KeyPoint[];
+  solutions: KeyPoint[];
+  scopeModules: ScopeModule[];
+  deliverables: string | null;
+  acceptanceCriteria: string | null;
+  paymentSchedule: PaymentSchedule;
+  paymentTerms: string | null;
+  changeManagementTerms: string | null;
+  legalTerms: string;
+  notes: string | null;
+  subtotal: number;
+  taxAmount: number;
+  total: number;
+  items: ProposalPdfItem[];
+  maintenanceOffer: MaintenanceOffer;
+  maintenanceSelectedPlanId: string | null;
+  portalUrl: string;
+  companyName: string | null;
+  companyNif?: string | null;
+  iban: string | null;
   acceptance?: {
-    signerName: string
-    signerRole: string | null
-    acceptedAt: string
-    documentHash: string
-  } | null
-}
+    signerName: string;
+    signerRole: string | null;
+    acceptedAt: string;
+    documentHash: string;
+  } | null;
+};
 
 function money(value: number): string {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)
+  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(value);
 }
 
 function date(value: string | null): string | null {
-  if (!value) return null
-  return new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date(value))
+  if (!value) return null;
+  return new Intl.DateTimeFormat("es-ES", { dateStyle: "long" }).format(new Date(value));
 }
 
 function dateTime(value: string): string {
-  return new Intl.DateTimeFormat('es-ES', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-    timeZone: 'UTC',
-  }).format(new Date(value))
+  return new Intl.DateTimeFormat("es-ES", {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }).format(new Date(value));
 }
 
-function cycleLabel(cycle: string | null, language: 'es' | 'ca' | 'en'): string {
-  const labels = language === 'ca'
-    ? { monthly: 'Mensual', quarterly: 'Trimestral', yearly: 'Anual', once: 'Únic' }
-    : language === 'en'
-      ? { monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly', once: 'One-time' }
-      : { monthly: 'Mensual', quarterly: 'Trimestral', yearly: 'Anual', once: 'Único' }
-  return labels[cycle as 'monthly' | 'quarterly' | 'yearly'] ?? labels.once
+function cycleLabel(cycle: string | null, language: "es" | "ca" | "en"): string {
+  const labels =
+    language === "ca"
+      ? { monthly: "Mensual", quarterly: "Trimestral", yearly: "Anual", once: "Únic" }
+      : language === "en"
+        ? { monthly: "Monthly", quarterly: "Quarterly", yearly: "Yearly", once: "One-time" }
+        : { monthly: "Mensual", quarterly: "Trimestral", yearly: "Anual", once: "Único" };
+  return labels[cycle as "monthly" | "quarterly" | "yearly"] ?? labels.once;
 }
 
 export function proposalPdfFilename(number: string | null, id: string): string {
-  const reference = number?.trim().replace(/[^a-zA-Z0-9_-]+/g, '-') || id
-  return `propuesta-${reference}.pdf`
+  const reference = number?.trim().replace(/[^a-zA-Z0-9_-]+/g, "-") || id;
+  return `propuesta-${reference}.pdf`;
 }
 
 export function printableMarkdown(value: string | null): string {
-  return (value ?? '')
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/[`*_>#-]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+  return (value ?? "")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[`*_>#-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function Footer({ language }: { language: 'es' | 'ca' | 'en' }) {
-  const label = language === 'ca' ? 'Proposta confidencial' : language === 'en' ? 'Confidential proposal' : 'Propuesta confidencial'
+function Footer({ language }: { language: "es" | "ca" | "en" }) {
+  const label =
+    language === "ca"
+      ? "Proposta confidencial"
+      : language === "en"
+        ? "Confidential proposal"
+        : "Propuesta confidencial";
   return (
     <View fixed style={styles.footer}>
       <Text style={styles.footerLine}>doscientos · {label}</Text>
     </View>
-  )
+  );
 }
 
 function PointList({ points }: { points: KeyPoint[] }) {
@@ -319,7 +325,7 @@ function PointList({ points }: { points: KeyPoint[] }) {
         </View>
       ))}
     </>
-  )
+  );
 }
 
 function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
@@ -329,7 +335,7 @@ function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
         <View key={module.id} style={styles.point} wrap={false}>
           <Text
             style={styles.pointTitle}
-          >{`${String(index + 1).padStart(2, '0')} · ${module.title}`}</Text>
+          >{`${String(index + 1).padStart(2, "0")} · ${module.title}`}</Text>
           {module.description ? <Text style={styles.pointText}>{module.description}</Text> : null}
           {scopeModuleDurationText(module) ? (
             <Text
@@ -337,7 +343,7 @@ function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
             >{`Plazo estimado: ${scopeModuleDurationText(module)}`}</Text>
           ) : null}
           {module.included.length > 0 ? (
-            <Text style={[styles.pointText, { color: BRAND, fontFamily: 'Helvetica-Bold' }]}>
+            <Text style={[styles.pointText, { color: BRAND, fontFamily: "Helvetica-Bold" }]}>
               Incluido
             </Text>
           ) : null}
@@ -345,7 +351,7 @@ function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
             <Text key={`included-${item}`} style={styles.bullet}>{`• ${item}`}</Text>
           ))}
           {module.excluded.length > 0 ? (
-            <Text style={[styles.pointText, { fontFamily: 'Helvetica-Bold' }]}>No incluido</Text>
+            <Text style={[styles.pointText, { fontFamily: "Helvetica-Bold" }]}>No incluido</Text>
           ) : null}
           {module.excluded.map((item) => (
             <Text key={`excluded-${item}`} style={styles.bullet}>{`• ${item}`}</Text>
@@ -354,111 +360,134 @@ function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
         </View>
       ))}
     </>
-  )
+  );
 }
 
 function MaintenancePlanList({
   offer,
   selectedPlanId,
 }: {
-  offer: MaintenanceOffer
-  selectedPlanId: string | null
+  offer: MaintenanceOffer;
+  selectedPlanId: string | null;
 }) {
   return (
     <View style={styles.maintenanceTable}>
       <View style={styles.tableHeader}>
-        <Text style={[styles.tableHeaderText, { width: '74%' }]}>Cobertura</Text>
-        <Text style={[styles.tableHeaderText, { textAlign: 'right', width: '26%' }]}>
+        <Text style={[styles.tableHeaderText, { width: "74%" }]}>Cobertura</Text>
+        <Text style={[styles.tableHeaderText, { textAlign: "right", width: "26%" }]}>
           Cuota mensual
         </Text>
       </View>
       {offer.plans.map((plan) => {
-        const selected = plan.id === selectedPlanId
+        const selected = plan.id === selectedPlanId;
         return (
           <View key={plan.id} style={styles.maintenanceRow} wrap={false}>
-            <View style={{ width: '74%' }}>
+            <View style={{ width: "74%" }}>
               <Text style={styles.maintenancePlanName}>{plan.name}</Text>
               {selected ? <Text style={styles.maintenanceSelection}>Plan elegido</Text> : null}
               <Text style={styles.maintenanceSummary}>{plan.summary}</Text>
               <Text style={styles.maintenanceListLabel}>Incluye</Text>
-              <Text style={styles.maintenanceList}>{plan.coverage.join(' · ')}</Text>
+              <Text style={styles.maintenanceList}>{plan.coverage.join(" · ")}</Text>
               {plan.exclusions.length > 0 ? (
                 <>
                   <Text style={styles.maintenanceListLabel}>No incluye</Text>
-                  <Text style={styles.maintenanceList}>{plan.exclusions.join(' · ')}</Text>
+                  <Text style={styles.maintenanceList}>{plan.exclusions.join(" · ")}</Text>
                 </>
               ) : null}
             </View>
-            <View style={{ width: '26%' }}>
+            <View style={{ width: "26%" }}>
               <Text style={styles.maintenancePrice}>{`${money(plan.monthly_price)} / mes`}</Text>
               <Text style={styles.maintenanceVat}>+ IVA</Text>
             </View>
           </View>
-        )
+        );
       })}
     </View>
-  )
+  );
 }
 
 function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
-  const language = data.language ?? 'es'
-  const ca = language === 'ca'
-  const en = language === 'en'
+  const language = data.language ?? "es";
+  const ca = language === "ca";
+  const en = language === "en";
   const copy = {
-    proposal: ca ? 'Proposta' : en ? 'Proposal' : 'Propuesta',
-    custom: ca ? 'personalitzada' : en ? 'custom' : 'personalizada',
-    prepared: ca ? 'Preparada per a' : en ? 'Prepared for' : 'Preparada para',
-    investment: ca ? 'Inversió inicial' : en ? 'Initial investment' : 'Inversión inicial',
-    valid: ca ? 'Vàlida fins al' : en ? 'Valid until' : 'Válida hasta el',
-    context: ca ? 'Context' : en ? 'Context' : 'Contexto',
-    challenges: ca ? 'Reptes detectats' : en ? 'Challenges identified' : 'Retos detectados',
-    proposalScope: ca ? 'Abast del projecte' : en ? 'Project scope' : 'Alcance del proyecto',
-    economics: ca ? 'Proposta econòmica' : en ? 'Pricing proposal' : 'Propuesta económica',
-    concept: ca ? 'Concepte' : en ? 'Item' : 'Concepto',
-    amount: ca ? 'Import' : en ? 'Amount' : 'Importe',
-    total: ca ? 'Total inicial, IVA inclòs' : en ? 'Initial total, including VAT' : 'Total inicial, IVA incluido',
-    payment: ca ? 'Pagament' : en ? 'Payment' : 'Pago',
-    notes: ca ? 'Notes' : en ? 'Notes' : 'Notas',
-    maintenance: ca ? 'Manteniment' : en ? 'Maintenance' : 'Mantenimiento',
-    acceptance: ca ? 'Acceptació electrònica' : en ? 'Electronic acceptance' : 'Aceptación electrónica',
-    signed: ca ? 'Proposta signada i acceptada' : en ? 'Proposal signed and accepted' : 'Propuesta firmada y aceptada',
-    annex: ca ? 'Annex contractual' : en ? 'Contractual annex' : 'Anexo contractual',
-    terms: ca ? 'Condicions generals i particulars' : en ? 'General and specific terms' : 'Condiciones generales y particulares',
-  }
-  const validUntil = date(data.validUntil)
-  const hasRecurring = data.items.some((item) => item.billingCycle && item.billingCycle !== 'none')
-  const deliverables = data.deliverables?.trim()
-  const acceptanceCriteria = data.acceptanceCriteria?.trim()
-  const initialPaymentPercentage = paymentInitialPercentage(data.paymentSchedule)
-  const hasConditions = Boolean(data.paymentTerms || data.changeManagementTerms)
+    proposal: ca ? "Proposta" : en ? "Proposal" : "Propuesta",
+    custom: ca ? "personalitzada" : en ? "custom" : "personalizada",
+    prepared: ca ? "Preparada per a" : en ? "Prepared for" : "Preparada para",
+    investment: ca ? "Inversió inicial" : en ? "Initial investment" : "Inversión inicial",
+    valid: ca ? "Vàlida fins al" : en ? "Valid until" : "Válida hasta el",
+    context: ca ? "Context" : en ? "Context" : "Contexto",
+    challenges: ca ? "Reptes detectats" : en ? "Challenges identified" : "Retos detectados",
+    proposalScope: ca ? "Abast del projecte" : en ? "Project scope" : "Alcance del proyecto",
+    economics: ca ? "Proposta econòmica" : en ? "Pricing proposal" : "Propuesta económica",
+    concept: ca ? "Concepte" : en ? "Item" : "Concepto",
+    amount: ca ? "Import" : en ? "Amount" : "Importe",
+    total: ca
+      ? "Total inicial, IVA inclòs"
+      : en
+        ? "Initial total, including VAT"
+        : "Total inicial, IVA incluido",
+    payment: ca ? "Pagament" : en ? "Payment" : "Pago",
+    notes: ca ? "Notes" : en ? "Notes" : "Notas",
+    maintenance: ca ? "Manteniment" : en ? "Maintenance" : "Mantenimiento",
+    acceptance: ca
+      ? "Acceptació electrònica"
+      : en
+        ? "Electronic acceptance"
+        : "Aceptación electrónica",
+    signed: ca
+      ? "Proposta signada i acceptada"
+      : en
+        ? "Proposal signed and accepted"
+        : "Propuesta firmada y aceptada",
+    annex: ca ? "Annex contractual" : en ? "Contractual annex" : "Anexo contractual",
+    terms: ca
+      ? "Condicions generals i particulars"
+      : en
+        ? "General and specific terms"
+        : "Condiciones generales y particulares",
+  };
+  const validUntil = date(data.validUntil);
+  const hasRecurring = data.items.some((item) => item.billingCycle && item.billingCycle !== "none");
+  const deliverables = data.deliverables?.trim();
+  const acceptanceCriteria = data.acceptanceCriteria?.trim();
+  const initialPaymentPercentage = paymentInitialPercentage(data.paymentSchedule);
+  const hasConditions = Boolean(data.paymentTerms || data.changeManagementTerms);
   return (
-    <Document title={`${copy.proposal} ${data.number ?? ''} · ${data.title}`} author="doscientos">
+    <Document title={`${copy.proposal} ${data.number ?? ""} · ${data.title}`} author="doscientos">
       <Page size="A4" style={styles.cover}>
         <View style={styles.coverHeader}>
           <Text style={styles.brandLight}>doscientos</Text>
-          <Text style={styles.coverTag}>{copy.proposal} {data.number ?? copy.custom}</Text>
+          <Text style={styles.coverTag}>
+            {copy.proposal} {data.number ?? copy.custom}
+          </Text>
         </View>
         <View style={styles.coverHero}>
           <Text style={styles.eyebrow}>Una propuesta para avanzar</Text>
           <Text style={styles.coverTitle}>{data.title}</Text>
-          <Text style={styles.coverRecipient}>{copy.prepared} {data.recipientName}</Text>
+          <Text style={styles.coverRecipient}>
+            {copy.prepared} {data.recipientName}
+          </Text>
         </View>
         <View style={styles.metricCard}>
           <Text style={styles.metricLabel}>{copy.investment}</Text>
           <Text style={styles.metricValue}>{money(data.total)}</Text>
           <Text style={styles.metricText}>
-            {validUntil
-              ? `${copy.valid} ${validUntil}.`
-              : 'Propuesta personalizada de doscientos.'}
+            {validUntil ? `${copy.valid} ${validUntil}.` : "Propuesta personalizada de doscientos."}
           </Text>
         </View>
-        <Text style={styles.coverFooter}>{ca ? 'Document confidencial' : en ? 'Confidential document' : 'Documento confidencial'} · doscientos.es</Text>
+        <Text style={styles.coverFooter}>
+          {ca ? "Document confidencial" : en ? "Confidential document" : "Documento confidencial"} ·
+          doscientos.es
+        </Text>
       </Page>
 
       <Page size="A4" style={styles.page} wrap>
         <View fixed style={styles.header}>
           <Text style={styles.brand}>doscientos</Text>
-          <Text style={styles.pageLabel}>{copy.proposal} {data.number ?? copy.custom}</Text>
+          <Text style={styles.pageLabel}>
+            {copy.proposal} {data.number ?? copy.custom}
+          </Text>
         </View>
 
         {data.context ? (
@@ -518,11 +547,11 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           style={styles.section}
           break={Boolean(
             data.context ||
-            data.problems.length ||
-            data.solutions.length ||
-            data.scopeModules.length ||
-            deliverables ||
-            acceptanceCriteria,
+              data.problems.length ||
+              data.solutions.length ||
+              data.scopeModules.length ||
+              deliverables ||
+              acceptanceCriteria,
           )}
         >
           <Text style={styles.sectionLabel}>{copy.economics}</Text>
@@ -536,20 +565,20 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, { width: '70%' }]}>{copy.concept}</Text>
-              <Text style={[styles.tableHeaderText, { textAlign: 'right', width: '30%' }]}>
+              <Text style={[styles.tableHeaderText, { width: "70%" }]}>{copy.concept}</Text>
+              <Text style={[styles.tableHeaderText, { textAlign: "right", width: "30%" }]}>
                 {copy.amount}
               </Text>
             </View>
             {data.items.map((item) => (
               <View key={item.id} style={styles.row} wrap={false}>
-                <View style={{ width: '70%' }}>
+                <View style={{ width: "70%" }}>
                   <Text style={styles.itemDescription}>{item.description}</Text>
                   <Text
                     style={styles.itemMeta}
                   >{`${item.quantity} × ${money(item.unitPrice)} · IVA ${item.vatRate}% · ${cycleLabel(item.billingCycle, language)}`}</Text>
                 </View>
-                <Text style={[styles.amount, { width: '30%' }]}>{money(item.subtotal)}</Text>
+                <Text style={[styles.amount, { width: "30%" }]}>{money(item.subtotal)}</Text>
               </View>
             ))}
           </View>
@@ -567,7 +596,15 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
 
         {hasConditions || data.iban ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{hasConditions ? (ca ? 'Condicions i pagament' : en ? 'Terms and payment' : 'Condiciones y pago') : copy.payment}</Text>
+            <Text style={styles.sectionLabel}>
+              {hasConditions
+                ? ca
+                  ? "Condicions i pagament"
+                  : en
+                    ? "Terms and payment"
+                    : "Condiciones y pago"
+                : copy.payment}
+            </Text>
             {data.paymentTerms ? (
               <>
                 <Text style={styles.pointTitle}>Forma de pago</Text>
@@ -592,11 +629,12 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
                   También puede abonar el primer plazo antes de recibir la factura con estos datos.
                 </Text>
                 <Text style={styles.body}>
-                  Beneficiario: {data.companyName ?? '—'}{`\n`}IBAN: {data.iban}
+                  Beneficiario: {data.companyName ?? "—"}
+                  {`\n`}IBAN: {data.iban}
                   {`\n`}Concepto: Propuesta {data.number ?? data.title}
                   {initialPaymentPercentage !== null
                     ? `\nPrimer plazo (${initialPaymentPercentage}%): ${money((data.total * initialPaymentPercentage) / 100)}`
-                    : ''}
+                    : ""}
                 </Text>
               </>
             ) : null}
@@ -628,13 +666,17 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             <Text style={styles.sectionLabel}>{copy.acceptance}</Text>
             <Text style={[styles.sectionTitle, { fontSize: 15 }]}>{copy.signed}</Text>
             <Text style={styles.body}>
-              {`Firmante: ${data.acceptance.signerName}${data.acceptance.signerRole ? ` · ${data.acceptance.signerRole}` : ''}`}
+              {`Firmante: ${data.acceptance.signerName}${data.acceptance.signerRole ? ` · ${data.acceptance.signerRole}` : ""}`}
             </Text>
-            <Text style={styles.body}>{`Fecha y hora (UTC): ${dateTime(data.acceptance.acceptedAt)}`}</Text>
+            <Text
+              style={styles.body}
+            >{`Fecha y hora (UTC): ${dateTime(data.acceptance.acceptedAt)}`}</Text>
             <Text style={styles.body}>
-              {`Emisor: ${data.companyName ?? 'doscientos'}${data.companyNif ? ` · NIF ${data.companyNif}` : ''}`}
+              {`Emisor: ${data.companyName ?? "doscientos"}${data.companyNif ? ` · NIF ${data.companyNif}` : ""}`}
             </Text>
-            <Text style={styles.acceptanceHash}>{`Huella SHA-256 del documento aceptado: ${data.acceptance.documentHash}`}</Text>
+            <Text
+              style={styles.acceptanceHash}
+            >{`Huella SHA-256 del documento aceptado: ${data.acceptance.documentHash}`}</Text>
           </View>
         ) : (
           <View style={styles.cta} wrap={false}>
@@ -651,7 +693,10 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
       <Page size="A4" style={styles.page} wrap>
         <View fixed style={styles.header}>
           <Text style={styles.brand}>doscientos</Text>
-          <Text style={styles.pageLabel}>{ca ? 'Annex de la proposta' : en ? 'Proposal annex' : 'Anexo de la propuesta'} {data.number ?? copy.custom}</Text>
+          <Text style={styles.pageLabel}>
+            {ca ? "Annex de la proposta" : en ? "Proposal annex" : "Anexo de la propuesta"}{" "}
+            {data.number ?? copy.custom}
+          </Text>
         </View>
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{copy.annex}</Text>
@@ -661,9 +706,9 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         <Footer language={language} />
       </Page>
     </Document>
-  )
+  );
 }
 
 export async function renderProposalPdf(data: ProposalPdfData): Promise<Buffer> {
-  return renderToBuffer(<ProposalPdfDocument data={data} />)
+  return renderToBuffer(<ProposalPdfDocument data={data} />);
 }
