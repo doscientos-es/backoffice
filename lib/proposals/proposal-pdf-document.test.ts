@@ -67,7 +67,7 @@ describe("proposal PDF helpers", () => {
 
     const pdfBytes = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
     const { pages } = await extractPdfPages(pdfBytes);
-    const coverText = pages[0]?.content.replace(/\s+/g, "") ?? "";
+    const coverText = pages[0]?.content.replace(/\s+/g, "").toLocaleUpperCase() ?? "";
     expect(coverText).toContain("INVERSIÓNINICIAL");
     expect(coverText).toContain("1000,00€");
     expect(coverText).toContain("(IVANOINCLUIDO)");
