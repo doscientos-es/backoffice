@@ -31,10 +31,10 @@ export function LeadLanguageSelect({
   const selected = OPTIONS.find((option) => option.value === value) ?? OPTIONS[0]
 
   return (
-    <label className="flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs">
+    <div className="relative inline-flex items-center">
       <span
         aria-hidden="true"
-        className={selected.value === 'ca' ? 'size-4 rounded-[2px] border border-black/10' : undefined}
+        className={`pointer-events-none absolute left-2.5 z-10 ${selected.value === 'ca' ? 'h-3.5 w-4 rounded-[2px] border border-black/10' : 'text-sm'}`}
         style={selected.value === 'ca'
           ? { background: 'repeating-linear-gradient(to bottom, #f6d64a 0 2px, #b83232 2px 4px)' }
           : undefined}
@@ -43,7 +43,7 @@ export function LeadLanguageSelect({
       </span>
       <Select
         aria-label="Idioma de contacto del lead"
-        className="h-7 w-auto border-0 bg-transparent p-0 pr-5 text-xs shadow-none focus-visible:ring-0"
+        className="h-8 w-[138px] rounded-md border border-[color:var(--border-strong)] bg-[color:var(--surface-elevated)] pl-9 pr-8 text-sm shadow-none"
         value={value}
         disabled={saving}
         onChange={async (event) => {
@@ -74,6 +74,6 @@ export function LeadLanguageSelect({
         ))}
       </Select>
       <span className="sr-only">{saving ? 'Guardando idioma' : 'Idioma del lead'}</span>
-    </label>
+    </div>
   )
 }
