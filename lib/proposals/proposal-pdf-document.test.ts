@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { extractPdfPages } from "@/lib/internal-documents/pdf-text";
+import { extractPdfPages } from "../internal-documents/pdf-text";
 import { DEFAULT_MAINTENANCE_OFFER } from "./maintenance";
 import { printableMarkdown, proposalPdfFilename, renderProposalPdf } from "./proposal-pdf-document";
 
