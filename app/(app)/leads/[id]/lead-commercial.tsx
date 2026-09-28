@@ -2,7 +2,6 @@ import { BriefcaseBusiness, FileText, ReceiptText } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/status-badge'
 import type { LeadRelatedInvoice, LeadRelatedProject, LeadRelatedProposal } from '@/lib/leads/types'
@@ -27,14 +26,10 @@ type LeadCommercialProps = {
 /** Shown in place of a list when projects/invoices require a client. */
 function ClientRequiredHint() {
   return (
-    <p className="text-muted-foreground px-6 py-2 text-sm">
+    <p className="px-6 py-2 text-sm text-muted-foreground">
       Disponible cuando el lead sea cliente.
     </p>
   )
-}
-
-function EmptyHint({ label }: { label: string }) {
-  return <p className="text-muted-foreground px-6 py-2 text-sm">{label}</p>
 }
 
 function relationshipSummary(count: number, singular: string, plural: string) {
@@ -52,7 +47,7 @@ function MobileRelationshipRow({
 }) {
   return (
     <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3">
-      <dt className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+      <dt className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
         {icon}
         {label}
       </dt>
@@ -63,7 +58,7 @@ function MobileRelationshipRow({
 
 function MobileEmptyLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="text-primary text-xs font-medium hover:underline">
+    <Link href={href} className="text-xs font-medium text-primary hover:underline">
       {children}
     </Link>
   )
@@ -83,11 +78,11 @@ export function LeadCommercial({
 }: LeadCommercialProps) {
   return (
     <>
-      <section className="lg:hidden" aria-label="Relaciones comerciales">
+      <section aria-label="Relaciones comerciales">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Relaciones comerciales</CardTitle>
-            <p className="text-muted-foreground mt-1 text-sm font-normal">
+            <p className="mt-1 text-sm font-normal text-muted-foreground">
               {[
                 relationshipSummary(proposals.length, 'propuesta', 'propuestas'),
                 relationshipSummary(projects.length, 'proyecto', 'proyectos'),
@@ -97,191 +92,85 @@ export function LeadCommercial({
           </CardHeader>
           <CardContent>
             <dl className="flex flex-col gap-4">
-            <MobileRelationshipRow icon={<FileText className="size-3.5" />} label="Propuestas">
-              {proposals.length === 0 ? (
-                <MobileEmptyLink href={`/proposals/new?lead_id=${leadId}`}>
-                  Crear propuesta
-                </MobileEmptyLink>
-              ) : (
-                proposals.map((proposal) => (
-                  <Link
-                    key={proposal.id}
-                    href={`/proposals/${proposal.id}`}
-                    className="hover:bg-muted flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors"
-                  >
-                    <span className="truncate font-medium">
-                      {proposal.number ?? proposal.title ?? 'Propuesta'}
-                    </span>
-                    <span className="text-muted-foreground shrink-0 tabular-nums">
-                      {formatEUR(Number(proposal.total ?? 0))}
-                    </span>
-                  </Link>
-                ))
-              )}
-            </MobileRelationshipRow>
-
-            <MobileRelationshipRow
-              icon={<BriefcaseBusiness className="size-3.5" />}
-              label="Proyectos"
-            >
-              {!linkedClientId ? (
-                <span className="text-muted-foreground text-xs">Cuando sea cliente</span>
-              ) : projects.length === 0 ? (
-                <MobileEmptyLink href={`/projects/new?client_id=${linkedClientId}`}>
-                  Crear proyecto
-                </MobileEmptyLink>
-              ) : (
-                projects.map((project) => (
-                  <Link
-                    key={project.id}
-                    href={`/projects/${project.id}`}
-                    className="hover:bg-muted flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors"
-                  >
-                    <span className="truncate font-medium">{project.name}</span>
-                    <StatusBadge meta={PROJECT_STATUS} value={project.status as ProjectStatus} />
-                  </Link>
-                ))
-              )}
-            </MobileRelationshipRow>
-
-            <MobileRelationshipRow icon={<ReceiptText className="size-3.5" />} label="Facturas">
-              {!linkedClientId ? (
-                <span className="text-muted-foreground text-xs">Cuando sea cliente</span>
-              ) : invoices.length === 0 ? (
-                <span className="text-muted-foreground text-xs">Sin facturas</span>
-              ) : (
-                invoices.map((invoice) => (
-                  <Link
-                    key={invoice.id}
-                    href={`/invoices/${invoice.id}`}
-                    className="hover:bg-muted flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors"
-                  >
-                    <span className="truncate font-medium">{invoice.full_number ?? 'Factura'}</span>
-                    <span className="flex shrink-0 items-center gap-1.5">
-                      <StatusBadge meta={INVOICE_STATUS} value={invoice.status as InvoiceStatus} />
-                      <span className="text-muted-foreground tabular-nums">
-                        {formatEUR(Number(invoice.total ?? 0))}
+              <MobileRelationshipRow icon={<FileText className="size-3.5" />} label="Propuestas">
+                {proposals.length === 0 ? (
+                  <MobileEmptyLink href={`/proposals/new?lead_id=${leadId}`}>
+                    Crear propuesta
+                  </MobileEmptyLink>
+                ) : (
+                  proposals.map((proposal) => (
+                    <Link
+                      key={proposal.id}
+                      href={`/proposals/${proposal.id}`}
+                      className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
+                    >
+                      <span className="truncate font-medium">
+                        {proposal.number ?? proposal.title ?? 'Propuesta'}
                       </span>
-                    </span>
-                  </Link>
-                ))
-              )}
-            </MobileRelationshipRow>
+                      <span className="shrink-0 text-muted-foreground tabular-nums">
+                        {formatEUR(Number(proposal.total ?? 0))}
+                      </span>
+                    </Link>
+                  ))
+                )}
+              </MobileRelationshipRow>
+
+              <MobileRelationshipRow
+                icon={<BriefcaseBusiness className="size-3.5" />}
+                label="Proyectos"
+              >
+                {!linkedClientId ? (
+                  <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
+                ) : projects.length === 0 ? (
+                  <MobileEmptyLink href={`/projects/new?client_id=${linkedClientId}`}>
+                    Crear proyecto
+                  </MobileEmptyLink>
+                ) : (
+                  projects.map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/projects/${project.id}`}
+                      className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
+                    >
+                      <span className="truncate font-medium">{project.name}</span>
+                      <StatusBadge meta={PROJECT_STATUS} value={project.status as ProjectStatus} />
+                    </Link>
+                  ))
+                )}
+              </MobileRelationshipRow>
+
+              <MobileRelationshipRow icon={<ReceiptText className="size-3.5" />} label="Facturas">
+                {!linkedClientId ? (
+                  <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
+                ) : invoices.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">Sin facturas</span>
+                ) : (
+                  invoices.map((invoice) => (
+                    <Link
+                      key={invoice.id}
+                      href={`/invoices/${invoice.id}`}
+                      className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
+                    >
+                      <span className="truncate font-medium">
+                        {invoice.full_number ?? 'Factura'}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-1.5">
+                        <StatusBadge
+                          meta={INVOICE_STATUS}
+                          value={invoice.status as InvoiceStatus}
+                        />
+                        <span className="text-muted-foreground tabular-nums">
+                          {formatEUR(Number(invoice.total ?? 0))}
+                        </span>
+                      </span>
+                    </Link>
+                  ))
+                )}
+              </MobileRelationshipRow>
             </dl>
           </CardContent>
         </Card>
       </section>
-
-      <div className="hidden gap-6 lg:grid lg:grid-cols-3">
-        {/* Proposals — always available via the lead-first flow. */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Propuestas</CardTitle>
-            <Button asChild size="sm">
-              <Link href={`/proposals/new?lead_id=${leadId}`}>Nueva</Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="px-0">
-            {proposals.length === 0 ? (
-              <EmptyHint label="Sin propuestas." />
-            ) : (
-              <ul className="divide-border divide-y">
-                {proposals.map((p) => (
-                  <li
-                    key={p.id}
-                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
-                  >
-                    <Link
-                      href={`/proposals/${p.id}`}
-                      className="truncate font-medium hover:underline"
-                    >
-                      {p.number ?? p.title ?? 'Propuesta'}
-                    </Link>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge meta={PROPOSAL_STATUS} value={p.status as ProposalStatus} />
-                      <span className="text-muted-foreground text-xs tabular-nums">
-                        {formatEUR(Number(p.total ?? 0))}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Projects — require a linked client. */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Proyectos</CardTitle>
-            {linkedClientId ? (
-              <Button asChild size="sm">
-                <Link href={`/projects/new?client_id=${linkedClientId}`}>Nuevo</Link>
-              </Button>
-            ) : null}
-          </CardHeader>
-          <CardContent className="px-0">
-            {!linkedClientId ? (
-              <ClientRequiredHint />
-            ) : projects.length === 0 ? (
-              <EmptyHint label="Sin proyectos." />
-            ) : (
-              <ul className="divide-border divide-y">
-                {projects.map((p) => (
-                  <li
-                    key={p.id}
-                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
-                  >
-                    <Link
-                      href={`/projects/${p.id}`}
-                      className="truncate font-medium hover:underline"
-                    >
-                      {p.name}
-                    </Link>
-                    <StatusBadge meta={PROJECT_STATUS} value={p.status as ProjectStatus} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Invoices — require a linked client. */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Facturas</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0">
-            {!linkedClientId ? (
-              <ClientRequiredHint />
-            ) : invoices.length === 0 ? (
-              <EmptyHint label="Sin facturas." />
-            ) : (
-              <ul className="divide-border divide-y">
-                {invoices.map((inv) => (
-                  <li
-                    key={inv.id}
-                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
-                  >
-                    <Link
-                      href={`/invoices/${inv.id}`}
-                      className="truncate font-medium hover:underline"
-                    >
-                      {inv.full_number ?? 'Factura'}
-                    </Link>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge meta={INVOICE_STATUS} value={inv.status as InvoiceStatus} />
-                      <span className="text-muted-foreground text-xs tabular-nums">
-                        {formatEUR(Number(inv.total ?? 0))}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
     </>
   )
 }
