@@ -67,8 +67,8 @@ export const ServerSchema = PublicSchema.extend({
   GEMINI_API_KEY: z.string().optional().default(''),
   DEEPSEEK_API_KEY: z.string().optional().default(''),
   GOOGLE_CLOUD_PROJECT_ID: z.string().optional().default(''),
-  // Región EU por defecto (GDPR): los datos del lead no salen de la UE.
-  GOOGLE_CLOUD_LOCATION: z.string().optional().default('europe-west1'),
+  // Gemini 3.1 Flash-Lite usa la multirregión EU (no una región como europe-west1).
+  GOOGLE_CLOUD_LOCATION: z.string().optional().default('eu'),
   VERIFACTU_CERT_P12_BASE64: z.string().optional().default(''),
   VERIFACTU_CERT_PASSWORD: z.string().optional().default(''),
   VERIFACTU_CERT_EXPIRES_AT: z.string().optional().default(''),

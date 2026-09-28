@@ -6,6 +6,7 @@ import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CopyButton } from '@/components/ui/copy-button'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
 import { SectionBoundary } from '@/components/ui/error-boundary'
 import { MemberLabel } from '@/components/ui/member-avatar'
@@ -46,7 +47,6 @@ import { LeadNextActionTaskItem } from './lead-next-action-task-item'
 import { LeadNextMove } from './lead-next-move'
 import { LeadNotesDialog } from './lead-notes-dialog'
 import { LeadRecentInteractions } from './lead-recent-interactions'
-import { LeadRelatedLinks } from './lead-related-links'
 import { MomTestChecklist } from './mom-test-checklist'
 import { PhoneQuickActions } from './phone-actions'
 import { LeadStatusSelect } from './status-select'
@@ -301,7 +301,24 @@ export default async function LeadDetailPage({
                               </span>
                             </DetailRow>
                           )}
-                        {lead.email && <DetailRow label="Email">{lead.email}</DetailRow>}
+                        {lead.email && (
+                          <DetailRow label="Email">
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <a
+                                href={`mailto:${lead.email as string}`}
+                                className="min-w-0 break-all text-primary underline-offset-2 hover:underline"
+                              >
+                                {lead.email as string}
+                              </a>
+                              <CopyButton
+                                text={lead.email as string}
+                                successMessage="Email copiado"
+                                label="Copiar email"
+                                className="shrink-0"
+                              />
+                            </div>
+                          </DetailRow>
+                        )}
                         {lead.phone && (
                           <DetailRow label="Teléfono">
                             <PhoneQuickActions
@@ -450,15 +467,6 @@ export default async function LeadDetailPage({
                   )}
                 </CardContent>
               </Card>
-
-              <LeadRelatedLinks
-                leadId={id}
-                counts={{
-                  proposals: proposals.length,
-                  projects: projects.length,
-                  invoices: invoices.length,
-                }}
-              />
 
               {canEdit || nextActions.length > 0 ? (
                 <NextActionsCard

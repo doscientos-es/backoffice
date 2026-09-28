@@ -1,14 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 
-const { generateText } = vi.hoisted(() => ({ generateText: vi.fn() }))
+const { generateText, createVertex } = vi.hoisted(() => ({
+  generateText: vi.fn(),
+  createVertex: vi.fn(() => () => ({ modelId: 'test-model' })),
+}))
 
 vi.mock('ai', () => ({
   generateText,
   Output: { object: vi.fn(() => ({ name: 'object' })) },
 }))
 vi.mock('@ai-sdk/google-vertex', () => ({
-  createVertex: () => () => ({ modelId: 'test-model' }),
+  createVertex,
 }))
 vi.mock('./env', () => ({ isAIEnabled: () => true }))
 vi.mock('./logger', () => ({ scopedLogger: () => ({ info: vi.fn() }) }))
@@ -27,6 +30,10 @@ describe('runAIObject', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubEnv('AI_PROVIDER', 'vertex')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('retries once when the provider returns malformed JSON', async () => {
@@ -80,5 +87,28 @@ describe('runAIObject', () => {
     expect(options.providerOptions).toEqual({
       vertex: { thinkingConfig: { thinkingLevel: 'minimal' } },
     })
+  })
+
+  it('uses the supported EU multi-region endpoint for Gemini 3.1 Flash-Lite', async () => {
+    vi.stubEnv('GOOGLE_CLOUD_LOCATION', 'us-central1')
+    generateText.mockResolvedValue({ text: 'Respuesta válida', usage: undefined })
+
+    await expect(
+      runAIChat({ model: input.model, system: 'Resume.', user: 'Notas.' }),
+    ).resolves.toBe('Respuesta válida')
+
+    expect(createVertex).toHaveBeenCalledWith(expect.objectContaining({ location: 'eu' }))
+  })
+
+  it('returns a clear message when Vertex cannot find the publisher model', async () => {
+    generateText.mockRejectedValue(
+      new Error(
+        'Publisher model projects/example/locations/us-central1/publishers/google/models/gemini-3.1-flash-lite was not found or your project does not have access to it.',
+      ),
+    )
+
+    await expect(runAIObject(input)).rejects.toThrow(
+      'Vertex AI no encuentra el modelo en la región configurada o el proyecto no tiene acceso.',
+    )
   })
 })

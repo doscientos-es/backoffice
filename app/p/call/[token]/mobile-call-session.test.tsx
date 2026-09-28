@@ -5,6 +5,17 @@ import { MobileCallSession } from './mobile-call-session'
 
 const fetchMock = vi.fn()
 const assignMock = vi.fn()
+const briefing = {
+  name: 'Lead de prueba',
+  company: null,
+  leadStatus: 'new',
+  estimatedValue: null,
+  questions: [],
+  proposals: [],
+  invoiceCount: 0,
+  paidTotal: 0,
+  outstandingTotal: 0,
+}
 
 describe('MobileCallSession', () => {
   beforeEach(() => {
@@ -21,24 +32,43 @@ describe('MobileCallSession', () => {
 
   it('opens the dialer only after recording the attempt', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true }) })
-    render(<MobileCallSession token="token-1" phone="600 111 222" status="started" />)
+    render(
+      <MobileCallSession
+        token="token-1"
+        phone="600 111 222"
+        status="started"
+        briefing={briefing}
+      />,
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Abrir teléfono' }))
 
     await waitFor(() => expect(assignMock).toHaveBeenCalledWith('tel:600111222'))
-    expect(fetchMock).toHaveBeenCalledWith('/api/public/call-sessions/token-1', expect.objectContaining({
-      method: 'POST',
-      body: JSON.stringify({ action: 'dial' }),
-    }))
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/public/call-sessions/token-1',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ action: 'dial' }),
+      }),
+    )
   })
 
   it('keeps the dialer closed and exposes a useful error when the session changed', async () => {
     fetchMock.mockResolvedValue({ ok: false, json: async () => ({ error: 'session_changed' }) })
-    render(<MobileCallSession token="token-1" phone="600 111 222" status="started" />)
+    render(
+      <MobileCallSession
+        token="token-1"
+        phone="600 111 222"
+        status="started"
+        briefing={briefing}
+      />,
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Abrir teléfono' }))
 
-    expect((await screen.findByRole('alert')).textContent).toContain('La llamada se actualizó desde otro dispositivo')
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'La llamada se actualizó desde otro dispositivo',
+    )
     expect(assignMock).not.toHaveBeenCalled()
   })
 
@@ -47,7 +77,14 @@ describe('MobileCallSession', () => {
       ok: true,
       json: async () => ({ ok: true, durationMinutes: 3, defaultOutcome: 'connected' }),
     })
-    render(<MobileCallSession token="token-1" phone="600 111 222" status="dialing" />)
+    render(
+      <MobileCallSession
+        token="token-1"
+        phone="600 111 222"
+        status="dialing"
+        briefing={briefing}
+      />,
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'He terminado' }))
 

@@ -1,6 +1,13 @@
 "use client";
 
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@doscientos/ui";
+import {
   CheckCircle2,
   CircleAlert,
   ExternalLink,
@@ -14,13 +21,6 @@ import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@doscientos/ui";
 import { cn } from "@/lib/utils";
 
 type Source = { title: string; url: string; excerpt: string };
@@ -50,9 +50,14 @@ function hasCorporateEmail(email: string | null): boolean {
   const domain = email?.trim().toLowerCase().split("@")[1];
   return Boolean(
     domain &&
-    !["gmail.com", "hotmail.com", "hotmail.es", "outlook.com", "yahoo.com", "icloud.com"].includes(
-      domain,
-    ),
+      ![
+        "gmail.com",
+        "hotmail.com",
+        "hotmail.es",
+        "outlook.com",
+        "yahoo.com",
+        "icloud.com",
+      ].includes(domain),
   );
 }
 
@@ -143,8 +148,8 @@ export function LeadCompanyResearch({
   const canResearch = available && canEdit && aiEnabled && hasCorporateEmail(email);
   const updated = researchedAt
     ? new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(
-      new Date(researchedAt),
-    )
+        new Date(researchedAt),
+      )
     : null;
 
   return (
@@ -240,7 +245,7 @@ export function LeadCompanyResearch({
         </div>
       )}
 
-      {error ? (
+      {error && !open ? (
         <p className="text-destructive flex items-center gap-1.5 text-xs">
           <CircleAlert className="size-3.5" />
           {error}
@@ -262,22 +267,32 @@ export function LeadCompanyResearch({
           <ol className="relative min-w-0 space-y-2" aria-live="polite">
             {items.map((item, index) => {
               const active = loading && index === items.length - 1;
+              const failed = Boolean(error) && index === items.length - 1;
               return (
                 <li
                   key={item.url ?? item.label}
                   className={cn(
                     "animate-in fade-in slide-in-from-bottom-1 flex items-start gap-3 rounded-xl border px-3 py-2.5 duration-300",
-                    active ? "border-primary/25 bg-primary/5" : "border-border/70 bg-muted/20",
+                    active
+                      ? "border-primary/25 bg-primary/5"
+                      : failed
+                        ? "border-destructive/30 bg-destructive/5"
+                        : "border-border/70 bg-muted/20",
                   )}
                 >
                   {active ? (
                     <Loader2 className="text-primary mt-0.5 size-4 shrink-0 animate-spin" />
+                  ) : failed ? (
+                    <CircleAlert className="text-destructive mt-0.5 size-4 shrink-0" />
                   ) : (
                     <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
                   )}
-                  <span className="min-w-0 flex-1 break-words text-sm">{item.label}</span>
+                  <span className="sr-only">
+                    {active ? "En curso" : failed ? "Falló" : "Completado"}
+                  </span>
+                  <span className="min-w-0 flex-1 text-sm break-words">{item.label}</span>
                   {item.url ? (
-                    <span className="text-muted-foreground max-w-28 break-all text-[11px]">
+                    <span className="text-muted-foreground max-w-28 text-[11px] break-all">
                       {new URL(item.url).hostname}
                     </span>
                   ) : null}
@@ -285,6 +300,15 @@ export function LeadCompanyResearch({
               );
             })}
           </ol>
+          {error ? (
+            <p
+              role="alert"
+              className="text-destructive border-destructive/30 bg-destructive/5 relative flex items-start gap-2 rounded-lg border p-3 text-sm break-words"
+            >
+              <CircleAlert className="mt-0.5 size-4 shrink-0" />
+              {error}
+            </p>
+          ) : null}
           <p className="text-muted-foreground relative text-center text-xs">
             La IA sintetiza evidencias; revisa siempre los resultados antes de actuar.
           </p>

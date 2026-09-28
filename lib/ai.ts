@@ -84,10 +84,14 @@ function resolveModel(modelName: string): LanguageModel {
 
   if (provider === 'vertex') {
     const auth = vertexAuthOptions()
+    // Gemini 3.1 Flash-Lite supports the `eu` multi-region endpoint, not
+    // single regions such as `us-central1` or `europe-west1`. Pin it to EU so
+    // a stale generic location setting cannot route lead data outside Europe.
+    const location =
+      modelName === AI_MODELS.default ? 'eu' : process.env.GOOGLE_CLOUD_LOCATION?.trim() || 'eu'
     const vertex = createVertex({
       project: process.env.GOOGLE_CLOUD_PROJECT_ID,
-      // Región EU por defecto (GDPR): los datos del lead no salen de la UE.
-      location: process.env.GOOGLE_CLOUD_LOCATION || 'europe-west1',
+      location,
       ...(auth ? { googleAuthOptions: auth } : {}),
     })
     return vertex(modelName)
@@ -114,6 +118,14 @@ function logUsage(model: string, usage: LanguageModelUsage | undefined, ms: numb
 function normalizeAIError(err: unknown): Error {
   if (err instanceof Error && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
     return new Error('La IA tardó demasiado en responder (timeout 30s).')
+  }
+  if (
+    err instanceof Error &&
+    /Publisher model .* was not found or your project does not have access to it/i.test(err.message)
+  ) {
+    return new Error(
+      'Vertex AI no encuentra el modelo en la región configurada o el proyecto no tiene acceso. Revisa la región y los permisos del modelo.',
+    )
   }
   if (isRetryableStructuredOutputError(err)) {
     return new Error('La IA devolvió un resultado con un formato no válido. Inténtalo de nuevo.')
