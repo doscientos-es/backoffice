@@ -43,7 +43,7 @@ export function LeadLanguageSelect({
       </span>
       <Select
         aria-label="Idioma de contacto del lead"
-        className="h-8 w-[138px] rounded-md border border-[color:var(--border-strong)] bg-[color:var(--surface-elevated)] pl-9 pr-8 text-sm shadow-none"
+        className="h-8 w-[138px] rounded-md border border-(--border-strong) bg-(--surface-elevated) pl-9 pr-8 text-sm shadow-none"
         value={value}
         disabled={saving}
         onChange={async (event) => {

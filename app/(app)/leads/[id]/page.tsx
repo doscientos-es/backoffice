@@ -282,8 +282,10 @@ export default async function LeadDetailPage({
             <>
               <Card>
                 <CardContent className="pt-5">
-                  <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
-                    <DetailGrid>
+                  <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2 2xl:grid-cols-3">
+                    <section className="min-w-0">
+                      <h3 className="mb-3 text-sm font-semibold">Contacto</h3>
+                    <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
                       <DetailRow label="Nombre">{lead.name as string}</DetailRow>
                       {alias && <DetailRow label="Alias">{alias}</DetailRow>}
                       <DetailRow label="Estado">
@@ -319,9 +321,11 @@ export default async function LeadDetailPage({
                         <MemberLabel member={lead.assignee} />
                       </DetailRow>
                     </DetailGrid>
+                    </section>
 
-                    <DetailGrid>
-                      {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
+                    <section className="min-w-0">
+                      <h3 className="mb-3 text-sm font-semibold">Oportunidad</h3>
+                    <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
                       {lead.score != null && (
                         <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
                       )}
@@ -338,6 +342,13 @@ export default async function LeadDetailPage({
                       {lead.solution_type && (
                         <DetailRow label="Solución">{lead.solution_type}</DetailRow>
                       )}
+                    </DetailGrid>
+                    </section>
+
+                    <section className="min-w-0 sm:col-span-2 2xl:col-span-1">
+                      <h3 className="mb-3 text-sm font-semibold">Captación</h3>
+                    <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                      {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
                       {campaignName && <DetailRow label="Campaña Meta">{campaignName}</DetailRow>}
                       {metaAdId && metaAdName && (
                         <DetailRow label="Anuncio Meta">
@@ -388,6 +399,7 @@ export default async function LeadDetailPage({
                         </DetailRow>
                       )}
                     </DetailGrid>
+                    </section>
                   </div>
 
                   {(lead.landing_subject || firstTouch || lastTouch || lead.notes) && (
