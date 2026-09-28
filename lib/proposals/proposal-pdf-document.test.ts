@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { extractPdfPages } from "@/lib/internal-documents/pdf-text";
 import { DEFAULT_MAINTENANCE_OFFER } from "./maintenance";
 import { printableMarkdown, proposalPdfFilename, renderProposalPdf } from "./proposal-pdf-document";
 
@@ -63,5 +64,12 @@ describe("proposal PDF helpers", () => {
     });
 
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+
+    const pdfBytes = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
+    const { pages } = await extractPdfPages(pdfBytes);
+    expect(pages[0]?.content).toContain("Inversión inicial (sin IVA)");
+    expect(pages[0]?.content).toContain("1.000,00 €");
+    expect(pages[0]?.content).toContain("IVA no incluido");
+    expect(pages[0]?.content).not.toContain("1.210,00 €");
   });
 });

@@ -414,7 +414,16 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
     proposal: ca ? "Proposta" : en ? "Proposal" : "Propuesta",
     custom: ca ? "personalitzada" : en ? "custom" : "personalizada",
     prepared: ca ? "Preparada per a" : en ? "Prepared for" : "Preparada para",
-    investment: ca ? "Inversió inicial" : en ? "Initial investment" : "Inversión inicial",
+    investment: ca
+      ? "Inversió inicial (sense IVA)"
+      : en
+        ? "Initial investment (excluding VAT)"
+        : "Inversión inicial (sin IVA)",
+    taxExcluded: ca
+      ? "IVA no inclòs; s'afegirà al total."
+      : en
+        ? "VAT excluded; it will be added to the total."
+        : "IVA no incluido; se añadirá al total.",
     valid: ca ? "Vàlida fins al" : en ? "Valid until" : "Válida hasta el",
     context: ca ? "Context" : en ? "Context" : "Contexto",
     challenges: ca ? "Reptes detectats" : en ? "Challenges identified" : "Retos detectados",
@@ -471,9 +480,10 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         </View>
         <View style={styles.metricCard}>
           <Text style={styles.metricLabel}>{copy.investment}</Text>
-          <Text style={styles.metricValue}>{money(data.total)}</Text>
+          <Text style={styles.metricValue}>{money(data.subtotal)}</Text>
           <Text style={styles.metricText}>
-            {validUntil ? `${copy.valid} ${validUntil}.` : "Propuesta personalizada de doscientos."}
+            {validUntil ? `${copy.valid} ${validUntil}. ` : ""}
+            {copy.taxExcluded}
           </Text>
         </View>
         <Text style={styles.coverFooter}>
@@ -547,20 +557,24 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           style={styles.section}
           break={Boolean(
             data.context ||
-              data.problems.length ||
-              data.solutions.length ||
-              data.scopeModules.length ||
-              deliverables ||
-              acceptanceCriteria,
+            data.problems.length ||
+            data.solutions.length ||
+            data.scopeModules.length ||
+            deliverables ||
+            acceptanceCriteria,
           )}
         >
           <Text style={styles.sectionLabel}>{copy.economics}</Text>
           <Text style={styles.sectionTitle}>Inversión y alcance</Text>
           <View style={styles.investment}>
             <Text style={styles.investmentLabel}>{copy.investment}</Text>
-            <Text style={styles.investmentValue}>{money(data.total)}</Text>
+            <Text style={styles.investmentValue}>{money(data.subtotal)}</Text>
             <Text style={styles.investmentText}>
-              Incluye {money(data.subtotal)} de base imponible e IVA de {money(data.taxAmount)}.
+              {ca
+                ? `S'hi afegirà l'IVA corresponent: ${money(data.taxAmount)}.`
+                : en
+                  ? `VAT of ${money(data.taxAmount)} will be added.`
+                  : `Se añadirá el IVA correspondiente: ${money(data.taxAmount)}.`}
             </Text>
           </View>
           <View style={styles.table}>

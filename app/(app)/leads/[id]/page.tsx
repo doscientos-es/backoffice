@@ -282,11 +282,10 @@ export default async function LeadDetailPage({
             <>
               <Card>
                 <CardContent className="pt-5">
-                  <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2 2xl:grid-cols-3">
+                  <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
                     <section className="min-w-0">
-                      <h3 className="mb-3 text-sm font-semibold">Contacto</h3>
+                      <h3 className="mb-4 text-sm font-semibold">Contacto</h3>
                       <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
-                        <DetailRow label="Nombre">{lead.name as string}</DetailRow>
                         {alias && <DetailRow label="Alias">{alias}</DetailRow>}
                         <DetailRow label="Estado">
                           <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
@@ -341,8 +340,10 @@ export default async function LeadDetailPage({
                     </section>
 
                     <section className="min-w-0">
-                      <h3 className="mb-3 text-sm font-semibold">Oportunidad</h3>
-                      <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                      <h3 className="mb-4 text-sm font-semibold">Oportunidad</h3>
+                      <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">`r`n                        <DetailRow label="Estado">
+                          <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
+                        </DetailRow>
                         {lead.score != null && (
                           <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
                         )}
@@ -364,8 +365,8 @@ export default async function LeadDetailPage({
                       </DetailGrid>
                     </section>
 
-                    <section className="min-w-0 sm:col-span-2 2xl:col-span-1">
-                      <h3 className="mb-3 text-sm font-semibold">Captación</h3>
+                    <section className="min-w-0">
+                      <h3 className="mb-4 text-sm font-semibold">Captación</h3>
                       <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
                         {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
                         {campaignName && <DetailRow label="Campaña Meta">{campaignName}</DetailRow>}
@@ -424,7 +425,7 @@ export default async function LeadDetailPage({
                   </div>
 
                   {(lead.landing_subject || firstTouch || lastTouch || lead.notes) && (
-                    <div className="mt-6 grid gap-5 border-t border-border pt-5 sm:grid-cols-2">
+                    <div className="mt-8 grid gap-6 border-t border-border pt-6 sm:grid-cols-2">
                       {lead.landing_subject || firstTouch || lastTouch ? (
                         <section className="min-w-0">
                           <h3 className="mb-2 text-sm font-semibold">Recorrido</h3>
@@ -684,10 +685,10 @@ function NextActionsCard({
   actions: NextAction[];
 }) {
   return (
-    <Card className="border-primary/20 bg-primary/2">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="border-primary/20 bg-primary/[0.03]">
+      <CardHeader className="flex flex-row items-center justify-between gap-4 pb-3">
         <div>
-          <CardTitle>Qué hacer ahora</CardTitle>
+          <CardTitle className="text-base">Siguiente paso</CardTitle>
           <p className="mt-1 text-sm font-normal text-muted-foreground">
             Próximos pasos para mantener el lead en movimiento.
           </p>
@@ -701,7 +702,7 @@ function NextActionsCard({
           />
         ) : null}
       </CardHeader>
-      <CardContent className="px-0">
+      <CardContent className="px-0 pt-0">
         {actions.length > 0 ? (
           <ul className="divide-y divide-border">
             {actions.map((action) => {
@@ -759,7 +760,9 @@ function NextActionsCard({
             })}
           </ul>
         ) : (
-          <p className="px-6 py-2 text-sm text-muted-foreground">Sin acciones pendientes.</p>
+          <p className="px-6 pb-4 text-sm text-muted-foreground">
+            Crea una tarea o un recordatorio para dejar claro qué toca hacer después.
+          </p>
         )}
       </CardContent>
     </Card>
