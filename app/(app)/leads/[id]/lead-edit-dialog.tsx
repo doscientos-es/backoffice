@@ -30,6 +30,7 @@ type Lead = {
   email: string | null
   phone: string | null
   source: string | null
+  language: 'es' | 'ca' | 'en' | null
   notes: string | null
   estimated_value: number | null
   company_size: string | null
@@ -58,6 +59,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
       phone: fd.get('phone')?.toString() ?? '',
       company: fd.get('company')?.toString() ?? '',
       source: fd.get('source')?.toString() ?? '',
+      language: (fd.get('language')?.toString() ?? 'es') as 'es' | 'ca' | 'en',
       notes: fd.get('notes')?.toString() ?? '',
       estimated_value: estimatedRaw === '' ? null : Number(estimatedRaw),
       company_size: fd.get('company_size')?.toString() ?? '',
@@ -107,6 +109,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
                 email: lead.email,
                 phone: lead.phone,
                 source: lead.source,
+                language: lead.language,
                 notes: lead.notes,
                 estimated_value: lead.estimated_value,
                 company_size: lead.company_size,

@@ -17,6 +17,7 @@ export type SendLeadConfirmationInput = {
   leadName: string
   leadEmail?: string | null
   leadSource: string
+  language?: 'ca' | 'es' | 'en' | null
   internalTraffic?: boolean
   landingRef?: string | null
   landingSubject?: string | null
@@ -38,13 +39,20 @@ export async function sendLeadConfirmation(input: SendLeadConfirmationInput): Pr
 
   const email = input.leadEmail as string
   const firstName = input.leadName.trim().split(/\s+/)[0] || input.leadName
-  const subject = `${firstName}, hemos recibido tu solicitud`
+  const language = input.language === 'ca' || input.language === 'en' ? input.language : 'es'
+  const subject =
+    language === 'ca'
+      ? `${firstName}, hem rebut la teva sol·licitud`
+      : language === 'en'
+        ? `${firstName}, we received your request`
+        : `${firstName}, hemos recibido tu solicitud`
   const resource = selectLeadResource({
     resourceSlug: input.resourceSlug,
     landingRef: input.landingRef,
     landingSubject: input.landingSubject,
     calculatorCost: input.calculatorCost,
     calculatorHours: input.calculatorHours,
+    language,
   })
   const html = await renderEmail(
     LeadConfirmationEmail({
@@ -53,6 +61,7 @@ export async function sendLeadConfirmation(input: SendLeadConfirmationInput): Pr
       resource,
       calculatorCost: input.calculatorCost,
       calculatorHours: input.calculatorHours,
+      language,
     }),
   )
   const sent = await sendEmail({

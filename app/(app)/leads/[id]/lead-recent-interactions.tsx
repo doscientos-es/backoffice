@@ -28,6 +28,7 @@ type LeadRecentInteractionsProps = {
   leadName: string
   leadEmail: string | null
   leadPhone: string | null
+  leadLanguage?: string | null
   senderName: string
   canEdit: boolean
   aiEnabled: boolean
@@ -64,6 +65,7 @@ export function LeadRecentInteractions({
   leadName,
   leadEmail,
   leadPhone,
+  leadLanguage,
   senderName,
   canEdit,
   aiEnabled,
@@ -87,7 +89,7 @@ export function LeadRecentInteractions({
       <CardHeader className="flex flex-col items-start gap-3">
         <div>
           <CardTitle className="text-base">Últimas interacciones</CardTitle>
-          <p className="text-muted-foreground mt-1 text-sm font-normal">
+          <p className="mt-1 text-sm font-normal text-muted-foreground">
             Llamadas, emails y notas más recientes con este lead.
           </p>
         </div>
@@ -106,38 +108,38 @@ export function LeadRecentInteractions({
               aiEnabled={aiEnabled}
               defaultDurationMinutes={defaultDurationMinutes}
             />
-            <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
+            <QEmailDialog leadId={leadId} leadEmail={leadEmail} defaultLanguage={leadLanguage} />
           </fieldset>
         ) : null}
       </CardHeader>
       <CardContent>
         {recent.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Sin interacciones todavía.</p>
+          <p className="text-sm text-muted-foreground">Sin interacciones todavía.</p>
         ) : (
           <>
-            <ul className="divide-border divide-y">
+            <ul className="divide-y divide-border">
               {recent.map(({ interaction, date }) => {
                 const Icon = icon(interaction.type)
                 const snippet = excerptInteractionBody(interaction.body, 140)
                 return (
                   <li key={interaction.id} className="flex items-start gap-3 py-2.5">
-                    <span className="bg-muted text-muted-foreground mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg">
+                    <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                       <Icon className="size-4" aria-hidden />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold">{label(interaction)}</p>
                       {interaction.subject ? (
-                        <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
                           {interaction.subject}
                         </p>
                       ) : null}
                       {snippet ? (
-                        <p className="text-muted-foreground/90 mt-1 line-clamp-2 text-xs leading-relaxed">
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground/90">
                           {snippet}
                         </p>
                       ) : null}
                     </div>
-                    <div className="text-muted-foreground flex shrink-0 flex-col items-end gap-1 text-xs">
+                    <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-muted-foreground">
                       <span className="tabular-nums">{relativeTime(date)}</span>
                       {interaction.type === 'call' ? (
                         <CallInteractionDetails
@@ -151,6 +153,7 @@ export function LeadRecentInteractions({
                           label={label(interaction)}
                           leadId={leadId}
                           leadEmail={leadEmail}
+                          leadLanguage={leadLanguage}
                           canReply={canEdit}
                           aiEnabled={aiEnabled}
                         />
@@ -165,7 +168,7 @@ export function LeadRecentInteractions({
                 asChild
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground mt-2 w-full"
+                className="mt-2 w-full text-muted-foreground"
               >
                 <Link href={`/leads/${leadId}?tab=actividad`}>
                   Ver todo el historial

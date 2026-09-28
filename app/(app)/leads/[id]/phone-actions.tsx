@@ -86,7 +86,7 @@ export function LeadCallLink({
           {error}
         </span>
       )}
-      {starting && <span className="text-muted-foreground text-xs">Preparando…</span>}
+      {starting && <span className="text-xs text-muted-foreground">Preparando…</span>}
       {session && (
         <CallTrackingDialog
           leadId={leadId}
@@ -106,6 +106,7 @@ export function PhoneQuickActions({
   leadId,
   leadName,
   leadEmail,
+  leadLanguage,
   firstContactedAt,
   senderName,
   aiEnabled,
@@ -114,6 +115,7 @@ export function PhoneQuickActions({
   leadId?: string
   leadName?: string
   leadEmail?: string | null
+  leadLanguage?: string | null
   firstContactedAt?: string | null
   senderName: string
   aiEnabled?: boolean
@@ -125,14 +127,14 @@ export function PhoneQuickActions({
         <LeadCallLink
           leadId={leadId}
           phone={phone}
-          className="text-primary truncate underline-offset-2 hover:underline"
+          className="truncate text-primary underline-offset-2 hover:underline"
         >
           {phone}
         </LeadCallLink>
       ) : (
         <a
           href={`tel:${normalized}`}
-          className="text-primary truncate underline-offset-2 hover:underline"
+          className="truncate text-primary underline-offset-2 hover:underline"
         >
           {phone}
         </a>
@@ -143,6 +145,7 @@ export function PhoneQuickActions({
           leadId={leadId}
           leadName={leadName}
           leadEmail={leadEmail ?? null}
+          leadLanguage={leadLanguage}
           phone={phone}
           firstContactedAt={firstContactedAt}
           senderName={senderName}
@@ -157,6 +160,7 @@ export function LeadWhatsAppButton({
   leadId,
   leadName,
   leadEmail,
+  leadLanguage,
   phone,
   firstContactedAt,
   senderName,
@@ -165,6 +169,7 @@ export function LeadWhatsAppButton({
   leadId: string
   leadName: string
   leadEmail: string | null
+  leadLanguage?: string | null
   phone: string
   firstContactedAt?: string | null
   senderName: string
@@ -215,6 +220,7 @@ export function LeadWhatsAppButton({
           leadName={leadName}
           leadEmail={leadEmail}
           leadPhone={phone}
+          defaultLanguage={leadLanguage ?? undefined}
           senderName={senderName}
           aiEnabled={aiEnabled}
           defaultMessage={message}
@@ -326,7 +332,7 @@ function CallTrackingDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center gap-3">
-          <div className="bg-muted flex size-[200px] items-center justify-center rounded-md">
+          <div className="flex size-[200px] items-center justify-center rounded-md bg-muted">
             {qr ? (
               <Image
                 src={qr}
@@ -336,15 +342,15 @@ function CallTrackingDialog({
                 unoptimized
               />
             ) : (
-              <span className="text-muted-foreground text-xs">Generando…</span>
+              <span className="text-xs text-muted-foreground">Generando…</span>
             )}
           </div>
-          <p className="text-muted-foreground text-center text-xs">
+          <p className="text-center text-xs text-muted-foreground">
             Escanea el QR para abrir el teléfono móvil sin perder el seguimiento.
           </p>
         </div>
         {error && (
-          <p role="alert" className="text-destructive text-sm">
+          <p role="alert" className="text-sm text-destructive">
             {error}
           </p>
         )}

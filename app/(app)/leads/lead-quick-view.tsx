@@ -337,6 +337,7 @@ function Body({
                 email: lead.email,
                 phone: lead.phone,
                 source: lead.source,
+                language: lead.language ?? null,
                 notes: lead.notes,
                 estimated_value: lead.estimated_value,
                 company_size: lead.company_size ?? null,

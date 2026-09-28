@@ -3,7 +3,7 @@
 import { CreditCard, Landmark } from 'lucide-react'
 
 import { CopyButton } from '@/components/ui/copy-button'
-import { formatEUR } from '@/lib/utils'
+import { formatPortalEUR } from '@/lib/portal/language'
 
 import { ProposalPaymentButton } from './proposal-payment-button'
 
@@ -15,6 +15,7 @@ interface ProposalPaymentOptionsProps {
   depositAmount: number
   companyName: string | null
   iban: string | null
+  language?: 'es' | 'ca' | 'en'
 }
 
 /** Offers the agreed first payment through the gateway or a bank transfer. */
@@ -26,13 +27,20 @@ export function ProposalPaymentOptions({
   depositAmount,
   companyName,
   iban,
+  language = 'es',
 }: ProposalPaymentOptionsProps) {
+  const copy = language === 'ca'
+    ? { first: 'Fes el primer pagament', intro: 'Per posar en marxa el projecte, abona el primer termini acordat (', card: 'Targeta o Bizum', safe: 'Pagament segur a través de la nostra passarel·la integrada.', pay: 'Pagar el primer termini', bank: 'Transferència bancària', bankInfo: 'També pots pagar aquest termini abans de rebre la factura.', beneficiary: 'Beneficiari', concept: 'Concepte', amount: 'Import', copyIban: 'Copiar IBAN', copyBeneficiary: 'Copiar beneficiari', copyConcept: 'Copiar concepte', copyAll: 'Copiar totes les dades de la transferència', copied: 'Dades de la transferència copiades' }
+    : language === 'en'
+      ? { first: 'Make the first payment', intro: 'To get the project started, pay the agreed first instalment (', card: 'Card or Bizum', safe: 'Secure payment through our integrated payment gateway.', pay: 'Pay first instalment', bank: 'Bank transfer', bankInfo: 'You can also pay this instalment before receiving the invoice.', beneficiary: 'Beneficiary', concept: 'Reference', amount: 'Amount', copyIban: 'Copy IBAN', copyBeneficiary: 'Copy beneficiary', copyConcept: 'Copy reference', copyAll: 'Copy all bank transfer details', copied: 'Bank transfer details copied' }
+      : { first: 'Realiza el primer pago', intro: 'Para poner en marcha el proyecto, abona el primer plazo acordado (', card: 'Tarjeta o Bizum', safe: 'Pago seguro mediante nuestra pasarela integrada.', pay: 'Pagar primer plazo', bank: 'Transferencia bancaria', bankInfo: 'También puede pagar este plazo antes de recibir la factura.', beneficiary: 'Beneficiario', concept: 'Concepto', amount: 'Importe', copyIban: 'Copiar IBAN', copyBeneficiary: 'Copiar beneficiario', copyConcept: 'Copiar concepto', copyAll: 'Copiar todos los datos de la transferencia', copied: 'Datos de la transferencia copiados' }
+  const money = (amount: number) => formatPortalEUR(amount, language)
   const transferConcept = `Propuesta ${proposalNumber}`
   const transferCopyText = [
     `Beneficiario: ${companyName ?? '—'}`,
     `IBAN: ${iban ?? '—'}`,
     `Concepto: ${transferConcept}`,
-    `Importe del primer plazo: ${formatEUR(depositAmount)}`,
+    `${copy.amount} del primer plazo: ${money(depositAmount)}`,
   ].join('\n')
 
   return (
@@ -42,11 +50,11 @@ export function ProposalPaymentOptions({
           id="proposal-payment-options-title"
           className="text-lg font-semibold text-zinc-900 dark:text-zinc-100"
         >
-          Realiza el primer pago
+          {copy.first}
         </h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Para poner en marcha el proyecto, abona el primer plazo acordado ({initialPaymentPercentage}{' '}
-          %) de <strong className="text-zinc-900 tabular-nums dark:text-zinc-100">{formatEUR(depositAmount)}</strong>.
+          {copy.intro}{initialPaymentPercentage}{' '}
+          %) de <strong className="text-zinc-900 tabular-nums dark:text-zinc-100">{money(depositAmount)}</strong>.
         </p>
       </div>
 
@@ -55,15 +63,15 @@ export function ProposalPaymentOptions({
           <div className="mb-4 flex items-start gap-3">
             <CreditCard className="mt-0.5 size-5 shrink-0 text-white" aria-hidden />
             <div>
-              <h3 className="font-semibold text-white">Tarjeta o Bizum</h3>
-              <p className="mt-1 text-sm text-zinc-400">Pago seguro mediante nuestra pasarela integrada.</p>
+              <h3 className="font-semibold text-white">{copy.card}</h3>
+              <p className="mt-1 text-sm text-zinc-400">{copy.safe}</p>
             </div>
           </div>
           <ProposalPaymentButton
             proposalId={proposalId}
             token={token}
             depositAmount={depositAmount}
-            paymentLabel="Pagar primer plazo"
+            paymentLabel={copy.pay}
           />
         </div>
 
@@ -72,28 +80,28 @@ export function ProposalPaymentOptions({
             <div className="mb-4 flex items-start gap-3">
               <Landmark className="mt-0.5 size-5 shrink-0 text-zinc-700 dark:text-zinc-300" aria-hidden />
               <div>
-                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Transferencia bancaria</h3>
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{copy.bank}</h3>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  También puede pagar este plazo antes de recibir la factura.
+                  {copy.bankInfo}
                 </p>
               </div>
             </div>
 
             <dl className="grid gap-3 text-sm">
-              <TransferDetail label="IBAN" value={iban} copyLabel="Copiar IBAN" />
+              <TransferDetail label="IBAN" value={iban} copyLabel={copy.copyIban} />
               <TransferDetail
-                label="Beneficiario"
+                label={copy.beneficiary}
                 value={companyName ?? '—'}
-                copyLabel="Copiar beneficiario"
+                copyLabel={copy.copyBeneficiary}
               />
-              <TransferDetail label="Concepto" value={transferConcept} copyLabel="Copiar concepto" />
-              <TransferDetail label="Importe" value={formatEUR(depositAmount)} />
+              <TransferDetail label={copy.concept} value={transferConcept} copyLabel={copy.copyConcept} />
+              <TransferDetail label={copy.amount} value={money(depositAmount)} />
             </dl>
 
             <CopyButton
               text={transferCopyText}
-              label="Copiar todos los datos de la transferencia"
-              successMessage="Datos de la transferencia copiados"
+              label={copy.copyAll}
+              successMessage={copy.copied}
               showLabel
               className="mt-5 border border-zinc-200 dark:border-zinc-700"
             />

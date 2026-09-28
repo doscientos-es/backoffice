@@ -5,6 +5,7 @@ import { externalAppUrl } from '@/lib/email/app-url'
 import { computeLineSubtotal, computeProposalTotals, type BillingCycle } from '@/lib/finance'
 import { publicEnv } from '@/lib/env'
 import { isPortalUnlocked } from '@/lib/portal/access'
+import { resolvePortalLanguage } from '@/lib/portal/language'
 import { parseKeyPoints } from '@/lib/proposals/key-points'
 import {
   maintenancePlanAsLineItem,
@@ -39,7 +40,7 @@ export async function GET(
 
   const { data: proposal } = await admin
     .from('proposals')
-    .select('*, clients(name), leads(name, company)')
+    .select('*, clients(name, lead_id, leads(language)), leads(name, company, language)')
     .eq('portal_token', token)
     .is('deleted_at', null)
     .maybeSingle()
@@ -47,6 +48,9 @@ export async function GET(
   if (!proposal || (proposal.status === 'draft' && !isTeam)) {
     return NextResponse.json({ error: 'Propuesta no encontrada' }, { status: 404 })
   }
+  const clientLanguage = (proposal.clients as { leads?: { language?: string | null } | null } | null)?.leads?.language
+  const leadLanguage = (proposal.leads as { language?: string | null } | null)?.language
+  const language = resolvePortalLanguage(leadLanguage ?? clientLanguage, req.nextUrl.searchParams.get('lang'))
   if (!isTeam) {
     if ((proposal.is_client_visible as boolean | null) === false) {
       return NextResponse.json({ error: 'Propuesta no disponible' }, { status: 404 })
@@ -165,6 +169,7 @@ export async function GET(
     : calculatedTotals.oneTime.taxAmount
   const pdfTotal = signedProposal ? Number(documentSource.total ?? 0) : calculatedTotals.oneTime.total
   const pdf = await renderProposalPdf({
+    language,
     number: (documentSource.number as string | null) ?? null,
     title: documentSource.title as string,
     recipientName:
@@ -187,7 +192,7 @@ export async function GET(
     items: pdfItems,
     maintenanceOffer,
     maintenanceSelectedPlanId,
-    portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${token}`,
+    portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${token}?lang=${language}`,
     companyName: (settings?.company_name as string | null) ?? null,
     companyNif: (settings?.company_nif as string | null) ?? null,
     iban: (settings?.iban as string | null) ?? null,

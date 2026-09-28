@@ -85,6 +85,28 @@ describe('mapMetaLeadgenToIntake', () => {
     expect(out.utm?.term).toBe('adset_1')
   })
 
+  it('detects Catalan from localized instant form fields', () => {
+    const out = mapMetaLeadgenToIntake({
+      ...base,
+      field_data: [
+        { name: 'nom_complet', values: ['Marta Soler'] },
+        { name: 'email', values: ['marta@example.com'] },
+      ],
+    })
+    expect(out.context?.language).toBe('ca')
+  })
+
+  it('uses an explicit language field when present', () => {
+    const out = mapMetaLeadgenToIntake({
+      ...base,
+      field_data: [
+        { name: 'full_name', values: ['Marta Soler'] },
+        { name: 'language', values: ['ca'] },
+      ],
+    })
+    expect(out.context?.language).toBe('ca')
+  })
+
   it('falls back to the webhook ad id when Graph does not return one', () => {
     const { ad_id: _adId, ...withoutAdId } = base
     const out = mapMetaLeadgenToIntake(withoutAdId, { adId: 'ad_from_webhook' })

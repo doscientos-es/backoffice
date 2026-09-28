@@ -895,8 +895,8 @@ type ProposalEmailData = {
   total: number
   valid_until: string | null
   portal_token: string | null
-  clients: { name: string; email: string | null; phone: string | null } | null
-  leads: { name: string; email: string | null; phone: string | null } | null
+  clients: { name: string; email: string | null; phone: string | null; leads?: { language: 'es' | 'ca' | 'en' | null } | null } | null
+  leads: { name: string; email: string | null; phone: string | null; language: 'es' | 'ca' | 'en' | null } | null
 }
 
 async function renderProposalPreview(
@@ -911,6 +911,7 @@ async function renderProposalPreview(
   if (!portalToken) return { ok: false, error: 'La propuesta no tiene token de portal' }
 
   const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
+  const language = proposal.leads?.language ?? proposal.clients?.leads?.language ?? 'es'
   const proposalNumber = proposal.number ?? (await nextProposalNumber(supabase))
   const { data: specs } = await supabase
     .from('proposal_specs')
@@ -923,9 +924,9 @@ async function renderProposalPreview(
     .filter((spec) => spec.portal_token)
     .map((spec) => ({
       title: spec.title,
-      url: `${appUrl}/p/spec/${spec.portal_token}`,
+      url: `${appUrl}/p/spec/${spec.portal_token}?lang=${language}`,
     }))
-  const portalUrl = `${appUrl}/p/proposal/${portalToken}`
+  const portalUrl = `${appUrl}/p/proposal/${portalToken}?lang=${language}`
   const html = await renderEmail(
     ProposalEmail({
       clientName: proposal.clients?.name ?? proposal.leads?.name ?? 'Hola',
@@ -934,10 +935,13 @@ async function renderProposalPreview(
       total: formatEUR(proposal.total),
       validUntil: proposal.valid_until ? formatDate(proposal.valid_until) : undefined,
       portalUrl,
-      deckUrl: `${appUrl}/deck/${portalToken}`,
+      // The presentation deck is still Spanish-only. Keep it out of CA/EN
+      // emails until its slide copy is localized instead of implying otherwise.
+      deckUrl: language === 'es' ? `${appUrl}/deck/${portalToken}` : undefined,
       appUrl,
       message,
       specs: specLinks,
+      language,
     }),
   )
 
@@ -945,7 +949,7 @@ async function renderProposalPreview(
     ok: true,
     proposalNumber,
     portalUrl,
-    subject: `Propuesta ${proposalNumber} · ${proposal.title}`,
+    subject: language === 'ca' ? `Proposta ${proposalNumber} · ${proposal.title}` : language === 'en' ? `Proposal ${proposalNumber} · ${proposal.title}` : `Propuesta ${proposalNumber} · ${proposal.title}`,
     html,
   }
 }
@@ -963,7 +967,7 @@ export async function previewProposalEmail(input: unknown): Promise<ProposalEmai
   const { data: proposal, error } = await supabase
     .from('proposals')
     .select(
-      'id, number, title, total, portal_token, valid_until, clients(name, email, phone), leads(name, email, phone)',
+      'id, number, title, total, portal_token, valid_until, clients(name, email, phone, lead_id, leads(language)), leads(name, email, phone, language)',
     )
     .eq('id', parsed.data.id)
     .is('deleted_at', null)
@@ -1008,7 +1012,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   const { data: proposal, error: readError } = await supabase
     .from('proposals')
     .select(
-      'id, number, title, total, status, portal_token, valid_until, sent_at, lead_id, client_id, clients(name, email, phone), leads(name, email, phone)',
+      'id, number, title, total, status, portal_token, valid_until, sent_at, lead_id, client_id, clients(name, email, phone, lead_id, leads(language)), leads(name, email, phone, language)',
     )
     .eq('id', id)
     .is('deleted_at', null)

@@ -20,6 +20,7 @@ export type InvoiceEmailProps = {
   appUrl: string
   /** Optional custom message from the sender */
   message?: string
+  language?: 'es' | 'ca' | 'en'
 }
 
 /**
@@ -37,18 +38,18 @@ export function InvoiceEmail({
   portalUrl,
   appUrl,
   message,
+  language = 'es',
 }: InvoiceEmailProps) {
+  const copy = language === 'ca' ? CA : language === 'en' ? EN : ES
   return (
     <EmailLayout
-      preview={`Factura ${invoiceNumber} · ${total} · Vence el ${dueDate}`}
+      preview={`${copy.invoice} ${invoiceNumber} · ${total} · ${copy.due} ${dueDate}`}
       appUrl={appUrl}
     >
       {/* Greeting */}
-      <Text style={headingStyle}>Hola, {clientName}</Text>
+      <Text style={headingStyle}>{copy.greeting}, {clientName}</Text>
       <Text style={bodyStyle}>
-        Te enviamos la factura <strong>{invoiceNumber}</strong> por importe de{' '}
-        <strong>{total}</strong>. Puedes consultarla, descargarla y pagarla online de forma segura
-        desde el enlace de abajo.
+        {copy.intro} <strong>{invoiceNumber}</strong> {copy.amount} <strong>{total}</strong>. {copy.details}
       </Text>
 
       {/* Optional custom message */}
@@ -63,11 +64,11 @@ export function InvoiceEmail({
           margin: '24px 0',
         }}
       >
-        <Text style={{ ...labelStyle, marginBottom: 4 }}>Nº factura</Text>
+        <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.invoiceNo}</Text>
         <Text style={{ ...valueStyle, marginBottom: 12 }}>{invoiceNumber}</Text>
-        <Text style={{ ...labelStyle, marginBottom: 4 }}>Importe total</Text>
+        <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.total}</Text>
         <Text style={{ ...valueStyle, marginBottom: 12 }}>{total}</Text>
-        <Text style={{ ...labelStyle, marginBottom: 4 }}>Fecha de vencimiento</Text>
+        <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.dueDate}</Text>
         <Text style={{ ...valueStyle, marginBottom: 0 }}>{dueDate}</Text>
       </Section>
 
@@ -89,16 +90,20 @@ export function InvoiceEmail({
           boxSizing: 'border-box',
         }}
       >
-        Ver y pagar
+        {copy.viewInvoice}
       </Button>
 
       <Hr style={{ borderColor: '#e4e4e7', margin: '28px 0 16px' }} />
       <Text style={{ ...bodyStyle, color: '#a1a1aa', fontSize: 12 }}>
-        Si tienes cualquier duda, responde a este email y te atenderemos encantados.
+        {copy.questions}
       </Text>
     </EmailLayout>
   )
 }
+
+const ES = { invoice: 'Factura', greeting: 'Hola', intro: 'Te enviamos la factura', amount: 'por importe de', details: 'Puedes consultarla, descargarla y pagarla online de forma segura desde el enlace de abajo.', invoiceNo: 'Nº factura', total: 'Importe total', dueDate: 'Fecha de vencimiento', due: 'Vence el', viewInvoice: 'Ver y pagar', questions: 'Si tienes cualquier duda, responde a este email y te atenderemos encantados.' }
+const CA = { invoice: 'Factura', greeting: 'Hola', intro: 'T’enviem la factura', amount: 'per un import de', details: 'Pots consultar-la, descarregar-la i pagar-la en línia de manera segura des de l’enllaç següent.', invoiceNo: 'Núm. de factura', total: 'Import total', dueDate: 'Data de venciment', due: 'Venç el', viewInvoice: 'Veure i pagar', questions: 'Si tens cap dubte, respon a aquest correu i t’atendrem encantats.' }
+const EN = { invoice: 'Invoice', greeting: 'Hello', intro: 'We are sending you invoice', amount: 'for', details: 'You can securely view, download, and pay it online using the link below.', invoiceNo: 'Invoice no.', total: 'Total amount', dueDate: 'Due date', due: 'Due', viewInvoice: 'View and pay', questions: 'If you have any questions, reply to this email and we will be happy to help.' }
 
 // ── Shared styles ────────────────────────────────────────────────────────────
 const FONT = "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"

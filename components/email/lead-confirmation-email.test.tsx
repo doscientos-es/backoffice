@@ -24,7 +24,7 @@ describe('LeadConfirmationEmail', () => {
       }),
     )
 
-    expect(html).toContain('Hola,')
+    expect(html).toContain('Hola')
     expect(html).toContain('María')
     expect(html).toContain('próximas horas laborables')
     expect(html).toContain('software a medida')
@@ -32,9 +32,24 @@ describe('LeadConfirmationEmail', () => {
     expect(html).toContain('https://doscientos.es/projects?ref=email-confirmacion')
     expect(html).toContain('Probar la calculadora de costes')
     expect(html).toContain('Resultado de tu calculadora')
-    expect(html).toContain('Horas estimadas al año:')
+    expect(html).toContain('Horas estimadas al año')
     expect(html).toContain('420')
-    expect(html).toContain('Coste anual estimado:')
+    expect(html).toContain('Coste anual estimado')
     expect(html).toContain('12500')
+  })
+
+  it('renders the Catalan confirmation copy and localized links', async () => {
+    const html = await renderEmail(
+      LeadConfirmationEmail({
+        leadName: 'Marta Soler',
+        appUrl: 'https://app.doscientos.es',
+        resource,
+        language: 'ca',
+      }),
+    )
+    expect(html).toContain('Sol·licitud rebuda')
+    expect(html).toContain('Hem rebut les teves dades')
+    expect(html).toContain('https://doscientos.es/ca/projects?ref=email-confirmacion')
+    expect(html).toContain('Què passarà ara?')
   })
 })

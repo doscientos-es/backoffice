@@ -5,7 +5,7 @@ import { useTransition } from 'react'
 
 import { initiatePayment } from '@/app/p/invoice/[token]/actions'
 import { Button } from '@/components/ui/button'
-import { formatEUR } from '@/lib/utils'
+import { formatPortalEUR } from '@/lib/portal/language'
 
 interface RedsysPaymentButtonProps {
   invoiceId: string
@@ -13,6 +13,7 @@ interface RedsysPaymentButtonProps {
   total: number
   /** Sum of already-confirmed payments in EUR. */
   amountPaid: number
+  language?: 'es' | 'ca' | 'en'
 }
 
 export function RedsysPaymentButton({
@@ -20,7 +21,14 @@ export function RedsysPaymentButton({
   token,
   total,
   amountPaid,
+  language = 'es',
 }: RedsysPaymentButtonProps) {
+  const copy = language === 'ca'
+    ? { paid: 'Pagat:', due: 'Pendent:', full: 'Es cobrarà l’import total d’aquesta factura:', waiting: 'Preparant el pagament…', pay: 'Pagar', with: 'amb targeta o Bizum' }
+    : language === 'en'
+      ? { paid: 'Paid:', due: 'Due:', full: 'The full invoice amount will be charged:', waiting: 'Preparing payment…', pay: 'Pay', with: 'by card or Bizum' }
+      : { paid: 'Pagado:', due: 'Pendiente:', full: 'Se cobrará el importe completo de esta factura:', waiting: 'Preparando pago…', pay: 'Pagar', with: 'con Tarjeta o Bizum' }
+  const money = (amount: number) => formatPortalEUR(amount, language)
   const amountDue = Math.round((total - amountPaid) * 100) / 100
   const [isPending, startTransition] = useTransition()
 
@@ -28,7 +36,7 @@ export function RedsysPaymentButton({
     startTransition(async () => {
       const result = await initiatePayment(invoiceId, token)
       if (!result.ok) {
-        window.location.href = `/p/invoice/${token}?error=1`
+        window.location.href = `/p/invoice/${token}?error=1&lang=${language}`
         return
       }
       // Dynamically build and submit the Redsys form
@@ -56,14 +64,14 @@ export function RedsysPaymentButton({
     <div className="flex w-full flex-col gap-4 sm:w-auto">
       {amountPaid > 0 ? (
         <p className="text-sm text-zinc-400">
-          Pagado: <strong className="text-emerald-400">{formatEUR(amountPaid)}</strong>
+          {copy.paid} <strong className="text-emerald-400">{money(amountPaid)}</strong>
           {' · '}
-          Pendiente: <strong className="text-white">{formatEUR(amountDue)}</strong>
+          {copy.due} <strong className="text-white">{money(amountDue)}</strong>
         </p>
       ) : (
         <p className="text-sm text-zinc-400">
-          Se cobrará el importe completo de esta factura:{' '}
-          <strong className="text-white">{formatEUR(amountDue)}</strong>
+          {copy.full}{' '}
+          <strong className="text-white">{money(amountDue)}</strong>
         </p>
       )}
 
@@ -79,7 +87,7 @@ export function RedsysPaymentButton({
         ) : (
           <CreditCard className="mr-2 h-5 w-5" />
         )}
-        {isPending ? 'Preparando pago…' : `Pagar ${formatEUR(amountDue)} con Tarjeta o Bizum`}
+        {isPending ? copy.waiting : `${copy.pay} ${money(amountDue)} ${copy.with}`}
       </Button>
     </div>
   )

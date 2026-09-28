@@ -2,7 +2,7 @@ import { CircleCheck as CheckCircle2 } from 'lucide-react'
 
 import { LogoMark } from '@/components/branding'
 import { ReceiptPrintButton } from '@/components/portal/receipt-print-button'
-import { formatDate, formatEUR } from '@/lib/utils'
+import { formatPortalDate, formatPortalEUR } from '@/lib/portal/language'
 
 interface PaymentReceiptProps {
   /** Redsys order reference shown under the title. */
@@ -25,6 +25,7 @@ interface PaymentReceiptProps {
   amount: number
   /** Closing legal note tailored to invoice vs proposal. */
   footerNote: string
+  language?: 'es' | 'ca' | 'en'
 }
 
 /**
@@ -43,7 +44,13 @@ export function PaymentReceipt({
   authorisationCode,
   amount,
   footerNote,
+  language = 'es',
 }: PaymentReceiptProps) {
+  const copy = language === 'ca'
+    ? { paymentConfirmed: 'Pagament confirmat', title: 'Justificant de pagament', paidBy: 'Pagat per', concept: 'En concepte de', details: 'Detalls del pagament', date: 'Data:', method: 'Mètode:', authorization: 'Autorització:', amount: 'Import pagat' }
+    : language === 'en'
+      ? { paymentConfirmed: 'Payment confirmed', title: 'Payment receipt', paidBy: 'Paid by', concept: 'For', details: 'Payment details', date: 'Date:', method: 'Method:', authorization: 'Authorization:', amount: 'Amount paid' }
+      : { paymentConfirmed: 'Pago confirmado', title: 'Justificante de Pago', paidBy: 'Pagado por', concept: 'En concepto de', details: 'Detalles del pago', date: 'Fecha:', method: 'Método:', authorization: 'Autorización:', amount: 'Importe abonado' }
   return (
     <div className="min-h-screen bg-zinc-50 p-4 sm:p-8 dark:bg-zinc-950 print:bg-white print:p-0">
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -51,7 +58,7 @@ export function PaymentReceipt({
         <div className="flex items-center justify-between print:hidden">
           <div className="flex items-center gap-2 text-emerald-600">
             <CheckCircle2 className="h-5 w-5" />
-            <span className="text-sm font-medium">Pago confirmado</span>
+            <span className="text-sm font-medium">{copy.paymentConfirmed}</span>
           </div>
           <ReceiptPrintButton />
         </div>
@@ -67,7 +74,7 @@ export function PaymentReceipt({
                 </span>
               </div>
               <h1 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                Justificante de Pago
+                {copy.title}
               </h1>
               <p className="text-sm text-zinc-500">Ref: {orderRef}</p>
             </div>
@@ -86,7 +93,7 @@ export function PaymentReceipt({
             <div className="flex flex-col gap-4">
               <div>
                 <p className="mb-1 text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
-                  Pagado por
+                  {copy.paidBy}
                 </p>
                 <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                   {recipientName}
@@ -95,7 +102,7 @@ export function PaymentReceipt({
               </div>
               <div>
                 <p className="mb-1 text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
-                  En concepto de
+                  {copy.concept}
                 </p>
                 <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   {conceptTitle}
@@ -107,23 +114,23 @@ export function PaymentReceipt({
             <div className="flex flex-col gap-4">
               <div>
                 <p className="mb-1 text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
-                  Detalles del pago
+                  {copy.details}
                 </p>
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">Fecha:</span>
+                    <span className="text-zinc-500">{copy.date}</span>
                     <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                      {formatDate(confirmedAt as string)}
+                      {formatPortalDate(confirmedAt, language)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">Método:</span>
+                    <span className="text-zinc-500">{copy.method}</span>
                     <span className="font-medium text-zinc-900 dark:text-zinc-100">
                       Tarjeta / Bizum (Redsys)
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">Autorización:</span>
+                    <span className="text-zinc-500">{copy.authorization}</span>
                     <span className="font-mono text-xs text-zinc-900 dark:text-zinc-100">
                       {authorisationCode ?? '—'}
                     </span>
@@ -135,9 +142,9 @@ export function PaymentReceipt({
 
           <div className="flex items-center justify-end py-6">
             <div className="flex flex-col items-end gap-1">
-              <p className="text-xs font-medium text-zinc-500">Importe abonado</p>
+              <p className="text-xs font-medium text-zinc-500">{copy.amount}</p>
               <p className="text-4xl font-bold text-zinc-900 dark:text-zinc-100">
-                {formatEUR(amount)}
+                {formatPortalEUR(amount, language)}
               </p>
             </div>
           </div>

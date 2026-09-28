@@ -12,18 +12,19 @@ export async function sendProposalAcceptedEmail(proposalId: string): Promise<voi
   const admin = createAdminClient()
   const { data } = await admin
     .from('proposals')
-    .select('id, title, acceptance_email_sent_at, clients(name, email), leads(name, email)')
+    .select('id, title, acceptance_email_sent_at, clients(name, email, lead_id, leads(language)), leads(name, email, language)')
     .eq('id', proposalId)
     .is('deleted_at', null)
     .maybeSingle()
   if (!data || data.acceptance_email_sent_at) return
 
   const relations = data as unknown as {
-    clients: { name: string; email: string | null } | null
-    leads: { name: string; email: string | null } | null
+    clients: { name: string; email: string | null; leads: { language: 'es' | 'ca' | 'en' | null } | null } | null
+    leads: { name: string; email: string | null; language: 'es' | 'ca' | 'en' | null } | null
   }
   const recipient = relations.clients?.email ?? relations.leads?.email ?? null
   const clientName = relations.clients?.name ?? relations.leads?.name ?? 'Hola'
+  const language = relations.leads?.language ?? relations.clients?.leads?.language ?? 'es'
   if (!recipient) return
 
   const claimedAt = new Date().toISOString()
@@ -39,14 +40,14 @@ export async function sendProposalAcceptedEmail(proposalId: string): Promise<voi
   try {
     const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
     const html = await renderEmail(
-      ProposalAcceptedEmail({ clientName, proposalTitle: data.title as string, appUrl }),
+      ProposalAcceptedEmail({ clientName, proposalTitle: data.title as string, appUrl, language }),
     )
     const sent = await sendEmail({
       fromName: 'doscientos',
       fromAlias: 'hola',
       to: recipient,
       replyTo: 'hola@doscientos.es',
-      subject: `Propuesta aprobada · ${data.title as string}`,
+      subject: language === 'ca' ? `Proposta aprovada · ${data.title as string}` : language === 'en' ? `Proposal approved · ${data.title as string}` : `Propuesta aprobada · ${data.title as string}`,
       html,
       tags: { proposal_id: proposalId, kind: 'proposal_accepted' },
     })

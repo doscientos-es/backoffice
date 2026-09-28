@@ -303,6 +303,13 @@ export function mapMetaLeadgenToIntake(
     formAnswers.find((a) => isUrgencyLikeValue(a.value))?.value ?? null
   const urgency = explicitUrgency || qualification.urgency || inferredUrgencyFromValue
   const adId = res.ad_id ?? webhookCtx?.adId ?? null
+  const languageAnswer = res.field_data.find((field) =>
+    /^(language|idioma|llengua)$/i.test(field.name),
+  )?.values?.[0]
+  const explicitLanguage = languageAnswer?.trim().toLowerCase()
+  const catalanForm = res.field_data.some((field) =>
+    /^(nom_complet|cognoms|telèfon|empresa|quin|quina|necessiteu|pressupost)/i.test(field.name),
+  )
 
   return {
     name: fullName,
@@ -329,7 +336,15 @@ export function mapMetaLeadgenToIntake(
       content: adId,
       term: res.adset_id ?? null,
     },
-    context: { referrer: res.platform ?? 'facebook' },
+    context: {
+      referrer: res.platform ?? 'facebook',
+      language:
+        explicitLanguage === 'ca' || (!explicitLanguage && catalanForm)
+          ? 'ca'
+          : explicitLanguage === 'en'
+            ? 'en'
+            : 'es',
+    },
     rawPayload: { ...res, webhookCtx: webhookCtx ?? null },
   }
 }

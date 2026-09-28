@@ -73,4 +73,13 @@ describe('sendLeadConfirmation', () => {
     expect(shouldSendLeadConfirmation({ ...baseInput, internalTraffic: true })).toBe(false)
     expect(shouldSendLeadConfirmation({ ...baseInput, leadEmail: null })).toBe(false)
   })
+
+  it('sends Catalan subject and language to the rendered confirmation', async () => {
+    await sendLeadConfirmation({ ...baseInput, language: 'ca' })
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: 'María, hem rebut la teva sol·licitud',
+      }),
+    )
+  })
 })

@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { type MaintenanceOffer, recommendedMaintenancePlanId } from '@/lib/proposals/maintenance'
-import { formatEUR } from '@/lib/utils'
+import { formatPortalEUR } from '@/lib/portal/language'
 
 import { selectProposalMaintenance } from './actions'
 
@@ -16,17 +16,25 @@ export function ProposalMaintenanceOptions({
   offer,
   selectedPlanId,
   disabled,
+  language = 'es',
 }: {
   token: string
   offer: MaintenanceOffer
   selectedPlanId: string | null
   disabled: boolean
+  language?: 'es' | 'ca' | 'en'
 }) {
   const router = useRouter()
   const feedback = useFormFeedback({ successResetMs: 0 })
   const [selected, setSelected] = useState(selectedPlanId)
   const selectedPlan = offer.plans.find((plan) => plan.id === selected) ?? null
   const recommendedPlanId = recommendedMaintenancePlanId(offer)
+  const copy = language === 'ca'
+    ? { choose: 'Tria la cobertura que prefereixis', intro: 'Compara què cobreix cada pla i selecciona’n com a màxim un abans de confirmar la proposta.', month: '/ mes + IVA', recommended: 'Recomanat', selected: 'Seleccionat', includes: 'Inclou', excludes: 'No inclou', remove: 'Pla seleccionat · Treure', choosePlan: 'Tria aquest pla', chosen: 'Has triat', before: 'Pots canviar-lo o treure’l abans de confirmar.', without: 'Pots confirmar la proposta sense afegir manteniment.', updating: 'Actualitzant la proposta…', added: 'Manteniment seleccionat', removed: 'Manteniment no afegit' }
+    : language === 'en'
+      ? { choose: 'Choose your preferred coverage', intro: 'Compare what each plan covers and select at most one before confirming the proposal.', month: '/ month + VAT', recommended: 'Recommended', selected: 'Selected', includes: 'Includes', excludes: 'Does not include', remove: 'Plan selected · Remove', choosePlan: 'Choose this plan', chosen: 'You chose', before: 'You can change or remove it before confirming.', without: 'You can confirm the proposal without adding maintenance.', updating: 'Updating proposal…', added: 'Maintenance selected', removed: 'Maintenance not added' }
+      : { choose: 'Elige la cobertura que prefieras', intro: 'Compara qué cubre cada plan y selecciona como máximo uno antes de confirmar la propuesta.', month: '/ mes + IVA', recommended: 'Recomendado', selected: 'Seleccionado', includes: 'Incluye', excludes: 'No incluye', remove: 'Plan seleccionado · Quitar', choosePlan: 'Elegir este plan', chosen: 'Has elegido', before: 'Puedes cambiarlo o quitarlo antes de confirmar.', without: 'Puedes confirmar la propuesta sin añadir mantenimiento.', updating: 'Actualizando propuesta…', added: 'Mantenimiento seleccionado', removed: 'Mantenimiento no añadido' }
+  const money = (amount: number) => formatPortalEUR(amount, language)
 
   const choose = async (planId: string | null) => {
     if (disabled) return
@@ -34,7 +42,7 @@ export function ProposalMaintenanceOptions({
     const result = await selectProposalMaintenance(token, planId)
     if (!result.ok) return feedback.setError(result.error)
     setSelected(planId)
-    feedback.setSuccess(planId ? 'Mantenimiento seleccionado' : 'Mantenimiento no añadido')
+    feedback.setSuccess(planId ? copy.added : copy.removed)
     router.refresh()
   }
 
@@ -45,11 +53,11 @@ export function ProposalMaintenanceOptions({
           {offer.heading}
         </p>
         <h2 className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Elige la cobertura que prefieras
+          {copy.choose}
         </h2>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{offer.intro}</p>
         <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-          Compara qué cubre cada plan y selecciona como máximo uno antes de confirmar la propuesta.
+          {copy.intro}
         </p>
       </header>
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
@@ -65,26 +73,26 @@ export function ProposalMaintenanceOptions({
                 <div>
                   <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{plan.name}</h2>
                   <p className="mt-1 text-lg font-bold text-[#2A4227] dark:text-[#9CC196]">
-                    {formatEUR(plan.monthly_price)}{' '}
-                    <span className="text-xs font-medium">/ mes + IVA</span>
+                    {money(plan.monthly_price)}{' '}
+                    <span className="text-xs font-medium">{copy.month}</span>
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
                   {recommended ? (
                     <span className="rounded-full bg-[#2A4227] px-2 py-1 text-[10px] font-semibold tracking-wide text-white uppercase dark:bg-[#9CC196] dark:text-[#1a2b18]">
-                      Recomendado
+                      {copy.recommended}
                     </span>
                   ) : null}
                   {active ? (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
-                      <Check className="size-4" aria-hidden /> Seleccionado
+                      <Check className="size-4" aria-hidden /> {copy.selected}
                     </span>
                   ) : null}
                 </div>
               </div>
               <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{plan.summary}</p>
               <p className="mt-4 text-[11px] font-semibold tracking-wide text-[#2A4227] uppercase dark:text-[#9CC196]">
-                Incluye
+                {copy.includes}
               </p>
               <ul className="mt-3 space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
                 {plan.coverage.map((item) => (
@@ -97,7 +105,7 @@ export function ProposalMaintenanceOptions({
               {plan.exclusions.length > 0 ? (
                 <div className="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800/60">
                   <p className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-                    No incluye
+                    {copy.excludes}
                   </p>
                   <ul className="mt-2 space-y-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                     {plan.exclusions.map((item) => (
@@ -118,7 +126,7 @@ export function ProposalMaintenanceOptions({
                   disabled={feedback.pending}
                   onClick={() => choose(active ? null : plan.id)}
                 >
-                  {active ? 'Plan seleccionado · Quitar' : 'Elegir este plan'}
+                  {active ? copy.remove : copy.choosePlan}
                 </Button>
               ) : null}
             </article>
@@ -128,15 +136,15 @@ export function ProposalMaintenanceOptions({
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {selectedPlan ? (
           <p className="text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
-            Has elegido {selectedPlan.name}. Puedes cambiarlo o quitarlo antes de confirmar.
+            {copy.chosen} {selectedPlan.name}. {copy.before}
           </p>
         ) : (
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Puedes confirmar la propuesta sin añadir mantenimiento.
+            {copy.without}
           </p>
         )}
         {!disabled ? (
-          <FormFeedback state={feedback.state} pendingLabel="Actualizando propuesta…" />
+          <FormFeedback state={feedback.state} pendingLabel={copy.updating} />
         ) : null}
       </div>
     </section>

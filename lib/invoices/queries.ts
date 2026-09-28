@@ -684,7 +684,7 @@ export async function findInvoiceForEmail(id: string): Promise<InvoiceForEmail |
   const { data, error } = await supabase
     .from("invoices")
     .select(
-      "id, full_number, total, due_date, status, portal_token, is_client_visible, clients(name, email, phone)",
+      "id, full_number, total, due_date, status, portal_token, is_client_visible, clients(name, email, phone, lead_id, leads(language))",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -694,7 +694,7 @@ export async function findInvoiceForEmail(id: string): Promise<InvoiceForEmail |
 
   const rawClient = (
     data as unknown as {
-      clients: { name: string; email: string | null; phone: string | null } | null;
+      clients: { name: string; email: string | null; phone: string | null; lead_id: string | null; leads: { language: 'es' | 'ca' | 'en' | null } | null } | null;
     }
   ).clients;
   return {

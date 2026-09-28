@@ -16,6 +16,7 @@ export type ProjectKickoffEmailProps = {
   portalUrl: string
   appUrl: string
   message?: string
+  language?: 'es' | 'ca' | 'en'
 }
 
 export function ProjectKickoffEmail({
@@ -24,20 +25,20 @@ export function ProjectKickoffEmail({
   portalUrl,
   appUrl,
   message,
+  language = 'es',
 }: ProjectKickoffEmailProps) {
+  const copy = language === 'ca' ? CA : language === 'en' ? EN : ES
   return (
-    <EmailLayout preview={`Tu proyecto ${projectName} ya está en marcha`} appUrl={appUrl}>
+    <EmailLayout preview={`${copy.preview} ${projectName}`} appUrl={appUrl}>
       <Text style={{ ...BODY, color: '#171717', fontSize: 20, fontWeight: 600 }}>
-        Arrancamos, {clientName}
+        {copy.greeting}, {clientName}
       </Text>
       <Text style={BODY}>
-        El proyecto <strong>{projectName}</strong> ya está en marcha. Hemos preparado un espacio
-        privado para que puedas seguir su evolución desde un único lugar.
+        {copy.intro} <strong>{projectName}</strong>. {copy.intro2}
       </Text>
       {message ? <Text style={{ ...BODY, fontStyle: 'italic' }}>{message}</Text> : null}
       <Text style={BODY}>
-        En el portal encontrarás el progreso, las próximas fechas, las tareas compartidas y un canal
-        para enviarnos solicitudes.
+        {copy.portalInfo}
       </Text>
       <Button
         href={portalUrl}
@@ -55,11 +56,15 @@ export function ProjectKickoffEmail({
           width: '100%',
         }}
       >
-        Ver seguimiento del proyecto
+        {copy.cta}
       </Button>
       <Text style={{ ...BODY, color: '#71717a', fontSize: 12, margin: '18px 0 0' }}>
-        Este enlace es privado. No lo compartas con personas ajenas al proyecto.
+        {copy.privacy}
       </Text>
     </EmailLayout>
   )
 }
+
+const ES = { preview: 'Tu proyecto ya está en marcha:', greeting: 'Arrancamos', intro: 'El proyecto', intro2: 'ya está en marcha. Hemos preparado un espacio privado para que puedas seguir su evolución desde un único lugar.', portalInfo: 'En el portal encontrarás el progreso, las próximas fechas, las tareas compartidas y un canal para enviarnos solicitudes.', cta: 'Ver seguimiento del proyecto', privacy: 'Este enlace es privado. No lo compartas con personas ajenas al proyecto.' }
+const CA = { preview: 'El teu projecte ja està en marxa:', greeting: 'Comencem', intro: 'El projecte', intro2: 'ja està en marxa. Hem preparat un espai privat perquè en puguis seguir l’evolució des d’un únic lloc.', portalInfo: 'Al portal trobaràs el progrés, les properes dates, les tasques compartides i un canal per enviar-nos sol·licituds.', cta: 'Veure el seguiment del projecte', privacy: 'Aquest enllaç és privat. No el comparteixis amb persones alienes al projecte.' }
+const EN = { preview: 'Your project is underway:', greeting: 'We are getting started', intro: 'The project', intro2: 'is underway. We have prepared a private space where you can follow its progress in one place.', portalInfo: 'In the portal you will find progress, upcoming dates, shared tasks, and a channel to send us requests.', cta: 'View project progress', privacy: 'This link is private. Do not share it with anyone outside the project.' }

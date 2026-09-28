@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 import { submitProjectRequest } from './actions'
 
-export function ProjectRequestDialog({ token }: { token: string }) {
+export function ProjectRequestDialog({ token, language = 'es' }: { token: string; language?: 'es' | 'ca' | 'en' }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -28,17 +28,17 @@ export function ProjectRequestDialog({ token }: { token: string }) {
       <DialogTrigger asChild>
         <Button size="sm">
           <MessageSquarePlus className="size-3.5" aria-hidden="true" />
-          Nueva
+          {language === 'ca' ? 'Nova' : language === 'en' ? 'New' : 'Nueva'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-lg">Nueva solicitud</DialogTitle>
+          <DialogTitle className="text-lg">{language === 'ca' ? 'Nova sol·licitud' : language === 'en' ? 'New request' : 'Nueva solicitud'}</DialogTitle>
           <DialogDescription>
-            Cuéntanos qué necesitas y quedará registrado en el proyecto.
+            {language === 'ca' ? 'Explica’ns què necessites i quedarà registrat al projecte.' : language === 'en' ? 'Tell us what you need and it will be recorded in the project.' : 'Cuéntanos qué necesitas y quedará registrado en el proyecto.'}
           </DialogDescription>
         </DialogHeader>
-        <ProjectRequestForm token={token} onSuccess={() => setOpen(false)} />
+        <ProjectRequestForm token={token} language={language} onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   )
@@ -46,14 +46,21 @@ export function ProjectRequestDialog({ token }: { token: string }) {
 
 export function ProjectRequestForm({
   token,
+  language = 'es',
   onSuccess,
 }: {
   token: string
+  language?: 'es' | 'ca' | 'en'
   onSuccess?: () => void
 }) {
   const router = useRouter()
   const feedback = useFormFeedback()
   const [sent, setSent] = useState(false)
+  const copy = language === 'ca'
+    ? { sent: 'Sol·licitud enviada correctament', retry: 'No s’ha pogut enviar. Comprova la connexió i torna-ho a provar.', form: 'Nova sol·licitud', name: 'Nom', yourName: 'El teu nom', emailOptional: 'Email (opcional)', category: 'En què et podem ajudar?', options: ['Tinc una consulta', 'Vull comunicar una incidència', 'Necessito demanar un canvi', 'Vull lliurar material', 'Necessito manteniment', 'Vull presentar una queixa'], subject: 'Assumpte', subjectPlaceholder: 'Resumeix breument la sol·licitud', description: 'Descripció', descriptionPlaceholder: 'Inclou el context i tots els detalls que consideris útils…', sending: 'Enviant…', another: 'Enviar una altra sol·licitud', submit: 'Enviar sol·licitud' }
+    : language === 'en'
+      ? { sent: 'Request sent successfully', retry: 'Could not send. Check your connection and try again.', form: 'New request', name: 'Name', yourName: 'Your name', emailOptional: 'Email (optional)', category: 'How can we help?', options: ['I have a question', 'I want to report an issue', 'I need to request a change', 'I want to provide materials', 'I need maintenance', 'I want to submit a complaint'], subject: 'Subject', subjectPlaceholder: 'Briefly summarize your request', description: 'Description', descriptionPlaceholder: 'Include the context and any useful details…', sending: 'Sending…', another: 'Send another request', submit: 'Send request' }
+      : { sent: 'Solicitud enviada correctamente', retry: 'No se pudo enviar. Comprueba tu conexión e inténtalo de nuevo.', form: 'Nueva solicitud', name: 'Nombre', yourName: 'Tu nombre', emailOptional: 'Email (opcional)', category: '¿En qué podemos ayudarte?', options: ['Tengo una consulta', 'Quiero comunicar una incidencia', 'Necesito solicitar un cambio', 'Quiero entregar material', 'Necesito mantenimiento', 'Quiero presentar una queja'], subject: 'Asunto', subjectPlaceholder: 'Resume brevemente tu solicitud', description: 'Descripción', descriptionPlaceholder: 'Incluye el contexto y todos los detalles que consideres útiles…', sending: 'Enviando…', another: 'Enviar otra solicitud', submit: 'Enviar solicitud' }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -74,20 +81,20 @@ export function ProjectRequestForm({
       if (!result.ok) return feedback.setError(result.error)
       form.reset()
       setSent(true)
-      feedback.setSuccess('Solicitud enviada correctamente')
+      feedback.setSuccess(copy.sent)
       router.refresh()
       onSuccess?.()
     } catch {
-      feedback.setError('No se pudo enviar. Comprueba tu conexión e inténtalo de nuevo.')
+      feedback.setError(copy.retry)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4" aria-label="Nueva solicitud">
+    <form onSubmit={handleSubmit} className="grid gap-4" aria-label={copy.form}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="requester-name" className="mb-1.5 block text-sm font-medium">
-            Nombre
+            {copy.name}
           </label>
           <Input
             id="requester-name"
@@ -95,13 +102,13 @@ export function ProjectRequestForm({
             required
             maxLength={160}
             autoComplete="name"
-            placeholder="Tu nombre"
+            placeholder={copy.yourName}
             className="h-10 bg-white dark:bg-white/[0.04]"
           />
         </div>
         <div>
           <label htmlFor="requester-email" className="mb-1.5 block text-sm font-medium">
-            Email <span className="font-normal text-zinc-400">(opcional)</span>
+          {copy.emailOptional}
           </label>
           <Input
             id="requester-email"
@@ -110,14 +117,14 @@ export function ProjectRequestForm({
             maxLength={254}
             autoComplete="email"
             inputMode="email"
-            placeholder="nombre@empresa.com"
+          placeholder="name@company.com"
             className="h-10 bg-white dark:bg-white/[0.04]"
           />
         </div>
       </div>
       <div>
         <label htmlFor="request-category" className="mb-1.5 block text-sm font-medium">
-          ¿En qué podemos ayudarte?
+          {copy.category}
         </label>
         <Select
           id="request-category"
@@ -125,30 +132,25 @@ export function ProjectRequestForm({
           defaultValue="question"
           className="h-10 bg-white dark:bg-white/[0.04]"
         >
-          <option value="question">Tengo una consulta</option>
-          <option value="incident">Quiero comunicar una incidencia</option>
-          <option value="change">Necesito solicitar un cambio</option>
-          <option value="material">Quiero entregar material</option>
-          <option value="maintenance">Necesito mantenimiento</option>
-          <option value="complaint">Quiero presentar una queja</option>
+          {(['question', 'incident', 'change', 'material', 'maintenance', 'complaint'] as const).map((value, index) => <option key={value} value={value}>{copy.options[index]}</option>)}
         </Select>
       </div>
       <div>
         <label htmlFor="request-subject" className="mb-1.5 block text-sm font-medium">
-          Asunto
+          {copy.subject}
         </label>
         <Input
           id="request-subject"
           name="subject"
           required
           maxLength={160}
-          placeholder="Resume brevemente tu solicitud"
+          placeholder={copy.subjectPlaceholder}
           className="h-10 bg-white dark:bg-white/[0.04]"
         />
       </div>
       <div>
         <label htmlFor="request-body" className="mb-1.5 block text-sm font-medium">
-          Descripción
+          {copy.description}
         </label>
         <Textarea
           id="request-body"
@@ -156,7 +158,7 @@ export function ProjectRequestForm({
           required
           rows={5}
           maxLength={4000}
-          placeholder="Incluye el contexto y todos los detalles que consideres útiles…"
+          placeholder={copy.descriptionPlaceholder}
           className="min-h-32 resize-y bg-white dark:bg-white/[0.04]"
         />
       </div>
@@ -175,7 +177,7 @@ export function ProjectRequestForm({
           aria-busy={feedback.pending}
           className="h-10 rounded-xl px-4"
         >
-          {feedback.pending ? 'Enviando…' : sent ? 'Enviar otra solicitud' : 'Enviar solicitud'}
+          {feedback.pending ? copy.sending : sent ? copy.another : copy.submit}
           <Send className="size-3.5" aria-hidden="true" />
         </Button>
       </div>

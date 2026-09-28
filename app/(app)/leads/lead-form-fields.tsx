@@ -33,6 +33,7 @@ export type LeadFormDefaults = {
   email?: string | null
   phone?: string | null
   source?: string | null
+  language?: 'es' | 'ca' | 'en' | null
   notes?: string | null
   estimated_value?: number | null
   company_size?: string | null
@@ -130,6 +131,13 @@ export function LeadFormFields({
               placeholder="+34 600 000 000"
               autoComplete="tel"
             />
+          </FormRow>
+          <FormRow label="Idioma de contacto" htmlFor={`${idPrefix}-language`}>
+            <Select id={`${idPrefix}-language`} name="language" defaultValue={d.language ?? 'es'}>
+              <option value="es">🇪🇸 Español</option>
+              <option value="ca">🏴 Català</option>
+              <option value="en">🇬🇧 English</option>
+            </Select>
           </FormRow>
         </div>
       </section>

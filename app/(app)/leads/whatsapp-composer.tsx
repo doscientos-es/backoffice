@@ -31,6 +31,7 @@ type Props = {
   defaultMessage?: string
   draftKind?: string
   draftInstructions?: string
+  defaultLanguage?: string
   onSuccess?: () => void
 }
 
@@ -50,6 +51,7 @@ export function WhatsAppComposer({
   defaultMessage,
   draftKind = 'follow_up',
   draftInstructions,
+  defaultLanguage,
   onSuccess,
 }: Props) {
   const fallbackMessage = buildLeadWhatsAppMessage(
@@ -59,7 +61,9 @@ export function WhatsAppComposer({
   )
   const initialMessage = signedMessage(defaultMessage ?? fallbackMessage, senderName)
   const [message, setMessage] = useState(initialMessage)
-  const [language, setLanguage] = useState('es')
+  const [language, setLanguage] = useState(
+    defaultLanguage === 'ca' || defaultLanguage === 'en' ? defaultLanguage : 'es',
+  )
   const [drafting, setDrafting] = useState(false)
   const [openedMessage, setOpenedMessage] = useState<string | null>(null)
   const feedback = useFormFeedback()
@@ -67,7 +71,7 @@ export function WhatsAppComposer({
 
   if (!leadPhone) {
     return (
-      <div className="border-border text-muted-foreground rounded-md border border-dashed p-4 text-sm">
+      <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
         Este lead no tiene teléfono registrado.
       </div>
     )
@@ -150,7 +154,7 @@ export function WhatsAppComposer({
         ) : (
           <AiNotice inline />
         )}
-        <span className="text-muted-foreground text-xs">Firma: {senderName || 'equipo'}</span>
+        <span className="text-xs text-muted-foreground">Firma: {senderName || 'equipo'}</span>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`whatsapp-message-${leadId}`} className="text-xs font-medium">
@@ -190,7 +194,7 @@ export function WhatsAppComposer({
           ) : null}
         </div>
       </div>
-      <p className="text-muted-foreground text-xs">
+      <p className="text-xs text-muted-foreground">
         WhatsApp no informa al backoffice del envío. Confirma solo después de enviarlo en la app.
       </p>
     </div>

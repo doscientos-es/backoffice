@@ -8,8 +8,11 @@ const BRAND = '#2A4227'
 const BRAND_LIGHT = '#edf3ec'
 const FONT = "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
 const CASES_URL = 'https://doscientos.es/projects?ref=email-confirmacion'
+const CASES_URL_CA = 'https://doscientos.es/ca/projects?ref=email-confirmacion'
 const CALCULATOR_URL =
   'https://doscientos.es/automatizar-excel?ref=email-confirmacion#calculadora-coste'
+const CALCULATOR_URL_CA =
+  'https://doscientos.es/ca/automatizar-excel?ref=email-confirmacion#calculadora-coste'
 
 export type LeadConfirmationEmailProps = {
   /** Lead's first name or full name, used in the greeting. */
@@ -20,6 +23,7 @@ export type LeadConfirmationEmailProps = {
   resource: LeadResource
   calculatorCost?: string | null
   calculatorHours?: string | null
+  language?: 'ca' | 'es' | 'en'
 }
 
 /**
@@ -35,15 +39,14 @@ export function LeadConfirmationEmail({
   resource,
   calculatorCost,
   calculatorHours,
+  language = 'es',
 }: LeadConfirmationEmailProps) {
   const firstName = leadName.split(' ')[0] ?? leadName
   const hasCalculatorSummary = Boolean(calculatorCost || calculatorHours)
+  const copy = language === 'ca' ? CATALAN : language === 'en' ? ENGLISH : SPANISH
 
   return (
-    <EmailLayout
-      preview={`${firstName}, hemos recibido tu solicitud y te contactaremos muy pronto`}
-      appUrl={appUrl}
-    >
+    <EmailLayout preview={`${firstName}, ${copy.preview}`} appUrl={appUrl}>
       {/* Hero accent band */}
       <Section
         style={{
@@ -75,31 +78,28 @@ export function LeadConfirmationEmail({
             lineHeight: '28px',
           }}
         >
-          Solicitud recibida
+          {copy.title}
         </Text>
       </Section>
 
       {/* Greeting */}
-      <Text style={headingStyle}>Hola, {firstName}!</Text>
-      <Text style={bodyStyle}>
-        Hemos recibido tus datos a través de uno de nuestros formularios y ya están en manos de
-        nuestro equipo. Nos pondremos en contacto contigo en las próximas horas laborables.
+      <Text style={headingStyle}>
+        {copy.greeting}, {firstName}!
       </Text>
+      <Text style={bodyStyle}>{copy.intro}</Text>
 
       <Section style={aboutStyle}>
-        <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>Qué hacemos</Text>
-        <Text style={{ ...stepBodyStyle, marginBottom: 16 }}>
-          En doscientos creamos software a medida, automatizamos procesos y desarrollamos webs para
-          que las empresas ahorren tiempo, reduzcan errores y trabajen con más control.
-        </Text>
-        <Button href={CASES_URL} style={primaryButtonStyle}>
-          Ver casos de éxito
+        <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>{copy.about}</Text>
+        <Text style={{ ...stepBodyStyle, marginBottom: 16 }}>{copy.aboutBody}</Text>
+        <Button href={language === 'ca' ? CASES_URL_CA : CASES_URL} style={primaryButtonStyle}>
+          {copy.cases}
         </Button>
-        <Text style={{ ...stepBodyStyle, margin: '12px 0 8px' }}>
-          También puedes estimar cuánto cuesta al año ese trabajo manual que se repite en tu equipo.
-        </Text>
-        <Button href={CALCULATOR_URL} style={secondaryButtonStyle}>
-          Probar la calculadora de costes
+        <Text style={{ ...stepBodyStyle, margin: '12px 0 8px' }}>{copy.calculatorIntro}</Text>
+        <Button
+          href={language === 'ca' ? CALCULATOR_URL_CA : CALCULATOR_URL}
+          style={secondaryButtonStyle}
+        >
+          {copy.calculator}
         </Button>
       </Section>
 
@@ -113,14 +113,16 @@ export function LeadConfirmationEmail({
           }}
         >
           <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>
-            Resultado de tu calculadora
+            {copy.calculatorResult}
           </Text>
           {calculatorHours ? (
-            <Text style={stepBodyStyle}>Horas estimadas al año: {calculatorHours} h</Text>
+            <Text style={stepBodyStyle}>
+              {copy.hours}: {calculatorHours} h
+            </Text>
           ) : null}
           {calculatorCost ? (
             <Text style={{ ...stepBodyStyle, marginTop: 4 }}>
-              Coste anual estimado: {calculatorCost} EUR
+              {copy.cost}: {calculatorCost} EUR
             </Text>
           ) : null}
         </Section>
@@ -135,7 +137,7 @@ export function LeadConfirmationEmail({
             margin: '20px 0 24px',
           }}
         >
-          <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>Recurso recomendado</Text>
+          <Text style={{ ...labelStyle, color: BRAND, marginBottom: 8 }}>{copy.resource}</Text>
           <Text style={stepTitleStyle}>{resource.title}</Text>
           <Text style={{ ...stepBodyStyle, marginBottom: 16 }}>{resource.description}</Text>
           <Button href={resource.href} style={primaryButtonStyle}>
@@ -154,10 +156,10 @@ export function LeadConfirmationEmail({
           marginBottom: 16,
         }}
       >
-        ¿Qué pasa ahora?
+        {copy.next}
       </Text>
 
-      {STEPS.map((step, i) => (
+      {(language === 'ca' ? STEPS_CA : language === 'en' ? STEPS_EN : STEPS_ES).map((step, i) => (
         <Section
           key={step.title}
           style={{
@@ -174,18 +176,78 @@ export function LeadConfirmationEmail({
       ))}
 
       <Hr style={{ borderColor: '#e4e4e7', margin: '24px 0 16px' }} />
-      <Text style={{ ...bodyStyle, color: '#71717a' }}>
-        Si tienes cualquier pregunta mientras tanto, responde directamente a este email y te
-        atenderemos encantados.
-      </Text>
+      <Text style={{ ...bodyStyle, color: '#71717a' }}>{copy.questions}</Text>
       <Text style={{ ...bodyStyle, fontWeight: 600, color: BRAND, margin: 0 }}>
-        — El equipo de doscientos
+        {copy.signature}
       </Text>
     </EmailLayout>
   )
 }
 
-const STEPS = [
+const SPANISH = {
+  preview: 'hemos recibido tu solicitud y te contactaremos muy pronto',
+  title: 'Solicitud recibida',
+  greeting: 'Hola',
+  intro:
+    'Hemos recibido tus datos a través de uno de nuestros formularios y ya están en manos de nuestro equipo. Nos pondremos en contacto contigo en las próximas horas laborables.',
+  about: 'Qué hacemos',
+  aboutBody:
+    'En doscientos creamos software a medida, automatizamos procesos y desarrollamos webs para que las empresas ahorren tiempo, reduzcan errores y trabajen con más control.',
+  cases: 'Ver casos de éxito',
+  calculatorIntro:
+    'También puedes estimar cuánto cuesta al año ese trabajo manual que se repite en tu equipo.',
+  calculator: 'Probar la calculadora de costes',
+  calculatorResult: 'Resultado de tu calculadora',
+  hours: 'Horas estimadas al año',
+  cost: 'Coste anual estimado',
+  resource: 'Recurso recomendado',
+  next: '¿Qué pasa ahora?',
+  questions:
+    'Si tienes cualquier pregunta mientras tanto, responde directamente a este email y te atenderemos encantados.',
+  signature: '— El equipo de doscientos',
+}
+const CATALAN = {
+  preview: 'hem rebut la teva sol·licitud i et contactarem ben aviat',
+  title: 'Sol·licitud rebuda',
+  greeting: 'Hola',
+  intro:
+    'Hem rebut les teves dades a través d’un dels nostres formularis i ja són en mans del nostre equip. Ens posarem en contacte amb tu durant les pròximes hores laborables.',
+  about: 'Què fem',
+  aboutBody:
+    'A doscientos creem programari a mida, automatitzem processos i desenvolupem webs perquè les empreses estalviïn temps, redueixin errors i treballin amb més control.',
+  cases: 'Veure casos d’èxit',
+  calculatorIntro:
+    'També pots calcular quant costa cada any la feina manual que es repeteix al teu equip.',
+  calculator: 'Provar la calculadora de costos',
+  calculatorResult: 'Resultat de la calculadora',
+  hours: 'Hores estimades a l’any',
+  cost: 'Cost anual estimat',
+  resource: 'Recurs recomanat',
+  next: 'Què passarà ara?',
+  questions:
+    'Si mentrestant tens cap pregunta, respon directament a aquest correu i t’atendrem encantats.',
+  signature: '— L’equip de doscientos',
+}
+const ENGLISH = {
+  preview: 'we received your request and will be in touch soon',
+  title: 'Request received',
+  greeting: 'Hello',
+  intro: 'We have received your details through one of our forms, and our team is reviewing them. We will get in touch during the next business hours.',
+  about: 'What we do',
+  aboutBody: 'At doscientos, we build custom software, automate processes, and develop websites so businesses can save time, reduce errors, and work with greater control.',
+  cases: 'See our work',
+  calculatorIntro: 'You can also estimate the annual cost of repetitive manual work in your team.',
+  calculator: 'Try the cost calculator',
+  calculatorResult: 'Your calculator result',
+  hours: 'Estimated hours per year',
+  cost: 'Estimated annual cost',
+  resource: 'Recommended resource',
+  next: 'What happens next?',
+  questions: 'If you have any questions, reply directly to this email and we will be happy to help.',
+  signature: '— The doscientos team',
+}
+
+const STEPS_ES = [
   {
     title: 'Entendemos tu caso',
     body: 'Revisamos la información para que la primera conversación sea concreta y útil.',
@@ -198,6 +260,25 @@ const STEPS = [
     title: 'Acordamos el siguiente paso',
     body: 'Si podemos ayudarte, te explicamos una propuesta clara de alcance, plazos y prioridades.',
   },
+]
+const STEPS_CA = [
+  {
+    title: 'Entenem el teu cas',
+    body: 'Revisem la informació perquè la primera conversa sigui concreta i útil.',
+  },
+  {
+    title: 'Ens posem en contacte',
+    body: 'Et trucarem o t’escriurem per concertar una primera conversa sense compromís.',
+  },
+  {
+    title: 'Acordem el pas següent',
+    body: 'Si et podem ajudar, t’explicarem una proposta clara d’abast, terminis i prioritats.',
+  },
+]
+const STEPS_EN = [
+  { title: 'We understand your case', body: 'We review the information so our first conversation is concrete and useful.' },
+  { title: 'We get in touch', body: 'We will call or email you to arrange an initial no-obligation conversation.' },
+  { title: 'We agree on the next step', body: 'If we can help, we will explain a clear proposal covering scope, timing, and priorities.' },
 ]
 
 // ── Styles ────────────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { LogoMark } from '@/components/branding'
 import { Markdown } from '@/components/ui/markdown'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { formatDate } from '@/lib/utils'
+import { formatPortalDate, resolvePortalLanguage } from '@/lib/portal/language'
 
 export const dynamic = 'force-dynamic'
 export const metadata = {
@@ -19,20 +19,29 @@ export const metadata = {
  * without a session — same pattern as `/p/proposal/[token]` and
  * `/p/invoice/[token]`.
  */
-export default async function PortalSpecPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function PortalSpecPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ lang?: string }> }) {
   const { token } = await params
+  const { lang } = await searchParams
   const admin = createAdminClient()
 
   const { data: doc } = await admin
     .from('proposal_specs')
     .select(
-      'id, title, body_markdown, is_client_visible, updated_at, proposal_id, proposals(number, title, portal_token)',
+      'id, title, body_markdown, is_client_visible, updated_at, proposal_id, proposals(number, title, portal_token, leads(language), clients(lead_id, leads(language)))',
     )
     .eq('portal_token', token)
     .eq('is_client_visible', true)
     .maybeSingle()
 
   if (!doc) notFound()
+  const proposalLanguage = (doc.proposals as { leads?: { language?: string | null } | null; clients?: { leads?: { language?: string | null } | null } | null } | null)?.leads?.language
+    ?? (doc.proposals as { clients?: { leads?: { language?: string | null } | null } | null } | null)?.clients?.leads?.language
+  const language = resolvePortalLanguage(proposalLanguage, lang)
+  const copy = language === 'ca'
+    ? { title: 'Documentació tècnica', linked: 'Vinculada a la proposta', updated: 'Actualitzada el' }
+    : language === 'en'
+      ? { title: 'Technical documentation', linked: 'Linked to proposal', updated: 'Updated on' }
+      : { title: 'Documentación técnica', linked: 'Vinculada a la propuesta', updated: 'Actualizada el' }
 
   const proposal = (
     doc as unknown as {
@@ -52,17 +61,17 @@ export default async function PortalSpecPage({ params }: { params: Promise<{ tok
         </div>
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-            Documentación técnica
+            {copy.title}
           </p>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             {doc.title as string}
           </h1>
           {proposal ? (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Vinculada a la propuesta{' '}
+              {copy.linked}{' '}
               {proposal.portal_token ? (
                 <a
-                  href={`/p/proposal/${proposal.portal_token}`}
+                  href={`/p/proposal/${proposal.portal_token}?lang=${language}`}
                   className="font-medium text-[#2A4227] hover:underline dark:text-[#9CC196]"
                 >
                   {proposal.number} · {proposal.title}
@@ -76,7 +85,7 @@ export default async function PortalSpecPage({ params }: { params: Promise<{ tok
           ) : null}
           {doc.updated_at ? (
             <p className="text-[11px] text-zinc-400 dark:text-zinc-600">
-              Actualizada el {formatDate(doc.updated_at as string)}
+              {copy.updated} {formatPortalDate(doc.updated_at as string, language)}
             </p>
           ) : null}
         </div>

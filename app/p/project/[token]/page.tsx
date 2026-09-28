@@ -19,9 +19,9 @@ import { PortalPasswordGate } from '@/components/portal/password-gate'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { getCurrentUser } from '@/lib/auth'
 import { isPortalUnlocked } from '@/lib/portal/access'
+import { formatPortalDate, formatPortalEUR, resolvePortalLanguage } from '@/lib/portal/language'
 import { PROJECT_STATUS, TASK_STATUS } from '@/lib/status'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { formatDate, formatEUR } from '@/lib/utils'
 
 import { unlockProjectPortal } from './actions'
 import { ProjectRequestDialog } from './request-form'
@@ -39,21 +39,15 @@ const REQUEST_STATUS: Record<string, { label: string; dot: string }> = {
   closed: { label: 'Cerrada', dot: 'bg-zinc-400' },
 }
 
-const REQUEST_CATEGORY: Record<string, string> = {
-  question: 'Consulta',
-  incident: 'Incidencia',
-  change: 'Cambio',
-  material: 'Material',
-  maintenance: 'Mantenimiento',
-  complaint: 'Queja',
-}
-
 export default async function ProjectPortalPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>
+  searchParams: Promise<{ lang?: string }>
 }) {
   const { token } = await params
+  const { lang } = await searchParams
   const admin = createAdminClient()
   const auth = await getCurrentUser()
   const isTeam = auth.ok
@@ -61,12 +55,19 @@ export default async function ProjectPortalPage({
   const { data: project } = await admin
     .from('projects')
     .select(
-      'id, name, status, starts_at, ends_at, portal_password_hash, is_client_visible, clients(name)',
+      'id, name, status, starts_at, ends_at, portal_password_hash, is_client_visible, clients(name, lead_id, leads(language))',
     )
     .eq('portal_token', token)
     .is('deleted_at', null)
     .maybeSingle()
   if (!project) notFound()
+  const clientRelation = (project as unknown as { clients: { name: string; leads?: { language?: string | null } | null } | null }).clients
+  const portalLanguage = resolvePortalLanguage(clientRelation?.leads?.language, lang)
+  const copy = portalLanguage === 'ca'
+    ? { preview: 'Vista prèvia interna.', hidden: 'Aquest portal encara està ocult per al client.', intro: 'Consulta el progrés del projecte i envia’ns qualsevol sol·licitud des d’un únic lloc.', progress: 'Progrés compartit', start: 'Inici del projecte', delivery: 'Lliurament previst', documents: 'Documents compartits', documentIntro: 'Consulta propostes i factures relacionades amb aquest projecte.', work: 'Estat del treball', websites: 'Webs', websitesIntro: 'Versions compartides del teu projecte.', proposal: 'Proposta', invoice: 'Factura', noDate: 'Sense data', preparing: 'Estem preparant els propers passos', done: 'Tot el treball compartit està completat', taskCount: (done: number, total: number) => `${done} de ${total} tasques completades`, taskProgress: 'Progrés de les tasques compartides', upcoming: 'Propers passos en preparació', upcomingDescription: 'Les tasques compartides apareixeran aquí amb el seu estat i la data prevista.', requests: 'Sol·licituds', allClear: 'Tot al dia', requestCategory: { question: 'Consulta', incident: 'Incidència', change: 'Canvi', material: 'Material', maintenance: 'Manteniment', complaint: 'Queixa' }, requestStatus: { new: 'Rebuda', in_progress: 'En curs', resolved: 'Resolta', closed: 'Tancada' }, projectStatuses: { planning: 'Planificació', active: 'Actiu', on_hold: 'En pausa', done: 'Finalitzat', cancelled: 'Cancel·lat' }, taskStatuses: { todo: 'Per fer', in_progress: 'En curs', in_review: 'Revisió', done: 'Feta', cancelled: 'Cancel·lada' } }
+    : portalLanguage === 'en'
+      ? { preview: 'Internal preview.', hidden: 'This portal is still hidden from the client.', intro: 'Check project progress and send us requests from one place.', progress: 'Shared progress', start: 'Project start', delivery: 'Expected delivery', documents: 'Shared documents', documentIntro: 'View proposals and invoices related to this project.', work: 'Work status', websites: 'Websites', websitesIntro: 'Shared versions of your project.', proposal: 'Proposal', invoice: 'Invoice', noDate: 'No date', preparing: 'We are preparing the next steps', done: 'All shared work is complete', taskCount: (done: number, total: number) => `${done} of ${total} tasks complete`, taskProgress: 'Shared task progress', upcoming: 'Next steps are being prepared', upcomingDescription: 'Shared tasks will appear here with their status and expected date.', requests: 'Requests', allClear: 'All up to date', requestCategory: { question: 'Question', incident: 'Issue', change: 'Change', material: 'Materials', maintenance: 'Maintenance', complaint: 'Complaint' }, requestStatus: { new: 'Received', in_progress: 'In progress', resolved: 'Resolved', closed: 'Closed' }, projectStatuses: { planning: 'Planning', active: 'Active', on_hold: 'On hold', done: 'Completed', cancelled: 'Cancelled' }, taskStatuses: { todo: 'To do', in_progress: 'In progress', in_review: 'In review', done: 'Completed', cancelled: 'Cancelled' } }
+      : { preview: 'Vista previa interna.', hidden: 'Este portal todavía está oculto para el cliente.', intro: 'Consulta el avance del proyecto y envíanos cualquier solicitud desde un único lugar.', progress: 'Progreso compartido', start: 'Inicio del proyecto', delivery: 'Entrega prevista', documents: 'Documentos compartidos', documentIntro: 'Consulta propuestas y facturas relacionadas con este proyecto.', work: 'Estado del trabajo', websites: 'Webs', websitesIntro: 'Versiones compartidas de tu proyecto.', proposal: 'Propuesta', invoice: 'Factura', noDate: 'Sin fecha', preparing: 'Estamos preparando los próximos pasos', done: 'Todo el trabajo compartido está completado', taskCount: (done: number, total: number) => `${done} de ${total} tareas completadas`, taskProgress: 'Progreso de las tareas compartidas', upcoming: 'Próximos pasos en preparación', upcomingDescription: 'Cuando compartamos tareas contigo, aparecerán aquí con su estado y fecha prevista.', requests: 'Solicitudes', allClear: 'Todo al día', requestCategory: { question: 'Consulta', incident: 'Incidencia', change: 'Cambio', material: 'Material', maintenance: 'Mantenimiento', complaint: 'Queja' }, requestStatus: { new: 'Recibida', in_progress: 'En curso', resolved: 'Resuelta', closed: 'Cerrada' }, projectStatuses: { planning: 'Planificación', active: 'Activo', on_hold: 'En pausa', done: 'Finalizado', cancelled: 'Cancelado' }, taskStatuses: { todo: 'Por hacer', in_progress: 'En curso', in_review: 'Revisión', done: 'Terminada', cancelled: 'Cancelada' } }
 
   if (!isTeam) {
     if (project.is_client_visible === false) notFound()
@@ -75,7 +76,7 @@ export default async function ProjectPortalPage({
       (project.portal_password_hash as string | null) ?? null,
     )
     if (!unlocked) {
-      return <PortalPasswordGate token={token} action={unlockProjectPortal} />
+      return <PortalPasswordGate token={token} action={unlockProjectPortal} language={portalLanguage} />
     }
   }
 
@@ -131,13 +132,15 @@ export default async function ProjectPortalPage({
   const completed = visibleTasks.filter((task) => task.status === 'done').length
   const progress =
     visibleTasks.length === 0 ? 0 : Math.round((completed / visibleTasks.length) * 100)
-  const client = (project as unknown as { clients: { name: string } | null }).clients
+  const client = clientRelation
   const hasTasks = visibleTasks.length > 0
   const progressCopy = !hasTasks
-    ? 'Estamos preparando los próximos pasos'
+    ? copy.preparing
     : progress === 100
-      ? 'Todo el trabajo compartido está completado'
-      : `${completed} de ${visibleTasks.length} tareas completadas`
+      ? copy.done
+      : copy.taskCount(completed, visibleTasks.length)
+  const localizedProjectStatus = Object.fromEntries(Object.entries(PROJECT_STATUS).map(([key, meta]) => [key, { ...meta, label: copy.projectStatuses[key as keyof typeof copy.projectStatuses] }]))
+  const localizedTaskStatus = Object.fromEntries(Object.entries(TASK_STATUS).map(([key, meta]) => [key, { ...meta, label: copy.taskStatuses[key as keyof typeof copy.taskStatuses] }]))
   const publicWebs = (webProjects ?? []).filter((web) => {
     try {
       return ['http:', 'https:'].includes(new URL(web.url as string).protocol)
@@ -157,7 +160,7 @@ export default async function ProjectPortalPage({
         >
           <Sparkles className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <p>
-            <strong>Vista previa interna.</strong> Este portal todavía está oculto para el cliente.
+            <strong>{copy.preview}</strong> {copy.hidden}
           </p>
         </div>
       ) : null}
@@ -180,7 +183,7 @@ export default async function ProjectPortalPage({
               </p>
               <span className="size-1 rounded-full bg-white/30" aria-hidden="true" />
               <StatusBadge
-                meta={PROJECT_STATUS}
+                meta={localizedProjectStatus}
                 value={project.status as string}
                 className="border border-white/15 bg-white/10 text-white"
               />
@@ -189,14 +192,14 @@ export default async function ProjectPortalPage({
               {project.name as string}
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-6 text-white/65 sm:text-base">
-              Consulta el avance del proyecto y envíanos cualquier solicitud desde un único lugar.
+              {copy.intro}
             </p>
           </div>
 
           <div className="border-white/15 lg:border-l lg:py-1 lg:pl-8">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-medium text-white/55">Progreso compartido</p>
+                <p className="text-xs font-medium text-white/55">{copy.progress}</p>
                 <p className="mt-1 text-sm font-medium text-white/90">{progressCopy}</p>
               </div>
               <strong className="text-3xl font-semibold tracking-tight text-[#bdff7b] tabular-nums">
@@ -206,7 +209,7 @@ export default async function ProjectPortalPage({
             <div
               className="mt-4 h-2 overflow-hidden rounded-full bg-black/25 ring-1 ring-white/5"
               role="progressbar"
-              aria-label="Progreso de las tareas compartidas"
+              aria-label={copy.taskProgress}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={progress}
@@ -221,8 +224,8 @@ export default async function ProjectPortalPage({
       </header>
 
       <section className="grid border-y border-black/[0.07] sm:grid-cols-2 sm:divide-x sm:divide-black/[0.07] dark:border-white/[0.09] dark:sm:divide-white/[0.09]">
-        <InfoItem label="Inicio del proyecto" date={project.starts_at as string | null} />
-        <InfoItem label="Entrega prevista" date={project.ends_at as string | null} />
+        <InfoItem label={copy.start} date={project.starts_at as string | null} language={portalLanguage} />
+        <InfoItem label={copy.delivery} date={project.ends_at as string | null} language={portalLanguage} />
       </section>
 
       {publicWebs.length > 0 ? (
@@ -230,11 +233,11 @@ export default async function ProjectPortalPage({
           <div className="flex items-center gap-2.5">
             <Globe className="size-5 text-sky-700 dark:text-sky-300" aria-hidden="true" />
             <h2 id="webs-title" className="text-xl font-semibold">
-              Webs
+              {copy.websites}
             </h2>
           </div>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Versiones compartidas de tu proyecto.
+            {copy.websitesIntro}
           </p>
           <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
             {publicWebs.map((web) => (
@@ -259,17 +262,17 @@ export default async function ProjectPortalPage({
           <div className="flex items-center gap-2.5">
             <FileText className="size-5 text-violet-700 dark:text-violet-300" aria-hidden="true" />
             <h2 id="documents-title" className="text-xl font-semibold">
-              Documentos compartidos
+              {copy.documents}
             </h2>
           </div>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Consulta propuestas y facturas relacionadas con este proyecto.
+            {copy.documentIntro}
           </p>
           <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
             {publicProposals.map((proposal) => (
               <a
                 key={proposal.id as string}
-                href={`/p/proposal/${proposal.portal_token as string}`}
+                href={`/p/proposal/${proposal.portal_token as string}?lang=${portalLanguage}`}
                 className="group flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-3.5 transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white hover:shadow-sm motion-reduce:transform-none dark:border-white/[0.08] dark:bg-white/[0.025] dark:hover:border-violet-400/30 dark:hover:bg-white/[0.045]"
               >
                 <span className="flex min-w-0 items-center gap-2.5">
@@ -277,28 +280,28 @@ export default async function ProjectPortalPage({
                   <span className="truncate text-sm font-medium">
                     {(proposal.number as string | null) ??
                       (proposal.title as string | null) ??
-                      'Propuesta'}
+                      copy.proposal}
                   </span>
                 </span>
                 <span className="shrink-0 text-sm font-medium tabular-nums">
-                  {formatEUR(Number(proposal.total ?? 0))}
+        {formatPortalEUR(Number(proposal.total ?? 0), portalLanguage)}
                 </span>
               </a>
             ))}
             {publicInvoices.map((invoice) => (
               <a
                 key={invoice.id as string}
-                href={`/p/invoice/${invoice.portal_token as string}`}
+                href={`/p/invoice/${invoice.portal_token as string}?lang=${portalLanguage}`}
                 className="group flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-3.5 transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-white hover:shadow-sm motion-reduce:transform-none dark:border-white/[0.08] dark:bg-white/[0.025] dark:hover:border-emerald-400/30 dark:hover:bg-white/[0.045]"
               >
                 <span className="flex min-w-0 items-center gap-2.5">
                   <Receipt className="size-4 shrink-0 text-emerald-600" aria-hidden="true" />
                   <span className="truncate text-sm font-medium">
-                    {(invoice.full_number as string | null) ?? 'Factura'}
+                    {(invoice.full_number as string | null) ?? copy.invoice}
                   </span>
                 </span>
                 <span className="shrink-0 text-sm font-medium tabular-nums">
-                  {formatEUR(Number(invoice.total ?? 0))}
+                  {formatPortalEUR(Number(invoice.total ?? 0), portalLanguage)}
                 </span>
               </a>
             ))}
@@ -315,7 +318,7 @@ export default async function ProjectPortalPage({
                 aria-hidden="true"
               />
               <h2 id="work-title" className="text-xl font-semibold">
-                Estado del trabajo
+                {copy.work}
               </h2>
             </div>
           </div>
@@ -323,8 +326,8 @@ export default async function ProjectPortalPage({
           {!hasTasks ? (
             <EmptyState
               icon={<Clock3 className="size-5" aria-hidden="true" />}
-              title="Próximos pasos en preparación"
-              description="Cuando compartamos tareas contigo, aparecerán aquí con su estado y fecha prevista."
+              title={copy.upcoming}
+              description={copy.upcomingDescription}
             />
           ) : (
             <ul className="mt-4 divide-y divide-zinc-200 dark:divide-white/[0.08]">
@@ -352,12 +355,12 @@ export default async function ProjectPortalPage({
                         dateTime={task.due_date as string}
                         className="text-xs font-medium text-zinc-500 dark:text-zinc-400"
                       >
-                        {formatDate(task.due_date as string)}
+                        {formatPortalDate(task.due_date as string, portalLanguage)}
                       </time>
                     ) : (
-                      <span className="text-xs text-zinc-400 dark:text-zinc-500">Sin fecha</span>
+                      <span className="text-xs text-zinc-400 dark:text-zinc-500">{copy.noDate}</span>
                     )}
-                    <StatusBadge meta={TASK_STATUS} value={task.status as string} />
+                    <StatusBadge meta={localizedTaskStatus} value={task.status as string} />
                   </div>
                 </li>
               ))}
@@ -376,10 +379,10 @@ export default async function ProjectPortalPage({
                 aria-hidden="true"
               />
               <h2 id="requests-title" className="text-xl font-semibold">
-                Solicitudes
+                {copy.requests}
               </h2>
             </div>
-            <ProjectRequestDialog token={token} />
+            <ProjectRequestDialog token={token} language={portalLanguage} />
           </div>
 
           {(requests ?? []).length > 0 ? (
@@ -394,13 +397,13 @@ export default async function ProjectPortalPage({
                     <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                       <span className="inline-flex items-center gap-1.5 font-medium">
                         <span className={`size-1.5 rounded-full ${status?.dot ?? 'bg-zinc-400'}`} />
-                        {status?.label ?? (request.status as string)}
+                        {copy.requestStatus[request.status as keyof typeof copy.requestStatus] ?? (request.status as string)}
                       </span>
                       <span aria-hidden="true">·</span>
-                      <span>{REQUEST_CATEGORY[request.category as string] ?? 'Solicitud'}</span>
+                      <span>{copy.requestCategory[request.category as keyof typeof copy.requestCategory] ?? copy.requests}</span>
                       <span aria-hidden="true">·</span>
                       <time dateTime={request.created_at as string}>
-                        {formatDate(request.created_at as string)}
+                        {formatPortalDate(request.created_at as string, portalLanguage)}
                       </time>
                     </div>
                   </li>
@@ -411,8 +414,8 @@ export default async function ProjectPortalPage({
             <EmptyState
               compact
               icon={<Inbox className="size-5" aria-hidden="true" />}
-              title="Todo al día"
-              description="Todavía no has enviado ninguna solicitud para este proyecto."
+              title={copy.allClear}
+              description={portalLanguage === 'ca' ? 'Encara no has enviat cap sol·licitud per a aquest projecte.' : portalLanguage === 'en' ? 'You have not sent any requests for this project yet.' : 'Todavía no has enviado ninguna solicitud para este proyecto.'}
             />
           )}
         </section>
@@ -443,7 +446,7 @@ function TaskStateIcon({ status }: { status: string }) {
   )
 }
 
-function InfoItem({ label, date }: { label: string; date: string | null }) {
+function InfoItem({ label, date, language }: { label: string; date: string | null; language: 'es' | 'ca' | 'en' }) {
   return (
     <div className="flex items-center gap-3.5 px-1 py-4 sm:px-5 sm:first:pl-1">
       <div className="text-[#2a4227] dark:text-[#bdff7b]">
@@ -453,7 +456,7 @@ function InfoItem({ label, date }: { label: string; date: string | null }) {
         <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
         {date ? (
           <time dateTime={date} className="mt-0.5 block text-sm font-semibold">
-            {formatDate(date)}
+            {formatPortalDate(date, language)}
           </time>
         ) : (
           <p className="mt-0.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300">

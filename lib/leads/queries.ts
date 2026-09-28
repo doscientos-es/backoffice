@@ -42,9 +42,9 @@ const MOM_TEST_COLUMNS =
 
 const COMPANY_RESEARCH_COLUMNS = 'company_research, company_researched_at'
 
-const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, notes, status, created_at, updated_at, estimated_value, score, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
+const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, language, notes, status, created_at, updated_at, estimated_value, score, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
 
-const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
+const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, language, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
 
 const log = scopedLogger('leads.queries')
 
@@ -207,6 +207,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     email: (l.email as string | null) ?? null,
     phone: (l.phone as string | null) ?? null,
     source: (l.source as string | null) ?? null,
+    language: (l.language as 'es' | 'ca' | 'en' | null) ?? null,
     notes: (l.notes as string | null) ?? null,
     status: l.status as LeadStatus,
     created_at: l.created_at as string,

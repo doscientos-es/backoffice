@@ -31,6 +31,7 @@ export const CreateLeadInput = z.object({
   phone: optionalText(40),
   company: optionalText(160),
   source: optionalText(80),
+  language: z.enum(['es', 'ca', 'en']).nullable().optional(),
   notes: optionalText(4000),
   estimated_value: z.number().min(0).max(99_999_999.99).nullable().optional(),
   assigned_to: assignableUuid.optional(),

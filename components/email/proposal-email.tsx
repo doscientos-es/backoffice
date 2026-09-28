@@ -33,6 +33,7 @@ export type ProposalEmailProps = {
   message?: string
   /** Optional client-visible technical specs to surface as secondary CTAs. */
   specs?: ProposalEmailSpec[]
+  language?: 'es' | 'ca' | 'en'
 }
 
 /**
@@ -53,18 +54,19 @@ export function ProposalEmail({
   appUrl,
   message,
   specs,
+  language = 'es',
 }: ProposalEmailProps) {
   const hasSpecs = Array.isArray(specs) && specs.length > 0
+  const copy = language === 'ca' ? CA : language === 'en' ? EN : ES
   return (
     <EmailLayout
-      preview={`Propuesta ${proposalNumber} · ${proposalTitle} · ${total}`}
+      preview={`${copy.proposal} ${proposalNumber} · ${proposalTitle} · ${total}`}
       appUrl={appUrl}
     >
       {/* Greeting */}
-      <Text style={headingStyle}>Hola, {clientName}</Text>
+      <Text style={headingStyle}>{copy.greeting}, {clientName}</Text>
       <Text style={bodyStyle}>
-        Te enviamos nuestra propuesta <strong>{proposalTitle}</strong>. Puedes revisarla, hacer
-        preguntas y aceptarla o rechazarla directamente desde el siguiente enlace.
+        {copy.intro} <strong>{proposalTitle}</strong>. {copy.details}
       </Text>
 
       {/* Optional custom message */}
@@ -79,15 +81,15 @@ export function ProposalEmail({
           margin: '24px 0',
         }}
       >
-        <Text style={{ ...labelStyle, marginBottom: 4 }}>Propuesta</Text>
+        <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.proposal}</Text>
         <Text style={{ ...valueStyle, marginBottom: 12 }}>{proposalTitle}</Text>
-        <Text style={{ ...labelStyle, marginBottom: 4 }}>Referencia</Text>
+        <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.reference}</Text>
         <Text style={{ ...valueStyle, marginBottom: 12 }}>{proposalNumber}</Text>
-        <Text style={{ ...labelStyle, marginBottom: 4 }}>Importe total</Text>
+        <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.total}</Text>
         <Text style={{ ...valueStyle, marginBottom: validUntil ? 12 : 0 }}>{total}</Text>
         {validUntil ? (
           <>
-            <Text style={{ ...labelStyle, marginBottom: 4 }}>Válida hasta</Text>
+            <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.validUntil}</Text>
             <Text style={{ ...valueStyle, marginBottom: 0 }}>{validUntil}</Text>
           </>
         ) : null}
@@ -111,7 +113,7 @@ export function ProposalEmail({
           boxSizing: 'border-box',
         }}
       >
-        Ver propuesta
+        {copy.viewProposal}
       </Button>
 
       {deckUrl ? (
@@ -134,16 +136,16 @@ export function ProposalEmail({
             marginTop: 8,
           }}
         >
-          Ver presentación
+          {copy.deck}
         </Button>
       ) : null}
 
       {hasSpecs ? (
         <>
           <Hr style={{ borderColor: '#e4e4e7', margin: '28px 0 16px' }} />
-          <Text style={{ ...labelStyle, marginBottom: 8 }}>Documentación técnica</Text>
+          <Text style={{ ...labelStyle, marginBottom: 8 }}>{copy.specifications}</Text>
           <Text style={{ ...bodyStyle, marginBottom: 12 }}>
-            Adjuntamos también la documentación técnica de este proyecto:
+            {copy.specificationsIntro}
           </Text>
           {specs!.map((spec) => (
             <Button
@@ -166,7 +168,7 @@ export function ProposalEmail({
                 marginBottom: 8,
               }}
             >
-              {spec.title}
+              {copy.open} {spec.title}
             </Button>
           ))}
         </>
@@ -174,11 +176,15 @@ export function ProposalEmail({
 
       <Hr style={{ borderColor: '#e4e4e7', margin: '28px 0 16px' }} />
       <Text style={{ ...bodyStyle, color: '#a1a1aa', fontSize: 12 }}>
-        Si tienes cualquier pregunta o necesitas ajustes, responde a este email.
+        {copy.questions}
       </Text>
     </EmailLayout>
   )
 }
+
+const ES = { proposal: 'Propuesta', greeting: 'Hola', intro: 'Te enviamos nuestra propuesta', details: 'Puedes revisarla, hacer preguntas y aceptarla o rechazarla desde el siguiente enlace.', reference: 'Referencia', total: 'Importe total', validUntil: 'Válida hasta', viewProposal: 'Ver propuesta', deck: 'Ver presentación', specifications: 'Documentación técnica', specificationsIntro: 'Adjuntamos también la documentación técnica de este proyecto:', open: 'Abrir', questions: 'Si tienes cualquier pregunta o necesitas ajustes, responde a este email.' }
+const CA = { proposal: 'Proposta', greeting: 'Hola', intro: 'T’enviem la nostra proposta', details: 'Pots revisar-la, fer preguntes i acceptar-la o rebutjar-la des de l’enllaç següent.', reference: 'Referència', total: 'Import total', validUntil: 'Vàlida fins al', viewProposal: 'Veure proposta', deck: 'Veure presentació', specifications: 'Documentació tècnica', specificationsIntro: 'T’adjuntem també la documentació tècnica d’aquest projecte:', open: 'Obrir', questions: 'Si tens cap pregunta o necessites algun ajust, respon a aquest correu.' }
+const EN = { proposal: 'Proposal', greeting: 'Hello', intro: 'We are sending you our proposal', details: 'You can review it, ask questions, and accept or decline it using the link below.', reference: 'Reference', total: 'Total', validUntil: 'Valid until', viewProposal: 'View proposal', deck: 'View presentation', specifications: 'Technical documentation', specificationsIntro: 'We have also attached the technical documentation for this project:', open: 'Open', questions: 'If you have any questions or need changes, reply to this email.' }
 
 // ── Shared styles ────────────────────────────────────────────────────────────
 const headingStyle: React.CSSProperties = {

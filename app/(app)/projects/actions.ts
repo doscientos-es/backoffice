@@ -205,7 +205,7 @@ export async function publishProjectPortal(input: unknown) {
   const { data, error } = await supabase
     .from('projects')
     .select(
-      'id, name, portal_token, is_client_visible, portal_invite_sent_at, portal_invite_recipient, portal_invite_resend_id, clients(name, email)',
+      'id, name, portal_token, is_client_visible, portal_invite_sent_at, portal_invite_recipient, portal_invite_resend_id, clients(name, email, lead_id, leads(language))',
     )
     .eq('id', parsed.data.id)
     .is('deleted_at', null)
@@ -220,7 +220,7 @@ export async function publishProjectPortal(input: unknown) {
     portal_invite_sent_at: string | null
     portal_invite_recipient: string | null
     portal_invite_resend_id: string | null
-    clients: { name: string; email: string | null } | null
+    clients: { name: string; email: string | null; lead_id: string | null; leads: { language: 'es' | 'ca' | 'en' | null } | null } | null
   }
   if (!project.portal_token)
     return { ok: false as const, error: 'El proyecto no tiene enlace público' }
@@ -251,7 +251,8 @@ export async function publishProjectPortal(input: unknown) {
 
   try {
     const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
-    const portalUrl = `${appUrl}/p/project/${project.portal_token}`
+    const language = project.clients?.leads?.language ?? 'es'
+    const portalUrl = `${appUrl}/p/project/${project.portal_token}?lang=${language}`
     const html = await renderEmail(
       ProjectKickoffEmail({
         clientName: project.clients.name,
@@ -259,6 +260,7 @@ export async function publishProjectPortal(input: unknown) {
         portalUrl,
         appUrl,
         message: parsed.data.message || undefined,
+        language,
       }),
     )
     const sent = await sendEmail({
@@ -266,7 +268,7 @@ export async function publishProjectPortal(input: unknown) {
       fromAlias: user.emailAlias ?? user.email,
       to: project.clients.email,
       replyTo: user.email,
-      subject: `Arrancamos con ${project.name}`,
+      subject: language === 'ca' ? `Comencem amb ${project.name}` : language === 'en' ? `Getting started with ${project.name}` : `Arrancamos con ${project.name}`,
       html,
       tags: { project_id: project.id, kind: 'project_kickoff' },
     })
@@ -303,14 +305,14 @@ type ProjectPortalEmailData = {
   name: string
   portal_token: string | null
   is_client_visible: boolean
-  clients: { name: string; email: string | null; phone: string | null } | null
+  clients: { name: string; email: string | null; phone: string | null; lead_id: string | null; leads: { language: 'es' | 'ca' | 'en' | null } | null } | null
 }
 
 async function findProjectPortalEmailData(id: string): Promise<ProjectPortalEmailData | null> {
   const supabase = await createServerClient()
   const { data, error } = await supabase
     .from('projects')
-    .select('id, name, portal_token, is_client_visible, clients(name, email, phone)')
+    .select('id, name, portal_token, is_client_visible, clients(name, email, phone, lead_id, leads(language))')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
@@ -327,7 +329,8 @@ async function renderProjectPortalEmail(
     return { ok: false as const, error: 'El proyecto no tiene enlace público' }
 
   const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
-  const portalUrl = `${appUrl}/p/project/${project.portal_token}`
+  const language = project.clients?.leads?.language ?? 'es'
+  const portalUrl = `${appUrl}/p/project/${project.portal_token}?lang=${language}`
   const html = await renderEmail(
     ProjectKickoffEmail({
       clientName: project.clients?.name ?? 'Hola',
@@ -335,12 +338,13 @@ async function renderProjectPortalEmail(
       portalUrl,
       appUrl,
       message,
+      language,
     }),
   )
 
   return {
     ok: true as const,
-    subject: `Arrancamos con ${project.name}`,
+    subject: language === 'ca' ? `Comencem amb ${project.name}` : language === 'en' ? `Getting started with ${project.name}` : `Arrancamos con ${project.name}`,
     html,
     portalUrl,
     clientEmail: project.clients?.email ?? null,

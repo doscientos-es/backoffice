@@ -76,10 +76,10 @@ export function QuickActionTile({
       variant="outline"
       size="sm"
       className={cn(
-        'border-border/80 bg-card/60 h-8 w-full min-w-0 justify-start gap-2 px-2.5 text-left font-medium [&>span]:min-w-0',
-        'hover:border-foreground/25 hover:bg-muted/60 transition-colors',
+        'h-8 w-full min-w-0 justify-start gap-2 border-border/80 bg-card/60 px-2.5 text-left font-medium [&>span]:min-w-0',
+        'transition-colors hover:border-foreground/25 hover:bg-muted/60',
         tone === 'whatsapp' &&
-        'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
+          'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
       )}
       {...props}
     >
@@ -143,7 +143,7 @@ function LastAttemptDialog({
             prefieras usar. No se envía nada automáticamente.
           </DialogDescription>
         </DialogHeader>
-        <div className="bg-muted grid grid-cols-2 gap-1 rounded-lg p-1">
+        <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
           <button
             type="button"
             onClick={() => setChannel('whatsapp')}
@@ -214,7 +214,7 @@ function MemberCheckboxes({
       <Label className="text-xs font-medium">
         Invitar compañeros <span className="text-muted-foreground/60">(opcional)</span>
       </Label>
-      <div className="border-border/60 bg-muted/30 flex flex-col gap-1.5 rounded-md border p-2.5">
+      <div className="flex flex-col gap-1.5 rounded-md border border-border/60 bg-muted/30 p-2.5">
         {members.map((m) => (
           <div key={m.id} className="flex items-center gap-2">
             <Checkbox
@@ -576,7 +576,7 @@ function FollowUpSection({
   onRemindAtChange: (v: string) => void
 }) {
   return (
-    <div className="border-border/60 bg-muted/30 flex flex-col gap-2 rounded-md border p-2.5">
+    <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-2.5">
       <label
         htmlFor={`${idPrefix}-followup`}
         className="flex items-center gap-2 text-xs font-medium"
@@ -749,7 +749,7 @@ export function QCallDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <QuickActionTile
-            icon={<Phone className="text-muted-foreground size-3.5" />}
+            icon={<Phone className="size-3.5 text-muted-foreground" />}
             label="Llamar"
           />
         </DialogTrigger>
@@ -809,15 +809,15 @@ export function QCallDialog({
                     setShowImport(!showImport)
                     setImportError(null)
                   }}
-                  className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
+                  className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <FileText className="size-3" />
                   Importar desde Meet
                 </button>
               </div>
               {showImport && (
-                <div className="bg-muted/30 flex flex-col gap-1.5 rounded-md border p-2">
-                  <p className="text-muted-foreground text-xs">
+                <div className="flex flex-col gap-1.5 rounded-md border bg-muted/30 p-2">
+                  <p className="text-xs text-muted-foreground">
                     Pega la URL del documento de notas de Google Meet
                   </p>
                   <div className="flex gap-2">
@@ -838,7 +838,7 @@ export function QCallDialog({
                       {importing ? <Loader2 className="size-3 animate-spin" /> : 'Importar'}
                     </Button>
                   </div>
-                  {importError && <p className="text-destructive text-xs">{importError}</p>}
+                  {importError && <p className="text-xs text-destructive">{importError}</p>}
                 </div>
               )}
               <Textarea
@@ -851,7 +851,7 @@ export function QCallDialog({
                 }}
                 placeholder="Puntos clave, próximos pasos…"
               />
-              <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                 <span
                   className={notes.length > CALL_NOTES_MAX_LENGTH ? 'text-destructive' : undefined}
                 >
@@ -877,7 +877,7 @@ export function QCallDialog({
                 ) : null}
               </div>
               {notes.length > CALL_NOTES_MAX_LENGTH ? (
-                <p className="text-destructive text-xs" role="alert">
+                <p className="text-xs text-destructive" role="alert">
                   Las notas superan el límite de 8.000 caracteres.{' '}
                   {aiEnabled
                     ? 'Puedes resumirlas con IA antes de guardar.'
@@ -885,7 +885,7 @@ export function QCallDialog({
                 </p>
               ) : null}
               {summaryError ? (
-                <p className="text-destructive text-xs" role="alert">
+                <p className="text-xs text-destructive" role="alert">
                   {summaryError}
                 </p>
               ) : null}
@@ -1010,7 +1010,15 @@ export function QWhatsAppDialog({
   )
 }
 
-export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string | null }) {
+export function QEmailDialog({
+  leadId,
+  leadEmail,
+  defaultLanguage,
+}: {
+  leadId: string
+  leadEmail: string | null
+  defaultLanguage?: string | null
+}) {
   const [open, setOpen] = useState(false)
   const [direction, setDirection] = useState<'incoming' | 'outgoing'>('outgoing')
   const [subject, setSubject] = useState('')
@@ -1040,7 +1048,7 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <QuickActionTile
-          icon={<Mail className="text-muted-foreground size-3.5" />}
+          icon={<Mail className="size-3.5 text-muted-foreground" />}
           label="Registrar"
         />
       </DialogTrigger>
@@ -1120,7 +1128,7 @@ export function QNoteDialog({ leadId }: { leadId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <QuickActionTile icon={<Plus className="text-muted-foreground size-3.5" />} label="Nota" />
+        <QuickActionTile icon={<Plus className="size-3.5 text-muted-foreground" />} label="Nota" />
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -1165,7 +1173,7 @@ export function QSendEmailDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <QuickActionTile
-          icon={<Mail className="text-muted-foreground size-3.5" />}
+          icon={<Mail className="size-3.5 text-muted-foreground" />}
           label="Enviar"
         />
       </DialogTrigger>

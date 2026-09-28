@@ -833,6 +833,7 @@ type RenderedInvoiceEmail = {
   clientEmail: string | null
   clientName: string | null
   invoiceNumber: string
+  language: 'es' | 'ca' | 'en'
 }
 
 /** Renders the exact invoice email so it can be previewed or delivered. */
@@ -841,8 +842,9 @@ async function renderInvoiceEmail(
   message: string | undefined,
 ): Promise<RenderedInvoiceEmail> {
   const invoiceNumber = invoice.full_number ?? '—'
+  const language = invoice.client?.leads?.language ?? 'es'
   const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
-  const portalUrl = `${appUrl}/p/invoice/${invoice.portal_token ?? ''}`
+  const portalUrl = `${appUrl}/p/invoice/${invoice.portal_token ?? ''}?lang=${language}`
   const html = await renderEmail(
     InvoiceEmail({
       clientName: invoice.client?.name ?? 'Hola',
@@ -852,15 +854,17 @@ async function renderInvoiceEmail(
       portalUrl,
       appUrl,
       message,
+      language,
     }),
   )
   return {
-    subject: `Factura ${invoiceNumber}`,
+    subject: language === 'ca' ? `Factura ${invoiceNumber}` : language === 'en' ? `Invoice ${invoiceNumber}` : `Factura ${invoiceNumber}`,
     html,
     portalUrl,
     clientEmail: invoice.client?.email ?? null,
     clientName: invoice.client?.name ?? null,
     invoiceNumber,
+    language,
   }
 }
 

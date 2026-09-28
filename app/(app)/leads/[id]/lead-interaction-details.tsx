@@ -1,12 +1,5 @@
 'use client'
 
-import { CalendarDays, CornerUpLeft, Eye, Mail, Sparkles } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { CopyButton } from '@/components/ui/copy-button'
 import {
   Dialog,
   DialogContent,
@@ -15,6 +8,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
+import { CalendarDays, CornerUpLeft, Eye, Mail, Sparkles } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { CopyButton } from '@/components/ui/copy-button'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { interactionBodyText } from '@/lib/leads/interaction-utils'
 import type { LeadDetailInteraction } from '@/lib/leads/types'
@@ -67,6 +67,7 @@ export function LeadInteractionDetails({
   label,
   leadId,
   leadEmail,
+  leadLanguage,
   canReply = false,
   aiEnabled = false,
 }: {
@@ -74,6 +75,7 @@ export function LeadInteractionDetails({
   label: string
   leadId: string
   leadEmail: string | null
+  leadLanguage?: string | null
   canReply?: boolean
   aiEnabled?: boolean
 }) {
@@ -97,16 +99,16 @@ export function LeadInteractionDetails({
           type="button"
           variant="ghost"
           size="xs"
-          className="text-muted-foreground h-6 shrink-0 gap-1 px-2 text-xs"
+          className="h-6 shrink-0 gap-1 px-2 text-xs text-muted-foreground"
         >
           <Eye className="size-3" />
           Ver detalles
         </Button>
       </DialogTrigger>
       <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
-        <DialogHeader className="from-primary/[0.07] via-background to-background shrink-0 border-b bg-gradient-to-br p-5 pr-12 sm:p-6 sm:pr-14">
+        <DialogHeader className="shrink-0 border-b bg-gradient-to-br from-primary/[0.07] via-background to-background p-5 pr-12 sm:p-6 sm:pr-14">
           <div className="flex items-start gap-3">
-            <span className="bg-primary/10 text-primary ring-primary/15 flex size-10 shrink-0 items-center justify-center rounded-xl ring-1">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
               {isEmail ? <Mail className="size-5" /> : <Eye className="size-5" />}
             </span>
             <div className="min-w-0 space-y-1.5">
@@ -129,14 +131,14 @@ export function LeadInteractionDetails({
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
             <div className="min-w-0 space-y-5">
               {replying ? (
-                <section className="border-primary/20 bg-card rounded-xl border p-4 shadow-sm sm:p-5">
+                <section className="rounded-xl border border-primary/20 bg-card p-4 shadow-sm sm:p-5">
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <div>
                       <h3 className="flex items-center gap-2 text-sm font-semibold">
-                        <CornerUpLeft className="text-primary size-4" />
+                        <CornerUpLeft className="size-4 text-primary" />
                         Respuesta rápida
                       </h3>
-                      <p className="text-muted-foreground mt-1 text-xs">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         La IA usará el mensaje completo como fuente prioritaria. Revisa siempre el
                         borrador.
                       </p>
@@ -151,6 +153,7 @@ export function LeadInteractionDetails({
                     </Button>
                   </div>
                   <EmailComposer
+                    defaultLanguage={leadLanguage ?? undefined}
                     key={interaction.id}
                     leadId={leadId}
                     defaultTo={replyTo ?? ''}
@@ -166,11 +169,11 @@ export function LeadInteractionDetails({
                 </section>
               ) : null}
 
-              <section className="bg-card overflow-hidden rounded-xl border shadow-sm">
-                <div className="bg-muted/20 flex items-center justify-between gap-3 border-b px-4 py-3">
+              <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+                <div className="flex items-center justify-between gap-3 border-b bg-muted/20 px-4 py-3">
                   <div>
                     <h3 className="text-sm font-medium">Contenido completo</h3>
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-xs text-muted-foreground">
                       Formato original convertido a texto legible.
                     </p>
                   </div>
@@ -183,19 +186,19 @@ export function LeadInteractionDetails({
             </div>
 
             <aside className="space-y-4 lg:sticky lg:top-0">
-              <section className="bg-muted/15 rounded-xl border p-4">
-                <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              <section className="rounded-xl border bg-muted/15 p-4">
+                <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   Detalles
                 </h3>
                 <dl className="mt-3 space-y-3 text-sm">
                   {metadata.map(([name, value]) => (
                     <div key={name}>
-                      <dt className="text-muted-foreground text-xs">{name}</dt>
+                      <dt className="text-xs text-muted-foreground">{name}</dt>
                       <dd className="mt-0.5 leading-snug font-medium break-words">{value}</dd>
                     </div>
                   ))}
                   <div>
-                    <dt className="text-muted-foreground text-xs">Registrado por</dt>
+                    <dt className="text-xs text-muted-foreground">Registrado por</dt>
                     <dd className="mt-1">
                       {interaction.performer ? (
                         <MemberLabel member={interaction.performer} size="xs" />
@@ -208,10 +211,10 @@ export function LeadInteractionDetails({
               </section>
 
               {canQuickReply ? (
-                <section className="border-primary/20 bg-primary/[0.04] rounded-xl border p-4">
-                  <Sparkles className="text-primary size-5" />
+                <section className="rounded-xl border border-primary/20 bg-primary/[0.04] p-4">
+                  <Sparkles className="size-5 text-primary" />
                   <h3 className="mt-3 text-sm font-semibold">Preparar respuesta</h3>
-                  <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                     Responde manualmente o genera un borrador contextual con IA usando todo el
                     email.
                   </p>

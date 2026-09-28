@@ -77,6 +77,7 @@ type ActivityEvent = InteractionEvent | RecordEvent
 type LeadActivityFeedProps = {
   leadId: string
   leadEmail: string | null
+  leadLanguage?: string | null
   canEdit: boolean
   aiEnabled: boolean
   interactions: LeadDetailInteraction[]
@@ -157,7 +158,10 @@ function buildEvents({
         id: `proposal-${item.id}`,
         date,
         label: item.status === 'accepted' ? 'Propuesta aceptada' : 'Propuesta en seguimiento',
-        detail: [item.number ?? 'Propuesta', item.total != null ? formatEUR(Number(item.total)) : null]
+        detail: [
+          item.number ?? 'Propuesta',
+          item.total != null ? formatEUR(Number(item.total)) : null,
+        ]
           .filter(Boolean)
           .join(' · '),
         href: `/proposals/${item.id}`,
@@ -220,6 +224,7 @@ export function countActivityEvents(
 export function LeadActivityFeed({
   leadId,
   leadEmail,
+  leadLanguage,
   canEdit,
   aiEnabled,
   interactions,
@@ -235,27 +240,27 @@ export function LeadActivityFeed({
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle className="text-base">Actividad</CardTitle>
-          <p className="text-muted-foreground mt-1 text-sm font-normal">
+          <p className="mt-1 text-sm font-normal text-muted-foreground">
             Interacciones y movimientos comerciales en orden cronológico.
           </p>
         </div>
         {events[0] ? (
-          <p className="text-muted-foreground shrink-0 text-xs tabular-nums">
+          <p className="shrink-0 text-xs text-muted-foreground tabular-nums">
             Última {relativeTime(events[0].date)}
           </p>
         ) : null}
       </CardHeader>
       <CardContent>
         {events.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Sin actividad registrada.</p>
+          <p className="text-sm text-muted-foreground">Sin actividad registrada.</p>
         ) : (
           <div className="space-y-6">
             {groups.map((group) => (
               <section key={group.key} aria-label={`Actividad: ${group.label}`}>
-                <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+                <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   {group.label}
                 </p>
-                <ol className="divide-border divide-y">
+                <ol className="divide-y divide-border">
                   {group.events.map((event) =>
                     event.kind === 'record' ? (
                       <RecordRow key={event.id} event={event} />
@@ -267,6 +272,7 @@ export function LeadActivityFeed({
                         event={event}
                         leadId={leadId}
                         leadEmail={leadEmail}
+                        leadLanguage={leadLanguage}
                         canEdit={canEdit}
                         aiEnabled={aiEnabled}
                       />
@@ -287,16 +293,16 @@ function RecordRow({ event }: { event: RecordEvent }) {
   return (
     <li className="py-2.5">
       <Link href={event.href} className="flex items-start gap-3 hover:opacity-75">
-        <span className="bg-muted text-muted-foreground mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
           <Icon className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{event.label}</p>
           {event.detail ? (
-            <p className="text-muted-foreground mt-0.5 truncate text-xs">{event.detail}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{event.detail}</p>
           ) : null}
         </div>
-        <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
           {relativeTime(event.date)}
         </span>
       </Link>
@@ -308,12 +314,14 @@ function InteractionRow({
   event,
   leadId,
   leadEmail,
+  leadLanguage,
   canEdit,
   aiEnabled,
 }: {
   event: InteractionEvent
   leadId: string
   leadEmail: string | null
+  leadLanguage?: string | null
   canEdit: boolean
   aiEnabled: boolean
 }) {
@@ -325,7 +333,7 @@ function InteractionRow({
   return (
     <li className="py-2.5">
       <article className="flex items-start gap-3">
-        <span className="bg-muted text-muted-foreground mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
           <Icon className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
@@ -334,21 +342,21 @@ function InteractionRow({
             <EmailDeliveryStatuses statuses={event.statuses} />
           </div>
           {interaction.subject ? (
-            <p className="text-muted-foreground mt-0.5 truncate text-xs">{interaction.subject}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{interaction.subject}</p>
           ) : null}
           {snippet ? (
-            <p className="text-muted-foreground/90 mt-1 line-clamp-2 text-xs leading-relaxed">
+            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground/90">
               {snippet}
             </p>
           ) : null}
         </div>
-        <div className="text-muted-foreground flex shrink-0 flex-col items-end gap-1 text-xs">
+        <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-muted-foreground">
           <span className="tabular-nums">{relativeTime(event.date)}</span>
           {interaction.performer ? (
             <MemberLabel
               member={interaction.performer}
               size="xs"
-              className="text-muted-foreground/70 gap-1 text-[11px]"
+              className="gap-1 text-[11px] text-muted-foreground/70"
             />
           ) : null}
           <div className="flex flex-wrap justify-end gap-0.5">
@@ -360,6 +368,7 @@ function InteractionRow({
                 label={event.label}
                 leadId={leadId}
                 leadEmail={leadEmail}
+                leadLanguage={leadLanguage}
                 canReply={canEdit}
                 aiEnabled={aiEnabled}
               />
@@ -382,7 +391,7 @@ function InteractionRow({
 function CompactInteractionRow({ event }: { event: InteractionEvent }) {
   return (
     <li className="py-1.5">
-      <div className="text-muted-foreground/80 flex items-center gap-2 text-xs">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
         <span className="tabular-nums">{relativeTime(event.date)}</span>
         <span className="truncate">{event.interaction.subject ?? event.label}</span>
         {event.interaction.performer ? (

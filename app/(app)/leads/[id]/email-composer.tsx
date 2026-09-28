@@ -34,6 +34,7 @@ export type EmailComposerProps = {
   /** Kind and extra instructions sent to the optional AI drafting endpoint. */
   draftKind?: string
   draftInstructions?: string
+  defaultLanguage?: string
   /** Interaction loaded server-side as the complete source for a contextual reply. */
   draftInteractionId?: string
   /** Sends a copy to active owners and admins. Used for post-call summaries. */
@@ -51,6 +52,7 @@ export function EmailComposer({
   defaultBody,
   draftKind = 'follow_up',
   draftInstructions,
+  defaultLanguage,
   draftInteractionId,
   ccAdmins = false,
   disabled,
@@ -61,7 +63,9 @@ export function EmailComposer({
   const [to, setTo] = useState(defaultTo)
   const [subject, setSubject] = useState(defaultSubject ?? '')
   const [body, setBody] = useState(defaultBody ?? '')
-  const [language, setLanguage] = useState<string>('es')
+  const [language, setLanguage] = useState<string>(
+    defaultLanguage === 'ca' || defaultLanguage === 'en' ? defaultLanguage : 'es',
+  )
   const [aiInstructions, setAiInstructions] = useState('')
   const [drafting, setDrafting] = useState(false)
   const [hasGeneratedDraft, setHasGeneratedDraft] = useState(false)
@@ -106,7 +110,7 @@ export function EmailComposer({
 
   if (disabled) {
     return (
-      <div className="border-border text-muted-foreground rounded-md border border-dashed p-4 text-sm">
+      <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
         {disabledReason ?? 'Envío de email no disponible.'}
       </div>
     )
@@ -147,14 +151,14 @@ export function EmailComposer({
     <>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         {aiEnabled ? (
-          <div className="border-primary/20 bg-primary/[0.03] rounded-lg border p-3">
+          <div className="rounded-lg border border-primary/20 bg-primary/[0.03] p-3">
             <div className="flex items-start gap-2.5">
-              <div className="bg-primary/10 text-primary mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md">
+              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <Sparkles className="size-3.5" aria-hidden />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium">Crear borrador con IA</p>
-                <p className="text-muted-foreground mt-0.5 text-xs">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   Describe el objetivo, los puntos clave o el tono. Podrás editarlo antes de enviar.
                 </p>
               </div>
@@ -176,7 +180,7 @@ export function EmailComposer({
               />
               <div
                 id={`${instructionsId}-hint`}
-                className="text-muted-foreground flex items-center justify-between gap-3 text-[11px]"
+                className="flex items-center justify-between gap-3 text-[11px] text-muted-foreground"
               >
                 <span>La IA usará también el contexto y el historial del lead.</span>
                 <span className="shrink-0 tabular-nums">
@@ -270,12 +274,12 @@ export function EmailComposer({
             className="font-mono text-xs"
             aria-describedby="body-hint"
           />
-          <p id="body-hint" className="text-muted-foreground text-[11px]">
+          <p id="body-hint" className="text-[11px] text-muted-foreground">
             Se escribe en Markdown. Variables disponibles: <code>{'{{nombre}}'}</code>,{' '}
             <code>{'{{empresa}}'}</code>, <code>{'{{email}}'}</code>. Tu firma se añade al final.
           </p>
         </div>
-        <p className="text-foreground rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs">
+        <p className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-foreground">
           Este mensaje llegará a <strong>{to || 'la dirección indicada'}</strong>. Antes de enviarlo
           podrás revisar una confirmación final.
         </p>

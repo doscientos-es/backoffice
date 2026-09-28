@@ -40,6 +40,7 @@ import {
 import { LeadDetailTabs, resolveLeadTab } from './lead-detail-tabs'
 import { LeadDiscoveryQuestionsPanel } from './lead-discovery-questions-panel'
 import { LeadEditDialog } from './lead-edit-dialog'
+import { LeadLanguageSelect } from './lead-language-select'
 import { LeadNextActionReminderItem } from './lead-next-action-reminder-item'
 import { LeadNextActionTaskItem } from './lead-next-action-task-item'
 import { LeadNextMove } from './lead-next-move'
@@ -233,6 +234,7 @@ export default async function LeadDetailPage({
                     email: (lead.email as string | null) ?? null,
                     phone: (lead.phone as string | null) ?? null,
                     source: (lead.source as string | null) ?? null,
+                    language: (lead.language as 'es' | 'ca' | 'en' | null) ?? null,
                     notes: (lead.notes as string | null) ?? null,
                     estimated_value:
                       lead.estimated_value != null ? Number(lead.estimated_value) : null,
@@ -245,6 +247,12 @@ export default async function LeadDetailPage({
                 />
               </div>
             ) : null}
+            <LeadLanguageSelect
+              leadId={lead.id as string}
+              leadName={lead.name as string}
+              version={Number(lead.version)}
+              language={(lead.language as string | null) ?? null}
+            />
             {linkedClientId ? (
               <Button asChild variant="outline" size="sm">
                 <Link href={`/clients/${linkedClientId}`}>Ver cliente</Link>
@@ -286,7 +294,7 @@ export default async function LeadDetailPage({
                           <DetailRow
                             label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}
                           >
-                            <span className="text-destructive font-medium">
+                            <span className="font-medium text-destructive">
                               {lead.lost_reason as string}
                             </span>
                           </DetailRow>
@@ -299,6 +307,7 @@ export default async function LeadDetailPage({
                             leadId={lead.id as string}
                             leadName={displayName}
                             leadEmail={(lead.email as string | null) ?? null}
+                            leadLanguage={(lead.language as string | null) ?? null}
                             firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
                             senderName={user.name}
                             aiEnabled={aiEnabled}
@@ -338,7 +347,7 @@ export default async function LeadDetailPage({
                                 href={adsManagerUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-primary inline-flex items-center gap-1 hover:underline"
+                                className="inline-flex items-center gap-1 text-primary hover:underline"
                                 title={`ID de anuncio: ${metaAdId}`}
                               >
                                 {metaAdName}
@@ -358,7 +367,7 @@ export default async function LeadDetailPage({
                       )}
                       {requiresCyaProspectSoftwareCommission(campaignName) && (
                         <DetailRow label="Comisión">
-                          <span className="text-warning font-medium">CYA · 20 % de lo ganado</span>
+                          <span className="font-medium text-warning">CYA · 20 % de lo ganado</span>
                         </DetailRow>
                       )}
                       {lead.conversion_step && (
@@ -382,24 +391,24 @@ export default async function LeadDetailPage({
                   </div>
 
                   {(lead.landing_subject || firstTouch || lastTouch || lead.notes) && (
-                    <div className="border-border mt-5 grid gap-4 border-t pt-4 sm:grid-cols-2">
+                    <div className="mt-5 grid gap-4 border-t border-border pt-4 sm:grid-cols-2">
                       {lead.landing_subject || firstTouch || lastTouch ? (
-                        <div className="text-muted-foreground space-y-1 text-xs">
+                        <div className="space-y-1 text-xs text-muted-foreground">
                           {lead.landing_subject ? (
                             <p>
-                              <span className="text-foreground font-medium">Asunto:</span>{' '}
+                              <span className="font-medium text-foreground">Asunto:</span>{' '}
                               {lead.landing_subject}
                             </p>
                           ) : null}
                           {firstTouch ? (
                             <p>
-                              <span className="text-foreground font-medium">First touch:</span>{' '}
+                              <span className="font-medium text-foreground">First touch:</span>{' '}
                               {firstTouch}
                             </p>
                           ) : null}
                           {lastTouch ? (
                             <p>
-                              <span className="text-foreground font-medium">Last touch:</span>{' '}
+                              <span className="font-medium text-foreground">Last touch:</span>{' '}
                               {lastTouch}
                             </p>
                           ) : null}
@@ -410,7 +419,7 @@ export default async function LeadDetailPage({
                       {lead.notes ? (
                         <div>
                           <div className="flex items-center justify-between gap-2">
-                            <h3 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                            <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                               Notas
                             </h3>
                             <LeadNotesDialog notes={lead.notes as string} />
@@ -449,6 +458,7 @@ export default async function LeadDetailPage({
                 leadName={displayName}
                 leadEmail={(lead.email as string | null) ?? null}
                 leadPhone={(lead.phone as string | null) ?? null}
+                leadLanguage={(lead.language as string | null) ?? null}
                 senderName={user.name}
                 canEdit={canEdit}
                 aiEnabled={aiEnabled}
@@ -469,6 +479,7 @@ export default async function LeadDetailPage({
               <LeadActivityFeed
                 leadId={lead.id as string}
                 leadEmail={(lead.email as string | null) ?? null}
+                leadLanguage={(lead.language as string | null) ?? null}
                 canEdit={canEdit}
                 aiEnabled={aiEnabled}
                 interactions={interactions ?? []}
@@ -523,7 +534,7 @@ export default async function LeadDetailPage({
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Análisis IA</CardTitle>
-                    <p className="text-muted-foreground mt-1 text-sm font-normal">
+                    <p className="mt-1 text-sm font-normal text-muted-foreground">
                       Resumen, señales y siguiente mejor acción.
                     </p>
                   </CardHeader>
@@ -651,7 +662,7 @@ function NextActionsCard({
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Qué hacer ahora</CardTitle>
-          <p className="text-muted-foreground mt-1 text-sm font-normal">
+          <p className="mt-1 text-sm font-normal text-muted-foreground">
             Próximos pasos para mantener el lead en movimiento.
           </p>
         </div>
@@ -666,7 +677,7 @@ function NextActionsCard({
       </CardHeader>
       <CardContent className="px-0">
         {actions.length > 0 ? (
-          <ul className="divide-border divide-y">
+          <ul className="divide-y divide-border">
             {actions.map((action) => {
               const overdue = action.when ? new Date(action.when) < new Date() : false
               const whenLabel = action.when ? relativeTime(action.when) : null
@@ -698,7 +709,7 @@ function NextActionsCard({
                     href={`/tasks/${action.id}`}
                     className="min-w-0 truncate font-medium hover:underline"
                   >
-                    <span className="text-muted-foreground mr-2 text-xs">
+                    <span className="mr-2 text-xs text-muted-foreground">
                       {action.kind === 'reminder' ? 'Aviso' : 'Tarea'}
                     </span>
                     {action.title}
@@ -710,7 +721,7 @@ function NextActionsCard({
                     {whenLabel ? (
                       <span
                         className={
-                          overdue ? 'text-destructive font-medium' : 'text-muted-foreground'
+                          overdue ? 'font-medium text-destructive' : 'text-muted-foreground'
                         }
                       >
                         {whenLabel}
@@ -722,7 +733,7 @@ function NextActionsCard({
             })}
           </ul>
         ) : (
-          <p className="text-muted-foreground px-6 py-2 text-sm">Sin acciones pendientes.</p>
+          <p className="px-6 py-2 text-sm text-muted-foreground">Sin acciones pendientes.</p>
         )}
       </CardContent>
     </Card>

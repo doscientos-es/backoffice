@@ -225,6 +225,7 @@ export type ProposalPdfItem = {
 }
 
 export type ProposalPdfData = {
+  language?: 'es' | 'ca' | 'en'
   number: string | null
   title: string
   recipientName: string
@@ -275,8 +276,13 @@ function dateTime(value: string): string {
   }).format(new Date(value))
 }
 
-function cycleLabel(cycle: string | null): string {
-  return { monthly: 'Mensual', quarterly: 'Trimestral', yearly: 'Anual' }[cycle ?? ''] ?? 'Único'
+function cycleLabel(cycle: string | null, language: 'es' | 'ca' | 'en'): string {
+  const labels = language === 'ca'
+    ? { monthly: 'Mensual', quarterly: 'Trimestral', yearly: 'Anual', once: 'Únic' }
+    : language === 'en'
+      ? { monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly', once: 'One-time' }
+      : { monthly: 'Mensual', quarterly: 'Trimestral', yearly: 'Anual', once: 'Único' }
+  return labels[cycle as 'monthly' | 'quarterly' | 'yearly'] ?? labels.once
 }
 
 export function proposalPdfFilename(number: string | null, id: string): string {
@@ -292,10 +298,11 @@ export function printableMarkdown(value: string | null): string {
     .trim()
 }
 
-function Footer() {
+function Footer({ language }: { language: 'es' | 'ca' | 'en' }) {
+  const label = language === 'ca' ? 'Proposta confidencial' : language === 'en' ? 'Confidential proposal' : 'Propuesta confidencial'
   return (
     <View fixed style={styles.footer}>
-      <Text style={styles.footerLine}>doscientos · Propuesta confidencial</Text>
+      <Text style={styles.footerLine}>doscientos · {label}</Text>
     </View>
   )
 }
@@ -394,6 +401,30 @@ function MaintenancePlanList({
 }
 
 function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
+  const language = data.language ?? 'es'
+  const ca = language === 'ca'
+  const en = language === 'en'
+  const copy = {
+    proposal: ca ? 'Proposta' : en ? 'Proposal' : 'Propuesta',
+    custom: ca ? 'personalitzada' : en ? 'custom' : 'personalizada',
+    prepared: ca ? 'Preparada per a' : en ? 'Prepared for' : 'Preparada para',
+    investment: ca ? 'Inversió inicial' : en ? 'Initial investment' : 'Inversión inicial',
+    valid: ca ? 'Vàlida fins al' : en ? 'Valid until' : 'Válida hasta el',
+    context: ca ? 'Context' : en ? 'Context' : 'Contexto',
+    challenges: ca ? 'Reptes detectats' : en ? 'Challenges identified' : 'Retos detectados',
+    proposalScope: ca ? 'Abast del projecte' : en ? 'Project scope' : 'Alcance del proyecto',
+    economics: ca ? 'Proposta econòmica' : en ? 'Pricing proposal' : 'Propuesta económica',
+    concept: ca ? 'Concepte' : en ? 'Item' : 'Concepto',
+    amount: ca ? 'Import' : en ? 'Amount' : 'Importe',
+    total: ca ? 'Total inicial, IVA inclòs' : en ? 'Initial total, including VAT' : 'Total inicial, IVA incluido',
+    payment: ca ? 'Pagament' : en ? 'Payment' : 'Pago',
+    notes: ca ? 'Notes' : en ? 'Notes' : 'Notas',
+    maintenance: ca ? 'Manteniment' : en ? 'Maintenance' : 'Mantenimiento',
+    acceptance: ca ? 'Acceptació electrònica' : en ? 'Electronic acceptance' : 'Aceptación electrónica',
+    signed: ca ? 'Proposta signada i acceptada' : en ? 'Proposal signed and accepted' : 'Propuesta firmada y aceptada',
+    annex: ca ? 'Annex contractual' : en ? 'Contractual annex' : 'Anexo contractual',
+    terms: ca ? 'Condicions generals i particulars' : en ? 'General and specific terms' : 'Condiciones generales y particulares',
+  }
   const validUntil = date(data.validUntil)
   const hasRecurring = data.items.some((item) => item.billingCycle && item.billingCycle !== 'none')
   const deliverables = data.deliverables?.trim()
@@ -401,38 +432,38 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const initialPaymentPercentage = paymentInitialPercentage(data.paymentSchedule)
   const hasConditions = Boolean(data.paymentTerms || data.changeManagementTerms)
   return (
-    <Document title={`Propuesta ${data.number ?? ''} · ${data.title}`} author="doscientos">
+    <Document title={`${copy.proposal} ${data.number ?? ''} · ${data.title}`} author="doscientos">
       <Page size="A4" style={styles.cover}>
         <View style={styles.coverHeader}>
           <Text style={styles.brandLight}>doscientos</Text>
-          <Text style={styles.coverTag}>Propuesta {data.number ?? 'personalizada'}</Text>
+          <Text style={styles.coverTag}>{copy.proposal} {data.number ?? copy.custom}</Text>
         </View>
         <View style={styles.coverHero}>
           <Text style={styles.eyebrow}>Una propuesta para avanzar</Text>
           <Text style={styles.coverTitle}>{data.title}</Text>
-          <Text style={styles.coverRecipient}>Preparada para {data.recipientName}</Text>
+          <Text style={styles.coverRecipient}>{copy.prepared} {data.recipientName}</Text>
         </View>
         <View style={styles.metricCard}>
-          <Text style={styles.metricLabel}>Inversión inicial</Text>
+          <Text style={styles.metricLabel}>{copy.investment}</Text>
           <Text style={styles.metricValue}>{money(data.total)}</Text>
           <Text style={styles.metricText}>
             {validUntil
-              ? `Válida hasta el ${validUntil}.`
+              ? `${copy.valid} ${validUntil}.`
               : 'Propuesta personalizada de doscientos.'}
           </Text>
         </View>
-        <Text style={styles.coverFooter}>Documento confidencial · doscientos.es</Text>
+        <Text style={styles.coverFooter}>{ca ? 'Document confidencial' : en ? 'Confidential document' : 'Documento confidencial'} · doscientos.es</Text>
       </Page>
 
       <Page size="A4" style={styles.page} wrap>
         <View fixed style={styles.header}>
           <Text style={styles.brand}>doscientos</Text>
-          <Text style={styles.pageLabel}>Propuesta {data.number ?? 'personalizada'}</Text>
+          <Text style={styles.pageLabel}>{copy.proposal} {data.number ?? copy.custom}</Text>
         </View>
 
         {data.context ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Contexto</Text>
+            <Text style={styles.sectionLabel}>{copy.context}</Text>
             <Text style={styles.sectionTitle}>El punto de partida</Text>
             <Text style={styles.body}>{printableMarkdown(data.context)}</Text>
           </View>
@@ -440,7 +471,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
 
         {data.problems.length > 0 ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Retos detectados</Text>
+            <Text style={styles.sectionLabel}>{copy.challenges}</Text>
             <Text style={styles.sectionTitle}>Lo que queremos resolver</Text>
             <PointList points={data.problems} />
           </View>
@@ -459,7 +490,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             style={styles.section}
             break={Boolean(data.context || data.problems.length || data.solutions.length)}
           >
-            <Text style={styles.sectionLabel}>Alcance del proyecto</Text>
+            <Text style={styles.sectionLabel}>{copy.proposalScope}</Text>
             <Text style={styles.sectionTitle}>Qué incluye esta propuesta</Text>
             <ScopeModuleList modules={data.scopeModules} />
           </View>
@@ -494,10 +525,10 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             acceptanceCriteria,
           )}
         >
-          <Text style={styles.sectionLabel}>Propuesta económica</Text>
+          <Text style={styles.sectionLabel}>{copy.economics}</Text>
           <Text style={styles.sectionTitle}>Inversión y alcance</Text>
           <View style={styles.investment}>
-            <Text style={styles.investmentLabel}>Inversión inicial</Text>
+            <Text style={styles.investmentLabel}>{copy.investment}</Text>
             <Text style={styles.investmentValue}>{money(data.total)}</Text>
             <Text style={styles.investmentText}>
               Incluye {money(data.subtotal)} de base imponible e IVA de {money(data.taxAmount)}.
@@ -505,9 +536,9 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, { width: '70%' }]}>Concepto</Text>
+              <Text style={[styles.tableHeaderText, { width: '70%' }]}>{copy.concept}</Text>
               <Text style={[styles.tableHeaderText, { textAlign: 'right', width: '30%' }]}>
-                Importe
+                {copy.amount}
               </Text>
             </View>
             {data.items.map((item) => (
@@ -516,7 +547,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
                   <Text style={styles.itemDescription}>{item.description}</Text>
                   <Text
                     style={styles.itemMeta}
-                  >{`${item.quantity} × ${money(item.unitPrice)} · IVA ${item.vatRate}% · ${cycleLabel(item.billingCycle)}`}</Text>
+                  >{`${item.quantity} × ${money(item.unitPrice)} · IVA ${item.vatRate}% · ${cycleLabel(item.billingCycle, language)}`}</Text>
                 </View>
                 <Text style={[styles.amount, { width: '30%' }]}>{money(item.subtotal)}</Text>
               </View>
@@ -529,14 +560,14 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             </Text>
           ) : null}
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total inicial, IVA incluido</Text>
+            <Text style={styles.totalLabel}>{copy.total}</Text>
             <Text style={styles.totalValue}>{money(data.total)}</Text>
           </View>
         </View>
 
         {hasConditions || data.iban ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{hasConditions ? 'Condiciones y pago' : 'Pago'}</Text>
+            <Text style={styles.sectionLabel}>{hasConditions ? (ca ? 'Condicions i pagament' : en ? 'Terms and payment' : 'Condiciones y pago') : copy.payment}</Text>
             {data.paymentTerms ? (
               <>
                 <Text style={styles.pointTitle}>Forma de pago</Text>
@@ -573,13 +604,13 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         ) : null}
         {data.notes ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Notas</Text>
+            <Text style={styles.sectionLabel}>{copy.notes}</Text>
             <Text style={styles.body}>{printableMarkdown(data.notes)}</Text>
           </View>
         ) : null}
         {data.maintenanceOffer.enabled && data.maintenanceOffer.plans.length > 0 ? (
           <View style={styles.section} break>
-            <Text style={styles.sectionLabel}>Mantenimiento</Text>
+            <Text style={styles.sectionLabel}>{copy.maintenance}</Text>
             <Text style={styles.sectionTitle}>{data.maintenanceOffer.heading}</Text>
             <Text style={styles.body}>{data.maintenanceOffer.intro}</Text>
             <MaintenancePlanList
@@ -594,8 +625,8 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         ) : null}
         {data.acceptance ? (
           <View style={styles.acceptance} break wrap={false}>
-            <Text style={styles.sectionLabel}>Aceptación electrónica</Text>
-            <Text style={[styles.sectionTitle, { fontSize: 15 }]}>Propuesta firmada y aceptada</Text>
+            <Text style={styles.sectionLabel}>{copy.acceptance}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 15 }]}>{copy.signed}</Text>
             <Text style={styles.body}>
               {`Firmante: ${data.acceptance.signerName}${data.acceptance.signerRole ? ` · ${data.acceptance.signerRole}` : ''}`}
             </Text>
@@ -615,19 +646,19 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             </Link>
           </View>
         )}
-        <Footer />
+        <Footer language={language} />
       </Page>
       <Page size="A4" style={styles.page} wrap>
         <View fixed style={styles.header}>
           <Text style={styles.brand}>doscientos</Text>
-          <Text style={styles.pageLabel}>Anexo de la propuesta {data.number ?? 'personalizada'}</Text>
+          <Text style={styles.pageLabel}>{ca ? 'Annex de la proposta' : en ? 'Proposal annex' : 'Anexo de la propuesta'} {data.number ?? copy.custom}</Text>
         </View>
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Anexo contractual</Text>
-          <Text style={styles.sectionTitle}>Condiciones generales y particulares</Text>
+          <Text style={styles.sectionLabel}>{copy.annex}</Text>
+          <Text style={styles.sectionTitle}>{copy.terms}</Text>
           <Text style={styles.body}>{printableMarkdown(data.legalTerms)}</Text>
         </View>
-        <Footer />
+        <Footer language={language} />
       </Page>
     </Document>
   )

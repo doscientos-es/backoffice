@@ -28,7 +28,7 @@ export const LandingLeadInput = z.object({
   utm_content: optionalText(200),
   gclid: optionalText(200),
   referrer: optionalText(500),
-  language: optionalText(16),
+  language: z.enum(['ca', 'es', 'en']).optional(),
   event_id: optionalText(120),
   visitor_id: optionalText(120),
   internal_traffic: z.boolean().optional(),

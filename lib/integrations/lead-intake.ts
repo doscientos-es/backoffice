@@ -38,7 +38,7 @@ const contextSchema = z.object({
   ip: z.string().optional().nullable(),
   device: z.string().optional().nullable(),
   browser: z.string().optional().nullable(),
-  language: z.string().optional().nullable(),
+  language: z.enum(['ca', 'es', 'en']).optional().nullable(),
   landingPath: z.string().optional().nullable(),
   landingRef: z.string().optional().nullable(),
   landingSubject: z.string().optional().nullable(),
@@ -93,6 +93,11 @@ export const LeadIntakeSchema = z.object({
 })
 
 export type LeadIntake = z.infer<typeof LeadIntakeSchema>
+
+export function normalizeContactLanguage(value: string | null | undefined): 'ca' | 'es' | 'en' {
+  const language = value?.toLowerCase().split(/[-_]/)[0]
+  return language === 'ca' || language === 'en' ? language : 'es'
+}
 
 export type LeadIntakeResult =
   | { ok: true; leadId: string; duplicate: boolean }
@@ -221,6 +226,8 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     return { ok: false, error: firstError }
   }
   const norm = parsed.data
+  if (norm.context?.language)
+    norm.context.language = normalizeContactLanguage(norm.context.language)
   const normalizedSource = normalizeLeadSource(norm.source) ?? norm.source.trim()
   const normalizedCompanySize = normalizeCompanySize(norm.companySize)
   const normalizedUrgency = normalizeUrgency(norm.urgency)
@@ -478,6 +485,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
       leadName: row.name,
       leadEmail: row.email,
       leadSource: row.source,
+      language: normalizeContactLanguage(row.language),
       internalTraffic: norm.context?.internalTraffic,
       landingRef: row.landing_ref as string | null,
       landingSubject: row.landing_subject as string | null,

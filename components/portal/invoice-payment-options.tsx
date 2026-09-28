@@ -3,7 +3,7 @@
 import { CreditCard, Landmark } from 'lucide-react'
 
 import { CopyButton } from '@/components/ui/copy-button'
-import { formatEUR } from '@/lib/utils'
+import { formatPortalEUR } from '@/lib/portal/language'
 
 import { RedsysPaymentButton } from './redsys-payment-button'
 
@@ -15,6 +15,7 @@ interface InvoicePaymentOptionsProps {
   invoiceNumber: string
   companyName: string | null
   iban: string | null
+  language?: 'es' | 'ca' | 'en'
 }
 
 /** Shows the online gateway and bank-transfer alternatives for an unpaid invoice. */
@@ -26,24 +27,31 @@ export function InvoicePaymentOptions({
   invoiceNumber,
   companyName,
   iban,
+  language = 'es',
 }: InvoicePaymentOptionsProps) {
+  const copy = language === 'ca'
+    ? { pay: 'Tria com pagar', due: 'Import pendent:', card: 'Targeta o Bizum', safe: 'Paga de manera segura a través de la nostra passarel·la de pagament integrada.', bank: 'Transferència bancària', bankInfo: 'També pots fer una transferència amb aquestes dades.', beneficiary: 'Beneficiari', concept: 'Concepte', amount: 'Import', copyIban: 'Copiar IBAN', copyBeneficiary: 'Copiar beneficiari', copyConcept: 'Copiar concepte', copyAll: 'Copiar totes les dades de la transferència', copied: 'Dades de la transferència copiades' }
+    : language === 'en'
+      ? { pay: 'Choose how to pay', due: 'Amount due:', card: 'Card or Bizum', safe: 'Pay securely through our integrated payment gateway.', bank: 'Bank transfer', bankInfo: 'You can also make a bank transfer using these details.', beneficiary: 'Beneficiary', concept: 'Reference', amount: 'Amount', copyIban: 'Copy IBAN', copyBeneficiary: 'Copy beneficiary', copyConcept: 'Copy reference', copyAll: 'Copy all bank transfer details', copied: 'Bank transfer details copied' }
+      : { pay: 'Elige cómo pagar', due: 'Importe pendiente:', card: 'Tarjeta o Bizum', safe: 'Paga de forma segura mediante nuestra pasarela de pago integrada.', bank: 'Transferencia bancaria', bankInfo: 'También puede realizar una transferencia normal con estos datos.', beneficiary: 'Beneficiario', concept: 'Concepto', amount: 'Importe', copyIban: 'Copiar IBAN', copyBeneficiary: 'Copiar beneficiario', copyConcept: 'Copiar concepto', copyAll: 'Copiar todos los datos de la transferencia', copied: 'Datos de la transferencia copiados' }
+  const money = (amount: number) => formatPortalEUR(amount, language)
   const amountDue = Math.round((total - amountPaid) * 100) / 100
   const transferConcept = `Factura ${invoiceNumber}`
   const transferCopyText = [
     `Beneficiario: ${companyName ?? '—'}`,
     `IBAN: ${iban ?? '—'}`,
     `Concepto: ${transferConcept}`,
-    `Importe: ${formatEUR(amountDue)}`,
+    `${copy.amount}: ${money(amountDue)}`,
   ].join('\n')
 
   return (
     <section aria-labelledby="payment-options-title" className="flex flex-col gap-3">
       <div>
         <h2 id="payment-options-title" className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-          Elige cómo pagar
+          {copy.pay}
         </h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Importe pendiente: <strong className="text-zinc-900 tabular-nums dark:text-zinc-100">{formatEUR(amountDue)}</strong>
+          {copy.due} <strong className="text-zinc-900 tabular-nums dark:text-zinc-100">{money(amountDue)}</strong>
         </p>
       </div>
 
@@ -52,9 +60,9 @@ export function InvoicePaymentOptions({
           <div className="mb-5 flex items-start gap-3">
             <CreditCard className="mt-0.5 size-5 shrink-0 text-white" aria-hidden />
             <div>
-              <h3 className="font-bold text-white">Tarjeta o Bizum</h3>
+              <h3 className="font-bold text-white">{copy.card}</h3>
               <p className="mt-1 text-sm text-zinc-400">
-                Paga de forma segura mediante nuestra pasarela de pago integrada.
+                {copy.safe}
               </p>
             </div>
           </div>
@@ -63,6 +71,7 @@ export function InvoicePaymentOptions({
             token={token}
             total={total}
             amountPaid={amountPaid}
+            language={language}
           />
         </div>
 
@@ -71,28 +80,28 @@ export function InvoicePaymentOptions({
             <div className="mb-5 flex items-start gap-3">
               <Landmark className="mt-0.5 size-5 shrink-0 text-zinc-700 dark:text-zinc-300" aria-hidden />
               <div>
-                <h3 className="font-bold text-zinc-900 dark:text-zinc-100">Transferencia bancaria</h3>
+                <h3 className="font-bold text-zinc-900 dark:text-zinc-100">{copy.bank}</h3>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  También puede realizar una transferencia normal con estos datos.
+                  {copy.bankInfo}
                 </p>
               </div>
             </div>
 
             <dl className="grid gap-3 text-sm">
-              <TransferDetail label="IBAN" value={iban} copyLabel="Copiar IBAN" />
+              <TransferDetail label="IBAN" value={iban} copyLabel={copy.copyIban} />
               <TransferDetail
-                label="Beneficiario"
+                label={copy.beneficiary}
                 value={companyName ?? '—'}
-                copyLabel="Copiar beneficiario"
+                copyLabel={copy.copyBeneficiary}
               />
-              <TransferDetail label="Concepto" value={transferConcept} copyLabel="Copiar concepto" />
-              <TransferDetail label="Importe" value={formatEUR(amountDue)} />
+              <TransferDetail label={copy.concept} value={transferConcept} copyLabel={copy.copyConcept} />
+              <TransferDetail label={copy.amount} value={money(amountDue)} />
             </dl>
 
             <CopyButton
               text={transferCopyText}
-              label="Copiar todos los datos de la transferencia"
-              successMessage="Datos de la transferencia copiados"
+              label={copy.copyAll}
+              successMessage={copy.copied}
               showLabel
               className="mt-5 border border-zinc-200 dark:border-zinc-700"
             />

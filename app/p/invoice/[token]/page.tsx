@@ -12,9 +12,9 @@ import { StatusBadge } from '@/components/ui/status-badge'
 import { getCurrentUser } from '@/lib/auth'
 import { buildVatBreakdown } from '@/lib/finance'
 import { isPortalUnlocked } from '@/lib/portal/access'
+import { formatPortalDate, formatPortalEUR, resolvePortalLanguage } from '@/lib/portal/language'
 import { INVOICE_STATUS } from '@/lib/status'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { formatDate, formatEUR } from '@/lib/utils'
 import { verifactuInvoiceConfigFromEnv } from '@/lib/verifactu/config'
 
 import { unlockInvoicePortal } from './actions'
@@ -39,10 +39,10 @@ export default async function PortalInvoicePage({
   searchParams,
 }: {
   params: Promise<{ token: string }>
-  searchParams: Promise<{ success?: string; error?: string }>
+  searchParams: Promise<{ success?: string; error?: string; lang?: string }>
 }) {
   const { token } = await params
-  const { success, error: paymentError } = await searchParams
+  const { success, error: paymentError, lang } = await searchParams
   const admin = createAdminClient()
 
   // Resolve auth first so team members can preview drafts.
@@ -51,13 +51,20 @@ export default async function PortalInvoicePage({
 
   const { data: invoice } = await admin
     .from('invoices')
-    .select('*, clients(name, logo_url)')
+    .select('*, clients(name, logo_url, lead_id, leads(language))')
     .eq('portal_token', token)
     .is('deleted_at', null)
     .maybeSingle()
 
   // Drafts are only accessible to authenticated team members.
   if (!invoice || (invoice.status === 'draft' && !isTeam)) notFound()
+  const clientLeadLanguage = (invoice.clients as { leads?: { language?: string | null } | null } | null)?.leads?.language
+  const portalLanguage = resolvePortalLanguage(clientLeadLanguage, lang)
+  const copy = portalLanguage === 'ca'
+    ? { invoice: 'Factura', issued: 'Emesa', due: 'Venciment', total: 'Total de la factura', download: 'Descarregar PDF', issuer: 'Emesa per', billedTo: 'Facturada a', concepts: 'Conceptes', concept: 'concepte', conceptsPlural: 'conceptes', verify: 'Verificar a l’AEAT', paid: 'El pagament s’ha completat correctament. La factura es marcarà com a pagada aviat.', paymentError: 'No s’ha pogut completar el pagament. Torna-ho a provar o contacta amb suport.', payments: 'Pagaments rebuts', receipt: 'Justificant', confirmed: 'Confirmat', fiscal: 'Dades fiscals', activity: 'Desglossament d’activitat', date: 'Data', schedule: 'Horari', hours: 'Hores', description: 'Descripció' }
+    : portalLanguage === 'en'
+        ? { invoice: 'Invoice', issued: 'Issued', due: 'Due date', total: 'Invoice total', download: 'Download PDF', issuer: 'Issued by', billedTo: 'Billed to', concepts: 'Items', concept: 'item', conceptsPlural: 'items', verify: 'Verify with AEAT', paid: 'Payment successful. The invoice will be marked as paid shortly.', paymentError: 'Payment could not be completed. Please try again or contact support.', payments: 'Payments received', receipt: 'Receipt', confirmed: 'Confirmed', fiscal: 'Tax details', activity: 'Activity breakdown', date: 'Date', schedule: 'Time', hours: 'Hours', description: 'Description' }
+        : { invoice: 'Factura', issued: 'Emitida', due: 'Vencimiento', total: 'Total factura', download: 'Descargar PDF', issuer: 'Emitida por', billedTo: 'Facturado a', concepts: 'Conceptos', concept: 'concepto', conceptsPlural: 'conceptos', verify: 'Verificar en AEAT', paid: '¡Pago realizado con éxito! La factura se marcará como pagada en breve.', paymentError: 'El pago no se pudo completar. Por favor, inténtelo de nuevo o contacte con soporte.', payments: 'Pagos recibidos', receipt: 'Justificante', confirmed: 'Confirmado', fiscal: 'Datos fiscales', activity: 'Desglose de actividad', date: 'Fecha', schedule: 'Horario', hours: 'Horas', description: 'Descripción' }
 
   // Client-facing access gate: hidden invoices 404 and password-protected ones
   // show the unlock form until the visitor presents a valid cookie. Team
@@ -69,7 +76,7 @@ export default async function PortalInvoicePage({
       (invoice.portal_password_hash as string | null) ?? null,
     )
     if (!unlocked) {
-      return <PortalPasswordGate token={token} action={unlockInvoicePortal} />
+      return <PortalPasswordGate token={token} action={unlockInvoicePortal} language={portalLanguage} />
     }
   }
 
@@ -161,7 +168,7 @@ export default async function PortalInvoicePage({
         <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
           <p className="text-sm font-medium">
-            ¡Pago realizado con éxito! La factura se marcará como pagada en breve.
+            {copy.paid}
           </p>
         </div>
       )}
@@ -169,7 +176,7 @@ export default async function PortalInvoicePage({
         <div className="flex items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300">
           <XCircle className="h-5 w-5 shrink-0" />
           <p className="text-sm font-medium">
-            El pago no se pudo completar. Por favor, inténtelo de nuevo o contacte con soporte.
+            {copy.paymentError}
           </p>
         </div>
       )}
@@ -179,7 +186,7 @@ export default async function PortalInvoicePage({
           <div className="border-b border-zinc-200 bg-zinc-50 px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900/50">
             <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-zinc-100">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              Pagos recibidos
+              {copy.payments}
             </h3>
           </div>
           <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
@@ -187,17 +194,17 @@ export default async function PortalInvoicePage({
               <div key={p.id} className="flex items-center justify-between gap-4 px-6 py-4">
                 <div className="flex flex-col gap-0.5">
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {formatEUR(Number(p.amount))}
+                    {formatPortalEUR(Number(p.amount), portalLanguage)}
                   </p>
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    {p.confirmed_at ? formatDate(p.confirmed_at as string) : 'Confirmado'} · Aut:{' '}
+                    {p.confirmed_at ? formatPortalDate(p.confirmed_at as string, portalLanguage) : copy.confirmed} · Aut:{' '}
                     {p.ds_authorisation_code ?? '—'}
                   </p>
                 </div>
                 <Button variant="outline" size="sm" asChild>
-                  <a href={`/p/invoice/${token}/receipt/${p.id}`} target="_blank" rel="noreferrer">
+                    <a href={`/p/invoice/${token}/receipt/${p.id}?lang=${portalLanguage}`} target="_blank" rel="noreferrer">
                     <Download className="mr-2 h-4 w-4" />
-                    Justificante
+                    {copy.receipt}
                   </a>
                 </Button>
               </div>
@@ -215,6 +222,7 @@ export default async function PortalInvoicePage({
           invoiceNumber={invoice.full_number as string}
           companyName={(settings?.company_name as string | null) ?? null}
           iban={(settings?.iban as string | null) ?? null}
+          language={portalLanguage}
         />
       ) : null}
 
@@ -223,7 +231,7 @@ export default async function PortalInvoicePage({
         <div className="flex flex-col gap-5 border-b border-zinc-200 px-4 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-8 sm:py-7 dark:border-zinc-800">
           <div className="flex flex-col items-start gap-2">
             <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-              Factura · {invoice.invoice_type as string}
+              {copy.invoice} · {invoice.invoice_type as string}
             </p>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -234,17 +242,17 @@ export default async function PortalInvoicePage({
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
               {invoice.issue_date ? (
                 <span>
-                  Emitida:{' '}
+                    {copy.issued}:{' '}
                   <strong className="text-zinc-700 dark:text-zinc-300">
-                    {formatDate(invoice.issue_date as string)}
+                    {formatPortalDate(invoice.issue_date as string, portalLanguage)}
                   </strong>
                 </span>
               ) : null}
               {invoice.due_date ? (
                 <span>
-                  Vencimiento:{' '}
+                    {copy.due}:{' '}
                   <strong className="text-zinc-700 dark:text-zinc-300">
-                    {formatDate(invoice.due_date as string)}
+                    {formatPortalDate(invoice.due_date as string, portalLanguage)}
                   </strong>
                 </span>
               ) : null}
@@ -252,15 +260,15 @@ export default async function PortalInvoicePage({
           </div>
           <div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:flex-col sm:items-end">
             <div className="sm:text-right">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Total factura</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">{copy.total}</p>
               <p className="text-xl font-bold text-zinc-900 tabular-nums dark:text-zinc-100">
-                {formatEUR(Number(invoice.total ?? 0))}
+                {formatPortalEUR(Number(invoice.total ?? 0), portalLanguage)}
               </p>
             </div>
             <Button variant="outline" size="sm" asChild>
               <a href={`/p/invoice/${token}/pdf`}>
                 <Download className="mr-2 h-4 w-4" />
-                Descargar PDF
+                {copy.download}
               </a>
             </Button>
           </div>
@@ -271,7 +279,7 @@ export default async function PortalInvoicePage({
           {settings ? (
             <div className="border-b border-zinc-100 px-4 py-5 sm:border-r sm:border-b-0 sm:px-8 dark:border-zinc-800/60">
               <p className="mb-1 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                Emitida por
+                {copy.issuer}
               </p>
               <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 {(settings.company_name as string | null) ?? '—'}
@@ -298,7 +306,7 @@ export default async function PortalInvoicePage({
           ) : null}
           <div className="px-4 py-5 sm:px-8">
             <p className="mb-2 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-              Facturado a
+              {copy.billedTo}
             </p>
             <div className="mb-1 flex items-center gap-3">
               {client?.logo_url ? (
@@ -339,9 +347,9 @@ export default async function PortalInvoicePage({
         </div>
 
         <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 sm:px-8 dark:border-zinc-800">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Conceptos</h2>
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{copy.concepts}</h2>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            {safeItems.length} {safeItems.length === 1 ? 'concepto' : 'conceptos'}
+            {safeItems.length} {safeItems.length === 1 ? copy.concept : copy.conceptsPlural}
           </span>
         </div>
         <InvoiceItemsSummary
@@ -350,6 +358,7 @@ export default async function PortalInvoicePage({
           total={Number(invoice.total ?? 0)}
           vatBreakdown={vatBreakdown}
           variant="portal"
+          language={portalLanguage}
         />
 
         {/* Fiscal info + QR */}
@@ -358,7 +367,7 @@ export default async function PortalInvoicePage({
           <div className="flex flex-col gap-4 border-t border-zinc-100 bg-zinc-50 px-8 py-5 sm:flex-row sm:items-start sm:justify-between dark:border-zinc-800/60 dark:bg-zinc-900/50">
             <div className="flex flex-col gap-1.5">
               <p className="mb-0.5 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                Datos fiscales
+                {copy.fiscal}
               </p>
               {(invoice.idfact as string | null) ? (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -387,7 +396,7 @@ export default async function PortalInvoicePage({
                   unoptimized
                   className="rounded"
                 />
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-600">Verificar en AEAT</p>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-600">{copy.verify}</p>
               </div>
             ) : null}
           </div>
@@ -398,7 +407,7 @@ export default async function PortalInvoicePage({
           <div className="border-t border-zinc-200 dark:border-zinc-800">
             <div className="bg-zinc-50 px-8 py-5 dark:bg-zinc-900/50">
               <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                Desglose de actividad
+                {copy.activity}
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -406,16 +415,16 @@ export default async function PortalInvoicePage({
                 <thead>
                   <tr className="border-b border-zinc-100 dark:border-zinc-800/60">
                     <th className="px-8 py-2.5 text-left text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                      Fecha
+                      {copy.date}
                     </th>
                     <th className="px-4 py-2.5 text-left text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                      Horario
+                      {copy.schedule}
                     </th>
                     <th className="px-4 py-2.5 text-right text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                      Horas
+                      {copy.hours}
                     </th>
                     <th className="px-8 py-2.5 text-left text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                      Descripción
+                      {copy.description}
                     </th>
                   </tr>
                 </thead>
@@ -426,7 +435,7 @@ export default async function PortalInvoicePage({
                       className={i > 0 ? 'border-t border-zinc-100 dark:border-zinc-800/60' : ''}
                     >
                       <td className="px-8 py-3 whitespace-nowrap text-zinc-700 tabular-nums dark:text-zinc-300">
-                        {formatDate(log.work_date as string)}
+                        {formatPortalDate(log.work_date as string, portalLanguage)}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-zinc-500 tabular-nums dark:text-zinc-400">
                         {log.start_time && log.end_time

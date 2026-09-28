@@ -46,6 +46,7 @@ export type LeadListItem = {
   email: string | null
   phone: string | null
   source: string | null
+  language?: 'es' | 'ca' | 'en' | null
   notes: string | null
   status: LeadStatus
   created_at: string
@@ -144,6 +145,7 @@ export type LeadDetail = {
   phone: string | null
   company: string | null
   source: string | null
+  language: 'ca' | 'es' | 'en' | null
   status: LeadStatus
   notes: string | null
   estimated_value: number | null
