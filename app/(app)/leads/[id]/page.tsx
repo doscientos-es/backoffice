@@ -285,161 +285,166 @@ export default async function LeadDetailPage({
                   <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2 2xl:grid-cols-3">
                     <section className="min-w-0">
                       <h3 className="mb-3 text-sm font-semibold">Contacto</h3>
-                    <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
-                      <DetailRow label="Nombre">{lead.name as string}</DetailRow>
-                      {alias && <DetailRow label="Alias">{alias}</DetailRow>}
-                      <DetailRow label="Estado">
-                        <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
-                      </DetailRow>
-                      {(lead.status === 'lost' || lead.status === 'not_interested') &&
-                        lead.lost_reason && (
-                          <DetailRow
-                            label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}
-                          >
-                            <span className="font-medium text-destructive">
-                              {lead.lost_reason as string}
-                            </span>
+                      <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                        <DetailRow label="Nombre">{lead.name as string}</DetailRow>
+                        {alias && <DetailRow label="Alias">{alias}</DetailRow>}
+                        <DetailRow label="Estado">
+                          <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
+                        </DetailRow>
+                        {(lead.status === 'lost' || lead.status === 'not_interested') &&
+                          lead.lost_reason && (
+                            <DetailRow
+                              label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}
+                            >
+                              <span className="font-medium text-destructive">
+                                {lead.lost_reason as string}
+                              </span>
+                            </DetailRow>
+                          )}
+                        {lead.email && <DetailRow label="Email">{lead.email}</DetailRow>}
+                        {lead.phone && (
+                          <DetailRow label="Teléfono">
+                            <PhoneQuickActions
+                              phone={lead.phone as string}
+                              leadId={lead.id as string}
+                              leadName={displayName}
+                              leadEmail={(lead.email as string | null) ?? null}
+                              leadLanguage={(lead.language as string | null) ?? null}
+                              firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
+                              senderName={user.name}
+                              aiEnabled={aiEnabled}
+                            />
                           </DetailRow>
                         )}
-                      {lead.email && <DetailRow label="Email">{lead.email}</DetailRow>}
-                      {lead.phone && (
-                        <DetailRow label="Teléfono">
-                          <PhoneQuickActions
-                            phone={lead.phone as string}
-                            leadId={lead.id as string}
-                            leadName={displayName}
-                            leadEmail={(lead.email as string | null) ?? null}
-                            leadLanguage={(lead.language as string | null) ?? null}
-                            firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
-                            senderName={user.name}
-                            aiEnabled={aiEnabled}
-                          />
+                        {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}
+                        <DetailRow label="Responsable">
+                          <MemberLabel member={lead.assignee} />
                         </DetailRow>
-                      )}
-                      {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}
-                      <DetailRow label="Responsable">
-                        <MemberLabel member={lead.assignee} />
-                      </DetailRow>
-                    </DetailGrid>
+                      </DetailGrid>
                     </section>
 
                     <section className="min-w-0">
                       <h3 className="mb-3 text-sm font-semibold">Oportunidad</h3>
-                    <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
-                      {lead.score != null && (
-                        <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
-                      )}
-                      {lead.estimated_value != null && (
-                        <DetailRow label="Valor estimado">
-                          {formatEUR(Number(lead.estimated_value))}
+                      <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                        {lead.score != null && (
+                          <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
+                        )}
+                        {lead.estimated_value != null && (
+                          <DetailRow label="Valor estimado">
+                            {formatEUR(Number(lead.estimated_value))}
+                          </DetailRow>
+                        )}
+                        <DetailRow label="Creado">
+                          {formatDate(lead.created_at as string)}
                         </DetailRow>
-                      )}
-                      <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
-                      {lead.company_size && (
-                        <DetailRow label="Tamaño">{lead.company_size}</DetailRow>
-                      )}
-                      {lead.urgency && <DetailRow label="Urgencia">{lead.urgency}</DetailRow>}
-                      {lead.solution_type && (
-                        <DetailRow label="Solución">{lead.solution_type}</DetailRow>
-                      )}
-                    </DetailGrid>
+                        {lead.company_size && (
+                          <DetailRow label="Tamaño">{lead.company_size}</DetailRow>
+                        )}
+                        {lead.urgency && <DetailRow label="Urgencia">{lead.urgency}</DetailRow>}
+                        {lead.solution_type && (
+                          <DetailRow label="Solución">{lead.solution_type}</DetailRow>
+                        )}
+                      </DetailGrid>
                     </section>
 
                     <section className="min-w-0 sm:col-span-2 2xl:col-span-1">
                       <h3 className="mb-3 text-sm font-semibold">Captación</h3>
-                    <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
-                      {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
-                      {campaignName && <DetailRow label="Campaña Meta">{campaignName}</DetailRow>}
-                      {metaAdId && metaAdName && (
-                        <DetailRow label="Anuncio Meta">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {adsManagerUrl ? (
-                              <a
-                                href={adsManagerUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-primary hover:underline"
-                                title={`ID de anuncio: ${metaAdId}`}
-                              >
-                                {metaAdName}
-                                <ExternalLink className="size-3.5" />
-                              </a>
-                            ) : (
-                              <span title={`ID de anuncio: ${metaAdId}`}>{metaAdName}</span>
-                            )}
-                            <AdPreviewDialog
-                              adId={metaAdId}
-                              adName={metaAdName}
-                              campaignName={campaignName ?? 'Sin campaña'}
-                              adsManagerUrl={adsManagerUrl}
-                            />
-                          </div>
-                        </DetailRow>
-                      )}
-                      {requiresCyaProspectSoftwareCommission(campaignName) && (
-                        <DetailRow label="Comisión">
-                          <span className="font-medium text-warning">CYA · 20 % de lo ganado</span>
-                        </DetailRow>
-                      )}
-                      {lead.conversion_step && (
-                        <DetailRow label="Conversión">
-                          {CONVERSION_STEP_LABEL[lead.conversion_step as string] ??
-                            lead.conversion_step}
-                        </DetailRow>
-                      )}
-                      {lead.landing_path && (
-                        <DetailRow label="Landing">{lead.landing_path}</DetailRow>
-                      )}
-                      {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
-                      {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
-                        <DetailRow label="Calculadora">
-                          {[lead.calculator_cost, lead.calculator_hours]
-                            .filter(hasValue)
-                            .join(' · ')}
-                        </DetailRow>
-                      )}
-                    </DetailGrid>
+                      <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                        {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
+                        {campaignName && <DetailRow label="Campaña Meta">{campaignName}</DetailRow>}
+                        {metaAdId && metaAdName && (
+                          <DetailRow label="Anuncio Meta">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {adsManagerUrl ? (
+                                <a
+                                  href={adsManagerUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                                  title={`ID de anuncio: ${metaAdId}`}
+                                >
+                                  {metaAdName}
+                                  <ExternalLink className="size-3.5" />
+                                </a>
+                              ) : (
+                                <span title={`ID de anuncio: ${metaAdId}`}>{metaAdName}</span>
+                              )}
+                              <AdPreviewDialog
+                                adId={metaAdId}
+                                adName={metaAdName}
+                                campaignName={campaignName ?? 'Sin campaña'}
+                                adsManagerUrl={adsManagerUrl}
+                              />
+                            </div>
+                          </DetailRow>
+                        )}
+                        {requiresCyaProspectSoftwareCommission(campaignName) && (
+                          <DetailRow label="Comisión">
+                            <span className="font-medium text-warning">
+                              CYA · 20 % de lo ganado
+                            </span>
+                          </DetailRow>
+                        )}
+                        {lead.conversion_step && (
+                          <DetailRow label="Conversión">
+                            {CONVERSION_STEP_LABEL[lead.conversion_step as string] ??
+                              lead.conversion_step}
+                          </DetailRow>
+                        )}
+                        {lead.landing_path && (
+                          <DetailRow label="Landing">{lead.landing_path}</DetailRow>
+                        )}
+                        {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
+                        {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
+                          <DetailRow label="Calculadora">
+                            {[lead.calculator_cost, lead.calculator_hours]
+                              .filter(hasValue)
+                              .join(' · ')}
+                          </DetailRow>
+                        )}
+                      </DetailGrid>
                     </section>
                   </div>
 
                   {(lead.landing_subject || firstTouch || lastTouch || lead.notes) && (
-                    <div className="mt-5 grid gap-4 border-t border-border pt-4 sm:grid-cols-2">
+                    <div className="mt-6 grid gap-5 border-t border-border pt-5 sm:grid-cols-2">
                       {lead.landing_subject || firstTouch || lastTouch ? (
-                        <div className="space-y-1 text-xs text-muted-foreground">
-                          {lead.landing_subject ? (
-                            <p>
-                              <span className="font-medium text-foreground">Asunto:</span>{' '}
-                              {lead.landing_subject}
-                            </p>
-                          ) : null}
-                          {firstTouch ? (
-                            <p>
-                              <span className="font-medium text-foreground">First touch:</span>{' '}
-                              {firstTouch}
-                            </p>
-                          ) : null}
-                          {lastTouch ? (
-                            <p>
-                              <span className="font-medium text-foreground">Last touch:</span>{' '}
-                              {lastTouch}
-                            </p>
-                          ) : null}
-                        </div>
+                        <section className="min-w-0">
+                          <h3 className="mb-2 text-sm font-semibold">Recorrido</h3>
+                          <div className="space-y-2 text-xs leading-5 text-muted-foreground">
+                            {lead.landing_subject ? (
+                              <p>
+                                <span className="font-medium text-foreground">Asunto:</span>{' '}
+                                {lead.landing_subject}
+                              </p>
+                            ) : null}
+                            {firstTouch ? (
+                              <p>
+                                <span className="font-medium text-foreground">First touch:</span>{' '}
+                                {firstTouch}
+                              </p>
+                            ) : null}
+                            {lastTouch ? (
+                              <p>
+                                <span className="font-medium text-foreground">Last touch:</span>{' '}
+                                {lastTouch}
+                              </p>
+                            ) : null}
+                          </div>
+                        </section>
                       ) : (
                         <span />
                       )}
                       {lead.notes ? (
-                        <div>
+                        <section className="min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                              Notas
-                            </h3>
+                            <h3 className="text-sm font-semibold">Notas</h3>
                             <LeadNotesDialog notes={lead.notes as string} />
                           </div>
-                          <p className="mt-1 line-clamp-4 text-sm leading-6 whitespace-pre-wrap">
+                          <p className="mt-2 line-clamp-5 text-sm leading-6 whitespace-pre-wrap">
                             {lead.notes as string}
                           </p>
-                        </div>
+                        </section>
                       ) : null}
                     </div>
                   )}
