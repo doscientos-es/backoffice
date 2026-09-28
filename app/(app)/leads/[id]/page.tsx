@@ -341,7 +341,8 @@ export default async function LeadDetailPage({
 
                     <section className="min-w-0">
                       <h3 className="mb-4 text-sm font-semibold">Oportunidad</h3>
-                      <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">`r`n                        <DetailRow label="Estado">
+                      <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                        <DetailRow label="Estado">
                           <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
                         </DetailRow>
                         {lead.score != null && (
@@ -467,7 +468,8 @@ export default async function LeadDetailPage({
                     </div>
                   )}
                 </CardContent>
-              </Card>`r`n              <LeadDiscoveryQuestionsPanel
+              </Card>
+              <LeadDiscoveryQuestionsPanel
                 leadId={lead.id as string}
                 initialQuestions={discoveryQuestions}
                 aiEnabled={aiEnabled}
