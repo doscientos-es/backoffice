@@ -234,7 +234,7 @@ export function LeadDiscoveryQuestionsPanel({
         className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
       >
         <div className="min-h-0 overflow-hidden">
-          <CardContent className="flex flex-col gap-3 pt-0">
+          <CardContent className="flex flex-col gap-2 pt-0">
             {adding ? (
               <form onSubmit={addQuestion} className="flex flex-col gap-2">
                 <Textarea
@@ -275,7 +275,7 @@ export function LeadDiscoveryQuestionsPanel({
             ) : null}
 
             {visibleQuestions.length ? (
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-2">
                 {visibleQuestions.map((question, index) => (
                   <div
                     key={question.id}
@@ -365,7 +365,7 @@ function DiscoveryQuestionCard({
   return (
     <article
       data-status={question.status}
-      className="group/question flex flex-col gap-3 rounded-xl border border-border/80 bg-card p-3 shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-primary/25 hover:shadow-md motion-reduce:transition-none"
+      className="group/question flex flex-col gap-2.5 rounded-xl border border-border/80 bg-card p-2.5 shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-primary/25 hover:shadow-md motion-reduce:transition-none"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -416,7 +416,7 @@ function DiscoveryQuestionCard({
       ) : null}
 
       {question.suggested_answer ? (
-        <div className="flex flex-col gap-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3 shadow-sm">
+        <div className="flex flex-col gap-2 rounded-lg border border-primary/20 bg-primary/5 p-2.5 shadow-sm">
           <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-xs font-semibold">
               <Sparkles className="size-3.5 text-primary" aria-hidden="true" />
@@ -479,7 +479,7 @@ function DiscoveryQuestionCard({
           rows={2}
           maxLength={2000}
           disabled={!canEdit || busy}
-          className="min-h-[72px] resize-y bg-background/70 text-sm leading-relaxed transition-shadow motion-reduce:transition-none"
+          className="min-h-[60px] resize-y bg-background/70 text-sm leading-relaxed transition-shadow motion-reduce:transition-none"
         />
       </div>
       {question.answer_source ? (

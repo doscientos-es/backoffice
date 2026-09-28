@@ -280,12 +280,6 @@ export default async function LeadDetailPage({
         <div className="order-2 flex min-w-0 flex-col gap-6 lg:order-1">
           {tab === "resumen" ? (
             <>
-              <LeadDiscoveryQuestionsPanel
-                leadId={lead.id as string}
-                initialQuestions={discoveryQuestions}
-                aiEnabled={aiEnabled}
-                canEdit={canEdit}
-              />
               <Card>
                 <CardContent className="pt-5">
                   <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
@@ -473,7 +467,12 @@ export default async function LeadDetailPage({
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </Card>`r`n              <LeadDiscoveryQuestionsPanel
+                leadId={lead.id as string}
+                initialQuestions={discoveryQuestions}
+                aiEnabled={aiEnabled}
+                canEdit={canEdit}
+              />
 
               {canEdit || nextActions.length > 0 ? (
                 <NextActionsCard
