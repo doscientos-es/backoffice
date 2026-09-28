@@ -42,7 +42,7 @@
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@doscientos/ui": "^0.1.29",
+    "@doscientos/ui": "0.1.42",
     "@doscientos/verifactu": "^0.1.25",
     "@hcaptcha/react-hcaptcha": "^2.0.2",
     "@hookform/resolvers": "^3.9.1",
@@ -119,7 +119,7 @@
   "packageManager": "pnpm@9.15.2",
   "pnpm": {
     "patchedDependencies": {
-      "@doscientos/ui@0.1.29": "patches/@doscientos__ui@0.1.29.patch"
+      "@doscientos/ui@0.1.42": "patches/@doscientos__ui@0.1.42.patch"
     }
   }
 }

@@ -1,0 +1,34 @@
+diff --git a/dist/chunk-OLYJEA35.js b/dist/chunk-OLYJEA35.js
+index 1f0b7b44ade9be9741e3828eec2bbaa4921c5797..dac22a3a5e6da73563da5381672a55d2b4b76114 100644
+--- a/dist/chunk-OLYJEA35.js
++++ b/dist/chunk-OLYJEA35.js
+@@ -14,6 +14,7 @@ import {
+   Heading,
+   ModalOverlay as ModalOverlayPrimitive,
+   Modal as ModalPrimitive,
++  Pressable,
+   Text
+ } from "react-aria-components";
+ import { jsx, jsxs } from "react/jsx-runtime";
+@@ -90,7 +91,7 @@ function DrawerContent({
+ function Drawer(props) {
+   if (!("trigger" in props)) return /* @__PURE__ */ jsx(DrawerContent, { ...props });
+   const { children, trigger, triggerProps, defaultOpen, isOpen, onOpenChange, ...contentProps } = props;
+-  const triggerElement = typeof trigger === "string" ? /* @__PURE__ */ jsx(Button, { ...triggerProps, children: trigger }) : trigger;
++  const triggerElement = typeof trigger === "string" ? /* @__PURE__ */ jsx(Button, { ...triggerProps, children: trigger }) : /* @__PURE__ */ jsx(Pressable, { children: trigger });
+   return /* @__PURE__ */ jsxs(DrawerTrigger, { defaultOpen, isOpen, onOpenChange, children: [
+     triggerElement,
+     /* @__PURE__ */ jsx(DrawerContent, { ...contentProps, children })
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 470a9053eb2d7f07d44c0e34232560476c6da926..0da026df7c51397df413fc9afebba0507b83b959 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -2647,7 +2647,7 @@ function DrawerContent({
+ function Drawer(props) {
+   if (!("trigger" in props)) return /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(DrawerContent, { ...props });
+   const { children, trigger, triggerProps, defaultOpen, isOpen, onOpenChange, ...contentProps } = props;
+-  const triggerElement = typeof trigger === "string" ? /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(Button, { ...triggerProps, children: trigger }) : trigger;
++  const triggerElement = typeof trigger === "string" ? /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(Button, { ...triggerProps, children: trigger }) : /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(import_react_aria_components12.Pressable, { children: trigger });
+   return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)(DrawerTrigger, { defaultOpen, isOpen, onOpenChange, children: [
+     triggerElement,
+     /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(DrawerContent, { ...contentProps, children })

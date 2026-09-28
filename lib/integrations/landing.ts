@@ -1,7 +1,7 @@
-import { z } from 'zod'
+import { z } from "zod";
 
-import { type LeadIntake, parseBudgetFloor } from '@/lib/integrations/lead-intake'
-import { optionalEmail, optionalText, requiredText } from '@/lib/schemas/common'
+import { type LeadIntake, parseBudgetFloor } from "@/lib/integrations/lead-intake";
+import { optionalEmail, optionalText, requiredText } from "@/lib/schemas/common";
 
 /**
  * Validation schema for the public landing contact form.
@@ -11,7 +11,7 @@ import { optionalEmail, optionalText, requiredText } from '@/lib/schemas/common'
  * field is length-capped to keep the public endpoint cheap to abuse.
  */
 export const LandingLeadInput = z.object({
-  name: requiredText(160, 'El nombre es obligatorio'),
+  name: requiredText(160, "El nombre es obligatorio"),
   email: optionalEmail,
   phone: optionalText(40),
   company: optionalText(160),
@@ -28,7 +28,7 @@ export const LandingLeadInput = z.object({
   utm_content: optionalText(200),
   gclid: optionalText(200),
   referrer: optionalText(500),
-  language: z.enum(['ca', 'es', 'en']).optional(),
+  language: z.enum(["ca", "es", "en"]).optional(),
   event_id: optionalText(120),
   visitor_id: optionalText(120),
   internal_traffic: z.boolean().optional(),
@@ -68,14 +68,14 @@ export const LandingLeadInput = z.object({
   dedupeKey: optionalText(120),
   /** Honeypot: must stay empty. Real users never see it; bots fill it. */
   website: optionalText(200),
-})
+});
 
-export type LandingLeadInputType = z.infer<typeof LandingLeadInput>
+export type LandingLeadInputType = z.infer<typeof LandingLeadInput>;
 
 /** Minimal device classification from the User-Agent header. */
 function deviceFromUserAgent(ua: string | null): string | null {
-  if (!ua) return null
-  return /Mobi|Android|iPhone|iPad/i.test(ua) ? 'mobile' : 'desktop'
+  if (!ua) return null;
+  return /Mobi|Android|iPhone|iPad/i.test(ua) ? "mobile" : "desktop";
 }
 
 /**
@@ -94,24 +94,24 @@ export function mapLandingToIntake(
     input.urgency ? `Urgencia: ${input.urgency}` : null,
     input.budget ? `Presupuesto: ${input.budget}` : null,
     input.resource ? `Recurso solicitado: ${input.resource}` : null,
-  ].filter((v): v is string => Boolean(v))
+  ].filter((v): v is string => Boolean(v));
 
-  const dedupeKey = input.dedupeKey ?? null
-  const ua = ctx?.userAgent ?? null
+  const dedupeKey = input.dedupeKey ?? null;
+  const ua = ctx?.userAgent ?? null;
 
   return {
     name: input.name,
     email: input.email ?? null,
     phone: input.phone ?? null,
     company: input.company ?? null,
-    notes: notesParts.length ? notesParts.join('\n') : null,
+    notes: notesParts.length ? notesParts.join("\n") : null,
     estimatedValue: parseBudgetFloor(input.budget),
     companySize: input.companySize ?? null,
     solutionType: input.solutionType ?? null,
     urgency: input.urgency ?? null,
-    source: 'Landing',
+    source: "Landing",
     externalId: dedupeKey,
-    externalSource: dedupeKey ? 'Landing' : null,
+    externalSource: dedupeKey ? "Landing" : null,
     utm: {
       source: input.utm_source ?? null,
       medium: input.utm_medium ?? null,
@@ -156,5 +156,5 @@ export function mapLandingToIntake(
       lastUtmContent: input.last_utm_content ?? null,
     },
     rawPayload: input,
-  }
+  };
 }

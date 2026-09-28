@@ -1,96 +1,96 @@
-import { ExternalLink } from 'lucide-react'
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
-import { PageHeader } from '@/components/layout/page-header'
-import { Button } from '@/components/ui/button'
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CopyButton } from '@/components/ui/copy-button'
-import { CopySummaryButton } from '@/components/ui/copy-summary-button'
-import { SectionBoundary } from '@/components/ui/error-boundary'
-import { MemberLabel } from '@/components/ui/member-avatar'
-import { StatusBadge } from '@/components/ui/status-badge'
-import { isAIEnabled } from '@/lib/ai'
-import { requireUser } from '@/lib/auth'
-import { CONVERSION_STEP_LABEL } from '@/lib/conversion-events/labels'
-import { serverEnv } from '@/lib/env'
-import { formatLeadBriefingForAI } from '@/lib/leads/ai-context'
-import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
-import { suggestedCallDurationMinutes } from '@/lib/leads/meeting-duration'
-import { getLeadDetail } from '@/lib/leads/queries'
-import type { LeadCompanyResearch as LeadCompanyResearchData } from '@/lib/leads/types'
-import { leadDisplayName } from '@/lib/leads/utils'
-import { listActiveMembers } from '@/lib/members/queries'
-import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from '@/lib/status'
-import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
+import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
+import { CopySummaryButton } from "@/components/ui/copy-summary-button";
+import { SectionBoundary } from "@/components/ui/error-boundary";
+import { MemberLabel } from "@/components/ui/member-avatar";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { isAIEnabled } from "@/lib/ai";
+import { requireUser } from "@/lib/auth";
+import { CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
+import { serverEnv } from "@/lib/env";
+import { formatLeadBriefingForAI } from "@/lib/leads/ai-context";
+import { requiresCyaProspectSoftwareCommission } from "@/lib/leads/attribution";
+import { suggestedCallDurationMinutes } from "@/lib/leads/meeting-duration";
+import { getLeadDetail } from "@/lib/leads/queries";
+import type { LeadCompanyResearch as LeadCompanyResearchData } from "@/lib/leads/types";
+import { leadDisplayName } from "@/lib/leads/utils";
+import { listActiveMembers } from "@/lib/members/queries";
+import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from "@/lib/status";
+import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 
-import { buildAdsManagerUrl } from '../../marketing/_components/marketing-format'
-import { AdPreviewDialog } from '../../marketing/ad-preview-dialog'
-import { TaskCreateDialog } from '../../tasks/task-create-dialog'
-import { LeadActivityFeed, countActivityEvents } from './lead-activity-feed'
-import { LeadAiPanel } from './lead-ai-panel'
-import { LeadCommercial } from './lead-commercial'
-import { LeadCompanyResearch } from './lead-company-research'
+import { buildAdsManagerUrl } from "../../marketing/_components/marketing-format";
+import { AdPreviewDialog } from "../../marketing/ad-preview-dialog";
+import { TaskCreateDialog } from "../../tasks/task-create-dialog";
+import { LeadActivityFeed, countActivityEvents } from "./lead-activity-feed";
+import { LeadAiPanel } from "./lead-ai-panel";
+import { LeadCommercial } from "./lead-commercial";
+import { LeadCompanyResearch } from "./lead-company-research";
 import {
   LeadAttachmentsSection,
   LeadConversionJourneySection,
   LeadDiagnosticsSection,
   LeadQuickActionsSection,
-} from './lead-detail-async-sections'
-import { LeadDetailTabs, resolveLeadTab } from './lead-detail-tabs'
-import { LeadDiscoveryQuestionsPanel } from './lead-discovery-questions-panel'
-import { LeadEditDialog } from './lead-edit-dialog'
-import { LeadLanguageSelect } from './lead-language-select'
-import { LeadNextActionReminderItem } from './lead-next-action-reminder-item'
-import { LeadNextActionTaskItem } from './lead-next-action-task-item'
-import { LeadNextMove } from './lead-next-move'
-import { LeadNotesDialog } from './lead-notes-dialog'
-import { LeadRecentInteractions } from './lead-recent-interactions'
-import { MomTestChecklist } from './mom-test-checklist'
-import { PhoneQuickActions } from './phone-actions'
-import { LeadStatusSelect } from './status-select'
+} from "./lead-detail-async-sections";
+import { LeadDetailTabs, resolveLeadTab } from "./lead-detail-tabs";
+import { LeadDiscoveryQuestionsPanel } from "./lead-discovery-questions-panel";
+import { LeadEditDialog } from "./lead-edit-dialog";
+import { LeadLanguageSelect } from "./lead-language-select";
+import { LeadNextActionReminderItem } from "./lead-next-action-reminder-item";
+import { LeadNextActionTaskItem } from "./lead-next-action-task-item";
+import { LeadNextMove } from "./lead-next-move";
+import { LeadNotesDialog } from "./lead-notes-dialog";
+import { LeadRecentInteractions } from "./lead-recent-interactions";
+import { MomTestChecklist } from "./mom-test-checklist";
+import { PhoneQuickActions } from "./phone-actions";
+import { LeadStatusSelect } from "./status-select";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 type NextAction = {
-  id: string
-  title: string
-  kind: 'task' | 'reminder'
-  when: string | null
-  status: TaskStatus
-}
+  id: string;
+  title: string;
+  kind: "task" | "reminder";
+  when: string | null;
+  status: TaskStatus;
+};
 
 function hasValue(value: unknown): boolean {
-  if (value == null) return false
-  return typeof value === 'string' ? value.trim().length > 0 : true
+  if (value == null) return false;
+  return typeof value === "string" ? value.trim().length > 0 : true;
 }
 
 function compactParts(parts: Array<string | null | undefined>): string | null {
-  const value = parts.filter(hasValue).join(' · ')
-  return value || null
+  const value = parts.filter(hasValue).join(" · ");
+  return value || null;
 }
 
 export default async function LeadDetailPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
   searchParams?: Promise<{
-    feedback?: string
-    tab?: string
-    callSessionId?: string
-    duration?: string
-    outcome?: string
-  }>
+    feedback?: string;
+    tab?: string;
+    callSessionId?: string;
+    duration?: string;
+    outcome?: string;
+  }>;
 }) {
-  const { id } = await params
-  const query = await searchParams
-  const tab = resolveLeadTab(query?.tab)
-  const user = await requireUser()
+  const { id } = await params;
+  const query = await searchParams;
+  const tab = resolveLeadTab(query?.tab);
+  const user = await requireUser();
 
-  const result = await getLeadDetail(id)
-  if (!result) notFound()
+  const result = await getLeadDetail(id);
+  if (!result) notFound();
   const {
     lead,
     companyResearchAvailable,
@@ -104,54 +104,54 @@ export default async function LeadDetailPage({
     reminders,
     attachments,
     discoveryQuestions,
-  } = result
+  } = result;
 
-  const aiEnabled = isAIEnabled()
-  const canEdit = user.role !== 'viewer'
-  const members = canEdit ? await listActiveMembers().catch(() => []) : []
+  const aiEnabled = isAIEnabled();
+  const canEdit = user.role !== "viewer";
+  const members = canEdit ? await listActiveMembers().catch(() => []) : [];
   const nextActions: NextAction[] = [
     ...tasks.map((task) => ({
       id: task.id as string,
       title: task.title as string,
-      kind: 'task' as const,
+      kind: "task" as const,
       when: (task.due_date as string | null) ?? null,
       status: task.status as TaskStatus,
     })),
     ...reminders.map((reminder) => ({
       id: reminder.id as string,
       title: reminder.title as string,
-      kind: 'reminder' as const,
+      kind: "reminder" as const,
       when: reminder.remind_at,
-      status: 'todo' as TaskStatus,
+      status: "todo" as TaskStatus,
     })),
   ].sort((a, b) => {
-    if (!a.when) return 1
-    if (!b.when) return -1
-    return new Date(a.when).getTime() - new Date(b.when).getTime()
-  })
+    if (!a.when) return 1;
+    if (!b.when) return -1;
+    return new Date(a.when).getTime() - new Date(b.when).getTime();
+  });
 
-  const displayName = leadDisplayName(lead)
-  const alias = (lead.alias as string | null)?.trim() || null
-  const campaignName = lead.marketing_campaign_name
-  const metaAdId = lead.source === 'Anuncios Meta' ? lead.utm_content : null
-  const metaAdName = lead.marketing_ad_name ?? (metaAdId ? `Anuncio ${metaAdId}` : null)
+  const displayName = leadDisplayName(lead);
+  const alias = (lead.alias as string | null)?.trim() || null;
+  const campaignName = lead.marketing_campaign_name;
+  const metaAdId = lead.source === "Anuncios Meta" ? lead.utm_content : null;
+  const metaAdName = lead.marketing_ad_name ?? (metaAdId ? `Anuncio ${metaAdId}` : null);
   const adsManagerUrl = metaAdId
     ? buildAdsManagerUrl(metaAdId, serverEnv().META_AD_ACCOUNT_ID || null)
-    : null
+    : null;
   const firstTouch = compactParts([
     lead.first_landing_path,
     lead.first_referrer,
     lead.first_utm_source,
     lead.first_utm_medium,
     lead.first_utm_campaign,
-  ])
+  ]);
   const lastTouch = compactParts([
     lead.last_landing_path,
     lead.last_referrer,
     lead.last_utm_source,
     lead.last_utm_medium,
     lead.last_utm_campaign,
-  ])
+  ]);
   const briefing = formatLeadBriefingForAI({
     lead,
     clientName: linkedClientName,
@@ -163,57 +163,57 @@ export default async function LeadDetailPage({
     reminders,
     attachments,
     discoveryQuestions,
-  })
-  const defaultDurationMinutes = suggestedCallDurationMinutes(interactions)
-  const sessionDuration = Number(query?.duration)
+  });
+  const defaultDurationMinutes = suggestedCallDurationMinutes(interactions);
+  const sessionDuration = Number(query?.duration);
   const callSessionDuration =
     Number.isInteger(sessionDuration) && sessionDuration >= 0 && sessionDuration <= 600
       ? sessionDuration
-      : null
+      : null;
   const callSessionOutcome =
-    query?.outcome === 'connected' || query?.outcome === 'no_answer' ? query.outcome : undefined
+    query?.outcome === "connected" || query?.outcome === "no_answer" ? query.outcome : undefined;
   const callSessionId =
     query?.callSessionId &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       query.callSessionId,
     )
       ? query.callSessionId
-      : undefined
+      : undefined;
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={displayName}
         description={(lead.company as string | null) ?? undefined}
         breadcrumbs={[
-          { label: 'Leads', href: '/leads' },
+          { label: "Leads", href: "/leads" },
           { label: displayName },
-          ...(linkedClientId ? [{ label: 'Cliente', href: `/clients/${linkedClientId}` }] : []),
+          ...(linkedClientId ? [{ label: "Cliente", href: `/clients/${linkedClientId}` }] : []),
         ]}
         actions={
           <>
             <CopySummaryButton
               lines={(() => {
-                const parts: string[] = []
+                const parts: string[] = [];
                 parts.push(
                   [`🎯 ${displayName}`, lead.company && `— ${lead.company}`]
                     .filter(Boolean)
-                    .join(' '),
-                )
+                    .join(" "),
+                );
                 parts.push(
                   [
                     `Estado: ${LEAD_STATUS[lead.status]?.label ?? lead.status}`,
                     lead.estimated_value != null && `Valor: ${formatEUR(lead.estimated_value)}`,
                   ]
                     .filter(Boolean)
-                    .join(' · '),
-                )
+                    .join(" · "),
+                );
                 const contact = [
                   lead.email && `Email: ${lead.email}`,
                   lead.phone && `Tel: ${lead.phone}`,
-                ].filter(Boolean)
-                if (contact.length) parts.push(contact.join(' · '))
-                if (lead.assignee?.name) parts.push(`Responsable: ${lead.assignee.name}`)
-                return parts
+                ].filter(Boolean);
+                if (contact.length) parts.push(contact.join(" · "));
+                if (lead.assignee?.name) parts.push(`Responsable: ${lead.assignee.name}`);
+                return parts;
               })()}
               urlPath={`/leads/${lead.id as string}`}
             />
@@ -234,7 +234,7 @@ export default async function LeadDetailPage({
                     email: (lead.email as string | null) ?? null,
                     phone: (lead.phone as string | null) ?? null,
                     source: (lead.source as string | null) ?? null,
-                    language: (lead.language as 'es' | 'ca' | 'en' | null) ?? null,
+                    language: (lead.language as "es" | "ca" | "en" | null) ?? null,
                     notes: (lead.notes as string | null) ?? null,
                     estimated_value:
                       lead.estimated_value != null ? Number(lead.estimated_value) : null,
@@ -278,7 +278,7 @@ export default async function LeadDetailPage({
 
       <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="order-2 flex min-w-0 flex-col gap-6 lg:order-1">
-          {tab === 'resumen' ? (
+          {tab === "resumen" ? (
             <>
               <Card>
                 <CardContent className="pt-5">
@@ -291,10 +291,10 @@ export default async function LeadDetailPage({
                         <DetailRow label="Estado">
                           <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
                         </DetailRow>
-                        {(lead.status === 'lost' || lead.status === 'not_interested') &&
+                        {(lead.status === "lost" || lead.status === "not_interested") &&
                           lead.lost_reason && (
                             <DetailRow
-                              label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}
+                              label={lead.status === "lost" ? "Motivo de pérdida" : "Motivo"}
                             >
                               <span className="font-medium text-destructive">
                                 {lead.lost_reason as string}
@@ -389,7 +389,7 @@ export default async function LeadDetailPage({
                               <AdPreviewDialog
                                 adId={metaAdId}
                                 adName={metaAdName}
-                                campaignName={campaignName ?? 'Sin campaña'}
+                                campaignName={campaignName ?? "Sin campaña"}
                                 adsManagerUrl={adsManagerUrl}
                               />
                             </div>
@@ -416,7 +416,7 @@ export default async function LeadDetailPage({
                           <DetailRow label="Calculadora">
                             {[lead.calculator_cost, lead.calculator_hours]
                               .filter(hasValue)
-                              .join(' · ')}
+                              .join(" · ")}
                           </DetailRow>
                         )}
                       </DetailGrid>
@@ -431,19 +431,19 @@ export default async function LeadDetailPage({
                           <div className="space-y-2 text-xs leading-5 text-muted-foreground">
                             {lead.landing_subject ? (
                               <p>
-                                <span className="font-medium text-foreground">Asunto:</span>{' '}
+                                <span className="font-medium text-foreground">Asunto:</span>{" "}
                                 {lead.landing_subject}
                               </p>
                             ) : null}
                             {firstTouch ? (
                               <p>
-                                <span className="font-medium text-foreground">First touch:</span>{' '}
+                                <span className="font-medium text-foreground">First touch:</span>{" "}
                                 {firstTouch}
                               </p>
                             ) : null}
                             {lastTouch ? (
                               <p>
-                                <span className="font-medium text-foreground">Last touch:</span>{' '}
+                                <span className="font-medium text-foreground">Last touch:</span>{" "}
                                 {lastTouch}
                               </p>
                             ) : null}
@@ -499,7 +499,7 @@ export default async function LeadDetailPage({
             </>
           ) : null}
 
-          {tab === 'actividad' ? (
+          {tab === "actividad" ? (
             <>
               <LeadActivityFeed
                 leadId={lead.id as string}
@@ -519,7 +519,7 @@ export default async function LeadDetailPage({
             </>
           ) : null}
 
-          {tab === 'comercial' ? (
+          {tab === "comercial" ? (
             <>
               <LeadCommercial
                 leadId={lead.id as string}
@@ -535,7 +535,7 @@ export default async function LeadDetailPage({
             </>
           ) : null}
 
-          {tab === 'inteligencia' ? (
+          {tab === "inteligencia" ? (
             <>
               <SectionBoundary label="No se pudo cargar la inteligencia de empresa">
                 <Card>
@@ -576,7 +576,7 @@ export default async function LeadDetailPage({
                         ai_suggested_next_step_at:
                           (lead.ai_suggested_next_step_at as string | null) ?? null,
                         ai_temperature:
-                          (lead.ai_temperature as 'hot' | 'warm' | 'cold' | null) ?? null,
+                          (lead.ai_temperature as "hot" | "warm" | "cold" | null) ?? null,
                         ai_confidence: (lead.ai_confidence as number | null) ?? null,
                         ai_updated_at: (lead.ai_updated_at as string | null) ?? null,
                         ai_tags: (lead.ai_tags as string[] | null) ?? null,
@@ -607,8 +607,8 @@ export default async function LeadDetailPage({
                 }}
                 senderName={user.name}
                 canEdit={canEdit}
-                openCallInitially={query?.feedback === 'call'}
-                openScheduleInitially={query?.feedback === 'schedule'}
+                openCallInitially={query?.feedback === "call"}
+                openScheduleInitially={query?.feedback === "schedule"}
                 defaultDurationMinutes={callSessionDuration ?? defaultDurationMinutes}
                 defaultCallOutcome={callSessionOutcome}
                 callSessionId={callSessionId}
@@ -667,7 +667,7 @@ export default async function LeadDetailPage({
         </aside>
       </section>
     </div>
-  )
+  );
 }
 
 function NextActionsCard({
@@ -677,11 +677,11 @@ function NextActionsCard({
   currentUserId,
   actions,
 }: {
-  canEdit: boolean
-  leadId: string
-  members: Awaited<ReturnType<typeof listActiveMembers>>
-  currentUserId: string
-  actions: NextAction[]
+  canEdit: boolean;
+  leadId: string;
+  members: Awaited<ReturnType<typeof listActiveMembers>>;
+  currentUserId: string;
+  actions: NextAction[];
 }) {
   return (
     <Card className="border-primary/20 bg-primary/2">
@@ -705,9 +705,9 @@ function NextActionsCard({
         {actions.length > 0 ? (
           <ul className="divide-y divide-border">
             {actions.map((action) => {
-              const overdue = action.when ? new Date(action.when) < new Date() : false
-              const whenLabel = action.when ? relativeTime(action.when) : null
-              if (action.kind === 'task' && canEdit) {
+              const overdue = action.when ? new Date(action.when) < new Date() : false;
+              const whenLabel = action.when ? relativeTime(action.when) : null;
+              if (action.kind === "task" && canEdit) {
                 return (
                   <LeadNextActionTaskItem
                     key={`${action.kind}-${action.id}`}
@@ -716,15 +716,15 @@ function NextActionsCard({
                     members={members}
                     currentUserId={currentUserId}
                   />
-                )
+                );
               }
-              if (action.kind === 'reminder' && canEdit) {
+              if (action.kind === "reminder" && canEdit) {
                 return (
                   <LeadNextActionReminderItem
                     key={`${action.kind}-${action.id}`}
                     reminder={{ id: action.id, title: action.title, whenLabel, overdue }}
                   />
-                )
+                );
               }
               return (
                 <li
@@ -736,18 +736,18 @@ function NextActionsCard({
                     className="min-w-0 truncate font-medium hover:underline"
                   >
                     <span className="mr-2 text-xs text-muted-foreground">
-                      {action.kind === 'reminder' ? 'Aviso' : 'Tarea'}
+                      {action.kind === "reminder" ? "Aviso" : "Tarea"}
                     </span>
                     {action.title}
                   </Link>
                   <div className="flex shrink-0 items-center gap-3 text-xs">
-                    {action.kind === 'task' ? (
+                    {action.kind === "task" ? (
                       <StatusBadge meta={TASK_STATUS} value={action.status} />
                     ) : null}
                     {whenLabel ? (
                       <span
                         className={
-                          overdue ? 'font-medium text-destructive' : 'text-muted-foreground'
+                          overdue ? "font-medium text-destructive" : "text-muted-foreground"
                         }
                       >
                         {whenLabel}
@@ -755,7 +755,7 @@ function NextActionsCard({
                     ) : null}
                   </div>
                 </li>
-              )
+              );
             })}
           </ul>
         ) : (
@@ -763,5 +763,5 @@ function NextActionsCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

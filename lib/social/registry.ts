@@ -6,16 +6,16 @@
  * single `register()` here. Cached per-process; adapters read env lazily and
  * self-report `isConfigured()`, so an unconfigured network is simply skipped.
  */
-import { PublisherRegistry } from '@/lib/social/core'
-import { FacebookPublisher, InstagramPublisher } from '@/lib/social/meta'
+import { PublisherRegistry } from "@/lib/social/core";
+import { FacebookPublisher, InstagramPublisher } from "@/lib/social/meta";
 
-let cached: PublisherRegistry | null = null
+let cached: PublisherRegistry | null = null;
 
 /** Shared registry with all supported publishing adapters registered. */
 export function socialRegistry(): PublisherRegistry {
-  if (cached) return cached
+  if (cached) return cached;
   cached = new PublisherRegistry()
     .register(new InstagramPublisher())
-    .register(new FacebookPublisher())
-  return cached
+    .register(new FacebookPublisher());
+  return cached;
 }

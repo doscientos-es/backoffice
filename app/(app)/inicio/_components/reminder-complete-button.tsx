@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { Check } from 'lucide-react'
-import { useState } from 'react'
+import { Check } from "lucide-react";
+import { useState } from "react";
 
-import { Button } from '@/components/ui/button'
-import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 /**
  * Purely presentational button — the parent (RemindersSection) owns the
@@ -16,10 +16,10 @@ export function ReminderCompleteButton({
   id,
   onCompleteAction,
 }: {
-  id: string
-  onCompleteAction: (id: string) => void
+  id: string;
+  onCompleteAction: (id: string) => void;
 }) {
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <>
@@ -40,10 +40,10 @@ export function ReminderCompleteButton({
         description="El aviso desaparecerá de la lista de pendientes."
         confirmLabel="Sí, completar"
         onConfirm={() => {
-          setConfirmOpen(false)
-          onCompleteAction(id)
+          setConfirmOpen(false);
+          onCompleteAction(id);
         }}
       />
     </>
-  )
+  );
 }

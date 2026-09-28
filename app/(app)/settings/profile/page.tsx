@@ -1,13 +1,13 @@
-import { PageHeader } from '@/components/layout/page-header'
-import { Card, CardContent } from '@/components/ui/card'
-import { requireUser } from '@/lib/auth'
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { requireUser } from "@/lib/auth";
 
-import { ProfileForm } from '../profile-form'
+import { ProfileForm } from "../profile-form";
 
-export const metadata = { title: 'Perfil · Ajustes · doscientos' }
+export const metadata = { title: "Perfil · Ajustes · doscientos" };
 
 export default async function ProfileSettingsPage() {
-  const user = await requireUser()
+  const user = await requireUser();
 
   return (
     <div className="flex flex-col gap-6">
@@ -30,5 +30,5 @@ export default async function ProfileSettingsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

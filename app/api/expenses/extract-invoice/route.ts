@@ -1,77 +1,77 @@
-import { type NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
-import { requireUser } from '@/lib/auth'
-import { extractExpenseInvoice } from '@/lib/finance/invoice-extraction'
-import { scopedLogger } from '@/lib/logger'
-import { getStorage } from '@/lib/storage'
-import { createServerClient } from '@/lib/supabase/server'
+import { requireUser } from "@/lib/auth";
+import { extractExpenseInvoice } from "@/lib/finance/invoice-extraction";
+import { scopedLogger } from "@/lib/logger";
+import { getStorage } from "@/lib/storage";
+import { createServerClient } from "@/lib/supabase/server";
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-const log = scopedLogger('expenses.extract-invoice')
+const log = scopedLogger("expenses.extract-invoice");
 const BodySchema = z.object({
   attachment_id: z.string().uuid(),
   confirm_large: z.boolean().optional().default(false),
-})
+});
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  let user: Awaited<ReturnType<typeof requireUser>>
+  let user: Awaited<ReturnType<typeof requireUser>>;
   try {
-    user = await requireUser()
+    user = await requireUser();
   } catch {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
-  if (user.role !== 'owner' && user.role !== 'admin') {
-    return NextResponse.json({ error: 'Sin permiso' }, { status: 403 })
+  if (user.role !== "owner" && user.role !== "admin") {
+    return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
   }
 
-  let body: z.infer<typeof BodySchema>
+  let body: z.infer<typeof BodySchema>;
   try {
-    body = BodySchema.parse(await req.json())
+    body = BodySchema.parse(await req.json());
   } catch {
-    return NextResponse.json({ error: 'Adjunto inválido' }, { status: 400 })
+    return NextResponse.json({ error: "Adjunto inválido" }, { status: 400 });
   }
 
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const { data: attachment, error } = await supabase
-    .from('attachments')
-    .select('id, expense_id, mime_type, storage_path, uploaded_by')
-    .eq('id', body.attachment_id)
-    .is('deleted_at', null)
-    .maybeSingle()
+    .from("attachments")
+    .select("id, expense_id, mime_type, storage_path, uploaded_by")
+    .eq("id", body.attachment_id)
+    .is("deleted_at", null)
+    .maybeSingle();
 
   if (error || !attachment)
-    return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 })
+    return NextResponse.json({ error: "Factura no encontrada" }, { status: 404 });
 
   // Orphan PDFs (uploaded from the new-expense form, not yet linked to an
   // expense) are only extractable by the member who uploaded them. 404, not
   // 403, to avoid leaking the attachment's existence.
   if (!attachment.expense_id && attachment.uploaded_by !== user.id) {
-    return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 })
+    return NextResponse.json({ error: "Factura no encontrada" }, { status: 404 });
   }
   if (
-    (!attachment.mime_type?.startsWith('image/') && attachment.mime_type !== 'application/pdf') ||
+    (!attachment.mime_type?.startsWith("image/") && attachment.mime_type !== "application/pdf") ||
     !attachment.storage_path
   ) {
     return NextResponse.json(
-      { error: 'Selecciona un PDF o una imagen de factura' },
+      { error: "Selecciona un PDF o una imagen de factura" },
       { status: 400 },
-    )
+    );
   }
 
   const { data, error: downloadError } = await getStorage().download(
-    'documents',
+    "documents",
     attachment.storage_path,
-  )
+  );
   if (downloadError || !data)
-    return NextResponse.json({ error: 'No se pudo leer el PDF' }, { status: 502 })
+    return NextResponse.json({ error: "No se pudo leer el PDF" }, { status: 502 });
 
   try {
     const result = await extractExpenseInvoice(data, attachment.mime_type, {
       confirmLarge: body.confirm_large,
-    })
+    });
     if (result.requiresConfirmation) {
       return NextResponse.json(
         {
@@ -81,15 +81,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           page_count: result.pageCount,
         },
         { status: 409 },
-      )
+      );
     }
-    log.info({ attachmentId: attachment.id, source: result.source }, 'expense_invoice_extracted')
-    return NextResponse.json(result)
+    log.info({ attachmentId: attachment.id, source: result.source }, "expense_invoice_extracted");
+    return NextResponse.json(result);
   } catch (err) {
-    log.error({ attachmentId: attachment.id, err }, 'expense_invoice_extraction_failed')
+    log.error({ attachmentId: attachment.id, err }, "expense_invoice_extraction_failed");
     return NextResponse.json(
-      { error: 'No se pudieron extraer los datos de la factura' },
+      { error: "No se pudieron extraer los datos de la factura" },
       { status: 422 },
-    )
+    );
   }
 }

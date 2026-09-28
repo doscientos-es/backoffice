@@ -1,38 +1,38 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
-import { createSubscriptionFromProposal } from '../proposals/actions'
+import { createSubscriptionFromProposal } from "../proposals/actions";
 
 type Props = {
-  proposalId: string
-}
+  proposalId: string;
+};
 
 export function CreateSubscriptionFromProposalButton({ proposalId }: Props) {
-  const router = useRouter()
-  const [pending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleCreate() {
-    setError(null)
+    setError(null);
     startTransition(async () => {
-      const result = await createSubscriptionFromProposal({ id: proposalId })
+      const result = await createSubscriptionFromProposal({ id: proposalId });
       if (!result.ok) {
-        setError(result.error)
-        return
+        setError(result.error);
+        return;
       }
-      router.refresh()
-    })
+      router.refresh();
+    });
   }
 
   return (
     <div className="flex flex-col items-end gap-2">
       <Button type="button" size="sm" onClick={handleCreate} disabled={pending}>
-        {pending ? 'Creando…' : 'Crear suscripción pausada'}
+        {pending ? "Creando…" : "Crear suscripción pausada"}
       </Button>
       {error ? (
         <Alert variant="destructive" className="max-w-xs text-left">
@@ -40,5 +40,5 @@ export function CreateSubscriptionFromProposalButton({ proposalId }: Props) {
         </Alert>
       ) : null}
     </div>
-  )
+  );
 }

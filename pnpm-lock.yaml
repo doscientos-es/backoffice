@@ -5,9 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@doscientos/ui@0.1.29':
-    hash: abthirmwvoetocnpzgfpuvn4wi
-    path: patches/@doscientos__ui@0.1.29.patch
+  '@doscientos/ui@0.1.42':
+    hash: 34w3bui3hpqm2pbx63he2dwtbe
+    path: patches/@doscientos__ui@0.1.42.patch
 
 importers:
 
@@ -35,8 +35,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.6)
       '@doscientos/ui':
-        specifier: ^0.1.29
-        version: 0.1.29(patch_hash=abthirmwvoetocnpzgfpuvn4wi)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: 0.1.42
+        version: 0.1.42(patch_hash=34w3bui3hpqm2pbx63he2dwtbe)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@doscientos/verifactu':
         specifier: ^0.1.25
         version: 0.1.25(date-fns@4.3.0)
@@ -548,8 +548,8 @@ packages:
       vitest:
         optional: true
 
-  '@doscientos/ui@0.1.29':
-    resolution: {integrity: sha512-bxWH3REBTMoeBjhyIV+nsVcCMMIfHQofyBonS7M8Eb6E1TMfS/Oo0LoYKWWe3Npv11NLpTRJcypfyV7kxJIbQA==}
+  '@doscientos/ui@0.1.42':
+    resolution: {integrity: sha512-muMzM83v1Y63jkHLieNfsGPsfQSdrJjtYZaf9Gg8vk1IeilYbpNwpRiWQGsJy1kGlDQJ1BfMiNIFoKDfoH2XfA==}
     peerDependencies:
       react: '>=18.3.0'
       react-dom: '>=18.3.0'
@@ -6274,16 +6274,15 @@ snapshots:
       oxlint-tsgolint: 7.0.2001
       vitest: 3.2.4(@types/node@22.19.19)(happy-dom@16.8.1)(jiti@2.7.0)(lightningcss@1.32.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))(tsx@4.22.4)
 
-  '@doscientos/ui@0.1.29(patch_hash=abthirmwvoetocnpzgfpuvn4wi)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@doscientos/ui@0.1.42(patch_hash=34w3bui3hpqm2pbx63he2dwtbe)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       class-variance-authority: 0.7.1
-      clsx: 2.1.1
+      cn: 0.3.2
       lucide-react: 1.33.0(react@19.2.6)
       react: 19.2.6
       react-aria-components: 1.20.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react-dom: 19.2.6(react@19.2.6)
       sileo: 0.1.5(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      tailwind-merge: 3.6.0
     transitivePeerDependencies:
       - '@emotion/is-prop-valid'
 

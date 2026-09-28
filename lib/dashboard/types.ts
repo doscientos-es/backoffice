@@ -3,114 +3,114 @@
  * Keeping them in `lib/` decouples the data layer from the UI components.
  */
 
-import type { LeadStatus, TaskPriority, TaskStatus } from '@/lib/status'
+import type { LeadStatus, TaskPriority, TaskStatus } from "@/lib/status";
 
-export type DashboardRange = '7d' | '30d' | '90d' | 'ytd'
+export type DashboardRange = "7d" | "30d" | "90d" | "ytd";
 
 export type DateWindow = {
-  from: Date
-  to: Date
-}
+  from: Date;
+  to: Date;
+};
 
 export type DateRange = {
-  current: DateWindow
-  previous: DateWindow
-}
+  current: DateWindow;
+  previous: DateWindow;
+};
 
-export type TrendDirection = 'up' | 'down' | 'flat'
+export type TrendDirection = "up" | "down" | "flat";
 
 export type Trend = {
-  delta: number // signed percentage, e.g. 12.5 means +12.5%
-  direction: TrendDirection
-}
+  delta: number; // signed percentage, e.g. 12.5 means +12.5%
+  direction: TrendDirection;
+};
 
 export type ReminderRow = {
-  id: string
-  title: string
-  remind_at: string
-}
+  id: string;
+  title: string;
+  remind_at: string;
+};
 
 export type OverdueInvoiceRow = {
-  id: string
-  full_number: string | null
-  due_date: string | null
-  total: number
-  client_name: string | null
-}
+  id: string;
+  full_number: string | null;
+  due_date: string | null;
+  total: number;
+  client_name: string | null;
+};
 
 export type RevenuePoint = {
-  month: string // period label, e.g. "15 jun" or "11–17 jun"
-  current: number
-  previous: number
-}
+  month: string; // period label, e.g. "15 jun" or "11–17 jun"
+  current: number;
+  previous: number;
+};
 
 export type RevenueBreakdownPoint = {
-  month: string
-  total: number
-  [seriesKey: string]: string | number
-}
+  month: string;
+  total: number;
+  [seriesKey: string]: string | number;
+};
 
 export type RevenueBreakdown = {
-  points: RevenueBreakdownPoint[]
-  series: Array<{ key: string; label: string; href?: string }>
-}
+  points: RevenueBreakdownPoint[];
+  series: Array<{ key: string; label: string; href?: string }>;
+};
 
 export type RevenueMetricData = {
-  totals: RevenuePoint[]
-  byProject: RevenueBreakdown
-  byLead: RevenueBreakdown
-}
+  totals: RevenuePoint[];
+  byProject: RevenueBreakdown;
+  byLead: RevenueBreakdown;
+};
 
 export type RevenueChartData = {
-  billed: RevenueMetricData
-  collected: RevenueMetricData
-}
+  billed: RevenueMetricData;
+  collected: RevenueMetricData;
+};
 
 // ---------------------------------------------------------------------------
 // Company goals
 // ---------------------------------------------------------------------------
 
-export type GoalMetric = 'leads_new' | 'revenue' | 'conversion_rate'
+export type GoalMetric = "leads_new" | "revenue" | "conversion_rate";
 
 /** Map of metric → raw numeric target. Only metrics with a set goal appear. */
-export type CompanyGoals = Partial<Record<GoalMetric, number>>
+export type CompanyGoals = Partial<Record<GoalMetric, number>>;
 
 // ---------------------------------------------------------------------------
 
 export type DashboardKpis = {
-  leadsNew: number
-  leadsNewPrev: number
-  proposalsOpen: number
-  proposalsOpenPrev: number
-  overdueCount: number
-  monthRevenue: number
-  monthRevenuePrev: number
-  pipelineValue: number
-  conversionRate: number // 0..1
-  conversionRatePrev: number
-}
+  leadsNew: number;
+  leadsNewPrev: number;
+  proposalsOpen: number;
+  proposalsOpenPrev: number;
+  overdueCount: number;
+  monthRevenue: number;
+  monthRevenuePrev: number;
+  pipelineValue: number;
+  conversionRate: number; // 0..1
+  conversionRatePrev: number;
+};
 
 export type AvisosData = {
-  reminders: ReminderRow[]
-  overdueInvoices: OverdueInvoiceRow[]
-  certExpiresAt: string | null
-}
+  reminders: ReminderRow[];
+  overdueInvoices: OverdueInvoiceRow[];
+  certExpiresAt: string | null;
+};
 
 export type ActionCenterItem = {
-  id: string
-  kind: 'task' | 'lead' | 'proposal' | 'invoice'
-  title: string
-  detail: string
-  href: string
-  actionLabel: string
-  severity: 'urgent' | 'high' | 'normal'
-  occurredAt: string | null
-}
+  id: string;
+  kind: "task" | "lead" | "proposal" | "invoice";
+  title: string;
+  detail: string;
+  href: string;
+  actionLabel: string;
+  severity: "urgent" | "high" | "normal";
+  occurredAt: string | null;
+};
 
 export type ActionCenterData = {
-  items: ActionCenterItem[]
-  total: number
-}
+  items: ActionCenterItem[];
+  total: number;
+};
 
 /**
  * "Tu día" — the personal, action-oriented layer of the dashboard. Surfaces
@@ -118,36 +118,36 @@ export type ActionCenterData = {
  * they own that need follow-up, and unassigned leads they can claim.
  */
 export type MyTaskRow = {
-  id: string
-  title: string
-  kind: 'task' | 'reminder'
-  status: TaskStatus
-  priority: TaskPriority
-  due_date: string | null
-  action_at: string | null
-  contextLabel: string | null // project or lead name the task belongs to
-  assigneeName: string | null
-}
+  id: string;
+  title: string;
+  kind: "task" | "reminder";
+  status: TaskStatus;
+  priority: TaskPriority;
+  due_date: string | null;
+  action_at: string | null;
+  contextLabel: string | null; // project or lead name the task belongs to
+  assigneeName: string | null;
+};
 
 export type ActionLeadRow = {
-  id: string
-  name: string
+  id: string;
+  name: string;
   /** Optional short display name. Falls back to `name` when null. */
-  alias: string | null
-  company: string | null
-  phone: string | null
-  email: string | null
-  status: LeadStatus
+  alias: string | null;
+  company: string | null;
+  phone: string | null;
+  email: string | null;
+  status: LeadStatus;
   /** Timestamp used for relative time: last update (my leads) or creation (unassigned). */
-  since: string
-  assigneeName: string | null
-}
+  since: string;
+  assigneeName: string | null;
+};
 
 export type MyDayData = {
-  tasks: MyTaskRow[]
-  myLeads: ActionLeadRow[]
-  unassignedLeads: ActionLeadRow[]
-}
+  tasks: MyTaskRow[];
+  myLeads: ActionLeadRow[];
+  unassignedLeads: ActionLeadRow[];
+};
 
 /**
  * Snapshot of Accounts Receivable for the dashboard tile: total outstanding
@@ -155,22 +155,22 @@ export type MyDayData = {
  * collected within the current calendar month.
  */
 export type AccountsReceivable = {
-  pendingTotal: number
-  pendingCount: number
-  overdueTotal: number
-  overdueCount: number
-  paidMonthTotal: number
-  paidMonthCount: number
-}
+  pendingTotal: number;
+  pendingCount: number;
+  overdueTotal: number;
+  overdueCount: number;
+  paidMonthTotal: number;
+  paidMonthCount: number;
+};
 
 /**
  * Current-month finance snapshot for the dashboard tile: invoiced revenue,
  * registered expenses, the resulting net and the dominant expense category.
  */
 export type MonthFinanceSummary = {
-  revenueMonth: number
-  expenseMonth: number
-  netMonth: number
-  margin: number | null
-  topCategory: { category: string; label: string; total: number } | null
-}
+  revenueMonth: number;
+  expenseMonth: number;
+  netMonth: number;
+  margin: number | null;
+  topCategory: { category: string; label: string; total: number } | null;
+};

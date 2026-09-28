@@ -7,122 +7,122 @@ import {
   Phone,
   Receipt as ReceiptText,
   StickyNote,
-} from 'lucide-react'
-import Link from 'next/link'
+} from "lucide-react";
+import Link from "next/link";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { MemberLabel } from '@/components/ui/member-avatar'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MemberLabel } from "@/components/ui/member-avatar";
 import {
   excerptInteractionBody,
   groupResendInteractions,
   interactionDate,
   isLowValueInteraction,
-} from '@/lib/leads/interaction-utils'
+} from "@/lib/leads/interaction-utils";
 import type {
   LeadDetailInteraction,
   LeadRelatedInvoice,
   LeadRelatedProposal,
   LeadRelatedTask,
-} from '@/lib/leads/types'
-import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
+} from "@/lib/leads/types";
+import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
 
-import { CallInteractionDetails } from './call-interaction-details'
-import { DeleteLeadInteractionButton } from './delete-lead-interaction-button'
-import { EmailDeliveryStatuses } from './email-delivery-statuses'
-import { LeadInteractionDetails } from './lead-interaction-details'
+import { CallInteractionDetails } from "./call-interaction-details";
+import { DeleteLeadInteractionButton } from "./delete-lead-interaction-button";
+import { EmailDeliveryStatuses } from "./email-delivery-statuses";
+import { LeadInteractionDetails } from "./lead-interaction-details";
 
 const INTERACTION_LABEL: Record<string, string> = {
-  email_sent: 'Email enviado',
-  email_received: 'Email recibido',
-  email_delivered: 'Email entregado',
-  email_opened: 'Email abierto',
-  email_clicked: 'Email con clic',
-  email_bounced: 'Email rebotado',
-  email_complained: 'Email marcado como spam',
-  email_scheduled: 'Email programado',
-  email_delivery_delayed: 'Entrega de email retrasada',
-  email_failed: 'Error al enviar el email',
-  email_suppressed: 'Email suprimido',
-  call: 'Llamada',
-  meeting: 'Reunión',
-  note: 'Nota',
-  owner_change: 'Responsable cambiado',
-  status_change: 'Cambio de estado',
-  portal_view: 'Portal visto',
-  portal_accept: 'Propuesta aceptada',
-  portal_reject: 'Propuesta rechazada',
-}
+  email_sent: "Email enviado",
+  email_received: "Email recibido",
+  email_delivered: "Email entregado",
+  email_opened: "Email abierto",
+  email_clicked: "Email con clic",
+  email_bounced: "Email rebotado",
+  email_complained: "Email marcado como spam",
+  email_scheduled: "Email programado",
+  email_delivery_delayed: "Entrega de email retrasada",
+  email_failed: "Error al enviar el email",
+  email_suppressed: "Email suprimido",
+  call: "Llamada",
+  meeting: "Reunión",
+  note: "Nota",
+  owner_change: "Responsable cambiado",
+  status_change: "Cambio de estado",
+  portal_view: "Portal visto",
+  portal_accept: "Propuesta aceptada",
+  portal_reject: "Propuesta rechazada",
+};
 
 type InteractionEvent = {
-  kind: 'interaction'
-  id: string
-  date: string
-  label: string
-  interaction: LeadDetailInteraction
-  statuses: string[]
-}
+  kind: "interaction";
+  id: string;
+  date: string;
+  label: string;
+  interaction: LeadDetailInteraction;
+  statuses: string[];
+};
 
 type RecordEvent = {
-  kind: 'record'
-  id: string
-  date: string
-  label: string
-  detail: string | null
-  href: string
-  icon: typeof Mail
-}
+  kind: "record";
+  id: string;
+  date: string;
+  label: string;
+  detail: string | null;
+  href: string;
+  icon: typeof Mail;
+};
 
-type ActivityEvent = InteractionEvent | RecordEvent
+type ActivityEvent = InteractionEvent | RecordEvent;
 
 type LeadActivityFeedProps = {
-  leadId: string
-  leadEmail: string | null
-  leadLanguage?: string | null
-  canEdit: boolean
-  aiEnabled: boolean
-  interactions: LeadDetailInteraction[]
-  proposals: LeadRelatedProposal[]
-  invoices: LeadRelatedInvoice[]
-  tasks: LeadRelatedTask[]
-}
+  leadId: string;
+  leadEmail: string | null;
+  leadLanguage?: string | null;
+  canEdit: boolean;
+  aiEnabled: boolean;
+  interactions: LeadDetailInteraction[];
+  proposals: LeadRelatedProposal[];
+  invoices: LeadRelatedInvoice[];
+  tasks: LeadRelatedTask[];
+};
 
 function interactionIcon(type: string) {
-  if (type === 'call') return Phone
-  if (type === 'note') return StickyNote
-  if (type.startsWith('email_')) return Mail
-  if (type === 'meeting') return Calendar
-  return MessageSquare
+  if (type === "call") return Phone;
+  if (type === "note") return StickyNote;
+  if (type.startsWith("email_")) return Mail;
+  if (type === "meeting") return Calendar;
+  return MessageSquare;
 }
 
 /** Trims the interaction body (HTML for emails, plain text otherwise) for the feed. */
 function excerpt(body: string | null, max = 160): string | null {
-  return excerptInteractionBody(body, max)
+  return excerptInteractionBody(body, max);
 }
 
 function dayKey(value: string) {
-  const date = new Date(value)
-  return [date.getFullYear(), date.getMonth(), date.getDate()].join('-')
+  const date = new Date(value);
+  return [date.getFullYear(), date.getMonth(), date.getDate()].join("-");
 }
 
 function dayLabel(value: string, now = new Date()) {
-  const date = new Date(value)
-  const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-  const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
-  const elapsedDays = Math.round((currentDay - eventDay) / 86_400_000)
-  if (elapsedDays === 0) return 'Hoy'
-  if (elapsedDays === 1) return 'Ayer'
-  return formatDate(value)
+  const date = new Date(value);
+  const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const elapsedDays = Math.round((currentDay - eventDay) / 86_400_000);
+  if (elapsedDays === 0) return "Hoy";
+  if (elapsedDays === 1) return "Ayer";
+  return formatDate(value);
 }
 
 function groupEventsByDay(events: ActivityEvent[]) {
-  const groups = new Map<string, { label: string; events: ActivityEvent[] }>()
+  const groups = new Map<string, { label: string; events: ActivityEvent[] }>();
   for (const event of events) {
-    const key = dayKey(event.date)
-    const current = groups.get(key)
-    if (current) current.events.push(event)
-    else groups.set(key, { label: dayLabel(event.date), events: [event] })
+    const key = dayKey(event.date);
+    const current = groups.get(key);
+    if (current) current.events.push(event);
+    else groups.set(key, { label: dayLabel(event.date), events: [event] });
   }
-  return [...groups.entries()].map(([key, group]) => ({ key, ...group }))
+  return [...groups.entries()].map(([key, group]) => ({ key, ...group }));
 }
 
 function buildEvents({
@@ -132,82 +132,82 @@ function buildEvents({
   tasks,
 }: Pick<
   LeadActivityFeedProps,
-  'interactions' | 'proposals' | 'invoices' | 'tasks'
+  "interactions" | "proposals" | "invoices" | "tasks"
 >): ActivityEvent[] {
   const interactionEvents: ActivityEvent[] = groupResendInteractions(interactions).map(
     ({ interaction, latestInteraction, statuses }) => ({
-      kind: 'interaction' as const,
+      kind: "interaction" as const,
       id: `interaction-${interaction.id}`,
       date: interactionDate(latestInteraction),
       label: interaction.resend_email_id
-        ? statuses.includes('email_received')
-          ? 'Email recibido'
-          : 'Email enviado'
+        ? statuses.includes("email_received")
+          ? "Email recibido"
+          : "Email enviado"
         : (INTERACTION_LABEL[interaction.type] ?? interaction.type),
       interaction,
       statuses,
     }),
-  )
+  );
 
   const proposalEvents: ActivityEvent[] = proposals.flatMap((item) => {
-    const date = item.responded_at ?? item.viewed_at ?? item.sent_at
-    if (!date) return []
+    const date = item.responded_at ?? item.viewed_at ?? item.sent_at;
+    if (!date) return [];
     return [
       {
-        kind: 'record' as const,
+        kind: "record" as const,
         id: `proposal-${item.id}`,
         date,
-        label: item.status === 'accepted' ? 'Propuesta aceptada' : 'Propuesta en seguimiento',
+        label: item.status === "accepted" ? "Propuesta aceptada" : "Propuesta en seguimiento",
         detail: [
-          item.number ?? 'Propuesta',
+          item.number ?? "Propuesta",
           item.total != null ? formatEUR(Number(item.total)) : null,
         ]
           .filter(Boolean)
-          .join(' · '),
+          .join(" · "),
         href: `/proposals/${item.id}`,
         icon: FileSignature,
       },
-    ]
-  })
+    ];
+  });
 
   const invoiceEvents: ActivityEvent[] = invoices.flatMap((item) => {
-    if (!item.issue_date) return []
+    if (!item.issue_date) return [];
     return [
       {
-        kind: 'record' as const,
+        kind: "record" as const,
         id: `invoice-${item.id}`,
         date: item.issue_date,
-        label: item.status === 'overdue' ? 'Factura vencida' : 'Factura emitida',
+        label: item.status === "overdue" ? "Factura vencida" : "Factura emitida",
         detail: [
-          item.full_number ?? 'Factura',
+          item.full_number ?? "Factura",
           item.total != null ? formatEUR(Number(item.total)) : null,
         ]
           .filter(Boolean)
-          .join(' · '),
+          .join(" · "),
         href: `/invoices/${item.id}`,
         icon: ReceiptText,
       },
-    ]
-  })
+    ];
+  });
 
   const taskEvents: ActivityEvent[] = tasks.flatMap((item) => {
-    if (!item.due_date) return []
+    if (!item.due_date) return [];
     return [
       {
-        kind: 'record' as const,
+        kind: "record" as const,
         id: `task-${item.id}`,
         date: item.due_date,
-        label: item.status === 'done' ? 'Tarea completada' : 'Tarea pendiente',
+        label: item.status === "done" ? "Tarea completada" : "Tarea pendiente",
         detail: item.title,
         href: `/tasks/${item.id}`,
         icon: CheckSquare2,
       },
-    ]
-  })
+    ];
+  });
 
   return [...interactionEvents, ...proposalEvents, ...invoiceEvents, ...taskEvents].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  )
+  );
 }
 
 /**
@@ -215,9 +215,9 @@ function buildEvents({
  * "view full history" link adds value elsewhere.
  */
 export function countActivityEvents(
-  props: Pick<LeadActivityFeedProps, 'interactions' | 'proposals' | 'invoices' | 'tasks'>,
+  props: Pick<LeadActivityFeedProps, "interactions" | "proposals" | "invoices" | "tasks">,
 ): number {
-  return buildEvents(props).length
+  return buildEvents(props).length;
 }
 
 /** Unified chronological feed: interactions plus proposal, invoice and task milestones. */
@@ -232,8 +232,8 @@ export function LeadActivityFeed({
   invoices,
   tasks,
 }: LeadActivityFeedProps) {
-  const events = buildEvents({ interactions, proposals, invoices, tasks })
-  const groups = groupEventsByDay(events)
+  const events = buildEvents({ interactions, proposals, invoices, tasks });
+  const groups = groupEventsByDay(events);
 
   return (
     <Card>
@@ -262,7 +262,7 @@ export function LeadActivityFeed({
                 </p>
                 <ol className="divide-y divide-border">
                   {group.events.map((event) =>
-                    event.kind === 'record' ? (
+                    event.kind === "record" ? (
                       <RecordRow key={event.id} event={event} />
                     ) : isLowValueInteraction(event.interaction.type) ? (
                       <CompactInteractionRow key={event.id} event={event} />
@@ -285,11 +285,11 @@ export function LeadActivityFeed({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function RecordRow({ event }: { event: RecordEvent }) {
-  const Icon = event.icon
+  const Icon = event.icon;
   return (
     <li className="py-2.5">
       <Link href={event.href} className="flex items-start gap-3 hover:opacity-75">
@@ -307,7 +307,7 @@ function RecordRow({ event }: { event: RecordEvent }) {
         </span>
       </Link>
     </li>
-  )
+  );
 }
 
 function InteractionRow({
@@ -318,17 +318,17 @@ function InteractionRow({
   canEdit,
   aiEnabled,
 }: {
-  event: InteractionEvent
-  leadId: string
-  leadEmail: string | null
-  leadLanguage?: string | null
-  canEdit: boolean
-  aiEnabled: boolean
+  event: InteractionEvent;
+  leadId: string;
+  leadEmail: string | null;
+  leadLanguage?: string | null;
+  canEdit: boolean;
+  aiEnabled: boolean;
 }) {
-  const interaction = event.interaction
-  const type = interaction.type
-  const snippet = excerpt(interaction.body)
-  const Icon = interactionIcon(type)
+  const interaction = event.interaction;
+  const type = interaction.type;
+  const snippet = excerpt(interaction.body);
+  const Icon = interactionIcon(type);
 
   return (
     <li className="py-2.5">
@@ -360,7 +360,7 @@ function InteractionRow({
             />
           ) : null}
           <div className="flex flex-wrap justify-end gap-0.5">
-            {type === 'call' ? (
+            {type === "call" ? (
               <CallInteractionDetails interaction={interaction} leadId={leadId} canEdit={canEdit} />
             ) : (
               <LeadInteractionDetails
@@ -373,7 +373,7 @@ function InteractionRow({
                 aiEnabled={aiEnabled}
               />
             )}
-            {type === 'note' && canEdit ? (
+            {type === "note" && canEdit ? (
               <DeleteLeadInteractionButton
                 leadId={leadId}
                 interactionId={interaction.id}
@@ -384,7 +384,7 @@ function InteractionRow({
         </div>
       </article>
     </li>
-  )
+  );
 }
 
 /** Bookkeeping event (status/owner change, portal signals): one muted inline line. */
@@ -403,5 +403,5 @@ function CompactInteractionRow({ event }: { event: InteractionEvent }) {
         ) : null}
       </div>
     </li>
-  )
+  );
 }

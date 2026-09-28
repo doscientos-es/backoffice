@@ -1,30 +1,30 @@
-'use client'
+"use client";
 
-import { Download, FileText as FileEdit } from 'lucide-react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { Download, FileText as FileEdit } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
-import { IconButton } from '@/components/ui/icon-button'
+import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
+import { IconButton } from "@/components/ui/icon-button";
 
-import type { InvoiceActionInvoice } from './invoice-action-contracts'
-import { aeatDeliveryLabel, getInvoiceActionPolicy } from './invoice-action-policy'
-import { InvoiceIssuanceAction } from './invoice-issuance-action'
-import { InvoiceMoreActions } from './invoice-more-actions'
-import { InvoicePaymentActions } from './invoice-payment-actions'
-import { RegularizeAeatButton } from './regularize-aeat-button'
-import { SendAeatButton } from './send-aeat-button'
-import { SendInvoiceButton } from './send-invoice-button'
-import { useInvoiceStatusVerification } from './use-invoice-status-verification'
+import type { InvoiceActionInvoice } from "./invoice-action-contracts";
+import { aeatDeliveryLabel, getInvoiceActionPolicy } from "./invoice-action-policy";
+import { InvoiceIssuanceAction } from "./invoice-issuance-action";
+import { InvoiceMoreActions } from "./invoice-more-actions";
+import { InvoicePaymentActions } from "./invoice-payment-actions";
+import { RegularizeAeatButton } from "./regularize-aeat-button";
+import { SendAeatButton } from "./send-aeat-button";
+import { SendInvoiceButton } from "./send-invoice-button";
+import { useInvoiceStatusVerification } from "./use-invoice-status-verification";
 
 interface Props {
-  invoice: InvoiceActionInvoice
-  clientEmail?: string | null
-  clientPhone?: string | null
+  invoice: InvoiceActionInvoice;
+  clientEmail?: string | null;
+  clientPhone?: string | null;
   /** Timestamp of the most recent delivery to the client, if any. */
-  lastSentAt?: string | null
-  recipientFiscalReady?: boolean
+  lastSentAt?: string | null;
+  recipientFiscalReady?: boolean;
 }
 
 /**
@@ -39,16 +39,16 @@ export function InvoiceActions({
   lastSentAt = null,
   recipientFiscalReady,
 }: Props) {
-  const router = useRouter()
-  const feedback = useFormFeedback()
-  const policy = getInvoiceActionPolicy(invoice)
-  const { challenge, verifyStatusChange } = useInvoiceStatusVerification(invoice.id, feedback)
-  const [sendDialogOpen, setSendDialogOpen] = useState(false)
+  const router = useRouter();
+  const feedback = useFormFeedback();
+  const policy = getInvoiceActionPolicy(invoice);
+  const { challenge, verifyStatusChange } = useInvoiceStatusVerification(invoice.id, feedback);
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
 
   return (
     <div className="flex w-fit max-w-full min-w-0 flex-col items-end gap-2">
       {challenge}
-      {feedback.state.status !== 'idle' ? (
+      {feedback.state.status !== "idle" ? (
         <div className="max-w-full min-w-0">
           <FormFeedback state={feedback.state} className="max-w-full min-w-0" />
         </div>
@@ -114,7 +114,7 @@ export function InvoiceActions({
             isRegularization={invoice.is_regularization_pending}
             label={
               invoice.is_regularization_pending
-                ? 'Enviar regularización a AEAT'
+                ? "Enviar regularización a AEAT"
                 : aeatDeliveryLabel(invoice.verifactu_status)
             }
           />
@@ -127,5 +127,5 @@ export function InvoiceActions({
         ) : null}
       </div>
     </div>
-  )
+  );
 }

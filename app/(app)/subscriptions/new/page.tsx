@@ -1,27 +1,27 @@
-import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { BackLink } from '@/components/layout/back-link'
-import { PageHeader } from '@/components/layout/page-header'
-import { Card, CardContent } from '@/components/ui/card'
-import { SubmitButton } from '@/components/ui/submit-button'
-import { requireUser } from '@/lib/auth'
-import { createServerClient } from '@/lib/supabase/server'
+import { BackLink } from "@/components/layout/back-link";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { requireUser } from "@/lib/auth";
+import { createServerClient } from "@/lib/supabase/server";
 
-import { createSubscription } from '../actions'
-import { SubscriptionFormFields } from '../subscription-form-fields'
+import { createSubscription } from "../actions";
+import { SubscriptionFormFields } from "../subscription-form-fields";
 
-export const metadata: Metadata = { title: 'Nueva suscripción · doscientos' }
+export const metadata: Metadata = { title: "Nueva suscripción · doscientos" };
 
 export default async function NewSubscriptionPage() {
-  const user = await requireUser()
-  if (user.role === 'viewer') redirect('/subscriptions')
+  const user = await requireUser();
+  if (user.role === "viewer") redirect("/subscriptions");
 
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
   const [{ data: clients }, { data: projects }] = await Promise.all([
-    supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
-    supabase.from('projects').select('id, name').is('deleted_at', null).order('name'),
-  ])
+    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from("projects").select("id, name").is("deleted_at", null).order("name"),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -37,9 +37,9 @@ export default async function NewSubscriptionPage() {
         <CardContent className="pt-6">
           <form
             action={async (fd) => {
-              'use server'
-              const res = await createSubscription(fd)
-              if (res.ok) redirect('/subscriptions')
+              "use server";
+              const res = await createSubscription(fd);
+              if (res.ok) redirect("/subscriptions");
             }}
             className="flex flex-col gap-6"
           >
@@ -55,5 +55,5 @@ export default async function NewSubscriptionPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
