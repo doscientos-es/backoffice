@@ -18,6 +18,57 @@ function isFrameworkError(err: unknown): boolean {
   return typeof digest === "string" && digest.startsWith("NEXT_");
 }
 
+const FRIENDLY_ERRORS: Array<{ codes: string[]; pattern: RegExp; message: string }> = [
+  {
+    codes: ["23505"],
+    pattern: /duplicate key/i,
+    message: "Ya existe un registro con esos datos.",
+  },
+  {
+    codes: ["23503"],
+    pattern: /violates foreign key constraint/i,
+    message: "No se puede completar: hay registros relacionados que lo impiden.",
+  },
+  {
+    codes: ["23502"],
+    pattern: /null value in column/i,
+    message: "Falta un dato obligatorio.",
+  },
+  {
+    codes: ["23514", "22P02"],
+    pattern: /violates check constraint|invalid input syntax/i,
+    message: "Algún dato no tiene un formato válido.",
+  },
+  {
+    codes: ["42501"],
+    pattern: /row-level security|permission denied/i,
+    message: "No tienes permisos para realizar esta acción.",
+  },
+  {
+    codes: ["PGRST116"],
+    pattern: /JSON object requested, multiple \(or no\) rows returned/i,
+    message: "No se encontró el registro; puede que se haya eliminado.",
+  },
+  {
+    codes: [],
+    pattern: /fetch failed|ECONNREFUSED|ECONNRESET|ETIMEDOUT|network error/i,
+    message: "Problema de conexión. Inténtalo de nuevo en unos segundos.",
+  },
+];
+
+/** Translates raw database/network errors into actionable Spanish messages. */
+export function friendlyErrorMessage(err: unknown): string {
+  const raw =
+    err && typeof err === "object" ? (err as { message?: unknown; code?: unknown }) : null;
+  const message = typeof raw?.message === "string" ? raw.message : "";
+  const code = typeof raw?.code === "string" ? raw.code : "";
+  const match = FRIENDLY_ERRORS.find(
+    (entry) => (code && entry.codes.includes(code)) || (message && entry.pattern.test(message)),
+  );
+  if (match) return match.message;
+  return message || "Algo ha fallado. Inténtalo de nuevo.";
+}
+
 export type ActionContext = { user: CurrentUser };
 
 export type DefineActionOptions<TSchema extends z.ZodTypeAny, TPayload> = {
@@ -89,9 +140,8 @@ export function defineAction<TSchema extends z.ZodTypeAny, TPayload>(
       if (isVersionConflictError(err)) {
         return { ok: false, code: "conflict", error: err.message } as ActionResult<TPayload>;
       }
-      const message = err instanceof Error ? err.message : "Error desconocido";
       log.error({ err }, "action failed");
-      return fail(message);
+      return fail(friendlyErrorMessage(err));
     }
   };
 }

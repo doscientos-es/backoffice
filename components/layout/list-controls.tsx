@@ -15,6 +15,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { startNavProgress } from "@/components/layout/nav-progress";
 import { Button } from "@/components/ui/button";
 import { EntityCombobox } from "@/components/ui/entity-combobox";
 import { Input } from "@/components/ui/input";
@@ -249,13 +250,31 @@ export function ListControls({
     setSavedViewName("");
   }, [savedViewsConfig]);
 
+  const navigate = useCallback(
+    (next: URLSearchParams) => {
+      const query = next.toString();
+      startNavProgress();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [pathname, router],
+  );
+
   // Keep the latest router-related callbacks in a ref so the debounce effect
   // can depend only on `q` without re-creating the timeout on every render.
-  const commitRef = useRef<(value: string) => void>(() => {});
+  const commitRef = useRef<(value: string) => void>(() => { });
   commitRef.current = (value: string) => {
-    const next = updateParams(params, { [searchKey]: value, page: null });
-    const query = next.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    navigate(updateParams(params, { [searchKey]: value, page: null }));
+  };
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (q !== urlQ) commitRef.current(q);
+    } else if (event.key === "Escape" && q) {
+      event.preventDefault();
+      event.stopPropagation();
+      setQ("");
+    }
   };
 
   // Sync local input when the URL changes externally (back/forward, links).
@@ -272,28 +291,24 @@ export function ListControls({
 
   const setFilter = useCallback(
     (key: string, value: string) => {
-      const next = updateParams(params, { [key]: value || null, page: null });
-      const query = next.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      navigate(updateParams(params, { [key]: value || null, page: null }));
     },
-    [params, pathname, router],
+    [navigate, params],
   );
 
   const setPage = useCallback(
     (page: number) => {
-      const next = updateParams(params, { page: page <= 1 ? null : String(page) });
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+      navigate(updateParams(params, { page: page <= 1 ? null : String(page) }));
     },
-    [params, pathname, router],
+    [navigate, params],
   );
 
   const clearFilters = useCallback(() => {
     const next = new URLSearchParams(params.toString());
     for (const key of [...managedFilterKeys, "page"]) next.delete(key);
     setQ("");
-    const query = next.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [managedFilterKeys, params, pathname, router]);
+    navigate(next);
+  }, [managedFilterKeys, navigate, params]);
 
   const applySavedView = useCallback(
     (view: SavedView) => {
@@ -303,10 +318,9 @@ export function ListControls({
       for (const [key, value] of Object.entries(view.filters)) next.set(key, value);
       next.delete("page");
       setQ(view.filters[searchKey] ?? "");
-      const query = next.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      navigate(next);
     },
-    [params, pathname, router, savedViewsConfig, searchKey],
+    [navigate, params, savedViewsConfig, searchKey],
   );
 
   const saveCurrentView = useCallback(() => {
@@ -343,14 +357,14 @@ export function ListControls({
 
   const hasActiveFilters = managedFilterKeys.some((key) => Boolean(params.get(key)));
   const isPanel = presentation === "panel";
-  const activeFilters = filters.flatMap((filter) => {
+  const avatarFilters = filters.filter((filter) => filter.display === "avatars");
+  const secondaryFilters = filters.filter((filter) => filter.display !== "avatars");
+  const activeSecondaryFilters = secondaryFilters.flatMap((filter) => {
     const value = params.get(filter.key);
     if (!value) return [];
     const option = filter.options.find((item) => item.value === value);
     return option ? [{ key: filter.key, label: `${filter.label}: ${option.label}` }] : [];
   });
-  const avatarFilters = filters.filter((filter) => filter.display === "avatars");
-  const secondaryFilters = filters.filter((filter) => filter.display !== "avatars");
   const activeSecondaryFilterCount = secondaryFilters.filter((filter) =>
     Boolean(params.get(filter.key)),
   ).length;
@@ -398,7 +412,9 @@ export function ListControls({
                 type="search"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
                 placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
                 className="h-9 rounded-lg border-border bg-background pr-8 pl-10! text-sm shadow-xs focus-visible:ring-primary/25"
               />
               {q ? (
@@ -600,6 +616,23 @@ export function ListControls({
             ) : null}
           </div>
         </div>
+        {activeSecondaryFilters.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-border/70 px-3 py-2 sm:px-4">
+            <span className="mr-1 text-xs text-muted-foreground">Activos:</span>
+            {activeSecondaryFilters.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={() => setFilter(filter.key, "")}
+                aria-label={`Quitar filtro ${filter.label}`}
+                className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
+                {filter.label}
+                <X className="size-3" aria-hidden />
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -638,7 +671,9 @@ export function ListControls({
               type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               placeholder={searchPlaceholder}
+              aria-label={searchPlaceholder}
               className={cn(
                 "text-sm",
                 isPanel
@@ -681,7 +716,7 @@ export function ListControls({
                   className={cn(
                     "flex items-center gap-1",
                     isPanel &&
-                      "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
+                    "min-h-9 w-full rounded-lg border border-border bg-background px-2 shadow-xs lg:w-auto",
                   )}
                 >
                   <span className="mr-0.5 text-xs font-medium text-muted-foreground">
@@ -731,7 +766,7 @@ export function ListControls({
                 className={cn(
                   "max-w-45 min-w-30 flex-1 text-xs sm:flex-none",
                   isPanel &&
-                    "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
+                  "h-9 w-full max-w-none rounded-lg border-border bg-background shadow-xs lg:w-auto lg:max-w-45",
                   !isPanel && "h-8",
                 )}
               />
@@ -821,36 +856,6 @@ export function ListControls({
           ) : null}
         </div>
       </div>
-
-      {isPanel && activeFilters.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-1.5 border-t border-border/70 px-3 py-2 sm:px-4">
-          <span className="mr-1 text-xs text-muted-foreground">Activos:</span>
-          {urlQ ? (
-            <button
-              type="button"
-              onClick={() => {
-                setQ("");
-                setFilter(searchKey, "");
-              }}
-              className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-            >
-              Búsqueda: {urlQ}
-              <X className="size-3" aria-hidden />
-            </button>
-          ) : null}
-          {activeFilters.map((filter) => (
-            <button
-              key={filter.key}
-              type="button"
-              onClick={() => setFilter(filter.key, "")}
-              className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-            >
-              {filter.label}
-              <X className="size-3" aria-hidden />
-            </button>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }

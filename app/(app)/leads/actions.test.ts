@@ -287,7 +287,7 @@ describe("createLead", () => {
     db.queryError = "duplicate key";
     const result = await createLead(lead());
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toContain("duplicate key");
+    if (!result.ok) expect(result.error).toBe("Ya existe un registro con esos datos.");
   });
 
   it("fails validation when name is missing", async () => {

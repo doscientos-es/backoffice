@@ -27,6 +27,7 @@ import {
 } from "react";
 
 import { markNotificationsRead } from "@/app/(app)/tasks/comment-actions";
+import { startNavProgress } from "@/components/layout/nav-progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -283,7 +284,10 @@ export function NotificationsBell({ memberId }: { memberId: string }) {
         await fetchNotifs();
       });
     }
-    if (n.link) router.push(n.link);
+    if (n.link) {
+      startNavProgress(n.link);
+      router.push(n.link);
+    }
   }
 
   return (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
+import { startNavProgress } from "@/components/layout/nav-progress";
 import { OPEN_SHORTCUTS_DIALOG_EVENT } from "@/components/layout/shortcuts-dialog";
 import { CREATE_SHORTCUTS, findShortcut, NAV_SHORTCUTS } from "@/lib/navigation/shortcuts";
 
@@ -45,7 +46,12 @@ export function KeyboardShortcuts() {
 
     const onKey = (e: KeyboardEvent) => {
       // Respeta combinaciones del SO/navegador (Ctrl+C, Cmd+K, Alt+←, …).
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+
+      if (e.key === "Escape" && prefixRef.current) {
+        clear();
+        return;
+      }
 
       const target = e.target as HTMLElement | null;
       if (
@@ -82,6 +88,7 @@ export function KeyboardShortcuts() {
       const match = findShortcut(list, key);
       if (match) {
         e.preventDefault();
+        startNavProgress(match.href);
         router.push(match.href);
       }
       clear();

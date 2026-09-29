@@ -18,13 +18,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   type FilterConfig,
   ListControls,
   type ListControlsProps,
 } from "@/components/layout/list-controls";
+import { startNavProgress } from "@/components/layout/nav-progress";
 import { type BreadcrumbEntry, PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,19 +40,19 @@ export type ListAlign = "left" | "right";
 export type ListHeader =
   | string
   | {
-      label: string;
-      /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
-      sortable?: boolean;
-      /**
-       * Clave de columna DB para ordenación en el servidor.
-       * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
-       * Tiene preferencia sobre `sortable`.
-       */
-      sortKey?: string;
-      align?: ListAlign;
-      /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
-      minWidth?: string;
-    };
+    label: string;
+    /** Activa la ordenación cliente (requiere `sortValues` en las filas). */
+    sortable?: boolean;
+    /**
+     * Clave de columna DB para ordenación en el servidor.
+     * Al hacer clic actualiza los URL params `sort` + `dir` y resetea `page`.
+     * Tiene preferencia sobre `sortable`.
+     */
+    sortKey?: string;
+    align?: ListAlign;
+    /** Ancho mínimo CSS para la columna (ej. "8rem"). Evita wrapping en celdas cortas. */
+    minWidth?: string;
+  };
 
 export type ListRow = {
   id: string;
@@ -123,6 +124,16 @@ function headerAlign(h: ListHeader, fallback?: ListAlign): ListAlign {
 }
 function headerMinWidth(h: ListHeader): string | undefined {
   return typeof h !== "string" ? h.minWidth : undefined;
+}
+function rowLabel(row: ListRow): string {
+  const first = row.cells[0];
+  if (typeof first === "string" || typeof first === "number") return String(first);
+  const fallback = row.csvValues?.[0] ?? row.sortValues?.[0];
+  return fallback != null && fallback !== "" ? String(fallback) : "fila";
+}
+function hasTextSelection(): boolean {
+  const selection = typeof window !== "undefined" ? window.getSelection() : null;
+  return !!selection && !selection.isCollapsed && selection.toString().trim().length > 0;
 }
 
 function exportToCSV(headers: ListHeader[], rows: ListRow[], filename: string) {
@@ -210,10 +221,57 @@ export function ListPage({
       next.set("sort", sortKey);
       next.set("dir", newDir);
       next.delete("page");
+      startNavProgress();
       router.replace(`${pathname}?${next.toString()}`, { scroll: false });
     },
     [router, pathname, urlParams, serverSortKey, serverSortDir],
   );
+
+  const filterKeys = useMemo(
+    () => [
+      ...new Set([
+        ...(searchKey ? [searchKey] : []),
+        ...(filters ?? []).map((filter) => filter.key),
+        ...(savedViews?.filterKeys ?? []),
+      ]),
+    ],
+    [filters, savedViews?.filterKeys, searchKey],
+  );
+  const hasActiveFilters = filterKeys.some((key) => Boolean(urlParams.get(key)));
+
+  const clearAllFilters = useCallback(() => {
+    const next = new URLSearchParams(urlParams.toString());
+    for (const key of [...filterKeys, "page"]) next.delete(key);
+    const query = next.toString();
+    startNavProgress();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [filterKeys, pathname, router, urlParams]);
+
+  const openRow = useCallback(
+    (row: ListRow, newTab: boolean) => {
+      if (onRowClick) {
+        onRowClick(row);
+        return;
+      }
+      if (!row.href) return;
+      if (newTab) {
+        window.open(row.href, "_blank", "noopener");
+        return;
+      }
+      startNavProgress(row.href);
+      router.push(row.href);
+    },
+    [onRowClick, router],
+  );
+
+  // Drop selections that are no longer present (filters, pagination, deletions).
+  useEffect(() => {
+    const ids = new Set(rows.map((row) => row.id));
+    setSelectedIds((current) => {
+      const next = current.filter((id) => ids.has(id));
+      return next.length === current.length ? current : next;
+    });
+  }, [rows]);
 
   // ── Column definitions ──────────────────────────────────────────────────
   const columns = useMemo<ColumnDef<ListRow>[]>(
@@ -405,13 +463,31 @@ export function ListPage({
           ) : null}
 
           {error ? (
-            <p className="px-5 py-6 text-sm text-destructive">{error}</p>
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 px-5 py-6"
+            >
+              <p className="text-sm text-destructive">{error}</p>
+              <Button size="sm" variant="outline" onClick={() => router.refresh()}>
+                Reintentar
+              </Button>
+            </div>
           ) : rows.length === 0 ? (
             <Empty className="border-0 py-10">
               <EmptyHeader>
-                <EmptyTitle>{empty}</EmptyTitle>
+                <EmptyTitle>
+                  {hasActiveFilters ? "No hay resultados con estos filtros" : empty}
+                </EmptyTitle>
               </EmptyHeader>
-              {emptyAction ? <EmptyContent>{emptyAction}</EmptyContent> : null}
+              {hasActiveFilters ? (
+                <EmptyContent>
+                  <Button size="sm" variant="outline" onClick={clearAllFilters}>
+                    Limpiar filtros
+                  </Button>
+                </EmptyContent>
+              ) : emptyAction ? (
+                <EmptyContent>{emptyAction}</EmptyContent>
+              ) : null}
             </Empty>
           ) : (
             <>
@@ -437,6 +513,10 @@ export function ListPage({
                         <th className="w-px px-3 py-3">
                           <input
                             type="checkbox"
+                            ref={(el) => {
+                              if (el)
+                                el.indeterminate = selectedVisibleCount > 0 && !allVisibleSelected;
+                            }}
                             checked={allVisibleSelected}
                             onChange={(event) => toggleVisibleSelection(event.target.checked)}
                             aria-label="Seleccionar esta página"
@@ -476,12 +556,18 @@ export function ListPage({
                             if (
                               event.target instanceof Element &&
                               event.target.closest(
-                                'a, button, input, select, textarea, [role="button"]',
+                                'a, button, input, select, textarea, label, [role="button"]',
                               )
                             )
                               return;
-                            if (onRowClick) onRowClick(row);
-                            else if (row.href) router.push(row.href);
+                            if (hasTextSelection()) return;
+                            openRow(row, event.metaKey || event.ctrlKey);
+                          }}
+                          onAuxClick={(event) => {
+                            if (event.button !== 1 || !row.href || onRowClick) return;
+                            if (event.target instanceof Element && event.target.closest("a"))
+                              return;
+                            openRow(row, true);
                           }}
                           onMouseEnter={() => prefetchRow(row.href)}
                           onFocus={() => prefetchRow(row.href)}
@@ -503,7 +589,7 @@ export function ListPage({
                                       : current.filter((id) => id !== row.id),
                                   );
                                 }}
-                                aria-label={`Seleccionar ${row.id}`}
+                                aria-label={`Seleccionar ${rowLabel(row)}`}
                               />
                             </td>
                           ) : null}
@@ -557,7 +643,11 @@ export function ListPage({
                     {addHref && (
                       <tr>
                         <td
-                          colSpan={table.getFlatHeaders().length + (bulkActions.length > 0 ? 1 : 0)}
+                          colSpan={
+                            table.getFlatHeaders().length +
+                            (bulkActions.length > 0 ? 1 : 0) +
+                            (hasRowActions ? 1 : 0)
+                          }
                           className="px-2 py-1.5"
                         >
                           <Link

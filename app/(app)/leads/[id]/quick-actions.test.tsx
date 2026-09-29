@@ -39,7 +39,7 @@ const props = {
 };
 
 describe("LeadQuickActions", () => {
-  it("shows the compact action groups without a collapsible section", () => {
+  it("shows every action in a flat grid without a collapsible section", () => {
     render(
       <LeadQuickActions
         {...props}
@@ -63,9 +63,7 @@ describe("LeadQuickActions", () => {
     ]) {
       expect(screen.getByRole("button", { name })).not.toBeNull();
     }
-    for (const group of ["Contacto", "Email", "Acciones", "Reunión", "Herramientas"]) {
-      expect(screen.getByText(group)).not.toBeNull();
-    }
+    expect(screen.getByRole("region", { name: "Acciones rápidas" })).not.toBeNull();
     expect(screen.queryByRole("button", { name: /Más acciones/ })).toBeNull();
   });
 

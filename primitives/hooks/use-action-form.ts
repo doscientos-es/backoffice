@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormFeedbackState, useFormFeedback } from "@doscientos/ui";
-import type { FormEvent } from "react";
+import { type FormEvent, useRef } from "react";
 
 import type { ActionFailure, ActionResult } from "../lib/types";
 
@@ -41,19 +41,39 @@ export interface UseActionFormResult {
  * server action: prevent default, snapshot `FormData`, flip to pending, then
  * surface the error or success.
  */
+function isNavigationError(err: unknown): boolean {
+  const digest = (err as { digest?: unknown } | null)?.digest;
+  return typeof digest === "string" && /^NEXT_(REDIRECT|NOT_FOUND|HTTP_ERROR)/.test(digest);
+}
+
 export function useActionForm(
   action: ActionFn,
   options: UseActionFormOptions = {},
 ): UseActionFormResult {
   const feedback = useFormFeedback();
+  const inFlight = useRef(false);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (inFlight.current) return;
+    inFlight.current = true;
     const form = e.currentTarget;
     feedback.setPending();
-    const res = await action(new FormData(form));
+    let res: ActionResult | undefined;
+    try {
+      res = await action(new FormData(form));
+    } catch (err) {
+      if (isNavigationError(err)) throw err;
+      feedback.setError("No se pudo conectar con el servidor. Inténtalo de nuevo.");
+      return;
+    } finally {
+      inFlight.current = false;
+    }
     if (res && !res.ok) {
-      if (options.onFailure?.(res)) return;
+      if (options.onFailure?.(res)) {
+        feedback.reset();
+        return;
+      }
       feedback.setError(res.error);
       return;
     }

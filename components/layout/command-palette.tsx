@@ -34,6 +34,7 @@ import { UnlockForm } from "@/app/(app)/vault/_components/vault-dialogs";
 import { revealVaultSecret } from "@/app/(app)/vault/actions";
 import type { SearchResultItem } from "@/app/api/search/route";
 import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/layout/command-palette-trigger";
+import { startNavProgress } from "@/components/layout/nav-progress";
 import {
   CommandDialog,
   CommandEmpty,
@@ -255,6 +256,7 @@ export function CommandPalette({ role }: { role: MemberRole }) {
   const go = useCallback(
     (href: string) => {
       setOpen(false);
+      startNavProgress(href);
       router.push(href);
     },
     [router],
