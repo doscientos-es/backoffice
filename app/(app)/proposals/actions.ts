@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { ProposalEmail } from "@/components/email";
 import { requireRole, requireUser } from "@/lib/auth";
 import {
   ensureClientForProposal,
@@ -13,11 +12,7 @@ import {
   promoteLeadFromClient,
 } from "@/lib/crm/conversion";
 import { externalAppUrl } from "@/lib/email/app-url";
-import { renderEmail } from "@/lib/email/render";
-import { sendEmail } from "@/lib/email/resend";
 import { publicEnv } from "@/lib/env";
-import { backupProposalToDrive } from "@/lib/google/backup";
-import { sendProposalAcceptedEmail } from "@/lib/integrations/send-proposal-accepted-email";
 import { createProposalDraftInvoices } from "@/lib/invoices/proposal-drafts";
 import { buildLeadStatusPatch } from "@/lib/leads/status-transitions";
 import { scopedLogger } from "@/lib/logger";
@@ -939,6 +934,10 @@ async function renderProposalPreview(
       url: `${appUrl}/p/spec/${spec.portal_token}?lang=${language}`,
     }));
   const portalUrl = `${appUrl}/p/proposal/${portalToken}?lang=${language}`;
+  const [{ ProposalEmail }, { renderEmail }] = await Promise.all([
+    import("@/components/email"),
+    import("@/lib/email/render"),
+  ]);
   const html = await renderEmail(
     ProposalEmail({
       clientName: proposal.clients?.name ?? proposal.leads?.name ?? "Hola",
@@ -1051,6 +1050,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
 
   let mocked = false;
   try {
+    const { sendEmail } = await import("@/lib/email/resend");
     const result = await sendEmail({
       fromName: user.name,
       fromAlias: user.emailAlias ?? "propuestas",
@@ -1223,7 +1223,9 @@ export async function markProposalAsAccepted(
   }
 
   // Best-effort Drive backup — fires as the acting user.
-  void backupProposalToDrive(id, user.email);
+  void import("@/lib/google/backup")
+    .then(({ backupProposalToDrive }) => backupProposalToDrive(id, user.email))
+    .catch((err) => log.warn({ err, proposalId: id }, "proposal_drive_backup_failed"));
 
   try {
     await ensureProjectForProposal(supabase, id);
@@ -1244,6 +1246,9 @@ export async function markProposalAsAccepted(
     log.warn({ err, proposalId: id }, "proposal_invoice_drafts_failed");
   }
 
+  const { sendProposalAcceptedEmail } = await import(
+    "@/lib/integrations/send-proposal-accepted-email"
+  );
   await sendProposalAcceptedEmail(id);
 
   revalidatePath(`/proposals/${id}`);

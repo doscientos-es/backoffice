@@ -8,15 +8,11 @@ import { z } from "zod";
 import { defineAction } from "@/lib/actions/define-action";
 import { VersionConflictError } from "@/lib/concurrency/version-conflict";
 import { externalAppUrl } from "@/lib/email/app-url";
-import { sendEmail } from "@/lib/email/resend";
 import { buildSignatureHtml } from "@/lib/email/signature";
 import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
 import { addEmailTracking } from "@/lib/email/tracking";
 import { isGoogleEnabled, publicEnv, serverEnv } from "@/lib/env";
 import type { CalendarBusySlot } from "@/lib/google/calendar";
-import { findConflicts, insertEvent } from "@/lib/google/calendar";
-import { resolveSubject } from "@/lib/google/client";
-import { listLeadGmailMessages, resolveGmailSyncMailboxes } from "@/lib/google/gmail";
 import { pushMetaQualifiedLeadStage } from "@/lib/integrations/meta-capi";
 import { isAutomaticallyAccessible, summarizeCallOutcomes } from "@/lib/leads/call-qualification";
 import { CALL_SESSION_TTL_HOURS, completeCallSession } from "@/lib/leads/call-session";
@@ -37,7 +33,6 @@ import {
   isLeadClosureStatus,
 } from "@/lib/leads/status-transitions";
 import { scopedLogger } from "@/lib/logger";
-import { dispatchNotifications } from "@/lib/notifications/dispatch";
 import {
   AssignLeadOwnerInput,
   CheckMeetingSlotInput,
@@ -827,6 +822,7 @@ export const sendEmailToLead = defineAction({
     let resendId: string | null = null;
     let mocked = false;
     try {
+      const { sendEmail } = await import("@/lib/email/resend");
       const sent = await sendEmail({
         fromName: user.name,
         fromAlias: user.emailAlias,
@@ -1087,6 +1083,7 @@ export const notifyDueCallReminders = defineAction({
       if (!claimed || !task.lead_id) continue;
       const taskLead = Array.isArray(task.leads) ? task.leads[0] : task.leads;
 
+      const { dispatchNotifications } = await import("@/lib/notifications/dispatch");
       await dispatchNotifications({
         recipientIds: [user.id],
         eventType: "call_pending",
@@ -1403,6 +1400,7 @@ export const syncLeadGmail = defineAction<
     const generalMailboxes = Array.isArray(settings?.gmail_sync_mailboxes)
       ? settings.gmail_sync_mailboxes
       : [];
+    const { listLeadGmailMessages, resolveGmailSyncMailboxes } = await import("@/lib/google/gmail");
     const mailboxes = resolveGmailSyncMailboxes(
       (members ?? []).map((member) => member.email),
       generalMailboxes,
@@ -1590,6 +1588,7 @@ export const assignLeadOwner = defineAction({
     });
 
     if (nextId && nextId !== user.id) {
+      const { dispatchNotifications } = await import("@/lib/notifications/dispatch");
       await dispatchNotifications({
         recipientIds: [nextId],
         actorId: user.id,
@@ -1631,6 +1630,10 @@ export const checkLeadMeetingSlot = defineAction({
     if (!isGoogleEnabled()) return { conflicts: [] };
     const calendarId = serverEnv().GOOGLE_CALENDAR_ID;
     if (!calendarId) return { conflicts: [] };
+    const [{ resolveSubject }, { findConflicts }] = await Promise.all([
+      import("@/lib/google/client"),
+      import("@/lib/google/calendar"),
+    ]);
     const subject = resolveSubject(user.email);
 
     const conflicts = await findConflicts({
@@ -1659,6 +1662,10 @@ export const scheduleLeadMeeting = defineAction<
     if (!isGoogleEnabled()) throw new Error("Google Workspace no está configurado");
     const calendarId = serverEnv().GOOGLE_CALENDAR_ID;
     if (!calendarId) throw new Error("GOOGLE_CALENDAR_ID no configurado");
+    const [{ resolveSubject }, { insertEvent }] = await Promise.all([
+      import("@/lib/google/client"),
+      import("@/lib/google/calendar"),
+    ]);
     const subject = resolveSubject(user.email);
     const attendeeEmails = [...new Set([...(data.attendeeEmails ?? []), user.email])];
 

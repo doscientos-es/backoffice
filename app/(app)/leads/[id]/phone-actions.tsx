@@ -17,10 +17,13 @@ import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { publicEnv } from "@/lib/env";
+import { CALL_REMINDER_SCHEDULED_EVENT } from "@/lib/leads/call-workflow";
 import { buildBookingUrl } from "@/lib/recovery/utils";
 
 import { finishLeadCall, getLeadCallSession, markLeadCallDialed, startLeadCall } from "../actions";
 import { WhatsAppComposer } from "../whatsapp-composer";
+
+const TERMINAL_CALL_STATUSES = new Set(["awaiting_log", "logged", "abandoned"]);
 
 /**
  * Normalises a raw phone string into a clean `tel:` URI value.
@@ -68,6 +71,7 @@ export function LeadCallLink({
     const result = await startLeadCall({ leadId, source: "desktop" });
     setStarting(false);
     if (!result.ok) return setError(result.error);
+    window.dispatchEvent(new Event(CALL_REMINDER_SCHEDULED_EVENT));
     setSession({ id: result.id, mobileToken: result.mobileToken });
   }
 
@@ -267,9 +271,13 @@ function CallTrackingDialog({
     };
   }, [session.mobileToken]);
 
+  const polling = !TERMINAL_CALL_STATUSES.has(status);
+
   useEffect(() => {
+    if (!polling) return;
     let cancelled = false;
     async function refreshSession() {
+      if (document.visibilityState === "hidden") return;
       const result = await getLeadCallSession({ leadId, sessionId: session.id });
       if (cancelled || !result.ok) return;
       setStatus(result.status);
@@ -282,11 +290,16 @@ function CallTrackingDialog({
     }
     void refreshSession();
     const timer = window.setInterval(() => void refreshSession(), 5_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void refreshSession();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [leadId, session.id]);
+  }, [leadId, session.id, polling]);
 
   async function callFromThisDevice() {
     setPending(true);

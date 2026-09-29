@@ -5,6 +5,7 @@ export const CALL_REMINDER_NOTIFIED_DESCRIPTION = "CALL_PENDING_NOTIFIED";
 export const CALL_AUTO_FOLLOW_UP = "CALL_AUTO_FOLLOW_UP";
 export const FIRST_TOUCH_REMINDER_MARKER = "AUTO_LEAD_FIRST_TOUCH";
 export const CALL_REMINDER_DELAY_MS = 3 * 60 * 1000;
+export const CALL_REMINDER_SCHEDULED_EVENT = "call-reminder:scheduled";
 
 export function followUpDelayHours(outcome: CallOutcome | undefined): number | null {
   if (outcome === "busy") return 4;
