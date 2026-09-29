@@ -212,6 +212,7 @@ export async function GET(
             documentHash: acceptance.document_hash as string,
           }
         : null,
+    acceptedWithoutSignature: proposal.status === "accepted" && !acceptance,
   });
 
   return new NextResponse(new Uint8Array(pdf), {

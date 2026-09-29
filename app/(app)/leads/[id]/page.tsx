@@ -174,9 +174,9 @@ export default async function LeadDetailPage({
     query?.outcome === "connected" || query?.outcome === "no_answer" ? query.outcome : undefined;
   const callSessionId =
     query?.callSessionId &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      query.callSessionId,
-    )
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        query.callSessionId,
+      )
       ? query.callSessionId
       : undefined;
   return (
@@ -287,9 +287,7 @@ export default async function LeadDetailPage({
                       <h3 className="mb-4 text-sm font-semibold">Contacto</h3>
                       <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
                         {alias && <DetailRow label="Alias">{alias}</DetailRow>}
-                        <DetailRow label="Estado">
-                          <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
-                        </DetailRow>
+                        <DetailRow label="Nombre">{lead.name}</DetailRow>
                         {(lead.status === "lost" || lead.status === "not_interested") &&
                           lead.lost_reason && (
                             <DetailRow

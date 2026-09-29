@@ -212,6 +212,9 @@ const styles = StyleSheet.create({
   ctaLink: { color: ACCENT, fontFamily: "Helvetica-Bold", fontSize: 10, marginTop: 7 },
   acceptance: { borderColor: BRAND, borderRadius: 10, borderWidth: 1, marginTop: 20, padding: 16 },
   acceptanceHash: { color: MUTED, fontSize: 6.5, lineHeight: 1.35, marginTop: 8 },
+  legalClause: { marginBottom: 8 },
+  legalTitle: { color: INK, fontFamily: "Helvetica-Bold", fontSize: 8, lineHeight: 1.3 },
+  legalBody: { color: MUTED, fontSize: 7.5, lineHeight: 1.35, marginTop: 2 },
 });
 
 export type ProposalPdfItem = {
@@ -257,6 +260,7 @@ export type ProposalPdfData = {
     acceptedAt: string;
     documentHash: string;
   } | null;
+  acceptedWithoutSignature?: boolean;
 };
 
 function money(value: number): string {
@@ -363,6 +367,35 @@ function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
   );
 }
 
+function LegalTerms({ source }: { source: string }) {
+  const clauses = source
+    .split(/\n\s*\n/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return (
+    <View style={{ marginTop: 10 }}>
+      {clauses.map((clause, index) => {
+        const match = /^(\d+)\.\s+\*\*(.+?)\*\*\s*(.*)$/s.exec(clause);
+        if (!match) {
+          return (
+            <Text key={`clause-${index}`} style={styles.legalBody}>
+              {printableMarkdown(clause)}
+            </Text>
+          );
+        }
+        return (
+          <View key={`clause-${index}`} style={styles.legalClause} wrap={false}>
+            <Text style={styles.legalTitle}>{`${match[1]}. ${match[2]}`}</Text>
+            {match[3]?.trim() ? (
+              <Text style={styles.legalBody}>{printableMarkdown(match[3])}</Text>
+            ) : null}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 function MaintenancePlanList({
   offer,
   selectedPlanId,
@@ -415,11 +448,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
     custom: ca ? "personalitzada" : en ? "custom" : "personalizada",
     prepared: ca ? "Preparada per a" : en ? "Prepared for" : "Preparada para",
     investment: ca ? "Inversió inicial" : en ? "Initial investment" : "Inversión inicial",
-    taxExcluded: ca
-      ? "(IVA no inclòs)"
-      : en
-        ? "(VAT excluded)"
-        : "(IVA no incluido)",
+    taxExcluded: ca ? "(IVA no inclòs)" : en ? "(VAT excluded)" : "(IVA no incluido)",
     valid: ca ? "Vàlida fins al" : en ? "Valid until" : "Válida hasta el",
     context: ca ? "Context" : en ? "Context" : "Contexto",
     challenges: ca ? "Reptes detectats" : en ? "Challenges identified" : "Retos detectados",
@@ -440,6 +469,12 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
       : en
         ? "Electronic acceptance"
         : "Aceptación electrónica",
+    accepted: ca ? "Proposta acceptada" : en ? "Proposal accepted" : "Propuesta aceptada",
+    manualAcceptance: ca
+      ? "Acceptació registrada manualment a Doscientos. No consta signatura electrònica del client."
+      : en
+        ? "Acceptance recorded manually in Doscientos. No client electronic signature is recorded."
+        : "Aceptación registrada manualmente en Doscientos. No consta firma electrónica del cliente.",
     signed: ca
       ? "Proposta signada i acceptada"
       : en
@@ -553,11 +588,11 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           style={styles.section}
           break={Boolean(
             data.context ||
-            data.problems.length ||
-            data.solutions.length ||
-            data.scopeModules.length ||
-            deliverables ||
-            acceptanceCriteria,
+              data.problems.length ||
+              data.solutions.length ||
+              data.scopeModules.length ||
+              deliverables ||
+              acceptanceCriteria,
           )}
         >
           <Text style={styles.sectionLabel}>{copy.economics}</Text>
@@ -688,6 +723,11 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
               style={styles.acceptanceHash}
             >{`Huella SHA-256 del documento aceptado: ${data.acceptance.documentHash}`}</Text>
           </View>
+        ) : data.acceptedWithoutSignature ? (
+          <View style={styles.acceptance} break wrap={false}>
+            <Text style={styles.sectionLabel}>{copy.accepted}</Text>
+            <Text style={styles.body}>{copy.manualAcceptance}</Text>
+          </View>
         ) : (
           <View style={styles.cta} wrap={false}>
             <Text style={styles.ctaText}>
@@ -711,7 +751,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{copy.annex}</Text>
           <Text style={styles.sectionTitle}>{copy.terms}</Text>
-          <Text style={styles.body}>{printableMarkdown(data.legalTerms)}</Text>
+          <LegalTerms source={data.legalTerms} />
         </View>
         <Footer language={language} />
       </Page>
