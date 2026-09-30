@@ -43,6 +43,7 @@ import { formatDate, formatEUR } from "@/lib/utils";
 import { updateProposalPortalAccess } from "../actions";
 import { CreateSubscriptionFromProposalButton } from "./create-subscription-from-proposal-button";
 import { ProposalMoreActions } from "./delete-proposal-button";
+import { type DeliveryNote, DeliveryNoteCard } from "./delivery-note-card";
 import { GenerateInvoiceButton } from "./generate-invoice-button";
 import { LinkProjectButton } from "./link-project-button";
 import { MarkAcceptedButton } from "./mark-accepted-button";
@@ -264,6 +265,20 @@ export default async function ProposalDetailPage({
     .order("accepted_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  const { data: latestDeliveryNote } = await supabase
+    .from("delivery_acceptances")
+    .select(
+      "id, version, status, portal_token, sent_at, first_viewed_at, accepted_at, accepted_by_name, accepted_by_role, document_hash",
+    )
+    .eq("proposal_id", id)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const deliveryNote =
+    latestDeliveryNote && latestDeliveryNote.status !== "cancelled"
+      ? (latestDeliveryNote as DeliveryNote)
+      : null;
+  const deliveredAt = (proposal.delivered_at as string | null) ?? null;
 
   // Projects available to link: same client or a client derived from this lead.
   // This mirrors the database rule which protects the association on every write.
@@ -439,6 +454,7 @@ export default async function ProposalDetailPage({
               urlPath={`/proposals/${id}`}
             />
             <StatusBadge meta={PROPOSAL_STATUS} value={status} />
+            {deliveredAt ? <Badge variant="success">Terminada</Badge> : null}
             {!locked ? (
               <Button variant="outline" size="sm" asChild>
                 <Link href={editing ? `/proposals/${id}` : `/proposals/${id}?mode=edit`}>
@@ -471,7 +487,7 @@ export default async function ProposalDetailPage({
                     fiscalPrefill={fiscalPrefill}
                   />
                 ) : null}
-                {locked && <ReopenProposalButton proposalId={id} />}
+                {locked && !deliveredAt && <ReopenProposalButton proposalId={id} />}
                 <ProposalMoreActions
                   proposalId={id}
                   canReject={
@@ -582,6 +598,12 @@ export default async function ProposalDetailPage({
 
               {status === "accepted" ? (
                 <>
+                  <DeliveryNoteCard
+                    proposalId={id}
+                    note={deliveryNote}
+                    hasMaintenance={Boolean(selectedMaintenance)}
+                    canEdit={user.role !== "viewer"}
+                  />
                   {selectedMaintenance && !maintenanceSubscription ? (
                     <CreateSubscriptionFromProposalButton
                       proposalId={id}
@@ -753,6 +775,9 @@ export default async function ProposalDetailPage({
                   <DetailRow label="Respondida">
                     {formatDate(proposal.responded_at as string | null)}
                   </DetailRow>
+                  {deliveredAt ? (
+                    <DetailRow label="Entregada">{formatDate(deliveredAt)}</DetailRow>
+                  ) : null}
                   {status === "accepted" && latestAcceptance ? (
                     <>
                       <DetailRow label="Firmada por">

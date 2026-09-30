@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ListPage } from "@/components/layout/list-page";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ClientAvatar } from "@/components/ui/client-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -63,11 +64,11 @@ export default async function ProposalsPage({
     supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
     leadId && UUID_PATTERN.test(leadId)
       ? supabase
-          .from("clients")
-          .select("id")
-          .eq("lead_id", leadId)
-          .is("deleted_at", null)
-          .maybeSingle()
+        .from("clients")
+        .select("id")
+        .eq("lead_id", leadId)
+        .is("deleted_at", null)
+        .maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
 
@@ -76,7 +77,7 @@ export default async function ProposalsPage({
   let query = supabase
     .from("proposals")
     .select(
-      "id, number, title, status, total, valid_until, sent_at, client_id, clients(name, logo_url), lead_id, leads(name), project_id, projects(name)",
+      "id, number, title, status, delivered_at, total, valid_until, sent_at, client_id, clients(name, logo_url), lead_id, leads(name), project_id, projects(name)",
       { count: "exact" },
     )
     .is("deleted_at", null);
@@ -182,7 +183,10 @@ export default async function ProposalsPage({
               p.title as string,
               clientCell,
               projectName,
-              <StatusBadge key="status" meta={PROPOSAL_STATUS} value={p.status as string} />,
+              <span key="status" className="flex items-center gap-1.5">
+                <StatusBadge meta={PROPOSAL_STATUS} value={p.status as string} />
+                {p.delivered_at ? <Badge variant="success">Terminada</Badge> : null}
+              </span>,
               p.sent_at ? relativeTime(p.sent_at as string) : "Sin enviar",
               formatEUR(p.total as number),
               formatDate(p.valid_until as string | null),
@@ -192,7 +196,7 @@ export default async function ProposalsPage({
               p.title as string,
               clientName,
               projectName,
-              p.status as string,
+              p.delivered_at ? `${p.status as string} (terminada)` : (p.status as string),
               (p.sent_at as string | null) ?? "",
               p.total as number,
               (p.valid_until as string | null) ?? "",

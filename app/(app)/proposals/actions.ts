@@ -23,12 +23,9 @@ import {
   isProposalEditable,
 } from "@/lib/proposals/items";
 import { parseMaintenanceOffer, selectedMaintenancePlan } from "@/lib/proposals/maintenance";
+import { ensureProposalMaintenanceSubscription } from "@/lib/proposals/maintenance-subscription";
 import { DEFAULT_PROPOSAL_LEGAL_TERMS } from "@/lib/proposals/proposal-acceptance";
-import {
-  ensureCalendarYearProration,
-  recurringAmount,
-  recurringPaymentTerms,
-} from "@/lib/proposals/recurring";
+import { ensureCalendarYearProration, recurringPaymentTerms } from "@/lib/proposals/recurring";
 import { parsePaymentPlan } from "@/lib/proposals/scope";
 import { formatProposalValidationIssues } from "@/lib/proposals/validation";
 import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
@@ -196,89 +193,16 @@ export async function createSubscriptionFromProposal(
   if (!parsed.success) return { ok: false, error: "ID de propuesta no válido" };
 
   const supabase = await createServerClient();
-  const { data: proposal, error: proposalError } = await supabase
-    .from("proposals")
-    .select(
-      "id, number, title, status, client_id, project_id, responded_at, maintenance_options, maintenance_selected_plan_id",
-    )
-    .eq("id", parsed.data.id)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (proposalError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
-  if (proposal.status !== "accepted") {
-    return { ok: false, error: "La propuesta debe estar aceptada para crear la suscripción" };
-  }
-  if (!proposal.client_id) {
-    return { ok: false, error: "La propuesta aceptada no tiene cliente facturable" };
-  }
-
-  const { data: existing, error: existingError } = await supabase
-    .from("subscriptions")
-    .select("id")
-    .eq("proposal_id", parsed.data.id)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (existingError) return { ok: false, error: existingError.message };
-  if (existing) return { ok: true, id: existing.id as string };
-
-  const offer = parseMaintenanceOffer(proposal.maintenance_options);
-  const plan = selectedMaintenancePlan(
-    offer,
-    (proposal.maintenance_selected_plan_id as string | null) ?? null,
-  );
-  if (!plan)
-    return { ok: false, error: "La propuesta no tiene un plan de mantenimiento seleccionado" };
-
-  const startDate = ((proposal.responded_at as string | null) ?? new Date().toISOString()).slice(
-    0,
-    10,
-  );
-  const { data: subscription, error: insertError } = await supabase
-    .from("subscriptions")
-    .insert({
-      proposal_id: proposal.id,
-      client_id: proposal.client_id,
-      project_id: proposal.project_id ?? null,
-      name: `Mantenimiento web · ${plan.name}`,
-      description: plan.summary,
-      // The maintenance contract is prepared when the proposal is accepted,
-      // but billing starts only after the project is finished and the team
-      // activates the subscription manually.
-      status: "paused",
-      billing_cycle: offer.billing_cycle,
-      amount: recurringAmount(plan.monthly_price, offer.billing_cycle),
-      vat_rate: plan.vat_rate,
-      start_date: startDate,
-      next_invoice_date: startDate,
-      notes: `Creada desde ${proposal.number ?? proposal.title}. Pendiente de activar al finalizar el proyecto. La cuota se actualizará anualmente conforme al IPC indicado en los términos de la propuesta.`,
-      created_by: user.id,
-    })
-    .select("id")
-    .single();
-  if (insertError || !subscription) {
-    if (insertError?.code === "23505") {
-      const { data: duplicate } = await supabase
-        .from("subscriptions")
-        .select("id")
-        .eq("proposal_id", parsed.data.id)
-        .is("deleted_at", null)
-        .maybeSingle();
-      if (duplicate) {
-        revalidatePath(`/proposals/${parsed.data.id}`);
-        revalidatePath("/subscriptions");
-        return { ok: true, id: duplicate.id as string };
-      }
-    }
-    log.error(
-      { err: insertError, proposalId: parsed.data.id },
-      "proposal_subscription_create_failed",
-    );
-    return { ok: false, error: insertError?.message ?? "No se pudo crear la suscripción" };
+  const result = await ensureProposalMaintenanceSubscription(supabase, parsed.data.id, user.id);
+  if (!result.ok || !result.id) {
+    const error = result.ok ? "No se pudo crear la suscripción" : result.error;
+    log.error({ err: error, proposalId: parsed.data.id }, "proposal_subscription_create_failed");
+    return { ok: false, error };
   }
 
   revalidatePath(`/proposals/${parsed.data.id}`);
   revalidatePath("/subscriptions");
-  return { ok: true, id: subscription.id as string };
+  return { ok: true, id: result.id };
 }
 
 export async function createProposal(formData: FormData): Promise<void> {
@@ -1278,7 +1202,7 @@ export async function reopenProposal(
   const supabase = await createServerClient();
   const { data: proposal, error: readError } = await supabase
     .from("proposals")
-    .select("id, status, number")
+    .select("id, status, number, delivered_at")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -1286,6 +1210,9 @@ export async function reopenProposal(
   if (readError || !proposal) return { ok: false, error: "Propuesta no encontrada" };
   if (proposal.status !== "accepted" && proposal.status !== "rejected") {
     return { ok: false, error: "Solo se pueden reabrir propuestas aceptadas o rechazadas" };
+  }
+  if (proposal.delivered_at) {
+    return { ok: false, error: "La propuesta ya está terminada: el cliente firmó el albarán" };
   }
 
   const { error } = await supabase

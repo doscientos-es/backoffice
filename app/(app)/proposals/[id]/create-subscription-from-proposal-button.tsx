@@ -43,8 +43,8 @@ export function CreateSubscriptionFromProposalButton({
       <div>
         <p className="text-sm font-medium">Preparar suscripción de mantenimiento</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {planName} · {formatEUR(amount)} / {cycleLabel}. Se creará pausada y no empezará a
-          facturar hasta activarla al finalizar el proyecto.
+          {planName} · {formatEUR(amount)} / {cycleLabel}. Se creará pausada y se activará
+          automáticamente cuando el cliente firme el albarán de entrega.
         </p>
       </div>
       <Button type="button" size="sm" onClick={handleCreate} disabled={pending} className="w-fit">

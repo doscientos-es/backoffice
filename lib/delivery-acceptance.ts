@@ -36,6 +36,59 @@ export function deliveryAcceptanceHash(snapshot: unknown): string {
   return createHash("sha256").update(JSON.stringify(snapshot)).digest("hex");
 }
 
+export const DELIVERY_NOTE_CONSENT =
+  "Declaro que he revisado la entrega y doy mi conformidad a que el trabajo acordado en la propuesta está completado.";
+
+export type DeliveryNoteInput = {
+  proposalNumber: string | null;
+  proposalTitle: string;
+  proposalAcceptedAt: string | null;
+  clientName: string;
+  projectName: string | null;
+  scopeModules: { title: string; included: string[] }[];
+  deliverables: string | null;
+  acceptanceCriteria: string | null;
+  maintenancePlanName: string | null;
+};
+
+export function deliveryNoteStatement(input: DeliveryNoteInput): string {
+  const reference = input.proposalNumber
+    ? `la propuesta ${input.proposalNumber} («${input.proposalTitle}»)`
+    : `la propuesta «${input.proposalTitle}»`;
+  const lines = [
+    `${input.clientName} declara haber recibido de Doscientos los trabajos acordados en ${reference} y confirma que se han entregado conforme a lo pactado.`,
+    "Con la firma de este albarán la propuesta queda terminada. Cualquier trabajo adicional o cambio posterior se presupuestará por separado.",
+  ];
+  if (input.maintenancePlanName) {
+    lines.push(
+      `A partir de la fecha de firma se inicia el servicio de mantenimiento «${input.maintenancePlanName}», en las condiciones indicadas en la propuesta.`,
+    );
+  }
+  return lines.join("\n\n");
+}
+
+export function deliveryNoteSnapshot(input: DeliveryNoteInput) {
+  return {
+    version: "doscientos-delivery-acceptance-v1",
+    kind: "delivery_note" as const,
+    proposal: {
+      number: input.proposalNumber,
+      title: input.proposalTitle,
+      accepted_at: input.proposalAcceptedAt,
+    },
+    client_name: input.clientName,
+    project_name: input.projectName,
+    statement: deliveryNoteStatement(input),
+    scope_modules: input.scopeModules,
+    deliverables: input.deliverables,
+    acceptance_criteria: input.acceptanceCriteria,
+    maintenance_plan_name: input.maintenancePlanName,
+    consent: DELIVERY_NOTE_CONSENT,
+  };
+}
+
+export type DeliveryNoteSnapshot = ReturnType<typeof deliveryNoteSnapshot>;
+
 export function deliveryAcceptanceDeadline(sentAt: Date, days: number): Date {
   const deadline = new Date(sentAt);
   deadline.setUTCDate(deadline.getUTCDate() + Math.max(1, Math.min(30, Math.round(days))));
