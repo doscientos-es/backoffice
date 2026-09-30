@@ -79,7 +79,9 @@ function pending(from, to) {
 }
 
 function main([command, ...args]) {
-  const head = git("rev-parse", "HEAD");
+  // Sync needs only the editorial Markdown, so it also works in build systems
+  // that omit Git history.
+  const head = command === "sync" ? null : git("rev-parse", "HEAD");
   if (command === "init") {
     if (existsSync("CHANGELOG.md") || !SHA.test(args[0] ?? ""))
       throw Error("Changelog existente o SHA base no válido");

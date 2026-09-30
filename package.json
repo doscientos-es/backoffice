@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbo",
-    "prebuild": "pnpm changelog:check && (node -e \"if(!process.env.CI) process.exit(1)\" || pnpm env:example)",
-    "build": "next build",
+    "dev": "pnpm changelog:sync && next dev --turbo",
+    "prebuild": "node -e \"if(!process.env.CI) process.exit(1)\" || pnpm env:example",
+    "build": "pnpm changelog:sync && next build",
     "start": "next start",
     "lint": "biome lint .",
     "lint:changed": "biome lint --changed --no-errors-on-unmatched",
