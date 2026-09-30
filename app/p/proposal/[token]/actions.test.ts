@@ -280,7 +280,7 @@ describe("portal proposal actions", () => {
     expect(state.lastRpc?.args).toMatchObject({
       p_proposal_id: "p1",
       p_signer_name: "Ana Gómez",
-      p_evidence_version: "doscientos-proposal-acceptance-v2",
+      p_evidence_version: "doscientos-proposal-acceptance-v3",
       p_document_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
     expect(createProposalDraftInvoices).toHaveBeenCalledWith(expect.anything(), "p1", null);

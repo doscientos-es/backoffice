@@ -10,7 +10,7 @@ describe("proposal acceptance terms", () => {
     expect(terms).toContain("10 días hábiles");
     expect(terms).toContain("no libera al Cliente del pago de los importes devengados");
     expect(terms).toContain("Los derechos imperativos de consumidores y usuarios");
-    expect(terms).toContain("Caso de éxito");
+    expect(terms).toContain("Casos de éxito y demostraciones");
     expect(terms).toContain("Vigencia, prelación y modificaciones");
     expect(terms).toContain("evidencia de aceptación");
     expect(terms).toContain("Fuerza mayor");
