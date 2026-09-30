@@ -24,8 +24,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
-    "changelog:sync": "node .agents/skills/product-changelog/bin/changelog.mjs sync lib/changelog.json",
-    "changelog:check": "node .agents/skills/product-changelog/bin/changelog.mjs sync lib/changelog.json --check",
+    "changelog:sync": "changelog sync lib/changelog.json",
+    "changelog:check": "changelog sync lib/changelog.json --check",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_REF --schema public > lib/database.types.ts",
     "env:example": "tsx scripts/generate-env-example.ts",
     "google:smoke": "tsx scripts/google-smoke.ts",
@@ -90,6 +90,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.5",
+    "@doscientos/changelog": "^0.1.0",
     "@doscientos/configs": "^0.1.9",
     "@shadcn/lint": "0.2.0",
     "@tailwindcss/postcss": "^4.0.0",
