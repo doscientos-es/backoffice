@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.75",
+      "date": "2026-10-01",
+      "title": "v0.1.75",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add quarterly scope selection and update CSV export functionality"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "4d1ea70fb737851b9c90321cb1551122b28dfc09",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add quarterly scope selection and update CSV export functionality"
+        }
+      ]
+    },
+    {
       "version": "0.1.73",
       "date": "2026-10-01",
       "title": "v0.1.73",
