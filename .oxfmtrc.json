@@ -2,6 +2,8 @@
   "endOfLine": "lf",
   "ignorePatterns": [
     "**/AGENTS.md",
+    "CHANGELOG.md",
+    "lib/changelog.json",
     ".next/**",
     ".turbo/**",
     "coverage/**",

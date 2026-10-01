@@ -7,7 +7,9 @@
       "sections": [
         {
           "title": "Correcciones",
-          "items": ["Add accessible labels, button type and icon title"]
+          "items": [
+            "Add accessible labels, button type and icon title"
+          ]
         }
       ],
       "changes": [
@@ -27,7 +29,9 @@
       "sections": [
         {
           "title": "Nuevas funciones",
-          "items": ["Generate backoffice changelog from git history"]
+          "items": [
+            "Generate backoffice changelog from git history"
+          ]
         }
       ],
       "changes": [
@@ -47,7 +51,9 @@
       "sections": [
         {
           "title": "Correcciones",
-          "items": ["Accept absent Meta attribution on landing leads"]
+          "items": [
+            "Accept absent Meta attribution on landing leads"
+          ]
         }
       ],
       "changes": [
@@ -67,7 +73,9 @@
       "sections": [
         {
           "title": "Correcciones",
-          "items": ["Keep landing CORS domains canonical"]
+          "items": [
+            "Keep landing CORS domains canonical"
+          ]
         }
       ],
       "changes": [
@@ -87,7 +95,9 @@
       "sections": [
         {
           "title": "Correcciones",
-          "items": ["Preserve Google Ads attribution on landing leads"]
+          "items": [
+            "Preserve Google Ads attribution on landing leads"
+          ]
         }
       ],
       "changes": [

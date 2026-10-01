@@ -10,7 +10,7 @@ files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(tsx?|jsx?
 if [ -n "$files" ]; then
   # Ficheros con cambios sin stagear: se calculan antes de formatear.
   partial=$(git diff --name-only)
-  echo "$files" | while IFS= read -r f; do pnpm exec oxfmt -c .oxfmtrc.json --write "$f" || exit 1; done || exit 1
+  echo "$files" | while IFS= read -r f; do pnpm exec oxfmt -c .oxfmtrc.json --no-error-on-unmatched-pattern --write "$f" || exit 1; done || exit 1
   echo "$files" | while IFS= read -r f; do
     if echo "$partial" | grep -Fxq "$f"; then
       echo "pre-commit: $f tiene cambios sin stagear; formateado pero no re-añadido." >&2
