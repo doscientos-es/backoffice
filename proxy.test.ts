@@ -54,9 +54,10 @@ import { proxy } from '@/proxy'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function req(path: string, ip = '1.2.3.4') {
+function req(path: string, ip = '1.2.3.4', cookie?: string) {
   const headers = new Headers()
   headers.set('x-forwarded-for', ip)
+  if (cookie) headers.set('cookie', cookie)
   return new NextRequest(`http://localhost${path}`, {
     headers,
   })
@@ -152,15 +153,31 @@ describe('proxy – public portal routes', () => {
     const res = await proxy(req('/p/invoice/some-token'))
     expect(res.status).not.toBe(307)
     expect(res.status).not.toBe(429)
-    expect(auth.getUserCalls).toBe(1)
+    expect(auth.getUserCalls).toBe(0)
   })
 
-  it('passes through public deck paths and refreshes an existing team session', async () => {
-    auth.user = { id: 'user-1' }
-    const res = await proxy(req('/deck/some-token'))
+  it.each(['sb-test-auth-token', 'sb-test-auth-token.0'])(
+    'refreshes an existing team session with cookie %s',
+    async (cookieName) => {
+      auth.user = { id: 'user-1' }
+      const res = await proxy(req('/deck/some-token', '1.2.3.4', `${cookieName}=session`))
 
-    expect(res.status).not.toBe(307)
-    expect(res.status).not.toBe(429)
+      expect(res.status).not.toBe(307)
+      expect(res.status).not.toBe(429)
+      expect(auth.getUserCalls).toBe(1)
+    },
+  )
+
+  it('ignores unrelated cookies on anonymous portals', async () => {
+    const res = await proxy(req('/p/proposal/some-token', '1.2.3.4', 'portal-unlock=value'))
+    expect(res.status).toBe(200)
+    expect(auth.getUserCalls).toBe(0)
+  })
+
+  it('still validates an invalid session cookie without requiring portal login', async () => {
+    const res = await proxy(req('/p/proposal/some-token', '1.2.3.4', 'sb-test-auth-token=invalid'))
+    expect(res.status).toBe(200)
+    expect(res.headers.get('location')).toBeNull()
     expect(auth.getUserCalls).toBe(1)
   })
 
@@ -169,6 +186,7 @@ describe('proxy – public portal routes', () => {
     const res = await proxy(req('/p/invoice/some-token'))
     expect(res.status).toBe(429)
     expect(res.headers.get('Retry-After')).toBeDefined()
+    expect(auth.getUserCalls).toBe(0)
   })
 })
 

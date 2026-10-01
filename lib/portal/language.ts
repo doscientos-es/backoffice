@@ -1,5 +1,8 @@
 export type PortalLanguage = 'es' | 'ca' | 'en'
 
+const dateFormatters: Partial<Record<PortalLanguage, Intl.DateTimeFormat>> = {}
+const eurFormatters: Partial<Record<PortalLanguage, Intl.NumberFormat>> = {}
+
 export function resolvePortalLanguage(
   leadLanguage: unknown,
   linkLanguage?: unknown,
@@ -20,14 +23,22 @@ export function formatPortalDate(
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
-  return new Intl.DateTimeFormat(`${language}-${language === 'en' ? 'GB' : 'ES'}`, {
-    dateStyle: 'long',
-  }).format(date)
+  dateFormatters[language] ??= new Intl.DateTimeFormat(
+    `${language}-${language === 'en' ? 'GB' : 'ES'}`,
+    {
+      dateStyle: 'long',
+    },
+  )
+  return dateFormatters[language].format(date)
 }
 
 export function formatPortalEUR(value: number, language: PortalLanguage): string {
-  return new Intl.NumberFormat(`${language}-${language === 'en' ? 'GB' : 'ES'}`, {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(value)
+  eurFormatters[language] ??= new Intl.NumberFormat(
+    `${language}-${language === 'en' ? 'GB' : 'ES'}`,
+    {
+      style: 'currency',
+      currency: 'EUR',
+    },
+  )
+  return eurFormatters[language].format(value)
 }

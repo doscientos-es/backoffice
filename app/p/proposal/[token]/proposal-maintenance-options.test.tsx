@@ -39,6 +39,6 @@ describe('ProposalMaintenanceOptions', () => {
     expect(
       screen.getByText('Has elegido Esencial. Puedes cambiarlo o quitarlo antes de confirmar.'),
     ).toBeDefined()
-    expect(refresh).toHaveBeenCalled()
+    expect(refresh).not.toHaveBeenCalled()
   })
 })

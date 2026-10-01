@@ -35,9 +35,8 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublicPortal = pathname.startsWith('/p/') || pathname.startsWith('/deck/')
 
-  // Public portal and presentation links remain anonymous, but still resolve
-  // Supabase below. That refreshes an existing team session, allowing members
-  // to preview drafts without making them accessible to clients.
+  // Refresh existing team sessions for draft previews; anonymous visitors only
+  // need the rate limit. Cookie presence never grants access by itself.
   if (isPublicPortal) {
     const ip = clientIp(request)
     const { success, resetAt } = rateLimit(`portal:${ip}`, 30)
@@ -47,6 +46,10 @@ export async function proxy(request: NextRequest) {
         headers: { 'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)) },
       })
     }
+    const hasSessionCookie = request.cookies
+      .getAll()
+      .some(({ name }) => /^sb-.+-auth-token(?:\.\d+)?$/.test(name))
+    if (!hasSessionCookie) return NextResponse.next()
   }
   if (isPublicPath(pathname)) return NextResponse.next()
   if (pathname.startsWith('/_next') || pathname.startsWith('/favicon')) return NextResponse.next()

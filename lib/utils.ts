@@ -1,6 +1,12 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
+// Reuse locale setup across table cells and requests; instantiate only on use.
+let eurFormatter: Intl.NumberFormat | undefined
+let dateFormatter: Intl.DateTimeFormat | undefined
+let dateTimeFormatter: Intl.DateTimeFormat | undefined
+let relativeTimeFormatter: Intl.RelativeTimeFormat | undefined
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -9,32 +15,35 @@ export function formatEUR(value: number | string | null | undefined): string {
   if (value == null) return '—'
   const n = typeof value === 'string' ? Number.parseFloat(value) : value
   if (!Number.isFinite(n)) return '—'
-  return new Intl.NumberFormat('es-ES', {
+  eurFormatter ??= new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 2,
-  }).format(n)
+  })
+  return eurFormatter.format(n)
 }
 
 export function formatDate(value: string | Date | null | undefined): string {
   if (!value) return '—'
   const d = typeof value === 'string' ? new Date(value) : value
   if (Number.isNaN(d.getTime())) return '—'
-  return new Intl.DateTimeFormat('es-ES', {
+  dateFormatter ??= new Intl.DateTimeFormat('es-ES', {
     dateStyle: 'medium',
     timeZone: 'Europe/Madrid',
-  }).format(d)
+  })
+  return dateFormatter.format(d)
 }
 
 export function formatDateTime(value: string | Date | null | undefined): string {
   if (!value) return '—'
   const d = typeof value === 'string' ? new Date(value) : value
   if (Number.isNaN(d.getTime())) return '—'
-  return new Intl.DateTimeFormat('es-ES', {
+  dateTimeFormatter ??= new Intl.DateTimeFormat('es-ES', {
     dateStyle: 'medium',
     timeStyle: 'short',
     timeZone: 'Europe/Madrid',
-  }).format(d)
+  })
+  return dateTimeFormatter.format(d)
 }
 
 export function relativeTime(value: string | Date | null | undefined): string {
@@ -43,7 +52,8 @@ export function relativeTime(value: string | Date | null | undefined): string {
   // positive = past, negative = future
   const diff = (Date.now() - d.getTime()) / 1000
   const abs = Math.abs(diff)
-  const rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' })
+  relativeTimeFormatter ??= new Intl.RelativeTimeFormat('es', { numeric: 'auto' })
+  const rtf = relativeTimeFormatter
   if (abs < 60) return rtf.format(Math.round(-diff), 'second')
   if (abs < 3600) return rtf.format(Math.round(-diff / 60), 'minute')
   if (abs < 86400) return rtf.format(Math.round(-diff / 3600), 'hour')
