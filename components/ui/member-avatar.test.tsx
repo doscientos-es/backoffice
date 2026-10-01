@@ -10,7 +10,7 @@ describe('MemberLabel', () => {
   it('remains a client boundary so internal callbacks never cross from a Server Component', () => {
     const source = readFileSync(resolve('components/ui/member-avatar.tsx'), 'utf8')
 
-    expect(source.trimStart().startsWith('"use client";')).toBe(true)
+    expect(source.trimStart()).toMatch(/^("use client"|'use client');?/)
   })
 
   it('opens an assigned member profile without callback props', async () => {

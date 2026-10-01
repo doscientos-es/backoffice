@@ -14,7 +14,7 @@ describe('changelog in settings', () => {
     expect(requireUser).toHaveBeenCalledOnce()
     expect(metadata.title).toContain('Novedades')
     const [latest] = changelog.releases
-    expect(latest).toBeDefined()
+    if (!latest) throw new Error('changelog.json has no releases')
     expect(html).toContain(latest.title)
     expect(html).toContain(latest.date)
   })
