@@ -1,19 +1,17 @@
 'use client'
 
 import {
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from '@doscientos/ui'
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
 } from '@doscientos/ui'
 import { ArrowUpRight, Building2, Clock, ExternalLink, Trash as Trash2, X } from 'lucide-react'
 import Link from 'next/link'
@@ -25,7 +23,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { computeHoursFromRange } from '@/lib/schemas/work-log'
-import { PROJECT_STATUS, type ProjectStatus } from '@/lib/status'
+import { PROJECT_STATUS } from '@/lib/status'
 import { relativeTime } from '@/lib/utils'
 
 import { addWorkLog } from './[id]/work-log-actions'
@@ -36,9 +34,9 @@ export type QuickProject = {
   id: string
   name: string
   client_name: string
-  status: ProjectStatus
+  status: string | null
   description: string | null
-  updated_at: string
+  updated_at: string | null
   github_sync_mode?: GitHubSyncMode | null
   github_repo?: string | null
 }

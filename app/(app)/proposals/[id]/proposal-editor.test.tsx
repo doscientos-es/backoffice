@@ -16,15 +16,14 @@ vi.mock('@/components/ui/attachment-section', () => ({
     <div>Adjuntos ({attachments.length})</div>
   ),
 }))
-vi.mock('../actions', () => ({ setProposalTeamMembers: vi.fn(), updateProposal: vi.fn() }))
+vi.mock('../actions', () => ({ saveProposalEditor: vi.fn() }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }))
 
-import { setProposalTeamMembers, updateProposal } from '../actions'
+import { saveProposalEditor } from '../actions'
 import { ProposalEditor } from './proposal-editor'
 
 const ID = '494d62cb-fd56-4650-b131-9e3a927a20ad'
-const saveProposal = vi.mocked(updateProposal)
-const saveTeam = vi.mocked(setProposalTeamMembers)
+const saveProposal = vi.mocked(saveProposalEditor)
 const props = {
   id: ID,
   initialTitle: 'Propuesta inicial',
@@ -65,9 +64,7 @@ const props = {
 describe('ProposalEditor', () => {
   beforeEach(() => {
     saveProposal.mockReset()
-    saveTeam.mockReset()
     saveProposal.mockResolvedValue({ ok: true, version: 2 })
-    saveTeam.mockResolvedValue({ ok: true })
   })
 
   it('saves proposal edits and team together when the user returns to the overview', async () => {
@@ -76,14 +73,14 @@ describe('ProposalEditor', () => {
     fireEvent.change(screen.getByLabelText('Título'), { target: { value: 'Propuesta revisada' } })
     expect(saveProposal).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Guardar y ver propuesta' })[0]!)
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
 
     await waitFor(() =>
       expect(saveProposal).toHaveBeenCalledWith(
-        expect.objectContaining({ id: ID, title: 'Propuesta revisada' }),
+        expect.objectContaining({ id: ID, title: 'Propuesta revisada', team_member_ids: [] }),
       ),
     )
-    expect(saveTeam).toHaveBeenCalledWith({ proposal_id: ID, member_ids: [] })
   })
 
   it('persists a proposal without maintenance', async () => {
@@ -94,7 +91,8 @@ describe('ProposalEditor', () => {
       />,
     )
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Guardar y ver propuesta' })[0]!)
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
 
     await waitFor(() =>
       expect(saveProposal).toHaveBeenCalledWith(
@@ -141,5 +139,23 @@ describe('ProposalEditor', () => {
     expect(document.activeElement).toBe(reviewTab)
     expect(reviewTab.getAttribute('aria-selected')).toBe('true')
     expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe('proposal-step-tab-3')
+  })
+  it('keeps edits and retries with the saved version after a team failure', async () => {
+    saveProposal.mockResolvedValueOnce({
+      ok: false,
+      version: 2,
+      error: 'La propuesta se guardó, pero no se pudo actualizar el equipo',
+    })
+    render(<ProposalEditor {...props} />)
+    fireEvent.change(screen.getByLabelText('Título'), { target: { value: 'Borrador conservado' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
+    await screen.findByText('La propuesta se guardó, pero no se pudo actualizar el equipo')
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
+    await waitFor(() =>
+      expect(saveProposal).toHaveBeenLastCalledWith(
+        expect.objectContaining({ title: 'Borrador conservado', expected_version: 2 }),
+      ),
+    )
   })
 })

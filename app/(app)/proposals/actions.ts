@@ -18,11 +18,11 @@ import { buildLeadStatusPatch } from '@/lib/leads/status-transitions'
 import { scopedLogger } from '@/lib/logger'
 import { buildPortalAccessPatch } from '@/lib/portal/access'
 import {
-  buildProposalItemRows,
-  buildProposalTotalsPatch,
-  isProposalEditable,
-} from '@/lib/proposals/items'
-import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
+  replaceProposalTeam,
+  saveProposalEditorDraft,
+  updateProposalRecord,
+} from '@/lib/proposals/editor-save'
+import { buildProposalItemRows, buildProposalTotalsPatch } from '@/lib/proposals/items'
 import { ensureProposalMaintenanceSubscription } from '@/lib/proposals/maintenance-subscription'
 import { DEFAULT_PROPOSAL_LEGAL_TERMS } from '@/lib/proposals/proposal-acceptance'
 import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
@@ -32,11 +32,10 @@ import { UpdatePortalAccessInput } from '@/lib/schemas/portal'
 import {
   AcceptProposalFiscalData,
   CreateProposalInput,
+  type CreateProposalInputType,
   DuplicateProposalInput,
   SendProposalPreviewInput,
-  UpdateProposalInput,
   UpdateProposalPaymentPlanInput,
-  UpdateProposalTeamInput,
 } from '@/lib/schemas/proposal'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createServerClient } from '@/lib/supabase/server'
@@ -140,7 +139,7 @@ async function nextProposalNumber(
 async function insertDraftProposal(
   supabase: Awaited<ReturnType<typeof createServerClient>>,
   userId: string,
-  data: import('@/lib/schemas/proposal').CreateProposalInputType,
+  data: CreateProposalInputType,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const items = ensureCalendarYearProration(data.items, new Date())
   const totals = buildProposalTotalsPatch(items)
@@ -237,7 +236,7 @@ export async function createProposal(formData: FormData): Promise<void> {
 }
 
 /**
- * JSON version of createProposal for use with autosave or client-side calls.
+ * JSON version of createProposal for use with client-side calls.
  * Returns the created proposal ID on success.
  */
 export async function createProposalAction(
@@ -350,150 +349,17 @@ export async function duplicateProposal(
   return { ok: true, id: created.id as string }
 }
 
-// ---------------- UPDATE (collaborative inline edits + autosave) ----------------
+// ---------------- UPDATE (explicit inline edits) ----------------
 
 type UpdateResult = { ok: true; version: number } | { ok: false; error: string; code?: 'conflict' }
 
-/**
- * Patches a proposal in place. Used by the inline editor + autosave loop.
- * Accepts a partial payload; when `items` is present the line items are
- * replaced atomically (delete + insert) and totals recomputed server-side.
- *
- * Locked once the proposal is `accepted` or `rejected`.
- */
 export async function updateProposal(input: unknown): Promise<UpdateResult> {
-  await requireUser()
+  return updateProposalRecord(input)
+}
 
-  const parsed = UpdateProposalInput.safeParse(input)
-  if (!parsed.success) {
-    const errors = formatProposalValidationIssues(parsed.error.issues)
-    return { ok: false, error: errors.join('\n') || 'Datos de la propuesta no válidos' }
-  }
-  const { id, expected_version, items, ...rest } = parsed.data
-
-  const maintenanceOffer = parseMaintenanceOffer(rest.maintenance_options)
-  if (
-    rest.maintenance_selected_plan_id &&
-    !selectedMaintenancePlan(maintenanceOffer, rest.maintenance_selected_plan_id)
-  ) {
-    return { ok: false, error: 'Mantenimiento: el plan seleccionado no existe en esta propuesta' }
-  }
-
-  const supabase = await createServerClient()
-
-  const { data: current, error: readError } = await supabase
-    .from('proposals')
-    .select('status, created_at, payment_schedule, payment_terms')
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (readError || !current) return { ok: false, error: 'Propuesta no encontrada' }
-  if (!isProposalEditable(current.status)) {
-    return { ok: false, error: 'La propuesta ya ha sido respondida y no se puede editar' }
-  }
-
-  const persistedItems = items
-    ? ensureCalendarYearProration(items, current.created_at as string | null)
-    : undefined
-
-  const patch: Record<string, unknown> = {}
-  if (rest.title !== undefined) patch.title = rest.title
-  if (rest.valid_until !== undefined) patch.valid_until = rest.valid_until
-  if (rest.notes !== undefined) patch.notes = rest.notes
-  if (rest.context_markdown !== undefined) patch.context_markdown = rest.context_markdown
-  if (rest.problems !== undefined) {
-    patch.problems = rest.problems && rest.problems.length > 0 ? rest.problems : null
-  }
-  if (rest.solutions !== undefined) {
-    patch.solutions = rest.solutions && rest.solutions.length > 0 ? rest.solutions : null
-  }
-  if (rest.terms !== undefined) patch.terms = rest.terms
-  if (rest.scope_modules !== undefined) {
-    patch.scope_modules =
-      rest.scope_modules && rest.scope_modules.length > 0 ? rest.scope_modules : null
-  }
-  if (rest.deliverables !== undefined) patch.deliverables = rest.deliverables
-  if (rest.acceptance_criteria !== undefined) patch.acceptance_criteria = rest.acceptance_criteria
-  if (rest.payment_schedule !== undefined) patch.payment_schedule = rest.payment_schedule
-  if (rest.payment_plan !== undefined) patch.payment_plan = rest.payment_plan
-  if (rest.payment_terms !== undefined) patch.payment_terms = rest.payment_terms
-  if (rest.change_management_terms !== undefined) {
-    patch.change_management_terms = rest.change_management_terms
-  }
-  if (rest.legal_terms !== undefined) patch.legal_terms = rest.legal_terms
-  if (rest.maintenance_options !== undefined) patch.maintenance_options = rest.maintenance_options
-  if (rest.maintenance_selected_plan_id !== undefined) {
-    patch.maintenance_selected_plan_id = rest.maintenance_selected_plan_id
-    patch.maintenance_selection_source = rest.maintenance_selected_plan_id ? 'team' : null
-    patch.maintenance_selected_at = rest.maintenance_selected_plan_id
-      ? new Date().toISOString()
-      : null
-  }
-
-  if (
-    persistedItems &&
-    rest.payment_terms === undefined &&
-    current.payment_schedule === 'half_half' &&
-    typeof current.payment_terms === 'string' &&
-    current.payment_terms.includes('50 %')
-  ) {
-    const automaticPaymentTerms = recurringPaymentTerms(
-      persistedItems,
-      current.created_at as string | null,
-    )
-    if (automaticPaymentTerms) {
-      patch.payment_schedule = 'custom'
-      patch.payment_plan = []
-      patch.payment_terms = automaticPaymentTerms
-    }
-  }
-
-  if (persistedItems) {
-    const { data, error: rpcError } = await supabase.rpc('update_proposal_items_versioned', {
-      p_proposal_id: id,
-      p_expected_version: expected_version,
-      p_patch: patch,
-      p_items: persistedItems,
-    })
-    if (rpcError) {
-      if (rpcError.message === 'VERSION_CONFLICT') {
-        return {
-          ok: false,
-          code: 'conflict',
-          error: 'Este registro ha cambiado mientras lo editabas.',
-        }
-      }
-      log.error({ err: rpcError, id }, 'replace_proposal_items_failed')
-      return { ok: false, error: rpcError.message }
-    }
-    const version = Number((data as Array<{ version: number }> | null)?.[0]?.version)
-    if (!Number.isSafeInteger(version))
-      return { ok: false, error: 'No se pudo confirmar el guardado' }
-    revalidatePath(`/proposals/${id}`)
-    return { ok: true, version }
-  } else if (Object.keys(patch).length > 0) {
-    const { data, error: updateError } = await supabase
-      .from('proposals')
-      .update(patch)
-      .eq('id', id)
-      .eq('version', expected_version)
-      .select('version')
-      .maybeSingle()
-    if (updateError) {
-      log.error({ err: updateError, id }, 'update_proposal_failed')
-      return { ok: false, error: updateError.message }
-    }
-    if (!data)
-      return {
-        ok: false,
-        code: 'conflict',
-        error: 'Este registro ha cambiado mientras lo editabas.',
-      }
-    revalidatePath(`/proposals/${id}`)
-    return { ok: true, version: Number(data.version) }
-  }
-
-  return { ok: true, version: expected_version }
+/** Saves the editor draft and its team in one server request. */
+export async function saveProposalEditor(input: unknown) {
+  return saveProposalEditorDraft(input)
 }
 
 /**
@@ -603,54 +469,8 @@ export async function linkProposalToProject(
 // ---------------- PROPOSAL TEAM ----------------
 
 /** Replaces the people shown as the project team in the client deck. */
-export async function setProposalTeamMembers(
-  input: unknown,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireUser()
-
-  const parsed = UpdateProposalTeamInput.safeParse(input)
-  if (!parsed.success) return { ok: false, error: 'Datos no válidos' }
-
-  const { proposal_id, member_ids } = parsed.data
-  const supabase = await createServerClient()
-  const { data: proposal, error: proposalError } = await supabase
-    .from('proposals')
-    .select('status')
-    .eq('id', proposal_id)
-    .is('deleted_at', null)
-    .maybeSingle()
-
-  if (proposalError || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
-  if (!isProposalEditable(proposal.status)) {
-    return { ok: false, error: 'La propuesta ya ha sido respondida y no se puede editar' }
-  }
-
-  if (member_ids.length > 0) {
-    const { data: members, error: membersError } = await supabase
-      .from('team_members')
-      .select('id')
-      .in('id', member_ids)
-      .is('deleted_at', null)
-    if (membersError || members?.length !== member_ids.length) {
-      return { ok: false, error: 'Hay personas seleccionadas que ya no están disponibles' }
-    }
-  }
-
-  const { error: deleteError } = await supabase
-    .from('proposal_team_members')
-    .delete()
-    .eq('proposal_id', proposal_id)
-  if (deleteError) return { ok: false, error: deleteError.message }
-
-  if (member_ids.length > 0) {
-    const { error: insertError } = await supabase
-      .from('proposal_team_members')
-      .insert(member_ids.map((member_id, position) => ({ proposal_id, member_id, position })))
-    if (insertError) return { ok: false, error: insertError.message }
-  }
-
-  revalidatePath(`/proposals/${proposal_id}`)
-  return { ok: true }
+export async function setProposalTeamMembers(input: unknown) {
+  return replaceProposalTeam(input)
 }
 
 // ---------------- DELETE (soft) ----------------

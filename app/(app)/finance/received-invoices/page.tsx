@@ -46,54 +46,65 @@ export default async function ReceivedInvoicesPage() {
       breadcrumbs={[{ label: 'Finanzas', href: '/finance' }, { label: 'Facturas recibidas' }]}
       empty="Aún no hay facturas ni justificantes adjuntos a gastos."
       error={error?.message}
-      headers={[
-        'Archivo',
-        'Proveedor',
-        'Nº factura',
-        'Fecha gasto',
-        { label: 'Total', align: 'right' },
-        '',
+      columns={[
+        { key: 'archivo', label: 'Archivo' },
+        { key: 'proveedor', label: 'Proveedor' },
+        { key: 'n_factura', label: 'Nº factura' },
+        { key: 'fecha_gasto', label: 'Fecha gasto' },
+        { key: 'total', label: 'Total', align: 'right' },
+        { key: 'actions', label: '', align: 'right' },
       ]}
-      align={['left', 'left', 'left', 'left', 'right', 'right']}
+
       rows={invoices.map((invoice) => {
         const expense = invoice.expenses
         return {
           id: invoice.id,
           href: expense ? `/finance/expenses/${expense.id}` : undefined,
-          cells: [
-            <span key="name" className="flex items-center gap-2 font-medium">
-              <FileText className="size-4 text-muted-foreground" aria-hidden />
-              <span className="max-w-72 truncate">{invoice.name}</span>
-            </span>,
-            expense?.vendor ?? '—',
-            expense?.invoice_reference ?? '—',
-            expense ? formatDate(expense.expense_date) : '—',
-            <span key="total" className="tabular-nums">
-              {expense ? formatEUR(Number(expense.total ?? 0)) : '—'}
-            </span>,
-            invoice.source === 'drive' && invoice.web_view_link ? (
-              <Button key="open" asChild variant="ghost" size="icon" className="size-7">
-                <a
-                  href={invoice.web_view_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Abrir en Drive"
-                >
-                  <ExternalLink className="size-3.5" />
-                </a>
-              </Button>
-            ) : (
-              <Button key="download" asChild variant="ghost" size="icon" className="size-7">
-                <Link
-                  href={`/api/documents/${invoice.id}/download`}
-                  target="_blank"
-                  aria-label="Descargar factura"
-                >
-                  <Download className="size-3.5" />
-                </Link>
-              </Button>
-            ),
-          ],
+          cells: {
+            archivo: {
+              content: (
+                <span key="name" className="flex items-center gap-2 font-medium">
+                  <FileText className="size-4 text-muted-foreground" aria-hidden />
+                  <span className="max-w-72 truncate">{invoice.name}</span>
+                </span>
+              ),
+            },
+            proveedor: { content: expense?.vendor ?? '—' },
+            n_factura: { content: expense?.invoice_reference ?? '—' },
+            fecha_gasto: { content: expense ? formatDate(expense.expense_date) : '—' },
+            total: {
+              content: (
+                <span key="total" className="tabular-nums">
+                  {expense ? formatEUR(Number(expense.total ?? 0)) : '—'}
+                </span>
+              ),
+            },
+            actions: {
+              content:
+                invoice.source === 'drive' && invoice.web_view_link ? (
+                  <Button key="open" asChild variant="ghost" size="icon" className="size-7">
+                    <a
+                      href={invoice.web_view_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Abrir en Drive"
+                    >
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  </Button>
+                ) : (
+                  <Button key="download" asChild variant="ghost" size="icon" className="size-7">
+                    <Link
+                      href={`/api/documents/${invoice.id}/download`}
+                      target="_blank"
+                      aria-label="Descargar factura"
+                    >
+                      <Download className="size-3.5" />
+                    </Link>
+                  </Button>
+                ),
+            },
+          },
         }
       })}
     />

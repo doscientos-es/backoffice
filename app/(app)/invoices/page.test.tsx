@@ -73,9 +73,13 @@ describe('InvoicesPage', () => {
 
     renderToStaticMarkup(await InvoicesPage({ searchParams: Promise.resolve({}) }))
 
-    const props = capturedListPageProps.current as { rows: Array<{ cells: ReactNode[] }> }
+    const props = capturedListPageProps.current as {
+      rows: Array<{ cells: Record<string, { content: ReactNode }> }>
+    }
     expect(props.rows).toHaveLength(1)
-    expect(findEventHandlers(props.rows[0]?.cells ?? [])).toEqual([])
+    expect(
+      findEventHandlers(Object.values(props.rows[0]?.cells ?? {}).map((cell) => cell.content)),
+    ).toEqual([])
   })
 
   it('does not render the synthetic AEAT diagnostic card in the summary', async () => {

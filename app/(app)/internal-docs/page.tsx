@@ -87,26 +87,37 @@ export default async function InternalDocsPage({
       }
       addHref="/internal-docs/new"
       addLabel="Subir documento"
-      headers={['Nombre', 'Categoría', 'Tamaño', 'Visibilidad', 'Subido']}
+      columns={[
+        { key: 'nombre', label: 'Nombre' },
+        { key: 'categoria', label: 'Categoría' },
+        { key: 'tamano', label: 'Tamaño' },
+        { key: 'visibilidad', label: 'Visibilidad' },
+        { key: 'subido', label: 'Subido' },
+      ]}
       rows={
         data?.map((d) => ({
           id: d.id as string,
           href: `/internal-docs/${d.id}`,
-          cells: [
-            d.name as string,
-            CATEGORY_LABELS[(d.category as string) ?? 'other'] ?? 'Otro',
-            d.size_bytes ? `${Math.ceil(Number(d.size_bytes) / 1024)} KB` : '—',
-            (d.visibility as string) === 'admins_only' ? (
-              <Badge variant="warning" key="vis">
-                Solo admin
-              </Badge>
-            ) : (
-              <Badge variant="neutral" key="vis">
-                Equipo
-              </Badge>
-            ),
-            formatDate(d.created_at as string),
-          ],
+          cells: {
+            nombre: { content: d.name as string },
+            categoria: { content: CATEGORY_LABELS[(d.category as string) ?? 'other'] ?? 'Otro' },
+            tamano: {
+              content: d.size_bytes ? `${Math.ceil(Number(d.size_bytes) / 1024)} KB` : '—',
+            },
+            visibilidad: {
+              content:
+                (d.visibility as string) === 'admins_only' ? (
+                  <Badge variant="warning" key="vis">
+                    Solo admin
+                  </Badge>
+                ) : (
+                  <Badge variant="neutral" key="vis">
+                    Equipo
+                  </Badge>
+                ),
+            },
+            subido: { content: formatDate(d.created_at as string) },
+          },
         })) ?? []
       }
     />

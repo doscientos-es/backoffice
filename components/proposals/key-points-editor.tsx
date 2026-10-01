@@ -24,7 +24,7 @@ export type KeyPointsEditorProps = {
 /**
  * Reusable ordered-list editor for proposal narrative blocks (problems and
  * solutions). Owns add/remove/reorder; consumers only deal with the array
- * via `onChange`. Pairs with the autosave hook used by `ProposalEditor`.
+ * via `onChange`. Changes are kept in the proposal draft until the user saves.
  */
 export function KeyPointsEditor({
   items,

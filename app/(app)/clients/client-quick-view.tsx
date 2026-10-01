@@ -1,19 +1,17 @@
 'use client'
 
 import {
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from '@doscientos/ui'
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
 } from '@doscientos/ui'
 import {
   ArrowUpRight,
@@ -52,7 +50,7 @@ export type QuickClient = {
   billing_address_province: string | null
   billing_address_country: string | null
   notes: string | null
-  updated_at: string
+  updated_at: string | null
   version: number
 }
 

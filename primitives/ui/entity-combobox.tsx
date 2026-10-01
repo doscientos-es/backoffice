@@ -1,7 +1,6 @@
 ﻿'use client'
 
-import type { ReactNode } from 'react'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, type ReactNode } from 'react'
 
 import {
   Combobox,
@@ -38,36 +37,7 @@ interface EntityComboboxProps {
   renderItem?: (item: EntityOption) => ReactNode
 }
 
-/** Focus the next tabbable element after `el` in DOM order. */
-function focusNextAfter(el: HTMLElement): void {
-  const all = Array.from(
-    document.querySelectorAll<HTMLElement>(
-      [
-        'input:not([disabled]):not([type="hidden"])',
-        'textarea:not([disabled])',
-        'select:not([disabled])',
-        'button:not([disabled])',
-        '[tabindex]:not([tabindex="-1"]):not([disabled])',
-      ].join(', '),
-    ),
-  )
-  const idx = all.indexOf(el)
-  if (idx !== -1 && idx + 1 < all.length) all[idx + 1]?.focus()
-}
-
-/**
- * Generic searchable combobox for selecting a single entity (lead, client, etc.).
- *
- * Improvements over the raw primitive:
- * - **Inline ghost text**: while typing, the best matching label suffix is shown
- *   in grey directly inside the input field.
- * - **Tab to accept**: pressing Tab when a ghost suggestion is visible selects
- *   it and moves focus to the next form field automatically.
- * - **Click → focus next**: selecting an item via click (or Enter) also moves
- *   focus to the next tabbable field.
- * - **autoHighlight**: the first matching list item is always pre-highlighted so
- *   Enter always picks the top result.
- */
+/** Searchable entity selection using the combobox's standard keyboard behavior. */
 export function EntityCombobox({
   id,
   items,
@@ -81,45 +51,18 @@ export function EntityCombobox({
   'aria-label': ariaLabel,
   renderItem,
 }: EntityComboboxProps) {
-  const [inputValue, setInputValue] = useState('')
-  // Capture the real <input> element on first focus so click handlers can use it
-  const inputElRef = useRef<HTMLInputElement | null>(null)
-
-  // Ghost text = the suffix of the best label that starts with what was typed
-  const { ghostText, bestMatch } = useMemo(() => {
-    if (!inputValue || value) return { ghostText: '', bestMatch: null }
-    const lower = inputValue.toLowerCase()
-    const match = items.find((item) => item.label.toLowerCase().startsWith(lower))
-    if (!match) return { ghostText: '', bestMatch: null }
-    return { ghostText: match.label.slice(inputValue.length), bestMatch: match }
-  }, [inputValue, items, value])
-
-  function handleValueChange(v: string | null) {
-    onChange(v ?? '')
-    if (v) {
-      // After clicking / pressing Enter on an item, move focus to the next field
-      const el = inputElRef.current
-      setTimeout(() => {
-        if (el) focusNextAfter(el)
-      }, 80)
-    }
-  }
+  const itemsById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
 
   return (
     <Combobox
       items={items.map((item) => item.id)}
       value={value}
-      onValueChange={handleValueChange}
-      onInputValueChange={(v) => setInputValue(v)}
+      onValueChange={(id) => onChange(id ?? '')}
       disabled={disabled}
-      // Only auto-highlight when there is an active name-based ghost match.
-      // When searching by company (sublabel) there is no ghost text, so the
-      // first result should not be silently pre-selected.
-      autoHighlight={!!bestMatch}
       // Include the sublabel so the library's built-in filter matches both
       // the name *and* the company/sublabel while typing.
       itemToStringLabel={(v: string) => {
-        const item = items.find((i) => i.id === v)
+        const item = itemsById.get(v)
         if (!item) return v ?? ''
         return item.sublabel ? `${item.label} · ${item.sublabel}` : item.label
       }}
@@ -132,38 +75,13 @@ export function EntityCombobox({
         required={required}
         aria-label={ariaLabel}
         className={className ?? 'w-full'}
-        onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-          inputElRef.current = e.currentTarget
-        }}
-        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-          // Tab + active ghost text → accept suggestion & focus next field
-          if (e.key === 'Tab' && bestMatch) {
-            e.preventDefault()
-            const inputEl = e.currentTarget as HTMLInputElement
-            onChange(bestMatch.id)
-            setTimeout(() => focusNextAfter(inputEl), 50)
-          }
-        }}
-      >
-        {/* Ghost text overlay — lives inside InputGroup (position:relative) */}
-        {ghostText && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 flex items-center overflow-hidden pr-8 pl-2.5 text-base select-none md:text-sm"
-          >
-            {/* Invisible spacer that pushes ghost text to cursor position */}
-            <span className="invisible whitespace-pre">{inputValue}</span>
-            {/* Visible grey completion */}
-            <span className="truncate text-muted-foreground/40">{ghostText}</span>
-          </div>
-        )}
-      </ComboboxInput>
+      />
       {name ? <input type="hidden" name={name} value={value} readOnly /> : null}
       <ComboboxContent>
         <ComboboxEmpty>No se encontraron coincidencias</ComboboxEmpty>
         <ComboboxList>
           {(id: string) => {
-            const item = items.find((option) => option.id === id)
+            const item = itemsById.get(id)
             if (!item) return null
             return (
               <ComboboxItem key={item.id} value={item.id}>

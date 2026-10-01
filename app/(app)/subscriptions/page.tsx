@@ -132,34 +132,35 @@ export default async function SubscriptionsPage({
   const rows = subscriptions.map((s) => ({
     id: s.id,
     href: `/subscriptions/${s.id}`,
-    cells: [
-      s.name,
-      s.clients ? (
-        <Link key="client" href={`/clients/${s.clients.id}`} className="hover:underline">
-          {s.clients.name}
-        </Link>
-      ) : null,
-      <StatusBadge key="status" meta={SUBSCRIPTION_STATUS} value={s.status} />,
-      SUBSCRIPTION_BILLING_CYCLE[s.billing_cycle as SubscriptionBillingCycle] ?? s.billing_cycle,
-      formatEUR(s.amount),
-      formatDate(s.next_invoice_date),
-    ],
-    sortValues: [
-      s.name,
-      s.clients?.name ?? '',
-      s.status,
-      s.billing_cycle,
-      s.amount,
-      s.next_invoice_date ?? '',
-    ],
-    csvValues: [
-      s.name,
-      s.clients?.name ?? '',
-      SUBSCRIPTION_STATUS[s.status as SubscriptionStatus]?.label ?? s.status,
-      SUBSCRIPTION_BILLING_CYCLE[s.billing_cycle as SubscriptionBillingCycle] ?? s.billing_cycle,
-      s.amount,
-      s.next_invoice_date ?? '',
-    ],
+    cells: {
+      nombre: { content: s.name, value: s.name },
+      cliente: {
+        content: s.clients ? (
+          <Link key="client" href={`/clients/${s.clients.id}`} className="hover:underline">
+            {s.clients.name}
+          </Link>
+        ) : null,
+        value: s.clients?.name ?? '',
+      },
+      estado: {
+        content: <StatusBadge key="status" meta={SUBSCRIPTION_STATUS} value={s.status} />,
+        value: SUBSCRIPTION_STATUS[s.status as SubscriptionStatus]?.label ?? s.status,
+      },
+      ciclo: {
+        content:
+          SUBSCRIPTION_BILLING_CYCLE[s.billing_cycle as SubscriptionBillingCycle] ??
+          s.billing_cycle,
+        value:
+          SUBSCRIPTION_BILLING_CYCLE[s.billing_cycle as SubscriptionBillingCycle] ??
+          s.billing_cycle,
+      },
+      importe_base: { content: formatEUR(s.amount), value: s.amount },
+      proxima_factura: {
+        content: formatDate(s.next_invoice_date),
+        value: s.next_invoice_date ?? '',
+      },
+    },
+
     rowActions: defaultInvoiceBySubscription.has(s.id) ? (
       <Button asChild size="sm" variant="outline">
         <Link href={`/invoices/${defaultInvoiceBySubscription.get(s.id)?.id}`}>
@@ -184,15 +185,15 @@ export default async function SubscriptionsPage({
     <ListPage
       title="Suscripciones"
       description="Servicios recurrentes con facturación periódica."
-      headers={[
-        { label: 'Nombre', sortKey: 'name' },
-        'Cliente',
-        { label: 'Estado', sortKey: 'status' },
-        'Ciclo',
-        { label: 'Importe base', align: 'right', sortKey: 'amount' },
-        { label: 'Próxima factura', sortKey: 'next_invoice_date' },
+      columns={[
+        { key: 'nombre', label: 'Nombre', sortKey: 'name' },
+        { key: 'cliente', label: 'Cliente' },
+        { key: 'estado', label: 'Estado', sortKey: 'status' },
+        { key: 'ciclo', label: 'Ciclo' },
+        { key: 'importe_base', label: 'Importe base', align: 'right', sortKey: 'amount' },
+        { key: 'proxima_factura', label: 'Próxima factura', sortKey: 'next_invoice_date' },
       ]}
-      align={['left', 'left', 'left', 'left', 'right', 'left']}
+
       rows={rows}
       empty={q || status || billingCycle ? 'Sin coincidencias.' : 'Aún no hay suscripciones.'}
       error={error?.message ?? invoiceError?.message}
