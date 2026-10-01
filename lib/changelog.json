@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.81",
+      "date": "2026-10-01",
+      "title": "v0.1.81",
+      "sections": [
+        {
+          "title": "Mejoras",
+          "items": [
+            "Parallelize proposal page queries and track views after response"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "0ef8309e084e742983181b68eb53f37a89b56ac5",
+          "type": "perf",
+          "scope": "portal",
+          "breaking": false,
+          "description": "Parallelize proposal page queries and track views after response"
+        }
+      ]
+    },
+    {
       "version": "0.1.80",
       "date": "2026-10-01",
       "title": "v0.1.80",
