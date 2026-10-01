@@ -48,7 +48,7 @@ describe('getInternalDocPreviewUrl', () => {
 
     await expect(getInternalDocPreviewUrl('doc-1', 'other/doc-1/file.pdf')).resolves.toBeNull()
     expect(mocks.log.error).toHaveBeenCalledWith(
-      { documentId: 'doc-1', errorType: 'TypeError' },
+      { documentId: 'doc-1', err: expect.any(TypeError) },
       'unexpected error generating internal document preview URL',
     )
   })

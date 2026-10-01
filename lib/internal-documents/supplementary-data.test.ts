@@ -31,7 +31,7 @@ describe('loadOptionalInternalDocData', () => {
     ).resolves.toBeNull()
 
     expect(mocks.log.warn).toHaveBeenCalledWith(
-      { documentId: 'doc-1', source: 'events', errorCode: 'PGRST205' },
+      { documentId: 'doc-1', source: 'events', errorCode: 'PGRST205', errorMessage: undefined },
       'could not load optional internal document data',
     )
   })
@@ -46,7 +46,7 @@ describe('loadOptionalInternalDocData', () => {
     ).resolves.toBeNull()
 
     expect(mocks.log.error).toHaveBeenCalledWith(
-      { documentId: 'doc-1', source: 'extraction', errorType: 'TypeError' },
+      { documentId: 'doc-1', source: 'extraction', err: expect.any(TypeError) },
       'unexpected error loading optional internal document data',
     )
   })

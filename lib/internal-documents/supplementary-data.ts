@@ -5,7 +5,7 @@ const log = scopedLogger('internal-documents.supplementary-data')
 
 type QueryResult<T> = {
   data: T | null
-  error: { code?: string | null } | null
+  error: { code?: string | null; message?: string } | null
 }
 
 /**
@@ -21,7 +21,7 @@ export async function loadOptionalInternalDocData<T>(
     const { data, error } = await query
     if (error) {
       log.warn(
-        { documentId, source, errorCode: error.code ?? 'unknown' },
+        { documentId, source, errorCode: error.code ?? 'unknown', errorMessage: error.message },
         'could not load optional internal document data',
       )
       return null
@@ -29,7 +29,7 @@ export async function loadOptionalInternalDocData<T>(
     return data
   } catch (error) {
     log.error(
-      { documentId, source, errorType: error instanceof Error ? error.name : typeof error },
+      { documentId, source, err: error },
       'unexpected error loading optional internal document data',
     )
     return null

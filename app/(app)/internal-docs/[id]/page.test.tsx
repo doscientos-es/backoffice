@@ -120,6 +120,9 @@ vi.mock('@/components/ui/danger-zone', () => ({
 vi.mock('@/components/ui/submit-button', () => ({
   SubmitButton: ({ children }: ChildrenProps) => <button type="submit">{children}</button>,
 }))
+vi.mock('@/components/ui/error-boundary', () => ({
+  SectionBoundary: ({ children }: ChildrenProps) => <div>{children}</div>,
+}))
 vi.mock('@doscientos/ui', () => ({ DocPreview: () => <p>Preview no disponible</p> }))
 vi.mock('./internal-doc-edit-dialog', () => ({
   InternalDocEditDialog: () => <button type="button">Editar</button>,
@@ -137,6 +140,7 @@ import InternalDocDetailPage from './page'
 describe('InternalDocDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.documentResult.error = null
     mocks.eventsResult = { data: null, error: null }
     mocks.extractionResult = { data: null, error: null }
     mocks.extractionRejects = false
@@ -144,6 +148,17 @@ describe('InternalDocDetailPage', () => {
     mocks.isGoogleEnabled.mockReturnValue(false)
     mocks.serverEnv.mockReset()
     mocks.user.role = 'viewer'
+  })
+
+  it('reports database failures instead of treating them as missing documents', async () => {
+    mocks.documentResult.error = { code: 'PGRST205' }
+    await expect(
+      InternalDocDetailPage({ params: Promise.resolve({ id: 'doc-1' }) }),
+    ).rejects.toThrow('No se pudo cargar el documento interno')
+    expect(mocks.log.error).toHaveBeenCalledWith(
+      { documentId: 'doc-1', err: mocks.documentResult.error },
+      'could not load internal document',
+    )
   })
 
   it('renders the document when preview and optional data fail', async () => {
@@ -159,7 +174,7 @@ describe('InternalDocDetailPage', () => {
       'other/doc-1/documento.pdf',
     )
     expect(mocks.log.warn).toHaveBeenCalledWith(
-      { documentId: 'doc-1', source: 'events', errorCode: 'PGRST205' },
+      { documentId: 'doc-1', source: 'events', errorCode: 'PGRST205', errorMessage: undefined },
       'could not load optional internal document data',
     )
   })

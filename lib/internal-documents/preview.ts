@@ -29,7 +29,7 @@ export async function getInternalDocPreviewUrl(
     )
   } catch (error) {
     log.error(
-      { documentId, errorType: error instanceof Error ? error.name : typeof error },
+      { documentId, err: error },
       'unexpected error generating internal document preview URL',
     )
   }

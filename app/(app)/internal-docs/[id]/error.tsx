@@ -1,0 +1,38 @@
+'use client'
+
+import { TriangleAlert as AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
+
+import { Button } from '@/components/ui/button'
+
+/** Keeps a failed internal document detail isolated from the rest of the app shell. */
+export default function InternalDocDetailError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-6 py-24 text-center">
+      <div className="flex size-16 items-center justify-center rounded-2xl bg-destructive/10">
+        <AlertTriangle className="size-8 text-destructive" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <h1 className="text-xl font-semibold">Error al cargar el documento</h1>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          No se ha podido cargar este documento. Inténtalo de nuevo o vuelve al listado.
+        </p>
+        {error.digest && <p className="text-xs text-muted-foreground">ID: {error.digest}</p>}
+      </div>
+      <div className="flex gap-2">
+        <Button onClick={reset} size="sm">
+          Reintentar
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/internal-docs">Volver a documentos</Link>
+        </Button>
+      </div>
+    </div>
+  )
+}

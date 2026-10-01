@@ -1,7 +1,5 @@
 import pino, { type Logger } from 'pino'
 
-import { serverEnv } from '@/lib/env'
-
 let cached: Logger | null = null
 
 /**
@@ -10,9 +8,13 @@ let cached: Logger | null = null
  */
 export function logger(): Logger {
   if (cached) return cached
-  const env = serverEnv()
+  // Logging must work even when application environment validation fails.
+  const configuredLevel = process.env.LOG_LEVEL?.trim()
+  const level = ['debug', 'info', 'warn', 'error'].includes(configuredLevel ?? '')
+    ? configuredLevel
+    : 'info'
   cached = pino({
-    level: env.LOG_LEVEL,
+    level,
     base: { app: 'backoffice-doscientos' },
     timestamp: pino.stdTimeFunctions.isoTime,
     redact: {

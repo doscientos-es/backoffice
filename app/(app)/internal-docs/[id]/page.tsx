@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DangerZone } from '@/components/ui/danger-zone'
+import { SectionBoundary } from '@/components/ui/error-boundary'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { requireUser } from '@/lib/auth'
 import { isGoogleEnabled, serverEnv } from '@/lib/env'
@@ -134,7 +135,7 @@ export default async function InternalDocDetailPage({
   const { id } = await params
 
   const supabase = await createServerClient()
-  const { data: doc } = await supabase
+  const { data: doc, error } = await supabase
     .from('internal_documents')
     .select(
       'id, name, description, category, tags, mime_type, size_bytes, storage_path, version, visibility, effective_date, expires_at, created_at, uploaded_by, deleted_at, drive_backup_version, drive_backup_url, team_members:uploaded_by(name)',
@@ -143,6 +144,10 @@ export default async function InternalDocDetailPage({
     .is('deleted_at', null)
     .maybeSingle()
 
+  if (error) {
+    log.error({ documentId: id, err: error }, 'could not load internal document')
+    throw new Error('No se pudo cargar el documento interno', { cause: error })
+  }
   if (!doc) notFound()
 
   const isAdmin = ['owner', 'admin'].includes(user.role)
@@ -322,7 +327,9 @@ export default async function InternalDocDetailPage({
               <CardTitle>Historial</CardTitle>
             </CardHeader>
             <CardContent>
-              <InternalDocHistory events={events} />
+              <SectionBoundary label="No se pudo cargar el historial">
+                <InternalDocHistory events={events} />
+              </SectionBoundary>
             </CardContent>
           </Card>
 
@@ -347,11 +354,13 @@ export default async function InternalDocDetailPage({
             <CardTitle>Preview</CardTitle>
           </CardHeader>
           <CardContent className="overflow-hidden rounded-b-lg p-0">
-            <DocPreview
-              url={previewUrl}
-              mimeType={doc.mime_type as string | null}
-              name={doc.name as string}
-            />
+            <SectionBoundary label="No se pudo cargar la vista previa. Puedes descargar el archivo.">
+              <DocPreview
+                url={previewUrl}
+                mimeType={doc.mime_type as string | null}
+                name={doc.name as string}
+              />
+            </SectionBoundary>
           </CardContent>
         </Card>
       </div>

@@ -1,5 +1,3 @@
-import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
-
 const MAX_DOCUMENT_TEXT_LENGTH = 2_000_000
 const MAX_PAGE_TEXT_LENGTH = 100_000
 
@@ -17,6 +15,10 @@ function textFromItem(item: unknown): string {
 
 /** Extract the embedded text layer of a digital PDF. It deliberately does not perform OCR. */
 export async function extractPdfPages(bytes: ArrayBuffer): Promise<ExtractedPdf> {
+  // PDF.js initializes native canvas/DOMMatrix at import time. Loading it while
+  // rendering a document (via the server actions) can crash the entire route.
+  // Keep initialization inside the indexing operation's error handling.
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs')
   const loadingTask = getDocument({
     data: new Uint8Array(bytes),
     useWorkerFetch: false,

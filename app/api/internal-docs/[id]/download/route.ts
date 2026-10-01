@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { requireUser } from '@/lib/auth'
+import { scopedLogger } from '@/lib/logger'
 import { getStorage } from '@/lib/storage'
 import { createServerClient } from '@/lib/supabase/server'
 
@@ -8,6 +9,7 @@ export const dynamic = 'force-dynamic'
 
 /** Signed URL TTL in seconds (2 minutes – enough for browser to follow the redirect). */
 const SIGNED_URL_TTL = 120
+const log = scopedLogger('internal-documents.download')
 
 export async function GET(
   _req: NextRequest,
@@ -29,7 +31,11 @@ export async function GET(
     .eq('id', id)
     .maybeSingle()
 
-  if (error || !doc || doc.deleted_at) {
+  if (error) {
+    log.error({ documentId: id, err: error }, 'could not load internal document for download')
+    return NextResponse.json({ error: 'No se pudo cargar el documento' }, { status: 500 })
+  }
+  if (!doc || doc.deleted_at) {
     return NextResponse.json({ error: 'Documento no encontrado' }, { status: 404 })
   }
 
@@ -46,6 +52,10 @@ export async function GET(
   )
 
   if (signError || !url) {
+    log.error(
+      { documentId: id, errorMessage: signError },
+      'could not sign internal document download',
+    )
     return NextResponse.json({ error: 'No se pudo generar la URL de descarga' }, { status: 500 })
   }
 
