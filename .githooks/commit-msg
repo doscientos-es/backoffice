@@ -1,0 +1,3 @@
+#!/bin/sh
+# Rechaza mensajes que no sigan Conventional Commits (el changelog se genera de ellos).
+exec pnpm exec changelog lint-commit "$1"

@@ -31,12 +31,12 @@ try {
     }
   }
 
-  chmodSync(join(root, ".githooks", "pre-commit"), 0o755);
+  for (const hook of ["pre-commit", "commit-msg"]) chmodSync(join(root, ".githooks", hook), 0o755);
   if (git("config", "--local", "core.hooksPath", ".githooks").status !== 0) {
     throw new Error("Cannot configure local Git hooks.");
   }
   process.stdout.write(
-    "Pre-commit installed: pnpm quality:quick. No pre-push hook or automatic fixes.\n",
+    "Hooks installed: pre-commit (pnpm quality:quick) and commit-msg (Conventional Commits). No pre-push hook or automatic fixes.\n",
   );
 } catch (error) {
   process.stderr.write(
