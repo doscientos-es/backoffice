@@ -51,7 +51,6 @@ export default defineConfig({
         // ── Client-side React hooks needing a DOM/render + network harness ─
         //    (use-form-dirty is pure and remains covered.)
         'lib/hooks/use-action-form.ts',
-        'lib/hooks/use-autosave.ts',
         'lib/hooks/use-github-handle.ts',
 
         // ── React PDF component (visual, not logic) ───────────────────────

@@ -30,9 +30,9 @@ type Recipient = { kind: 'client'; id: string } | { kind: 'lead'; id: string } |
 
 /**
  * Explicit create flow for proposals. The detail page (`/proposals/[id]`)
- * owns the autosave-driven collaborative editor; here the user fills a draft
+ * owns the draft editor; here the user fills a draft
  * and confirms with a single click — on success we navigate to the detail
- * view where further edits are autosaved.
+ * view where further edits are saved explicitly.
  *
  * The recipient is either an existing client OR an open lead: the proposal
  * never targets a project (projects are auto-generated on acceptance).

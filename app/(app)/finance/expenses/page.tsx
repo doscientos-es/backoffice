@@ -114,8 +114,16 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
         { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
       ]}
       pagination={{ page, pageSize: EXPENSE_LIST_PAGE_SIZE, total: count }}
-      headers={['Proveedor', 'Fecha', 'Categoría', 'Estado', 'Pagado por', 'Total', '']}
-      align={['left', 'left', 'left', 'left', 'left', 'right', 'right']}
+      columns={[
+        { key: 'proveedor', label: 'Proveedor' },
+        { key: 'fecha', label: 'Fecha' },
+        { key: 'categoria', label: 'Categoría' },
+        { key: 'estado', label: 'Estado' },
+        { key: 'pagado_por', label: 'Pagado por' },
+        { key: 'total', label: 'Total', align: 'right' },
+        { key: 'actions', label: '', align: 'right' },
+      ]}
+
       rows={expenses.map((e) => {
         const payer =
           e.payment_source === 'member' && e.paid_by_member_id
@@ -125,34 +133,42 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
         return {
           id: e.id,
           href: `/finance/expenses/${e.id}`,
-          cells: [
-            e.vendor,
-            formatDate(e.expense_date),
-            EXPENSE_CATEGORY_LABELS[e.category] ?? e.category,
-            <StatusBadge key={`${e.id}-status`} meta={EXPENSE_STATUS} value={e.status} />,
-            payer ? (
-              <MemberLabel key={`${e.id}-payer`} member={payer} size="sm" />
-            ) : (
-              <span
-                key={`${e.id}-payer`}
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
-              >
-                <Building2 className="size-3.5 shrink-0" />
-                Empresa
-              </span>
-            ),
-            formatEUR(e.total),
-            canEdit ? (
-              <ExpenseListActions
-                key={`${e.id}-actions`}
-                expense={e}
-                projects={projects}
-                teamMembers={teamMembers}
-                vendorSuggestions={vendorSuggestions}
-                canDelete={canDelete}
-              />
-            ) : null,
-          ],
+          cells: {
+            proveedor: { content: e.vendor },
+            fecha: { content: formatDate(e.expense_date) },
+            categoria: { content: EXPENSE_CATEGORY_LABELS[e.category] ?? e.category },
+            estado: {
+              content: (
+                <StatusBadge key={`${e.id}-status`} meta={EXPENSE_STATUS} value={e.status} />
+              ),
+            },
+            pagado_por: {
+              content: payer ? (
+                <MemberLabel key={`${e.id}-payer`} member={payer} size="sm" />
+              ) : (
+                <span
+                  key={`${e.id}-payer`}
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+                >
+                  <Building2 className="size-3.5 shrink-0" />
+                  Empresa
+                </span>
+              ),
+            },
+            total: { content: formatEUR(e.total) },
+            actions: {
+              content: canEdit ? (
+                <ExpenseListActions
+                  key={`${e.id}-actions`}
+                  expense={e}
+                  projects={projects}
+                  teamMembers={teamMembers}
+                  vendorSuggestions={vendorSuggestions}
+                  canDelete={canDelete}
+                />
+              ) : null,
+            },
+          },
         }
       })}
     />

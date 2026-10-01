@@ -182,81 +182,116 @@ export default async function InvoicesPage({
         { key: 'verifactu', label: 'Verifactu', options: VERIFACTU_FILTER_OPTIONS },
       ]}
       pagination={{ page, pageSize: INVOICE_LIST_PAGE_SIZE, total: count }}
-      headers={[
-        { label: 'Nº', sortKey: 'full_number', minWidth: '8rem' },
-        { label: 'Cliente', sortKey: 'client_name', minWidth: '11rem' },
-        { label: 'Conceptos', minWidth: '15rem' },
-        { label: 'IDFACT', minWidth: '7rem' },
-        { label: 'Estado', sortKey: 'status' },
-        'Verifactu',
-        { label: 'Importe', align: 'right', sortKey: 'total' },
-        { label: 'Emisión', sortKey: 'issue_date', minWidth: '7rem' },
-        { label: 'Vencimiento', sortKey: 'due_date', minWidth: '7rem' },
+      columns={[
+        { key: 'n', label: 'Nº', sortKey: 'full_number', minWidth: '8rem' },
+        { key: 'cliente', label: 'Cliente', sortKey: 'client_name', minWidth: '11rem' },
+        { key: 'conceptos', label: 'Conceptos', minWidth: '15rem' },
+        { key: 'idfact', label: 'IDFACT', minWidth: '7rem' },
+        { key: 'estado', label: 'Estado', sortKey: 'status' },
+        { key: 'verifactu', label: 'Verifactu' },
+        { key: 'importe', label: 'Importe', align: 'right', sortKey: 'total' },
+        { key: 'emision', label: 'Emisión', sortKey: 'issue_date', minWidth: '7rem' },
+        { key: 'vencimiento', label: 'Vencimiento', sortKey: 'due_date', minWidth: '7rem' },
       ]}
-      align={['left', 'left', 'left', 'left', 'left', 'left', 'right', 'left', 'left']}
+
       exportFilename="facturas"
       rows={data.map((i) => ({
         id: i.id,
         href: `/invoices/${i.id}`,
-        cells: [
-          <span key="number" className="font-semibold whitespace-nowrap tabular-nums">
-            {i.full_number ?? (i.status === 'draft' ? 'Borrador' : '—')}
-          </span>,
-          i.client_name ? (
-            <Link
-              key="client"
-              href={`/clients/${i.client_id}`}
-              className="block max-w-48 text-foreground transition-colors hover:text-primary hover:underline"
-              title={`Abrir ficha de ${i.client_name}`}
-            >
-              <span className="line-clamp-2 text-sm leading-5 font-medium">{i.client_name}</span>
-            </Link>
-          ) : null,
-          i.concepts.length > 0 ? (
-            <span
-              key="concepts"
-              className="line-clamp-2 max-w-80 text-sm leading-5 text-foreground/80"
-              title={i.concepts.join('\n')}
-            >
-              {i.concepts.join(' · ')}
-            </span>
-          ) : null,
-          i.idfact ? (
-            <span
-              key="idfact"
-              className="line-clamp-2 max-w-28 font-mono text-[10px] leading-4 break-all text-muted-foreground"
-              title={i.idfact}
-            >
-              {i.idfact}
-            </span>
-          ) : (
-            <span key="idfact" className="text-muted-foreground/50">
-              —
-            </span>
-          ),
-          <StatusBadge key="status" meta={INVOICE_STATUS} value={i.status ?? ''} />,
-          <StatusBadge key="verifactu" meta={VERIFACTU_STATUS} value={i.verifactu_status ?? ''} />,
-          <span key="total" className="font-medium whitespace-nowrap text-foreground tabular-nums">
-            {formatEUR(i.total ?? 0)}
-          </span>,
-          <span key="issue-date" className="whitespace-nowrap tabular-nums">
-            {formatDate(i.issue_date)}
-          </span>,
-          <span key="due-date" className="whitespace-nowrap tabular-nums">
-            {formatDate(i.due_date)}
-          </span>,
-        ],
-        csvValues: [
-          i.full_number ?? '',
-          i.client_name ?? '',
-          i.concepts.join(' | '),
-          i.idfact ?? '',
-          i.status ?? '',
-          i.verifactu_status ?? '',
-          i.total ?? 0,
-          i.issue_date ?? '',
-          i.due_date ?? '',
-        ],
+        cells: {
+          n: {
+            content: (
+              <span key="number" className="font-semibold whitespace-nowrap tabular-nums">
+                {i.full_number ?? (i.status === 'draft' ? 'Borrador' : '—')}
+              </span>
+            ),
+            value: i.full_number ?? '',
+          },
+          cliente: {
+            content: i.client_name ? (
+              <Link
+                key="client"
+                href={`/clients/${i.client_id}`}
+                className="block max-w-48 text-foreground transition-colors hover:text-primary hover:underline"
+                title={`Abrir ficha de ${i.client_name}`}
+              >
+                <span className="line-clamp-2 text-sm leading-5 font-medium">{i.client_name}</span>
+              </Link>
+            ) : null,
+            value: i.client_name ?? '',
+          },
+          conceptos: {
+            content:
+              i.concepts.length > 0 ? (
+                <span
+                  key="concepts"
+                  className="line-clamp-2 max-w-80 text-sm leading-5 text-foreground/80"
+                  title={i.concepts.join('\n')}
+                >
+                  {i.concepts.join(' · ')}
+                </span>
+              ) : null,
+            value: i.concepts.join(' | '),
+          },
+          idfact: {
+            content: i.idfact ? (
+              <span
+                key="idfact"
+                className="line-clamp-2 max-w-28 font-mono text-[10px] leading-4 break-all text-muted-foreground"
+                title={i.idfact}
+              >
+                {i.idfact}
+              </span>
+            ) : (
+              <span key="idfact" className="text-muted-foreground/50">
+                —
+              </span>
+            ),
+            value: i.idfact ?? '',
+          },
+          estado: {
+            content: <StatusBadge key="status" meta={INVOICE_STATUS} value={i.status ?? ''} />,
+            value: i.status ?? '',
+          },
+          verifactu: {
+            content: (
+              <StatusBadge
+                key="verifactu"
+                meta={VERIFACTU_STATUS}
+                value={i.verifactu_status ?? ''}
+              />
+            ),
+            value: i.verifactu_status ?? '',
+          },
+          importe: {
+            content: (
+              <span
+                key="total"
+                className="font-medium whitespace-nowrap text-foreground tabular-nums"
+              >
+                {formatEUR(i.total ?? 0)}
+              </span>
+            ),
+            value: i.total ?? 0,
+          },
+          emision: {
+            content: (
+              <span key="issue-date" className="whitespace-nowrap tabular-nums">
+                {formatDate(i.issue_date)}
+              </span>
+            ),
+            value: i.issue_date ?? '',
+          },
+          vencimiento: {
+            content: (
+              <span key="due-date" className="whitespace-nowrap tabular-nums">
+                {formatDate(i.due_date)}
+              </span>
+            ),
+            value: i.due_date ?? '',
+          },
+        },
+
         rowActions: (
           <InvoiceListRowActions invoiceId={i.id} canSendToClient={i.status !== 'draft'} />
         ),

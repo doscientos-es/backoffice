@@ -171,18 +171,18 @@ export default async function LeadsPage({
           filterKeys: LEAD_SAVED_VIEW_FILTER_KEYS,
         }}
         pagination={{ page, pageSize: LEAD_LIST_PAGE_SIZE, total: count }}
-        headers={[
-          { label: 'Nombre', sortKey: 'name' },
-          { label: 'Empresa', sortKey: 'company' },
-          'Email',
-          'Campaña',
-          { label: 'Estado', sortKey: 'status' },
-          { label: 'Score', sortKey: 'score' },
-          'Responsable',
-          { label: 'Creado', sortKey: 'created_at' },
-          'Acciones',
+        columns={[
+          { key: 'nombre', label: 'Nombre', sortKey: 'name' },
+          { key: 'empresa', label: 'Empresa', sortKey: 'company' },
+          { key: 'email', label: 'Email' },
+          { key: 'campana', label: 'Campaña' },
+          { key: 'estado', label: 'Estado', sortKey: 'status' },
+          { key: 'score', label: 'Score', sortKey: 'score', align: 'right' },
+          { key: 'responsable', label: 'Responsable' },
+          { key: 'creado', label: 'Creado', sortKey: 'created_at' },
+          { key: 'acciones', label: 'Acciones', align: 'right' },
         ]}
-        align={['left', 'left', 'left', 'left', 'left', 'right', 'left', 'left', 'right']}
+
         exportFilename="leads"
         addHref="/leads/new"
         addLabel="Añadir lead"

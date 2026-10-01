@@ -3,7 +3,7 @@
  *
  * Propone 3 pares problema→solución para una propuesta, a partir del contexto
  * del proyecto, cliente y líneas. NO persiste nada: devuelve el JSON para que
- * el editor lo cargue y el equipo lo revise antes de guardar (autosave).
+ * el editor lo cargue y el equipo lo revise antes de guardar explícitamente.
  *
  * Auth: requireUser (viewer denegado).
  * 503 si no hay clave de IA (isAIEnabled() falsy).

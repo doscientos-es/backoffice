@@ -89,7 +89,7 @@ export const DuplicateProposalInput = uuidIdInput
 export type DuplicateProposalInputType = z.infer<typeof DuplicateProposalInput>
 
 /**
- * Patch payload for the inline editor + autosave. All fields optional except
+ * Patch payload for the inline editor. All fields optional except
  * `id`; nullable string fields collapse "" → null so the editor can clear
  * them. When `items` is present the entire line set is replaced atomically.
  */

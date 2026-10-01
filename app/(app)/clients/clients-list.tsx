@@ -11,7 +11,10 @@ import { cn } from '@/lib/utils'
 import { deleteClient } from './actions'
 import { ClientQuickView, type QuickClient } from './client-quick-view'
 
-export function ClientsList({ canEdit = false, ...props }: ListPageProps & { canEdit?: boolean }) {
+export function ClientsList({
+  canEdit = false,
+  ...props
+}: ListPageProps<QuickClient> & { canEdit?: boolean }) {
   const [selectedClient, setSelectedClient] = useState<QuickClient | null>(null)
   const { items: rows, remove } = useOptimisticRemoval(props.rows)
 
@@ -25,14 +28,16 @@ export function ClientsList({ canEdit = false, ...props }: ListPageProps & { can
       <ListPage
         {...props}
         rows={rows}
-        mobileRow={(row) => (
-          <ClientMobileCard
-            key={row.id}
-            client={row.data as QuickClient}
-            onOpenAction={() => setSelectedClient(row.data as QuickClient)}
-          />
-        )}
-        onRowClick={(row) => setSelectedClient(row.data as QuickClient)}
+        mobileRow={(row) =>
+          row.data ? (
+            <ClientMobileCard
+              key={row.id}
+              client={row.data}
+              onOpenAction={() => setSelectedClient(row.data ?? null)}
+            />
+          ) : null
+        }
+        onRowClick={(row) => setSelectedClient(row.data ?? null)}
       />
       <ClientQuickView
         client={selectedClient}

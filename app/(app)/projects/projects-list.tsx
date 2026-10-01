@@ -9,7 +9,10 @@ import { useOptimisticRemoval } from '@/lib/hooks/use-optimistic-removal'
 import { deleteProject } from './actions'
 import { ProjectQuickView, type QuickProject } from './project-quick-view'
 
-export function ProjectsList({ canEdit = false, ...props }: ListPageProps & { canEdit?: boolean }) {
+export function ProjectsList({
+  canEdit = false,
+  ...props
+}: ListPageProps<QuickProject> & { canEdit?: boolean }) {
   const [selectedProject, setSelectedProject] = useState<QuickProject | null>(null)
   const { items: rows, remove } = useOptimisticRemoval(props.rows)
 
@@ -24,11 +27,7 @@ export function ProjectsList({ canEdit = false, ...props }: ListPageProps & { ca
 
   return (
     <>
-      <ListPage
-        {...props}
-        rows={rows}
-        onRowClick={(row) => setSelectedProject(row.data as QuickProject)}
-      />
+      <ListPage {...props} rows={rows} onRowClick={(row) => setSelectedProject(row.data ?? null)} />
       <ErrorBoundary>
         <ProjectQuickView
           project={selectedProject}
