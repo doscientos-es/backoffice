@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import { LineItemsTable } from '@/components/finance/line-items-table'
 import { MaintenanceOfferEditor } from '@/components/proposals/maintenance-offer-editor'
@@ -223,6 +224,11 @@ export function ProposalEditor({
       )
     }
   }
+
+  const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null)
+  useEffect(() => {
+    setActionsSlot(document.getElementById('proposal-editor-actions'))
+  }, [])
 
   const payload = useMemo(() => {
     const { problems, solutions } = unzipPairs(pairs)
@@ -460,22 +466,19 @@ export function ProposalEditor({
   return (
     <>
       <div className="flex flex-col gap-5">
-        <header className="sticky top-3 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background/95 p-3 shadow-sm backdrop-blur">
-          <div className="min-w-0 flex-1">
-            <p className="mb-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-              Edición de propuesta
-            </p>
-          </div>
-          {!locked ? (
-            <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
-              <FormFeedback state={saveFeedback.state} pendingLabel="Guardando propuesta…" />
-              <Button onClick={handleSave} disabled={saveFeedback.pending}>
-                <Save className="size-4" aria-hidden />
-                {saveFeedback.pending ? 'Guardando…' : 'Guardar y ver propuesta'}
-              </Button>
-            </div>
-          ) : null}
-        </header>
+        {/* El CTA de guardar vive en la cabecera de la página (slot en page.tsx). */}
+        {!locked && actionsSlot
+          ? createPortal(
+              <div className="flex items-center gap-2">
+                <FormFeedback state={saveFeedback.state} pendingLabel="Guardando propuesta…" />
+                <Button size="sm" onClick={handleSave} disabled={saveFeedback.pending}>
+                  <Save aria-hidden />
+                  {saveFeedback.pending ? 'Guardando…' : 'Guardar y ver propuesta'}
+                </Button>
+              </div>,
+              actionsSlot,
+            )
+          : null}
 
         {saveFeedback.state.status === 'error' && saveErrors.length > 0 ? (
           <Alert variant="destructive" className="border-destructive/30 bg-destructive/5 px-4 py-3">

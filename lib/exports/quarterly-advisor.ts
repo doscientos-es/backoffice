@@ -189,14 +189,28 @@ export function lastDayOf(period: QuarterlyPeriod): string {
 export function quarterlyAdvisorFilename(
   period: QuarterlyPeriod,
   extension: 'csv' | 'xlsx',
+  scope: QuarterlyCsvScope = 'all',
 ): string {
-  return `doscientos-${period.label.replace(' ', '-')}.${extension}`
+  const suffix = scope === 'all' ? '' : `-${scope === 'income' ? 'ingresos' : 'gastos'}`
+  return `doscientos-${period.label.replace(' ', '-')}${suffix}.${extension}`
 }
 
-/** Single-sheet CSV register combining collections and expenses. */
-export function quarterlyAdvisorCsv(data: QuarterlyAdvisorData): Uint8Array {
+export type QuarterlyCsvScope = 'all' | 'income' | 'expenses'
+
+export function parseQuarterlyCsvScope(value: string | null): QuarterlyCsvScope | null {
+  if (value === null || value === '') return 'all'
+  return value === 'all' || value === 'income' || value === 'expenses' ? value : null
+}
+
+/** Single-sheet CSV register combining collections and expenses (or only one of them). */
+export function quarterlyAdvisorCsv(
+  data: QuarterlyAdvisorData,
+  scope: QuarterlyCsvScope = 'all',
+): Uint8Array {
+  const invoices = scope === 'expenses' ? [] : data.invoices
+  const expenses = scope === 'income' ? [] : data.expenses
   const rows = [
-    ...data.invoices.map((invoice) => ({
+    ...invoices.map((invoice) => ({
       Tipo: 'Cobro',
       'Número / referencia': invoice.full_number ?? '',
       Fecha: invoice.issue_date ?? '',
@@ -212,7 +226,7 @@ export function quarterlyAdvisorCsv(data: QuarterlyAdvisorData): Uint8Array {
       Adjuntos: 'PDF disponible para descarga manual desde la factura',
       'Enlaces Drive': '',
     })),
-    ...data.expenses.map((expense) => ({
+    ...expenses.map((expense) => ({
       Tipo: 'Gasto',
       'Número / referencia': expense.invoice_reference ?? '',
       Fecha: expense.expense_date,

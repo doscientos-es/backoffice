@@ -11,21 +11,33 @@ function currentMonth(): string {
   return new Date().toISOString().slice(0, 7)
 }
 
-function quarterForMonth(month: string): { year: string; quarter: number; label: string } | null {
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null
-  const year = month.slice(0, 4)
-  const quarter = Math.ceil(Number(month.slice(5, 7)) / 3)
-  return { year, quarter, label: `T${quarter} ${year}` }
+type QuarterScope = 'all' | 'income' | 'expenses'
+
+const SCOPE_OPTIONS: { value: QuarterScope; label: string }[] = [
+  { value: 'all', label: 'Todo (ingresos y gastos)' },
+  { value: 'income', label: 'Solo ingresos' },
+  { value: 'expenses', label: 'Solo gastos' },
+]
+
+const selectClass =
+  'h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring'
+
+/** Quarters that already started in `year` (all four for past years). */
+function availableQuarters(year: number): number[] {
+  const now = new Date()
+  const last = year === now.getFullYear() ? Math.ceil((now.getMonth() + 1) / 3) : 4
+  return Array.from({ length: last }, (_, index) => index + 1)
 }
 
-/** Groups the monthly and annual accounting-register downloads. */
+/** Groups the monthly, quarterly and annual accounting-register downloads. */
 export function InvoiceRegisterExport({ year }: { year: number }) {
   const [month, setMonth] = useState(currentMonth)
   const monthHref = `/api/invoices/libro-registro?month=${month}`
-  const quarter = quarterForMonth(month)
-  const quarterHref = quarter
-    ? `/api/invoices/trimestral?year=${quarter.year}&quarter=${quarter.quarter}`
-    : null
+  const quarters = availableQuarters(year)
+  const [quarter, setQuarter] = useState(quarters[quarters.length - 1] ?? 1)
+  const [scope, setScope] = useState<QuarterScope>('all')
+  const quarterHref = `/api/invoices/trimestral?year=${year}&quarter=${quarter}&scope=${scope}`
+  const scopeSuffix = scope === 'all' ? '' : `-${scope === 'income' ? 'ingresos' : 'gastos'}`
 
   return (
     <PopoverTrigger>
@@ -75,43 +87,40 @@ export function InvoiceRegisterExport({ year }: { year: number }) {
               Resumen trimestral para asesoría
             </label>
             <p className="text-xs text-muted-foreground">
-              Excel o CSV con facturas emitidas y gastos. El envío por email a la gestoría está en
-              Finanzas.
+              Elige trimestre y qué incluir. El envío por email a la gestoría está en Finanzas.
             </p>
             <div className="flex gap-2">
-              <Input
+              <select
                 id="invoice-quarterly-month"
-                type="month"
-                value={month}
-                max={currentMonth()}
-                onChange={(event) => setMonth(event.target.value)}
-                className="h-9 min-w-0 flex-1"
-              />
-              {quarterHref && quarter ? (
-                <>
-                  <Button variant="secondary" className="h-9" asChild>
-                    <a href={`${quarterHref}&format=xlsx`} download>
-                      Excel
-                    </a>
-                  </Button>
-                  <Button variant="secondary" className="h-9" asChild>
-                    <a
-                      href={quarterHref}
-                      download={`doscientos-T${quarter.quarter}-${quarter.year}.csv`}
-                    >
-                      CSV
-                    </a>
-                  </Button>
-                </>
-              ) : (
-                <Button variant="secondary" className="h-9" disabled>
-                  Descargar
-                </Button>
-              )}
+                aria-label="Trimestre"
+                value={quarter}
+                onChange={(event) => setQuarter(Number(event.target.value))}
+                className={selectClass}
+              >
+                {quarters.map((q) => (
+                  <option key={q} value={q}>
+                    T{q} {year}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="Contenido"
+                value={scope}
+                onChange={(event) => setScope(event.target.value as QuarterScope)}
+                className={selectClass}
+              >
+                {SCOPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
-            {quarter ? (
-              <p className="text-xs text-muted-foreground">Se descargará {quarter.label}.</p>
-            ) : null}
+            <Button variant="secondary" className="h-9 w-full" asChild>
+              <a href={quarterHref} download={`doscientos-T${quarter}-${year}${scopeSuffix}.csv`}>
+                Descargar CSV
+              </a>
+            </Button>
           </div>
 
           <div className="flex items-center justify-between gap-3 border-t border-border pt-4">

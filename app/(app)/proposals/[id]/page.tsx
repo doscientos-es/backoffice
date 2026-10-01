@@ -455,6 +455,7 @@ export default async function ProposalDetailPage({
             />
             <StatusBadge meta={PROPOSAL_STATUS} value={status} />
             {deliveredAt ? <Badge variant="success">Terminada</Badge> : null}
+            {editing ? <div id="proposal-editor-actions" className="contents" /> : null}
             {!locked ? (
               <Button variant="outline" size="sm" asChild>
                 <Link href={editing ? `/proposals/${id}` : `/proposals/${id}?mode=edit`}>

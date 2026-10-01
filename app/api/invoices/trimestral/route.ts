@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { requireUser } from '@/lib/auth'
 import {
   loadQuarterlyAdvisorData,
+  parseQuarterlyCsvScope,
   quarterlyAdvisorCsv,
   quarterlyAdvisorFilename,
   quarterlyAdvisorWorkbook,
@@ -42,6 +43,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Formato no soportado (csv o xlsx)' }, { status: 400 })
   }
 
+  const scope = parseQuarterlyCsvScope(searchParams.get('scope'))
+  if (!scope) {
+    return NextResponse.json(
+      { error: 'Alcance no soportado (all, income o expenses)' },
+      { status: 400 },
+    )
+  }
+
   try {
     const data = await loadQuarterlyAdvisorData(period)
     const logContext = {
@@ -61,8 +70,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       })
     }
 
-    const csv = quarterlyAdvisorCsv(data)
-    const filename = quarterlyAdvisorFilename(period, 'csv')
+    const csv = quarterlyAdvisorCsv(data, scope)
+    const filename = quarterlyAdvisorFilename(period, 'csv', scope)
     log.info(logContext, 'quarterly_advisor_csv_exported')
     return new NextResponse(new TextDecoder().decode(csv), {
       headers: {
