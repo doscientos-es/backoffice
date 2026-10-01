@@ -55,27 +55,30 @@ export function CommandCenter({ metrics }: { metrics: CommandCenterMetrics }) {
         </CardHeader>
         <CardContent className="grid gap-5 lg:grid-cols-[1fr_1fr]">
           <div className="grid gap-3 sm:grid-cols-3">
-            <label className="text-sm">
+            <label className="text-sm" htmlFor="command-center-tax">
               Impuesto estimado %
               <Input
+                id="command-center-tax"
                 type="number"
                 min="0"
                 value={taxRate}
                 onChange={(e) => setTaxRate(Number(e.target.value))}
               />
             </label>
-            <label className="text-sm">
+            <label className="text-sm" htmlFor="command-center-target">
               Beneficio neto objetivo
               <Input
+                id="command-center-target"
                 type="number"
                 min="0"
                 value={target}
                 onChange={(e) => setTarget(Number(e.target.value))}
               />
             </label>
-            <label className="text-sm">
+            <label className="text-sm" htmlFor="command-center-months">
               Meses
               <Input
+                id="command-center-months"
                 type="number"
                 min="1"
                 value={months}

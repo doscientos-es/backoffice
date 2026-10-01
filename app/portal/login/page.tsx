@@ -53,6 +53,7 @@ export default function ClientPortalLoginPage() {
               autoComplete="email"
             />
             <button
+              type="submit"
               disabled={busy}
               className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-60"
             >

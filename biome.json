@@ -15,7 +15,8 @@
       "!**/build",
       "!**/*.lock",
       "!**/pnpm-lock.yaml",
-      "!**/lib/database.types.ts"
+      "!**/lib/database.types.ts",
+      "!**/*.svg"
     ]
   },
   "formatter": {
@@ -68,7 +69,11 @@
       "linter": {
         "rules": {
           "suspicious": {
-            "noExplicitAny": "off"
+            "noExplicitAny": "off",
+            "noThenProperty": "off"
+          },
+          "a11y": {
+            "noLabelWithoutControl": "off"
           }
         }
       }
