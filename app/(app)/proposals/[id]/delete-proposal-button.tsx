@@ -77,9 +77,8 @@ export function ProposalMoreActions({
         <MenuButton
           variant="ghost"
           size="icon-sm"
-          disabled={duplicating || rejecting || deleting}
+          isDisabled={duplicating || rejecting || deleting}
           aria-label="Más acciones de la propuesta"
-          title="Más acciones"
         >
           <MoreHorizontal aria-hidden />
         </MenuButton>
