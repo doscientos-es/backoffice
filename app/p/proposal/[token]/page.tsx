@@ -487,7 +487,7 @@ export default async function PortalProposalPage({
       : Math.round(Number(proposal.total) * initialPaymentPercentage) / 100
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pt-4 lg:pt-6">
       {isDraft && (
         <div className="flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
           <span className="tracking-wider uppercase">{copy.draft}</span>
