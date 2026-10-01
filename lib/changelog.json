@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.79",
+      "date": "2026-10-01",
+      "title": "v0.1.79",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Add top spacing so the response card does not touch the header"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "3971461121386d29917b032646d4ef923508086c",
+          "type": "fix",
+          "scope": "portal",
+          "breaking": false,
+          "description": "Add top spacing so the response card does not touch the header"
+        }
+      ]
+    },
+    {
       "version": "0.1.78",
       "date": "2026-10-01",
       "title": "v0.1.78",
