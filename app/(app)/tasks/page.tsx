@@ -148,45 +148,48 @@ export default async function TasksPage({
   const rows = data.map((t) => ({
     id: t.id,
     href: `/tasks/${t.id}`,
-    csvValues: [
-      t.title,
-      [t.projects?.name, t.leads?.name, t.clients?.name].filter(Boolean).join(' · '),
-      t.status,
-      t.priority,
-      t.team_members?.name ?? '',
-      t.due_date ?? '',
-    ],
-    cells: [
-      t.title,
-      t.projects || t.leads || t.clients ? (
-        <div key={`context-${t.id}`} className="flex flex-wrap gap-x-2 gap-y-0.5">
-          {t.projects ? (
-            <Link href={`/projects/${t.projects.id}`} className="hover:underline">
-              {t.projects.name}
-            </Link>
-          ) : null}
-          {t.leads ? (
-            <Link href={`/leads/${t.leads.id}`} className="hover:underline">
-              {t.leads.name}
-            </Link>
-          ) : null}
-          {t.clients ? (
-            <Link href={`/clients/${t.clients.id}`} className="hover:underline">
-              {t.clients.name}
-            </Link>
-          ) : null}
-        </div>
-      ) : (
-        <span key={`context-${t.id}`} className="text-muted-foreground">
-          Personal
-        </span>
-      ),
-      <StatusBadge key={`s-${t.id}`} meta={TASK_STATUS} value={t.status} />,
-      <StatusBadge key={`pr-${t.id}`} meta={TASK_PRIORITY} value={t.priority} />,
-      t.team_members?.name ?? '—',
-      formatDate(t.due_date),
-      <TaskRowActions key={`a-${t.id}`} taskId={t.id} status={t.status} />,
-    ],
+
+    cells: {
+      titulo: { content: t.title, value: t.title },
+      contexto: {
+        content:
+          t.projects || t.leads || t.clients ? (
+            <div key={`context-${t.id}`} className="flex flex-wrap gap-x-2 gap-y-0.5">
+              {t.projects ? (
+                <Link href={`/projects/${t.projects.id}`} className="hover:underline">
+                  {t.projects.name}
+                </Link>
+              ) : null}
+              {t.leads ? (
+                <Link href={`/leads/${t.leads.id}`} className="hover:underline">
+                  {t.leads.name}
+                </Link>
+              ) : null}
+              {t.clients ? (
+                <Link href={`/clients/${t.clients.id}`} className="hover:underline">
+                  {t.clients.name}
+                </Link>
+              ) : null}
+            </div>
+          ) : (
+            <span key={`context-${t.id}`} className="text-muted-foreground">
+              Personal
+            </span>
+          ),
+        value: [t.projects?.name, t.leads?.name, t.clients?.name].filter(Boolean).join(' · '),
+      },
+      estado: {
+        content: <StatusBadge key={`s-${t.id}`} meta={TASK_STATUS} value={t.status} />,
+        value: t.status,
+      },
+      prioridad: {
+        content: <StatusBadge key={`pr-${t.id}`} meta={TASK_PRIORITY} value={t.priority} />,
+        value: t.priority,
+      },
+      asignada: { content: t.team_members?.name ?? '—', value: t.team_members?.name ?? '' },
+      vence: { content: formatDate(t.due_date), value: t.due_date ?? '' },
+      actions: { content: <TaskRowActions key={`a-${t.id}`} taskId={t.id} status={t.status} /> },
+    },
   }))
 
   return (
@@ -231,16 +234,16 @@ export default async function TasksPage({
       }
       addHref="/tasks/new"
       addLabel="Nueva tarea"
-      headers={[
-        { label: 'Título', sortKey: 'title' },
-        'Contexto',
-        { label: 'Estado', sortKey: 'status' },
-        { label: 'Prioridad', sortKey: 'priority' },
-        'Asignada',
-        { label: 'Vence', sortKey: 'due_date' },
-        '',
+      columns={[
+        { key: 'titulo', label: 'Título', sortKey: 'title' },
+        { key: 'contexto', label: 'Contexto' },
+        { key: 'estado', label: 'Estado', sortKey: 'status' },
+        { key: 'prioridad', label: 'Prioridad', sortKey: 'priority' },
+        { key: 'asignada', label: 'Asignada' },
+        { key: 'vence', label: 'Vence', sortKey: 'due_date' },
+        { key: 'actions', label: '', align: 'right' },
       ]}
-      align={['left', 'left', 'left', 'left', 'left', 'left', 'right']}
+
       exportFilename="tareas"
       rows={rows}
     />

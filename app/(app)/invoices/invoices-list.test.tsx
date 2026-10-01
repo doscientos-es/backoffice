@@ -20,7 +20,7 @@ describe('InvoicesList', () => {
   it('runs the invoice bulk payment server action from the client boundary', async () => {
     bulkMarkInvoicesPaid.mockResolvedValue({ ok: true })
 
-    render(<InvoicesList title="Facturas" empty="Sin facturas" headers={[]} rows={[]} />)
+    render(<InvoicesList title="Facturas" empty="Sin facturas" columns={[]} rows={[]} />)
 
     const props = capturedProps.current as {
       bulkActions: Array<{ onAction: (ids: string[]) => Promise<void> }>

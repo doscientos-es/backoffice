@@ -67,11 +67,11 @@ export default async function ProjectsPage({
           </Link>
         </Button>
       }
-      headers={[
-        { label: 'Nombre', sortKey: 'name' },
-        'Cliente',
-        { label: 'Estado', sortKey: 'status' },
-        'GitHub',
+      columns={[
+        { key: 'nombre', label: 'Nombre', sortKey: 'name' },
+        { key: 'cliente', label: 'Cliente' },
+        { key: 'estado', label: 'Estado', sortKey: 'status' },
+        { key: 'github', label: 'GitHub' },
       ]}
       exportFilename="proyectos"
       rows={data.map((p) => {
@@ -89,13 +89,12 @@ export default async function ProjectsPage({
             github_sync_mode: mode,
             github_repo: p.github_repo,
           },
-          cells: [
-            p.name,
-            p.client_name ?? '—',
-            p.status as string,
-            <GitHubModeBadge key="gh" mode={mode} />,
-          ],
-          csvValues: [p.name, p.client_name ?? '', p.status ?? '', mode],
+          cells: {
+            nombre: { content: p.name, value: p.name },
+            cliente: { content: p.client_name ?? '—', value: p.client_name ?? '' },
+            estado: { content: p.status as string, value: p.status ?? '' },
+            github: { content: <GitHubModeBadge key="gh" mode={mode} />, value: mode },
+          },
         }
       })}
     />

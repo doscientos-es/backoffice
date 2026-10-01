@@ -55,21 +55,32 @@ export default async function RemindersPage({
       searchPlaceholder="Buscar por título…"
       filters={[{ key: 'status', label: 'Estado', options: STATUS_OPTIONS }]}
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
-      headers={['Título', 'Recordar el', 'Completado', '']}
-      align={['left', 'left', 'left', 'right']}
+      columns={[
+        { key: 'titulo', label: 'Título' },
+        { key: 'recordar_el', label: 'Recordar el' },
+        { key: 'completado', label: 'Completado' },
+        { key: 'actions', label: '', align: 'right' },
+      ]}
+
       rows={
         data?.map((r) => ({
           id: r.id as string,
-          cells: [
-            r.title as string,
-            formatDateTime(r.start_at as string),
-            r.completed_at ? formatDateTime(r.completed_at as string) : '—',
-            <ReminderRowActions
-              key={r.id}
-              reminderId={r.id as string}
-              completedAt={(r.completed_at as string | null) ?? null}
-            />,
-          ],
+          cells: {
+            titulo: { content: r.title as string },
+            recordar_el: { content: formatDateTime(r.start_at as string) },
+            completado: {
+              content: r.completed_at ? formatDateTime(r.completed_at as string) : '—',
+            },
+            actions: {
+              content: (
+                <ReminderRowActions
+                  key={r.id}
+                  reminderId={r.id as string}
+                  completedAt={(r.completed_at as string | null) ?? null}
+                />
+              ),
+            },
+          },
         })) ?? []
       }
     />

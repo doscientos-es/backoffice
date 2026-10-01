@@ -47,29 +47,29 @@ export default async function DocumentsPage({
       searchKey="q"
       searchPlaceholder="Buscar por nombre…"
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
-      headers={[
-        { label: 'Nombre', sortKey: 'name' },
-        { label: 'Formato', sortKey: 'mime_type' },
-        { label: 'Tamaño', sortKey: 'size_bytes' },
-        { label: 'Subido', sortKey: 'created_at' },
+      columns={[
+        { key: 'nombre', label: 'Nombre', sortKey: 'name' },
+        { key: 'formato', label: 'Formato', sortKey: 'mime_type' },
+        { key: 'tamano', label: 'Tamaño', sortKey: 'size_bytes' },
+        { key: 'subido', label: 'Subido', sortKey: 'created_at' },
       ]}
       exportFilename="documentos"
       rows={
         data?.map((d) => ({
           id: d.id as string,
           href: `/documents/${d.id}`,
-          cells: [
-            d.name as string,
-            (d.mime_type as string | null) ?? null,
-            d.size_bytes ? `${Math.ceil(Number(d.size_bytes) / 1024)} KB` : null,
-            formatDate(d.created_at as string),
-          ],
-          csvValues: [
-            d.name as string,
-            (d.mime_type as string | null) ?? '',
-            d.size_bytes ? Math.ceil(Number(d.size_bytes) / 1024) : 0,
-            d.created_at as string,
-          ],
+          cells: {
+            nombre: { content: d.name as string, value: d.name as string },
+            formato: {
+              content: (d.mime_type as string | null) ?? null,
+              value: (d.mime_type as string | null) ?? '',
+            },
+            tamano: {
+              content: d.size_bytes ? `${Math.ceil(Number(d.size_bytes) / 1024)} KB` : null,
+              value: d.size_bytes ? Math.ceil(Number(d.size_bytes) / 1024) : 0,
+            },
+            subido: { content: formatDate(d.created_at as string), value: d.created_at as string },
+          },
         })) ?? []
       }
     />

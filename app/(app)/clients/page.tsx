@@ -57,10 +57,10 @@ export default async function ClientsPage({
           </Link>
         </Button>
       }
-      headers={[
-        { label: 'Nombre', sortKey: 'name' },
-        { label: 'NIF', sortKey: 'nif' },
-        { label: 'Email', sortKey: 'email' },
+      columns={[
+        { key: 'nombre', label: 'Nombre', sortKey: 'name' },
+        { key: 'nif', label: 'NIF', sortKey: 'nif' },
+        { key: 'email', label: 'Email', sortKey: 'email' },
       ]}
       exportFilename="clientes"
       rows={
@@ -87,15 +87,20 @@ export default async function ClientsPage({
               notes: c.notes,
               version: c.version,
             },
-            cells: [
-              <div key="name" className="flex items-center gap-2">
-                <EntityAvatar name={displayName} logoUrl={c.logo_url} size="sm" />
-                <span className="truncate font-medium">{displayName}</span>
-              </div>,
-              (c.nif as string | null) ?? '—',
-              (c.email as string | null) ?? '—',
-            ],
-            csvValues: [displayName, c.nif ?? '', c.email ?? ''],
+            cells: {
+              nombre: {
+                content: (
+                  <div key="name" className="flex items-center gap-2">
+                    <EntityAvatar name={displayName} logoUrl={c.logo_url} size="sm" />
+                    <span className="truncate font-medium">{displayName}</span>
+                  </div>
+                ),
+                value: displayName,
+              },
+              nif: { content: (c.nif as string | null) ?? '—', value: c.nif ?? '' },
+              email: { content: (c.email as string | null) ?? '—', value: c.email ?? '' },
+            },
+
             rowActions: (
               <ClientRowActions
                 client={{

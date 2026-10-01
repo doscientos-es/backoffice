@@ -92,18 +92,18 @@ export default async function RecoveryPage({
           { key: 'assignee', label: 'Responsable', options: ASSIGNEE_FILTER_OPTIONS },
         ]}
         pagination={{ page, pageSize: RECOVERY_LIST_PAGE_SIZE, total: count }}
-        headers={[
-          { label: 'Nombre', sortKey: 'name' },
-          { label: 'Empresa', sortKey: 'company' },
-          'Motivo',
-          'Repesca',
-          'Señales',
-          'Responsable',
-          { label: 'Perdido', sortKey: 'lost_at' },
-          { label: 'Valor', sortKey: 'estimated_value', align: 'right' },
-          { label: 'Acciones', align: 'right' },
+        columns={[
+          { key: 'nombre', label: 'Nombre', sortKey: 'name' },
+          { key: 'empresa', label: 'Empresa', sortKey: 'company' },
+          { key: 'motivo', label: 'Motivo' },
+          { key: 'repesca', label: 'Repesca' },
+          { key: 'senales', label: 'Señales' },
+          { key: 'responsable', label: 'Responsable' },
+          { key: 'perdido', label: 'Perdido', sortKey: 'lost_at' },
+          { key: 'valor', label: 'Valor', sortKey: 'estimated_value', align: 'right' },
+          { key: 'acciones', label: 'Acciones', align: 'right' },
         ]}
-        align={['left', 'left', 'left', 'left', 'left', 'left', 'left', 'right', 'right']}
+
         exportFilename="repesca-leads"
       />
     </div>

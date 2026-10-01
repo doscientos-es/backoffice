@@ -140,17 +140,17 @@ export default async function ProposalsPage({
         { key: 'followup', label: 'Seguimiento', options: FOLLOW_UP_FILTER_OPTIONS },
       ]}
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
-      headers={[
-        { label: 'Número', sortKey: 'number', minWidth: '8.5rem' },
-        { label: 'Título', sortKey: 'title', minWidth: '15rem' },
-        { label: 'Cliente / Lead', minWidth: '13rem' },
-        { label: 'Proyecto', minWidth: '10rem' },
-        { label: 'Estado', sortKey: 'status', minWidth: '7rem' },
-        { label: 'Seguimiento', minWidth: '7.5rem' },
-        { label: 'Importe', align: 'right', sortKey: 'total', minWidth: '7rem' },
-        { label: 'Válida hasta', sortKey: 'valid_until', minWidth: '7.5rem' },
+      columns={[
+        { key: 'numero', label: 'Número', sortKey: 'number', minWidth: '8.5rem' },
+        { key: 'titulo', label: 'Título', sortKey: 'title', minWidth: '15rem' },
+        { key: 'cliente_lead', label: 'Cliente / Lead', minWidth: '13rem' },
+        { key: 'proyecto', label: 'Proyecto', minWidth: '10rem' },
+        { key: 'estado', label: 'Estado', sortKey: 'status', minWidth: '7rem' },
+        { key: 'seguimiento', label: 'Seguimiento', minWidth: '7.5rem' },
+        { key: 'importe', label: 'Importe', align: 'right', sortKey: 'total', minWidth: '7rem' },
+        { key: 'valida_hasta', label: 'Válida hasta', sortKey: 'valid_until', minWidth: '7.5rem' },
       ]}
-      align={['left', 'left', 'left', 'left', 'left', 'left', 'right', 'left']}
+
       exportFilename="propuestas"
       rows={
         data?.map((p) => {
@@ -164,7 +164,6 @@ export default async function ProposalsPage({
           const clientCell = (
             <span key="client" className="flex items-center gap-2">
               {clientRow ? (
-                // eslint-disable-next-line @typescript-eslint/no-require-imports
                 <ClientAvatar name={clientRow.name} logoUrl={clientRow.logo_url} size="xs" />
               ) : null}
               {clientName}
@@ -173,29 +172,33 @@ export default async function ProposalsPage({
           return {
             id: p.id as string,
             href: `/proposals/${p.id}`,
-            cells: [
-              (p.number as string | null) ?? 'Borrador',
-              p.title as string,
-              clientCell,
-              projectName,
-              <span key="status" className="flex items-center gap-1.5">
-                <StatusBadge meta={PROPOSAL_STATUS} value={p.status as string} />
-                {p.delivered_at ? <Badge variant="success">Terminada</Badge> : null}
-              </span>,
-              p.sent_at ? relativeTime(p.sent_at as string) : 'Sin enviar',
-              formatEUR(p.total as number),
-              formatDate(p.valid_until as string | null),
-            ],
-            csvValues: [
-              (p.number as string | null) ?? 'Borrador',
-              p.title as string,
-              clientName,
-              projectName,
-              p.delivered_at ? `${p.status as string} (terminada)` : (p.status as string),
-              (p.sent_at as string | null) ?? '',
-              p.total as number,
-              (p.valid_until as string | null) ?? '',
-            ],
+            cells: {
+              numero: {
+                content: (p.number as string | null) ?? 'Borrador',
+                value: (p.number as string | null) ?? 'Borrador',
+              },
+              titulo: { content: p.title as string, value: p.title as string },
+              cliente_lead: { content: clientCell, value: clientName },
+              proyecto: { content: projectName, value: projectName },
+              estado: {
+                content: (
+                  <span key="status" className="flex items-center gap-1.5">
+                    <StatusBadge meta={PROPOSAL_STATUS} value={p.status as string} />
+                    {p.delivered_at ? <Badge variant="success">Terminada</Badge> : null}
+                  </span>
+                ),
+                value: p.delivered_at ? `${p.status as string} (terminada)` : (p.status as string),
+              },
+              seguimiento: {
+                content: p.sent_at ? relativeTime(p.sent_at as string) : 'Sin enviar',
+                value: (p.sent_at as string | null) ?? '',
+              },
+              importe: { content: formatEUR(p.total as number), value: p.total as number },
+              valida_hasta: {
+                content: formatDate(p.valid_until as string | null),
+                value: (p.valid_until as string | null) ?? '',
+              },
+            },
           }
         }) ?? []
       }

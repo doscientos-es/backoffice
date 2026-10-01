@@ -64,44 +64,66 @@ function EngagementCell({ lead }: { lead: RecoveryLead }) {
 export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryListProps) {
   const rows = leads.map((l) => ({
     id: l.id,
-    csvValues: [
-      leadDisplayName(l),
-      l.company ?? '',
-      l.lost_reason ?? '',
-      RECOVERY_STATE[l.recoveryState].label,
-      `clics:${l.clickCount} aperturas:${l.openCount} contactos:${l.outreachCount}`,
-      l.assignee?.name ?? '',
-      l.lost_at ?? '',
-      l.estimated_value?.toString() ?? '',
-      '',
-    ],
-    cells: [
-      <Link
-        key="name"
-        href={`/leads/${l.id}`}
-        className="group/leadname inline-flex items-center gap-2.5"
-      >
-        <LeadInitials lead={l} />
-        <span className="max-w-40 truncate font-medium underline-offset-2 transition-colors group-hover/leadname:text-primary group-hover/leadname:underline">
-          {leadDisplayName(l)}
-        </span>
-        <ArrowRight className="size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover/leadname:translate-x-0 group-hover/leadname:opacity-60" />
-      </Link>,
-      l.company ?? '—',
-      <span key="reason" className="text-muted-foreground">
-        {l.lost_reason ?? '—'}
-      </span>,
-      <StatusBadge key="state" meta={RECOVERY_STATE} value={l.recoveryState} />,
-      <EngagementCell key="engagement" lead={l} />,
-      <MemberLabel key="assignee" member={l.assignee} size="sm" />,
-      <span key="lost" className="text-muted-foreground tabular-nums">
-        {relativeTime(l.lost_at)}
-      </span>,
-      <span key="value" className="tabular-nums">
-        {formatEUR(l.estimated_value)}
-      </span>,
-      <RecoveryActions key="actions" lead={l} aiEnabled={aiEnabled} />,
-    ],
+
+    cells: {
+      nombre: {
+        content: (
+          <Link
+            key="name"
+            href={`/leads/${l.id}`}
+            className="group/leadname inline-flex items-center gap-2.5"
+          >
+            <LeadInitials lead={l} />
+            <span className="max-w-40 truncate font-medium underline-offset-2 transition-colors group-hover/leadname:text-primary group-hover/leadname:underline">
+              {leadDisplayName(l)}
+            </span>
+            <ArrowRight className="size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover/leadname:translate-x-0 group-hover/leadname:opacity-60" />
+          </Link>
+        ),
+        value: leadDisplayName(l),
+      },
+      empresa: { content: l.company ?? '—', value: l.company ?? '' },
+      motivo: {
+        content: (
+          <span key="reason" className="text-muted-foreground">
+            {l.lost_reason ?? '—'}
+          </span>
+        ),
+        value: l.lost_reason ?? '',
+      },
+      repesca: {
+        content: <StatusBadge key="state" meta={RECOVERY_STATE} value={l.recoveryState} />,
+        value: RECOVERY_STATE[l.recoveryState].label,
+      },
+      senales: {
+        content: <EngagementCell key="engagement" lead={l} />,
+        value: `clics:${l.clickCount} aperturas:${l.openCount} contactos:${l.outreachCount}`,
+      },
+      responsable: {
+        content: <MemberLabel key="assignee" member={l.assignee} size="sm" />,
+        value: l.assignee?.name ?? '',
+      },
+      perdido: {
+        content: (
+          <span key="lost" className="text-muted-foreground tabular-nums">
+            {relativeTime(l.lost_at)}
+          </span>
+        ),
+        value: l.lost_at ?? '',
+      },
+      valor: {
+        content: (
+          <span key="value" className="tabular-nums">
+            {formatEUR(l.estimated_value)}
+          </span>
+        ),
+        value: l.estimated_value?.toString() ?? '',
+      },
+      acciones: {
+        content: <RecoveryActions key="actions" lead={l} aiEnabled={aiEnabled} />,
+        value: '',
+      },
+    },
   }))
 
   return <ListPage {...props} rows={rows} />

@@ -34,7 +34,7 @@ type UncontrolledProps = BaseProps & {
   onChange?: never
 }
 
-/** Controlled: parent owns the ISO value (autosave editors, etc.). */
+/** Controlled: parent owns the ISO value (draft editors, etc.). */
 type ControlledProps = BaseProps & {
   name?: string
   /** ISO `yyyy-MM-dd` value controlled by the parent. */

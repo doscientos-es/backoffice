@@ -24,7 +24,6 @@
 
 // Hooks — framework-agnostic React logic.
 export * from './hooks/use-action-form'
-export * from './hooks/use-autosave'
 export * from './hooks/use-browser-notifications'
 export * from './hooks/use-form-dirty'
 export * from './hooks/use-github-handle'
@@ -40,7 +39,6 @@ export * from './lib/utils'
 export * from './ui/ai-notice'
 export * from './ui/aspect-ratio'
 // Layout UI primitives (pure — depend only on other primitives + cn).
-export * from './ui/autosave-indicator'
 export * from './ui/breadcrumb'
 export * from './ui/button'
 export * from './ui/card'

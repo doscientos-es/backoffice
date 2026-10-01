@@ -38,17 +38,24 @@ describe('ListPage', () => {
       <ListPage
         title="Facturas"
         empty="Sin facturas"
-        headers={['Factura', 'Cliente']}
+        columns={[
+          { key: 'factura', label: 'Factura' },
+          { key: 'cliente', label: 'Cliente' },
+        ]}
         rows={[
           {
             id: 'invoice-1',
             href: '/invoices/invoice-1',
-            cells: [
-              'FAC-001',
-              <a key="client" href="/clients/client-1">
-                Cliente
-              </a>,
-            ],
+            cells: {
+              factura: { content: 'FAC-001' },
+              cliente: {
+                content: (
+                  <a key="client" href="/clients/client-1">
+                    Cliente
+                  </a>
+                ),
+              },
+            },
           },
         ]}
       />,
