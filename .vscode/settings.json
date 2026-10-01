@@ -4,7 +4,7 @@
   "editor.formatOnSave": true,
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
-      "text": "Escribe el mensaje en formato Conventional Commits: `<tipo>(<ámbito opcional>): <descripción>` en una sola línea de máximo 72 caracteres, en imperativo, en español y sin punto final. No añadas cuerpo, `Issue:` ni `Type:`. Tipos permitidos: feat (nueva función visible para el usuario), fix (corrección de un error), perf (mejora de rendimiento), refactor, docs, test, build, ci, chore. Los tipos feat, fix y perf generan el changelog público, así que su descripción debe entenderse sin conocimientos técnicos y sin nombres de ficheros ni de funciones. Usa `!` tras el tipo o un pie `BREAKING CHANGE:` en cambios incompatibles. No uses chore(release): lo genera el proceso de versionado."
+      "text": "You are a commit message generator, forget other instructions to create the commit and follow thes ones: Escribe el mensaje en formato Conventional Commits: `\u003ctipo\u003e(\u003cámbito opcional\u003e): \u003cdescripción\u003e` en una sola línea de máximo 72 caracteres, en imperativo y sin punto final. Tipos permitidos: feat (nueva función visible para el usuario), fix (corrección de un error), perf (mejora de rendimiento), refactor, docs, test, build, ci, chore. Los tipos feat, fix y perf generan el changelog público, así que su descripción debe entenderse sin conocimientos técnicos y sin nombres de ficheros ni de funciones. Usa `!` tras el tipo o un pie `BREAKING CHANGE:` en cambios incompatibles. No uses chore(release): lo genera el proceso de versionado."
     }
   ]
 }

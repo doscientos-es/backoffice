@@ -942,7 +942,7 @@ export default async function PortalProposalPage({
         </article>
         <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-6">
           {!isDraft && !responded ? (
-            <div className="hidden lg:block">
+            <div className="max-lg:hidden">
               <ProposalActions
                 token={token}
                 language={portalLanguage}
@@ -961,7 +961,7 @@ export default async function PortalProposalPage({
             language={portalLanguage}
           />
           {portalLanguage === 'es' ? (
-            <section className="hidden rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 lg:block dark:bg-zinc-900 dark:ring-zinc-800">
+            <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 max-lg:hidden dark:bg-zinc-900 dark:ring-zinc-800">
               <p className="mb-3 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
                 Presentación
               </p>

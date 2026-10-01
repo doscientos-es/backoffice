@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  Button as MenuButton,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -11,7 +12,6 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 
-import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useUndoableDelete } from '@/lib/hooks/use-undoable-delete'
 
@@ -42,7 +42,6 @@ export function ProposalMoreActions({
 }) {
   const router = useRouter()
   const [rejectOpen, setRejectOpen] = useState(false)
-  const [isOpen, setIsOpen] = useState(false)
   const [duplicating, startDuplicate] = useTransition()
   const [rejecting, startReject] = useTransition()
   const { run: onDelete, pending: deleting } = useUndoableDelete({
@@ -74,17 +73,16 @@ export function ProposalMoreActions({
 
   return (
     <>
-      <DropdownMenuTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
-        <Button
+      <DropdownMenuTrigger>
+        <MenuButton
           variant="ghost"
           size="icon-sm"
           disabled={duplicating || rejecting || deleting}
           aria-label="Más acciones de la propuesta"
           title="Más acciones"
-          onPointerDown={() => setIsOpen(true)}
         >
           <MoreHorizontal aria-hidden />
-        </Button>
+        </MenuButton>
         <DropdownMenuContent placement="bottom end" className="w-48">
           <DropdownMenuItem isDisabled={duplicating} onAction={onDuplicate}>
             <Copy aria-hidden />

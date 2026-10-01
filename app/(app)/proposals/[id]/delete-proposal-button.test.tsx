@@ -52,6 +52,12 @@ describe('ProposalMoreActions', () => {
 
     await waitFor(() => expect(duplicate).toHaveBeenCalledWith({ id: 'proposal-1' }))
     expect(push).toHaveBeenCalledWith('/proposals/duplicated-proposal')
+    await waitFor(() =>
+      expect(
+        (screen.getByRole('button', { name: 'Más acciones de la propuesta' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    )
 
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Más acciones de la propuesta' }), {
       button: 0,
