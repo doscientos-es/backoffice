@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.82",
+      "date": "2026-10-02",
+      "title": "v0.1.82",
+      "sections": [
+        {
+          "title": "Mejoras",
+          "items": [
+            "Reducir trabajo repetido en servidor y portales (#4)"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "b6bd5454dceec1c509a524c95b0f147613330e41",
+          "type": "perf",
+          "scope": null,
+          "breaking": false,
+          "description": "Reducir trabajo repetido en servidor y portales (#4)"
+        }
+      ]
+    },
+    {
       "version": "0.1.81",
       "date": "2026-10-01",
       "title": "v0.1.81",
