@@ -36,7 +36,7 @@ try {
     throw new Error('Cannot configure local Git hooks.')
   }
   process.stdout.write(
-    'Hooks installed: pre-commit (pnpm quality:quick) and commit-msg (Conventional Commits). No pre-push hook or automatic fixes.\n',
+    'Hooks installed: pre-commit (oxfmt --write on staged files + pnpm lint) and commit-msg (Conventional Commits). No pre-push hook.\n',
   )
 } catch (error) {
   process.stderr.write(

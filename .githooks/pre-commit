@@ -1,7 +1,23 @@
 #!/bin/sh
-# Check the working tree without changing files, the index or partial staging.
+# Formatea los ficheros staged (oxfmt --write), los vuelve a añadir y ejecuta el lint.
 if ! command -v pnpm >/dev/null 2>&1; then
   echo 'pre-commit: pnpm is not on PATH. Install dependencies and check your Git GUI PATH.' >&2
   exit 1
 fi
-exec pnpm quality:quick
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(tsx?|jsx?|mjs|cjs|jsonc?|css)$')
+if [ -n "$files" ]; then
+  # Ficheros con cambios sin stagear: se calculan antes de formatear.
+  partial=$(git diff --name-only)
+  echo "$files" | while IFS= read -r f; do pnpm exec oxfmt -c .oxfmtrc.json --write "$f" || exit 1; done || exit 1
+  echo "$files" | while IFS= read -r f; do
+    if echo "$partial" | grep -Fxq "$f"; then
+      echo "pre-commit: $f tiene cambios sin stagear; formateado pero no re-añadido." >&2
+    else
+      git add -- "$f"
+    fi
+  done
+fi
+
+exec pnpm lint
