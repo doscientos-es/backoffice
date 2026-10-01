@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-01 — v0.1.76
+
+### Nuevas funciones
+
+- Complete first touch reminders when a lead is contacted
+
 ## 2026-10-01 — v0.1.75
 
 ### Nuevas funciones

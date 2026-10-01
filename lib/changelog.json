@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.76",
+      "date": "2026-10-01",
+      "title": "v0.1.76",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Complete first touch reminders when a lead is contacted"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "8d8f4a80958c0f1e6f831ecd1a0c9517bff9e904",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Complete first touch reminders when a lead is contacted"
+        }
+      ]
+    },
+    {
       "version": "0.1.75",
       "date": "2026-10-01",
       "title": "v0.1.75",
