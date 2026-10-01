@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-01 — v0.1.78
+
+### Correcciones
+
+- Unblock Vercel build and stop language switch overlapping header badge
+
 ## 2026-10-01 — v0.1.76
 
 ### Nuevas funciones

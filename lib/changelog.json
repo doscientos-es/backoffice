@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.78",
+      "date": "2026-10-01",
+      "title": "v0.1.78",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Unblock Vercel build and stop language switch overlapping header badge"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "439f7fb4149dbc36ee8207d1c877925d88c8526d",
+          "type": "fix",
+          "scope": "portal",
+          "breaking": false,
+          "description": "Unblock Vercel build and stop language switch overlapping header badge"
+        }
+      ]
+    },
+    {
       "version": "0.1.76",
       "date": "2026-10-01",
       "title": "v0.1.76",
