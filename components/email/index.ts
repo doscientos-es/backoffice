@@ -9,4 +9,8 @@ export { ProjectKickoffEmail, type ProjectKickoffEmailProps } from "./project-ki
 export { ProposalAcceptedEmail, type ProposalAcceptedEmailProps } from "./proposal-accepted-email";
 export { ProposalEmail, type ProposalEmailProps } from "./proposal-email";
 export { ProposalMessageEmail } from "./proposal-message-email";
+export {
+  QuarterlyAdvisorEmail,
+  type QuarterlyAdvisorEmailProps,
+} from "./quarterly-advisor-email";
 export { TeamInviteEmail, type TeamInviteEmailProps } from "./team-invite-email";

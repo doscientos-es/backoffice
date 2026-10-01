@@ -75,8 +75,8 @@ export function InvoiceRegisterExport({ year }: { year: number }) {
               Resumen trimestral para asesoría
             </label>
             <p className="text-xs text-muted-foreground">
-              CSV con gastos y cobros. Descarga manualmente los PDF o adjuntos que necesite la
-              asesoría.
+              Excel o CSV con facturas emitidas y gastos. El envío por email a la gestoría está en
+              Finanzas.
             </p>
             <div className="flex gap-2">
               <Input
@@ -88,17 +88,24 @@ export function InvoiceRegisterExport({ year }: { year: number }) {
                 className="h-9 min-w-0 flex-1"
               />
               {quarterHref && quarter ? (
-                <Button variant="secondary" className="h-9" asChild>
-                  <a
-                    href={quarterHref}
-                    download={`doscientos-T${quarter.quarter}-${quarter.year}.csv`}
-                  >
-                    Descargar CSV
-                  </a>
-                </Button>
+                <>
+                  <Button variant="secondary" className="h-9" asChild>
+                    <a href={`${quarterHref}&format=xlsx`} download>
+                      Excel
+                    </a>
+                  </Button>
+                  <Button variant="secondary" className="h-9" asChild>
+                    <a
+                      href={quarterHref}
+                      download={`doscientos-T${quarter.quarter}-${quarter.year}.csv`}
+                    >
+                      CSV
+                    </a>
+                  </Button>
+                </>
               ) : (
                 <Button variant="secondary" className="h-9" disabled>
-                  Descargar CSV
+                  Descargar
                 </Button>
               )}
             </div>

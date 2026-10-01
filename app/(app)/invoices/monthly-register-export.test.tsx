@@ -22,9 +22,13 @@ describe("InvoiceRegisterExport", () => {
     ).toBe(true);
     expect(links.some((link) => link.getAttribute("href")?.includes("year=2026"))).toBe(true);
 
-    const quarterlyLink = screen.getByRole("link", { name: "Descargar CSV" });
+    const quarterlyLink = screen.getByRole("link", { name: "CSV" });
     expect(quarterlyLink.getAttribute("href")).toMatch(
       /^\/api\/invoices\/trimestral\?year=\d{4}&quarter=[1-4]$/,
+    );
+    const quarterlyExcel = screen.getByRole("link", { name: "Excel" });
+    expect(quarterlyExcel.getAttribute("href")).toMatch(
+      /^\/api\/invoices\/trimestral\?year=\d{4}&quarter=[1-4]&format=xlsx$/,
     );
   });
 });

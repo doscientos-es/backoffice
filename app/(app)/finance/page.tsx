@@ -14,6 +14,7 @@ import { FinanceKpis } from "./_components/finance-kpis";
 import { FinanceOverviewChart } from "./_components/finance-overview-chart";
 import { FinanceRangeSelector } from "./_components/finance-range-selector";
 import { ChartSkeleton, DetailsSkeleton, KpisSkeleton } from "./_components/finance-skeletons";
+import { QuarterlyHandoff } from "./_components/quarterly-handoff";
 
 export const metadata: Metadata = { title: "Finanzas · doscientos" };
 export const dynamic = "force-dynamic";
@@ -49,6 +50,10 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
           </div>
         }
       />
+
+      <SectionBoundary pending={null} label="No se pudo cargar el cierre trimestral">
+        <QuarterlyHandoff />
+      </SectionBoundary>
 
       <FinanceRangeSelector current={range} />
 
