@@ -11,7 +11,7 @@ export const metadata = {
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#f6f7f3] dark:bg-[#111410]">
+    <div className="relative flex min-h-screen flex-col overflow-x-clip bg-[#f6f7f3] dark:bg-[#111410]">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[32rem] bg-[radial-gradient(circle_at_15%_0%,rgba(189,255,123,0.14),transparent_34%),radial-gradient(circle_at_85%_8%,rgba(42,66,39,0.12),transparent_30%)] dark:bg-[radial-gradient(circle_at_15%_0%,rgba(189,255,123,0.08),transparent_34%),radial-gradient(circle_at_85%_8%,rgba(189,255,123,0.05),transparent_30%)]"

@@ -940,7 +940,7 @@ export default async function PortalProposalPage({
             </div>
           ) : null}
         </article>
-        <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-6">
+        <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
           {!isDraft && !responded ? (
             <div className="max-lg:hidden">
               <ProposalActions
