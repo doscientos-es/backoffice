@@ -8,6 +8,7 @@ import {
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
+import { after } from 'next/server'
 
 import { PortalPasswordGate } from '@/components/portal/password-gate'
 import { ProposalPaymentOptions } from '@/components/portal/proposal-payment-options'
@@ -157,18 +158,20 @@ export default async function PortalProposalPage({
   const { success, error, lang } = await searchParams
   const admin = createAdminClient()
 
-  // Resolve auth first so team members can preview drafts.
-  const auth = await getCurrentUser()
+  // Auth and proposal lookup are independent, so run them together. Auth decides
+  // whether team members can preview drafts.
+  const [auth, { data: proposal, error: proposalError }] = await Promise.all([
+    getCurrentUser(),
+    admin
+      .from('proposals')
+      .select(
+        '*, clients(name, nif, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, email, phone, contact_person, logo_url, lead_id, leads(language)), leads(name, email, phone, company, language)',
+      )
+      .eq('portal_token', token)
+      .is('deleted_at', null)
+      .maybeSingle(),
+  ])
   const isTeam = auth.ok
-
-  const { data: proposal, error: proposalError } = await admin
-    .from('proposals')
-    .select(
-      '*, clients(name, nif, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country, email, phone, contact_person, logo_url, lead_id, leads(language)), leads(name, email, phone, company, language)',
-    )
-    .eq('portal_token', token)
-    .is('deleted_at', null)
-    .maybeSingle()
 
   // Drafts are only accessible to authenticated team members.
   if (proposalError) {
@@ -254,70 +257,81 @@ export default async function PortalProposalPage({
     }
   }
 
-  const { data: items } = await admin
-    .from('proposal_items')
-    .select('id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle')
-    .eq('proposal_id', proposal.id as string)
-    .order('position')
+  // Independent reads: fetch them in parallel instead of one round-trip each.
+  const [
+    { data: items },
+    { data: specs },
+    { data: messages },
+    { data: settings },
+    { data: proposalPayments },
+  ] = await Promise.all([
+    admin
+      .from('proposal_items')
+      .select('id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle')
+      .eq('proposal_id', proposal.id as string)
+      .order('position'),
+    admin
+      .from('proposal_specs')
+      .select('id, title, portal_token')
+      .eq('proposal_id', proposal.id as string)
+      .eq('is_client_visible', true)
+      .not('portal_token', 'is', null),
+    admin
+      .from('proposal_messages')
+      .select('id, author_type, author_name, body, created_at')
+      .eq('proposal_id', proposal.id as string)
+      .order('created_at', { ascending: true }),
+    admin.from('settings').select('company_name, iban').eq('id', 1).maybeSingle(),
+    // Confirmed payments for this proposal (signal/deposit)
+    admin
+      .from('invoice_payments')
+      .select('id, amount, status, created_at')
+      .eq('proposal_id', proposal.id as string)
+      .eq('status', 'confirmed'),
+  ])
 
-  const { data: specs } = await admin
-    .from('proposal_specs')
-    .select('id, title, portal_token')
-    .eq('proposal_id', proposal.id as string)
-    .eq('is_client_visible', true)
-    .not('portal_token', 'is', null)
-  const { data: messages } = await admin
-    .from('proposal_messages')
-    .select('id, author_type, author_name, body, created_at')
-    .eq('proposal_id', proposal.id as string)
-    .order('created_at', { ascending: true })
-  const { data: settings } = await admin
-    .from('settings')
-    .select('company_name, iban')
-    .eq('id', 1)
-    .maybeSingle()
-
-  // Bump status from 'sent' to 'viewed' only on the first external (client)
-  // view. Team previews and drafts never transition the status.
-  if (!isTeam && !isDraft && proposal.status === 'sent') {
-    await admin
-      .from('proposals')
-      .update({ status: 'viewed', viewed_at: new Date().toISOString() })
-      .eq('id', proposal.id as string)
-      .eq('status', 'sent')
-  }
-
-  // Best-effort view tracking. Skipped for draft previews.
+  // View tracking is best-effort, so run it after the response is sent instead of
+  // blocking the render. Skipped for draft previews. Request headers must be read
+  // here: they are not available inside `after`.
   if (!isDraft) {
-    try {
-      const h = await headers()
-      const forwarded = h.get('x-forwarded-for')
-      const ip = forwarded ? forwarded.split(',')[0]?.trim() : (h.get('x-real-ip') ?? null)
-      const userAgent = h.get('user-agent')
-      await admin.from('proposal_view_events').insert({
-        proposal_id: proposal.id as string,
-        viewer_type: isTeam ? 'team' : 'client',
-        team_member_id: isTeam ? auth.user.id : null,
-        surface: 'portal',
-        ip,
-        user_agent: userAgent,
-      })
-      if (!isTeam) {
-        await recordClientProposalView(
-          {
-            id: proposal.id as string,
-            number: (proposal.number as string | null) ?? null,
-            title: (proposal.title as string | null) ?? null,
-            lead_id: (proposal.lead_id as string | null) ?? null,
-            client_id: (proposal.client_id as string | null) ?? null,
-            created_by: (proposal.created_by as string | null) ?? null,
-          },
-          'portal',
-        )
-      }
-    } catch (err) {
-      log.warn({ err, proposalId: proposal.id }, 'proposal_view_insert_failed')
+    const h = await headers()
+    const forwarded = h.get('x-forwarded-for')
+    const ip = forwarded ? forwarded.split(',')[0]?.trim() : (h.get('x-real-ip') ?? null)
+    const userAgent = h.get('user-agent')
+    const teamMemberId = auth.ok ? auth.user.id : null
+    const trackedProposal = {
+      id: proposal.id as string,
+      number: (proposal.number as string | null) ?? null,
+      title: (proposal.title as string | null) ?? null,
+      lead_id: (proposal.lead_id as string | null) ?? null,
+      client_id: (proposal.client_id as string | null) ?? null,
+      created_by: (proposal.created_by as string | null) ?? null,
     }
+    const firstClientView = !isTeam && proposal.status === 'sent'
+    after(async () => {
+      try {
+        // Bump 'sent' -> 'viewed' only on the first external (client) view.
+        // Team previews and drafts never transition the status.
+        if (firstClientView) {
+          await admin
+            .from('proposals')
+            .update({ status: 'viewed', viewed_at: new Date().toISOString() })
+            .eq('id', trackedProposal.id)
+            .eq('status', 'sent')
+        }
+        await admin.from('proposal_view_events').insert({
+          proposal_id: trackedProposal.id,
+          viewer_type: isTeam ? 'team' : 'client',
+          team_member_id: teamMemberId,
+          surface: 'portal',
+          ip,
+          user_agent: userAgent,
+        })
+        if (!isTeam) await recordClientProposalView(trackedProposal, 'portal')
+      } catch (err) {
+        log.warn({ err, proposalId: trackedProposal.id }, 'proposal_view_insert_failed')
+      }
+    })
   }
 
   const client = (
@@ -470,13 +484,6 @@ export default async function PortalProposalPage({
   )
   const hasRecurring =
     totals.monthly.total > 0 || totals.quarterly.total > 0 || totals.yearly.total > 0
-
-  // Fetch confirmed payments for this proposal (signal/deposit)
-  const { data: proposalPayments } = await admin
-    .from('invoice_payments')
-    .select('id, amount, status, created_at')
-    .eq('proposal_id', proposal.id as string)
-    .eq('status', 'confirmed')
 
   const confirmedPayments = proposalPayments ?? []
   const signalPaid = confirmedPayments.length > 0
