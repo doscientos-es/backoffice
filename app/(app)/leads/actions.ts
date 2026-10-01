@@ -75,6 +75,26 @@ async function markFirstContacted(
     .update({ first_contacted_at: new Date().toISOString() })
     .eq('id', leadId)
     .is('first_contacted_at', null)
+  await completeFirstTouchReminders(supabase, leadId)
+}
+
+/**
+ * Once a lead has been contacted, the "Primer contacto" reminders (automatic
+ * and manual) are obsolete. Idempotent: only open reminders are touched.
+ */
+async function completeFirstTouchReminders(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  leadId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('tasks')
+    .update({ completed_at: new Date().toISOString(), status: 'done' })
+    .eq('kind', 'reminder')
+    .eq('lead_id', leadId)
+    .eq('description', FIRST_TOUCH_REMINDER_MARKER)
+    .eq('status', 'todo')
+    .is('completed_at', null)
+  if (error) log.warn({ err: error, leadId }, 'complete_first_touch_reminders_failed')
 }
 
 // ---------------- CREATE ----------------
@@ -108,6 +128,7 @@ export const createLead = defineAction<typeof CreateLeadInput, { id: string }>({
     const { error: reminderError } = await supabase.from('tasks').insert({
       kind: 'reminder',
       title: `Contactar con ${input.alias?.trim() || input.name}`,
+      description: FIRST_TOUCH_REMINDER_MARKER,
       start_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
       lead_id: data.id,
       created_by: user.id,
@@ -1360,7 +1381,8 @@ export const logLeadEmail = defineAction({
     })
     if (error) throw new Error(error.message)
 
-    await markFirstContacted(supabase, leadId)
+    // An email written by the lead is not our first contact with them.
+    if (direction !== 'incoming') await markFirstContacted(supabase, leadId)
   },
 })
 
@@ -1459,6 +1481,7 @@ export const syncLeadGmail = defineAction<
         .update({ first_contacted_at: firstSentAt })
         .eq('id', leadId)
         .is('first_contacted_at', null)
+      await completeFirstTouchReminders(supabase, leadId)
     }
 
     return {
