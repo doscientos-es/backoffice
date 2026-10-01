@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.80",
+      "date": "2026-10-01",
+      "title": "v0.1.80",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Make the right-hand cards sticky on scroll"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "c8e1ba72bd2424897a57351a7c4277679889ebee",
+          "type": "fix",
+          "scope": "portal",
+          "breaking": false,
+          "description": "Make the right-hand cards sticky on scroll"
+        }
+      ]
+    },
+    {
       "version": "0.1.79",
       "date": "2026-10-01",
       "title": "v0.1.79",
