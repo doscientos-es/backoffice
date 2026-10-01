@@ -25,6 +25,21 @@ const CATEGORIES = [
 
 const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg";
 
+/** Human message for responses that did not carry a JSON `error` (usually platform-level failures). */
+function uploadErrorMessage(status: number): string {
+  if (status === 401)
+    return "Tu sesión ha caducado. Recarga la página e inicia sesión de nuevo.";
+  if (status === 403) return "No tienes permiso para subir documentos.";
+  if (status === 413)
+    return "El archivo es demasiado grande para el servidor. Prueba con uno más pequeño.";
+  if (status === 408 || status === 504) {
+    return "El servidor tardó demasiado en procesar el archivo. Inténtalo de nuevo o prueba con uno más pequeño.";
+  }
+  if (status >= 500)
+    return `Error del servidor (${status}) al subir el documento. Inténtalo de nuevo.`;
+  return `No se pudo subir el documento (${status}).`;
+}
+
 export function UploadForm() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -58,16 +73,22 @@ export function UploadForm() {
         method: "POST",
         body: formData,
       });
-      const json = (await res.json()) as { id?: string; error?: string };
+      // The body may not be JSON (e.g. platform 413/504 HTML pages), so parse defensively.
+      const json = (await res.json().catch(() => null)) as {
+        id?: string;
+        error?: string;
+      } | null;
 
-      if (!res.ok || !json.id) {
-        setError(json.error ?? "Error al subir el documento");
+      if (!res.ok || !json?.id) {
+        setError(json?.error ?? uploadErrorMessage(res.status));
         return;
       }
 
       router.push(`/internal-docs/${json.id}`);
     } catch {
-      setError("Error de red. Inténtalo de nuevo.");
+      setError(
+        "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+      );
     } finally {
       setUploading(false);
     }
@@ -98,7 +119,9 @@ export function UploadForm() {
             Seleccionar archivo
           </Button>
           {fileName ? (
-            <span className="max-w-xs truncate text-sm text-muted-foreground">{fileName}</span>
+            <span className="max-w-xs truncate text-sm text-muted-foreground">
+              {fileName}
+            </span>
           ) : (
             <span className="text-sm text-muted-foreground">
               Máx. 50 MB · PDF, Word, Excel, imagen

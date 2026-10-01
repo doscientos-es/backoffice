@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { requireUser } from "@/lib/auth";
 import { indexInternalDocument } from "@/lib/internal-documents";
+import { scopedLogger } from "@/lib/logger";
 import {
   INTERNAL_DOC_CATEGORIES,
   INTERNAL_DOC_MAX_SIZE_BYTES,
@@ -13,6 +14,8 @@ import { getStorage } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+const log = scopedLogger("internal-documents.upload");
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 200);
@@ -43,11 +46,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Archivo requerido" }, { status: 400 });
   }
   if (file.size > INTERNAL_DOC_MAX_SIZE_BYTES) {
-    return NextResponse.json({ error: "El archivo supera el límite de 50 MB" }, { status: 413 });
+    return NextResponse.json(
+      { error: "El archivo supera el límite de 50 MB" },
+      { status: 413 },
+    );
   }
 
   const name = (formData.get("name") as string | null)?.trim();
-  if (!name) return NextResponse.json({ error: "Nombre requerido" }, { status: 400 });
+  if (!name)
+    return NextResponse.json({ error: "Nombre requerido" }, { status: 400 });
 
   const rawCategory = (formData.get("category") as string | null) ?? "other";
   if (!(INTERNAL_DOC_CATEGORIES as readonly string[]).includes(rawCategory)) {
@@ -55,14 +62,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
   const category = rawCategory as InternalDocCategory;
 
-  const rawVisibility = (formData.get("visibility") as string | null) ?? "all_team";
-  if (!(INTERNAL_DOC_VISIBILITIES as readonly string[]).includes(rawVisibility)) {
-    return NextResponse.json({ error: "Visibilidad inválida" }, { status: 400 });
+  const rawVisibility =
+    (formData.get("visibility") as string | null) ?? "all_team";
+  if (
+    !(INTERNAL_DOC_VISIBILITIES as readonly string[]).includes(rawVisibility)
+  ) {
+    return NextResponse.json(
+      { error: "Visibilidad inválida" },
+      { status: 400 },
+    );
   }
   const visibility = rawVisibility as InternalDocVisibility;
 
-  const description = (formData.get("description") as string | null)?.trim() || null;
-  const effective_date = (formData.get("effective_date") as string | null) || null;
+  const description =
+    (formData.get("description") as string | null)?.trim() || null;
+  const effective_date =
+    (formData.get("effective_date") as string | null) || null;
   const expires_at = (formData.get("expires_at") as string | null) || null;
 
   const docId = crypto.randomUUID();
@@ -72,9 +87,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const storage = getStorage();
   const bytes = await file.arrayBuffer();
 
-  const { error: storageError } = await storage.upload("internal-docs", storagePath, bytes, {
-    contentType: file.type || "application/octet-stream",
-  });
+  const { error: storageError } = await storage.upload(
+    "internal-docs",
+    storagePath,
+    bytes,
+    {
+      contentType: file.type || "application/octet-stream",
+    },
+  );
 
   if (storageError) {
     return NextResponse.json({ error: storageError }, { status: 500 });
@@ -102,7 +122,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (dbError || !data) {
     // Best-effort cleanup of orphaned storage object
     await storage.remove("internal-docs", [storagePath]);
-    return NextResponse.json({ error: dbError?.message ?? "Error al guardar" }, { status: 500 });
+    return NextResponse.json(
+      { error: dbError?.message ?? "Error al guardar" },
+      { status: 500 },
+    );
   }
 
   // Audit trail: record creation (best-effort, never blocks the upload).
@@ -113,12 +136,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     payload: { name, category, visibility, size_bytes: file.size },
   });
 
-  await indexInternalDocument({
-    documentId: docId,
-    version: 1,
-    mimeType: file.type || null,
-    bytes,
-  });
+  // Indexing is best-effort: the file is already stored, so never fail the upload because of it.
+  try {
+    await indexInternalDocument({
+      documentId: docId,
+      version: 1,
+      mimeType: file.type || null,
+      bytes,
+    });
+  } catch (error) {
+    log.error(
+      {
+        documentId: docId,
+        errorType: error instanceof Error ? error.name : typeof error,
+      },
+      "internal document uploaded but indexing failed",
+    );
+  }
 
   return NextResponse.json({ id: data.id as string }, { status: 201 });
 }
