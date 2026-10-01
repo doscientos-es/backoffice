@@ -24,6 +24,7 @@ import { finishLeadCall, getLeadCallSession, markLeadCallDialed, startLeadCall }
 import { WhatsAppComposer } from '../whatsapp-composer'
 
 const TERMINAL_CALL_STATUSES = new Set(['awaiting_log', 'logged', 'abandoned'])
+const CALL_SESSION_POLL_INTERVAL_MS = 15_000
 
 /**
  * Normalises a raw phone string into a clean `tel:` URI value.
@@ -289,7 +290,7 @@ function CallTrackingDialog({
       }
     }
     void refreshSession()
-    const timer = window.setInterval(() => void refreshSession(), 5_000)
+    const timer = window.setInterval(() => void refreshSession(), CALL_SESSION_POLL_INTERVAL_MS)
     const onVisibility = () => {
       if (document.visibilityState === 'visible') void refreshSession()
     }

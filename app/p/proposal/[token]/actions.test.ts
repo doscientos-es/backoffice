@@ -109,9 +109,9 @@ vi.mock('@/lib/supabase/admin', () => ({
         update: (patch: Record<string, unknown>) => {
           state.lastPatch = patch
           return {
-            eq: async (_col: string, id: string) => {
+            eq: (_col: string, id: string) => {
               state.lastUpdateId = id
-              return state.updateResult
+              return { in: async () => state.updateResult }
             },
           }
         },
@@ -321,6 +321,17 @@ describe('portal proposal actions', () => {
     const result = await acceptProposal(VALID_TOKEN, SIGNATURE)
     expect(result).toEqual({ ok: false, error: 'No se pudo registrar la firma de la propuesta' })
     expect(revalidatePath).not.toHaveBeenCalled()
+  })
+
+  it('saves maintenance selection and revalidates the portal to update totals', async () => {
+    state.fetchResult = {
+      data: { id: 'p5', status: 'sent', maintenance_options: DEFAULT_MAINTENANCE_OFFER },
+      error: null,
+    }
+
+    await expect(selectProposalMaintenance(VALID_TOKEN, 'essential')).resolves.toEqual({ ok: true })
+    expect(state.lastPatch).toMatchObject({ maintenance_selected_plan_id: 'essential' })
+    expect(revalidatePath).toHaveBeenCalledExactlyOnceWith(`/p/proposal/${VALID_TOKEN}`)
   })
 
   it('rejects maintenance selection when the offer is disabled', async () => {

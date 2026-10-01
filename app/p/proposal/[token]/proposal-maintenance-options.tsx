@@ -1,7 +1,6 @@
 'use client'
 
 import { Check } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -24,7 +23,6 @@ export function ProposalMaintenanceOptions({
   disabled: boolean
   language?: 'es' | 'ca' | 'en'
 }) {
-  const router = useRouter()
   const feedback = useFormFeedback({ successResetMs: 0 })
   const [selected, setSelected] = useState(selectedPlanId)
   const selectedPlan = offer.plans.find((plan) => plan.id === selected) ?? null
@@ -95,7 +93,7 @@ export function ProposalMaintenanceOptions({
     if (!result.ok) return feedback.setError(result.error)
     setSelected(planId)
     feedback.setSuccess(planId ? copy.added : copy.removed)
-    router.refresh()
+    // The Server Action revalidates this page and returns the updated totals.
   }
 
   return (
