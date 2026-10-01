@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,59 +7,59 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@doscientos/ui";
-import { CalendarDays, CornerUpLeft, Eye, Mail, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+} from '@doscientos/ui'
+import { CalendarDays, CornerUpLeft, Eye, Mail, Sparkles } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { CopyButton } from "@/components/ui/copy-button";
-import { MemberLabel } from "@/components/ui/member-avatar";
-import { interactionBodyText } from "@/lib/leads/interaction-utils";
-import type { LeadDetailInteraction } from "@/lib/leads/types";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { CopyButton } from '@/components/ui/copy-button'
+import { MemberLabel } from '@/components/ui/member-avatar'
+import { interactionBodyText } from '@/lib/leads/interaction-utils'
+import type { LeadDetailInteraction } from '@/lib/leads/types'
 
-import { EmailComposer } from "./email-composer";
+import { EmailComposer } from './email-composer'
 
 function payloadText(payload: unknown, key: string): string | null {
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
-  const value = (payload as Record<string, unknown>)[key];
-  if (typeof value === "string") return value.trim() || null;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null
+  const value = (payload as Record<string, unknown>)[key]
+  if (typeof value === 'string') return value.trim() || null
   if (Array.isArray(value)) {
-    const items = value.filter((item): item is string => typeof item === "string" && Boolean(item));
-    return items.length ? items.join(", ") : null;
+    const items = value.filter((item): item is string => typeof item === 'string' && Boolean(item))
+    return items.length ? items.join(', ') : null
   }
-  return null;
+  return null
 }
 
 function emailMetadata(payload: unknown): Array<[string, string]> {
-  const metadata: Array<[string, string]> = [];
+  const metadata: Array<[string, string]> = []
   const fields = [
-    ["De", "from"],
-    ["Para", "to"],
-    ["CC", "cc"],
-    ["Contacto", "counterparty"],
-  ] as const;
+    ['De', 'from'],
+    ['Para', 'to'],
+    ['CC', 'cc'],
+    ['Contacto', 'counterparty'],
+  ] as const
 
   for (const [label, key] of fields) {
-    const value = payloadText(payload, key);
-    if (value) metadata.push([label, value]);
+    const value = payloadText(payload, key)
+    if (value) metadata.push([label, value])
   }
-  return metadata;
+  return metadata
 }
 
 function emailAddress(value: string | null): string | null {
-  if (!value) return null;
+  if (!value) return null
   return (
     value.match(/<([^<>\s]+@[^<>\s]+)>/)?.[1] ??
     value.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i)?.[0] ??
     null
-  );
+  )
 }
 
 function replySubject(subject: string | null): string {
-  if (!subject) return "Re: ";
-  return /^(re|aw|sv):/i.test(subject.trim()) ? subject : `Re: ${subject}`;
+  if (!subject) return 'Re: '
+  return /^(re|aw|sv):/i.test(subject.trim()) ? subject : `Re: ${subject}`
 }
 
 export function LeadInteractionDetails({
@@ -71,26 +71,26 @@ export function LeadInteractionDetails({
   canReply = false,
   aiEnabled = false,
 }: {
-  interaction: LeadDetailInteraction;
-  label: string;
-  leadId: string;
-  leadEmail: string | null;
-  leadLanguage?: string | null;
-  canReply?: boolean;
-  aiEnabled?: boolean;
+  interaction: LeadDetailInteraction
+  label: string
+  leadId: string
+  leadEmail: string | null
+  leadLanguage?: string | null
+  canReply?: boolean
+  aiEnabled?: boolean
 }) {
-  const [replying, setReplying] = useState(false);
-  const router = useRouter();
-  const body = interactionBodyText(interaction.body);
-  const isEmail = interaction.type.startsWith("email_");
-  const metadata = isEmail ? emailMetadata(interaction.payload) : [];
+  const [replying, setReplying] = useState(false)
+  const router = useRouter()
+  const body = interactionBodyText(interaction.body)
+  const isEmail = interaction.type.startsWith('email_')
+  const metadata = isEmail ? emailMetadata(interaction.payload) : []
   const replyTo =
-    emailAddress(payloadText(interaction.payload, "from")) ??
-    emailAddress(payloadText(interaction.payload, "counterparty")) ??
-    leadEmail;
-  const canQuickReply = interaction.type === "email_received" && canReply;
+    emailAddress(payloadText(interaction.payload, 'from')) ??
+    emailAddress(payloadText(interaction.payload, 'counterparty')) ??
+    leadEmail
+  const canQuickReply = interaction.type === 'email_received' && canReply
 
-  if (!body) return null;
+  if (!body) return null
 
   return (
     <Dialog>
@@ -121,7 +121,7 @@ export function LeadInteractionDetails({
               </DialogTitle>
               <DialogDescription className="flex flex-wrap items-center gap-2 text-left">
                 <CalendarDays className="size-3.5" />
-                <span>{new Date(interaction.created_at).toLocaleString("es-ES")}</span>
+                <span>{new Date(interaction.created_at).toLocaleString('es-ES')}</span>
               </DialogDescription>
             </div>
           </div>
@@ -156,7 +156,7 @@ export function LeadInteractionDetails({
                     defaultLanguage={leadLanguage ?? undefined}
                     key={interaction.id}
                     leadId={leadId}
-                    defaultTo={replyTo ?? ""}
+                    defaultTo={replyTo ?? ''}
                     defaultSubject={replySubject(interaction.subject)}
                     draftKind="reply"
                     draftInteractionId={interaction.id}
@@ -224,7 +224,7 @@ export function LeadInteractionDetails({
                     onClick={() => setReplying((value) => !value)}
                   >
                     <CornerUpLeft className="size-4" />
-                    {replying ? "Ocultar respuesta" : "Responder"}
+                    {replying ? 'Ocultar respuesta' : 'Responder'}
                   </Button>
                 </section>
               ) : null}
@@ -233,5 +233,5 @@ export function LeadInteractionDetails({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

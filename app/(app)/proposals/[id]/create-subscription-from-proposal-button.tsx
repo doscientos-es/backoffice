@@ -1,20 +1,20 @@
-"use client";
+'use client'
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { formatEUR } from "@/lib/utils";
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { formatEUR } from '@/lib/utils'
 
-import { createSubscriptionFromProposal } from "../actions";
+import { createSubscriptionFromProposal } from '../actions'
 
 type Props = {
-  proposalId: string;
-  planName: string;
-  cycleLabel: string;
-  amount: number;
-};
+  proposalId: string
+  planName: string
+  cycleLabel: string
+  amount: number
+}
 
 export function CreateSubscriptionFromProposalButton({
   proposalId,
@@ -22,20 +22,20 @@ export function CreateSubscriptionFromProposalButton({
   cycleLabel,
   amount,
 }: Props) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
 
   function handleCreate() {
-    setError(null);
+    setError(null)
     startTransition(async () => {
-      const result = await createSubscriptionFromProposal({ id: proposalId });
+      const result = await createSubscriptionFromProposal({ id: proposalId })
       if (!result.ok) {
-        setError(result.error);
-        return;
+        setError(result.error)
+        return
       }
-      router.refresh();
-    });
+      router.refresh()
+    })
   }
 
   return (
@@ -48,7 +48,7 @@ export function CreateSubscriptionFromProposalButton({
         </p>
       </div>
       <Button type="button" size="sm" onClick={handleCreate} disabled={pending} className="w-fit">
-        {pending ? "Preparando…" : "Preparar suscripción"}
+        {pending ? 'Preparando…' : 'Preparar suscripción'}
       </Button>
       {error ? (
         <Alert variant="destructive">
@@ -56,5 +56,5 @@ export function CreateSubscriptionFromProposalButton({
         </Alert>
       ) : null}
     </div>
-  );
+  )
 }

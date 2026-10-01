@@ -1,23 +1,23 @@
-"use client";
+'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
 
-import { DateField } from "@/components/ui/date-field";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { HOSTING_PROVIDER_LABELS, HOSTING_PROVIDERS } from "@/lib/schemas/web-project";
-import type { WebProjectDetail } from "@/lib/webs/types";
+import { DateField } from '@/components/ui/date-field'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { HOSTING_PROVIDER_LABELS, HOSTING_PROVIDERS } from '@/lib/schemas/web-project'
+import type { WebProjectDetail } from '@/lib/webs/types'
 
-type Defaults = Partial<WebProjectDetail>;
+type Defaults = Partial<WebProjectDetail>
 
 interface Props {
-  clients: Array<{ id: string; name: string }>;
-  projects: Array<{ id: string; name: string; client_id: string }>;
-  defaults?: Defaults;
-  idPrefix?: string;
-  autoFocusName?: boolean;
+  clients: Array<{ id: string; name: string }>
+  projects: Array<{ id: string; name: string; client_id: string }>
+  defaults?: Defaults
+  idPrefix?: string
+  autoFocusName?: boolean
 }
 
 /**
@@ -27,25 +27,25 @@ export function WebFormFields({
   clients,
   projects,
   defaults: d = {},
-  idPrefix = "web",
+  idPrefix = 'web',
   autoFocusName = false,
 }: Props) {
-  const [projectId, setProjectId] = useState(d.project_id ?? "");
-  const [clientId, setClientId] = useState(d.client_id ?? "");
+  const [projectId, setProjectId] = useState(d.project_id ?? '')
+  const [clientId, setClientId] = useState(d.client_id ?? '')
   const [clientVisible, setClientVisible] = useState(
     d.project_id ? (d.is_client_visible ?? true) : false,
-  );
+  )
 
   function selectProject(nextProjectId: string) {
-    const project = projects.find((item) => item.id === nextProjectId);
+    const project = projects.find((item) => item.id === nextProjectId)
     if (!project) {
-      setProjectId("");
-      setClientVisible(false);
-      return;
+      setProjectId('')
+      setClientVisible(false)
+      return
     }
-    if (!projectId) setClientVisible(true);
-    setProjectId(project.id);
-    setClientId(project.client_id);
+    if (!projectId) setClientVisible(true)
+    setProjectId(project.id)
+    setClientId(project.client_id)
   }
 
   return (
@@ -58,7 +58,7 @@ export function WebFormFields({
             required
             maxLength={200}
             autoFocus={autoFocusName}
-            defaultValue={d.name ?? ""}
+            defaultValue={d.name ?? ''}
             placeholder="Landing doscientos"
           />
         </FormRow>
@@ -70,7 +70,7 @@ export function WebFormFields({
             type="url"
             required
             maxLength={2000}
-            defaultValue={d.url ?? ""}
+            defaultValue={d.url ?? ''}
             placeholder="https://doscientos.es"
           />
         </FormRow>
@@ -115,7 +115,7 @@ export function WebFormFields({
           <Select
             id={`${idPrefix}-hosting_provider`}
             name="hosting_provider"
-            defaultValue={d.hosting_provider ?? ""}
+            defaultValue={d.hosting_provider ?? ''}
           >
             <option value="">— Sin especificar —</option>
             {HOSTING_PROVIDERS.map((p) => (
@@ -136,7 +136,7 @@ export function WebFormFields({
             name="hosting_url"
             type="url"
             maxLength={2000}
-            defaultValue={d.hosting_url ?? ""}
+            defaultValue={d.hosting_url ?? ''}
             placeholder="https://vercel.com/doscientos/landing"
           />
         </FormRow>
@@ -146,7 +146,7 @@ export function WebFormFields({
             id={`${idPrefix}-domain_registrar`}
             name="domain_registrar"
             maxLength={200}
-            defaultValue={d.domain_registrar ?? ""}
+            defaultValue={d.domain_registrar ?? ''}
             placeholder="Namecheap, GoDaddy…"
           />
         </FormRow>
@@ -155,7 +155,7 @@ export function WebFormFields({
           <DateField
             id={`${idPrefix}-domain_expires_at`}
             name="domain_expires_at"
-            defaultValue={d.domain_expires_at ?? ""}
+            defaultValue={d.domain_expires_at ?? ''}
           />
         </FormRow>
 
@@ -164,7 +164,7 @@ export function WebFormFields({
             id={`${idPrefix}-tech_stack`}
             name="tech_stack"
             maxLength={500}
-            defaultValue={(d.tech_stack ?? []).join(", ")}
+            defaultValue={(d.tech_stack ?? []).join(', ')}
             placeholder="Next.js, Tailwind, Supabase"
           />
         </FormRow>
@@ -208,7 +208,7 @@ export function WebFormFields({
           id={`${idPrefix}-backup_slug`}
           name="backup_slug"
           maxLength={200}
-          defaultValue={d.backup_slug ?? ""}
+          defaultValue={d.backup_slug ?? ''}
           placeholder="optinergia"
         />
       </FormRow>
@@ -225,7 +225,7 @@ export function WebFormFields({
               id={`${idPrefix}-db_host`}
               name="db_host"
               maxLength={255}
-              defaultValue={d.db_host ?? ""}
+              defaultValue={d.db_host ?? ''}
               placeholder="127.0.0.1"
             />
           </FormRow>
@@ -237,7 +237,7 @@ export function WebFormFields({
               type="number"
               min={1}
               max={65535}
-              defaultValue={d.db_port ?? ""}
+              defaultValue={d.db_port ?? ''}
               placeholder="5432"
             />
           </FormRow>
@@ -247,7 +247,7 @@ export function WebFormFields({
               id={`${idPrefix}-db_name`}
               name="db_name"
               maxLength={255}
-              defaultValue={d.db_name ?? ""}
+              defaultValue={d.db_name ?? ''}
               placeholder="optinergia_prod"
             />
           </FormRow>
@@ -257,7 +257,7 @@ export function WebFormFields({
               id={`${idPrefix}-db_user`}
               name="db_user"
               maxLength={255}
-              defaultValue={d.db_user ?? ""}
+              defaultValue={d.db_user ?? ''}
               placeholder="postgres"
             />
           </FormRow>
@@ -268,8 +268,8 @@ export function WebFormFields({
           htmlFor={`${idPrefix}-db_pass`}
           hint={
             d.has_db_password
-              ? "Ya hay una contraseña guardada. Déjalo vacío para mantenerla."
-              : "Se almacenará cifrada."
+              ? 'Ya hay una contraseña guardada. Déjalo vacío para mantenerla.'
+              : 'Se almacenará cifrada.'
           }
         >
           <Input
@@ -278,7 +278,7 @@ export function WebFormFields({
             type="password"
             maxLength={500}
             autoComplete="new-password"
-            placeholder={d.has_db_password ? "••••••••" : ""}
+            placeholder={d.has_db_password ? '••••••••' : ''}
           />
         </FormRow>
       </fieldset>
@@ -289,10 +289,10 @@ export function WebFormFields({
           name="notes"
           rows={3}
           maxLength={4000}
-          defaultValue={d.notes ?? ""}
+          defaultValue={d.notes ?? ''}
           placeholder="Notas internas, accesos, consideraciones…"
         />
       </FormRow>
     </>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   ChevronDown,
@@ -7,24 +7,24 @@ import {
   Plus,
   Sparkle as Sparkles,
   Trash as Trash2,
-} from "lucide-react";
+} from 'lucide-react'
 
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { createEmptyPair, type EditablePair, KEY_POINTS_LIMITS } from "@/lib/proposals/key-points";
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { createEmptyPair, type EditablePair, KEY_POINTS_LIMITS } from '@/lib/proposals/key-points'
 
 export type ProblemSolutionEditorProps = {
-  items: EditablePair[];
-  onChange: (items: EditablePair[]) => void;
+  items: EditablePair[]
+  onChange: (items: EditablePair[]) => void
   /** When true, every input is disabled. Mirrors `KeyPointsEditor.locked`. */
-  locked?: boolean;
+  locked?: boolean
   /** Shows the "generate with AI" affordance while the list is empty. */
-  aiEnabled?: boolean;
+  aiEnabled?: boolean
   /** Invoked by the AI button. The parent owns the request and state update. */
-  onGenerate?: () => void;
+  onGenerate?: () => void
   /** Disables inputs and shows a pending label while a generation is running. */
-  generating?: boolean;
-};
+  generating?: boolean
+}
 
 /**
  * Paired problem↔solution editor. Each row keeps a problem (title + description)
@@ -40,30 +40,30 @@ export function ProblemSolutionEditor({
   onGenerate,
   generating = false,
 }: ProblemSolutionEditorProps) {
-  const max = KEY_POINTS_LIMITS.maxCount;
-  const disabled = locked || generating;
+  const max = KEY_POINTS_LIMITS.maxCount
+  const disabled = locked || generating
 
   const update = (i: number, patch: Partial<EditablePair>) =>
-    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)))
 
   const add = () => {
-    if (items.length >= max) return;
-    onChange([...items, createEmptyPair()]);
-  };
+    if (items.length >= max) return
+    onChange([...items, createEmptyPair()])
+  }
 
-  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i))
 
   const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= items.length) return;
-    const copy = items.slice();
-    const a = copy[i];
-    const b = copy[j];
-    if (!a || !b) return;
-    copy[i] = b;
-    copy[j] = a;
-    onChange(copy);
-  };
+    const j = i + dir
+    if (j < 0 || j >= items.length) return
+    const copy = items.slice()
+    const a = copy[i]
+    const b = copy[j]
+    if (!a || !b) return
+    copy[i] = b
+    copy[j] = a
+    onChange(copy)
+  }
 
   if (items.length === 0) {
     return (
@@ -96,12 +96,12 @@ export function ProblemSolutionEditor({
                   aria-hidden
                 />
               )}
-              {generating ? "Generando…" : "Generar 3 con IA"}
+              {generating ? 'Generando…' : 'Generar 3 con IA'}
             </button>
           ) : null}
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -114,7 +114,7 @@ export function ProblemSolutionEditor({
           >
             <div className="flex items-center gap-1.5">
               <span className="w-6 shrink-0 text-center text-[11px] font-semibold text-muted-foreground tabular-nums">
-                {String(i + 1).padStart(2, "0")}
+                {String(i + 1).padStart(2, '0')}
               </span>
               <span className="flex-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                 Problema → Solución
@@ -208,5 +208,5 @@ export function ProblemSolutionEditor({
         <p className="text-[11px] text-muted-foreground">Máximo {max} pares.</p>
       ) : null}
     </div>
-  );
+  )
 }

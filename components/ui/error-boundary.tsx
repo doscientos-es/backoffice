@@ -1,19 +1,19 @@
-"use client";
+'use client'
 
-import { TriangleAlert as AlertTriangle, RefreshCw } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { Component, type ErrorInfo, type ReactNode, Suspense } from "react";
+import { TriangleAlert as AlertTriangle, RefreshCw } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Component, type ErrorInfo, type ReactNode, Suspense } from 'react'
 
-import { Button } from "./button";
+import { Button } from './button'
 
 interface Props {
-  children: ReactNode;
+  children: ReactNode
   /** Fallback inline pequeño para drawers/dialogs. Si no se pasa se usa el default. */
-  fallback?: (error: Error, reset: () => void) => ReactNode;
+  fallback?: (error: Error, reset: () => void) => ReactNode
 }
 
 interface State {
-  error: Error | null;
+  error: Error | null
 }
 
 /**
@@ -27,33 +27,33 @@ interface State {
  */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
-    super(props);
-    this.state = { error: null };
+    super(props)
+    this.state = { error: null }
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { error };
+    return { error }
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo) {
     // En producción aquí podría ir un servicio de logging (Sentry, etc.)
-    console.error("[ErrorBoundary]", error, info.componentStack);
+    console.error('[ErrorBoundary]', error, info.componentStack)
   }
 
   reset = () => {
-    this.setState({ error: null });
-  };
+    this.setState({ error: null })
+  }
 
   override render() {
-    const { error } = this.state;
-    const { children, fallback } = this.props;
+    const { error } = this.state
+    const { children, fallback } = this.props
 
     if (error) {
-      if (fallback) return fallback(error, this.reset);
-      return <DefaultFallback error={error} reset={this.reset} />;
+      if (fallback) return fallback(error, this.reset)
+      return <DefaultFallback error={error} reset={this.reset} />
     }
 
-    return children;
+    return children
   }
 }
 
@@ -66,7 +66,7 @@ function DefaultFallback({ error, reset }: { error: Error; reset: () => void }) 
       <div className="flex flex-col gap-1">
         <p className="text-sm font-medium">Algo ha salido mal</p>
         <p className="text-xs text-muted-foreground">No se ha podido cargar este contenido.</p>
-        {process.env.NODE_ENV === "development" && (
+        {process.env.NODE_ENV === 'development' && (
           <p className="mt-1 max-w-xs truncate text-[11px] text-muted-foreground/60">
             {error.message}
           </p>
@@ -77,7 +77,7 @@ function DefaultFallback({ error, reset }: { error: Error; reset: () => void }) 
         Reintentar
       </Button>
     </div>
-  );
+  )
 }
 
 /**
@@ -95,11 +95,11 @@ export function SectionBoundary({
   pending,
   label,
 }: {
-  children: ReactNode;
+  children: ReactNode
   /** Skeleton mostrado mientras la sección carga. */
-  pending?: ReactNode;
+  pending?: ReactNode
   /** Texto del fallback de error. Por defecto "No se pudo cargar esta sección". */
-  label?: string;
+  label?: string
 }) {
   return (
     <ErrorBoundary
@@ -107,7 +107,7 @@ export function SectionBoundary({
     >
       <Suspense fallback={pending}>{children}</Suspense>
     </ErrorBoundary>
-  );
+  )
 }
 
 function SectionErrorCard({
@@ -115,19 +115,19 @@ function SectionErrorCard({
   reset,
   label,
 }: {
-  error: Error;
-  reset: () => void;
-  label?: string;
+  error: Error
+  reset: () => void
+  label?: string
 }) {
-  const router = useRouter();
+  const router = useRouter()
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-xl bg-card p-6 text-center ring-1 ring-foreground/10">
       <div className="flex size-10 items-center justify-center rounded-lg bg-destructive/10">
         <AlertTriangle className="size-4 text-destructive" />
       </div>
       <div className="flex flex-col gap-0.5">
-        <p className="text-sm font-medium">{label ?? "No se pudo cargar esta sección"}</p>
-        {process.env.NODE_ENV === "development" && (
+        <p className="text-sm font-medium">{label ?? 'No se pudo cargar esta sección'}</p>
+        {process.env.NODE_ENV === 'development' && (
           <p className="max-w-xs truncate text-[11px] text-muted-foreground/60">{error.message}</p>
         )}
       </div>
@@ -135,13 +135,13 @@ function SectionErrorCard({
         size="sm"
         variant="outline"
         onClick={() => {
-          router.refresh();
-          reset();
+          router.refresh()
+          reset()
         }}
       >
         <RefreshCw className="size-3.5" />
         Reintentar
       </Button>
     </div>
-  );
+  )
 }

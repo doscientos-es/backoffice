@@ -1,9 +1,9 @@
-import { DetailCardSkeleton } from "@/components/layout/detail-grid-skeleton";
-import { PageHeaderSkeleton } from "@/components/layout/page-header-skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailCardSkeleton } from '@/components/layout/detail-grid-skeleton'
+import { PageHeaderSkeleton } from '@/components/layout/page-header-skeleton'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
-const LINE_WIDTHS = [200, 60, 80, 60, 80];
+const LINE_WIDTHS = [200, 60, 80, 60, 80]
 
 export default function InvoiceDetailLoading() {
   return (
@@ -45,5 +45,5 @@ export default function InvoiceDetailLoading() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

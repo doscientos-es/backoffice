@@ -1,31 +1,31 @@
-"use client";
+'use client'
 
-import { Button as PopoverButton, PopoverContent, PopoverTrigger } from "@doscientos/ui";
-import { CalendarDays, ChevronDown, Download } from "lucide-react";
-import { useState } from "react";
+import { Button as PopoverButton, PopoverContent, PopoverTrigger } from '@doscientos/ui'
+import { CalendarDays, ChevronDown, Download } from 'lucide-react'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
+  return new Date().toISOString().slice(0, 7)
 }
 
 function quarterForMonth(month: string): { year: string; quarter: number; label: string } | null {
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null;
-  const year = month.slice(0, 4);
-  const quarter = Math.ceil(Number(month.slice(5, 7)) / 3);
-  return { year, quarter, label: `T${quarter} ${year}` };
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null
+  const year = month.slice(0, 4)
+  const quarter = Math.ceil(Number(month.slice(5, 7)) / 3)
+  return { year, quarter, label: `T${quarter} ${year}` }
 }
 
 /** Groups the monthly and annual accounting-register downloads. */
 export function InvoiceRegisterExport({ year }: { year: number }) {
-  const [month, setMonth] = useState(currentMonth);
-  const monthHref = `/api/invoices/libro-registro?month=${month}`;
-  const quarter = quarterForMonth(month);
+  const [month, setMonth] = useState(currentMonth)
+  const monthHref = `/api/invoices/libro-registro?month=${month}`
+  const quarter = quarterForMonth(month)
   const quarterHref = quarter
     ? `/api/invoices/trimestral?year=${quarter.year}&quarter=${quarter.quarter}`
-    : null;
+    : null
 
   return (
     <PopoverTrigger>
@@ -136,5 +136,5 @@ export function InvoiceRegisterExport({ year }: { year: number }) {
         </div>
       </PopoverContent>
     </PopoverTrigger>
-  );
+  )
 }

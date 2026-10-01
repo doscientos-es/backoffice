@@ -1,12 +1,12 @@
-import { Row, Section, Text } from "@react-email/components";
+import { Row, Section, Text } from '@react-email/components'
 
 export type EmailLogoProps = {
   /**
    * Absolute base URL of the app. Kept for API compatibility with callers,
    * currently unused since the header renders a text-only wordmark.
    */
-  appUrl?: string;
-};
+  appUrl?: string
+}
 
 /**
  * Horizontally centered brand lockup for email headers.
@@ -28,8 +28,8 @@ export function EmailLogo(_props: EmailLogoProps) {
                 "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontSize: 20,
               fontWeight: 700,
-              letterSpacing: "-0.02em",
-              color: "#2A4227",
+              letterSpacing: '-0.02em',
+              color: '#2A4227',
             }}
           >
             doscientos
@@ -37,5 +37,5 @@ export function EmailLogo(_props: EmailLogoProps) {
         </td>
       </Row>
     </Section>
-  );
+  )
 }

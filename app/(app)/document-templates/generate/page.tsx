@@ -1,34 +1,34 @@
-import { notFound } from "next/navigation";
+import { notFound } from 'next/navigation'
 
-import { BackLink } from "@/components/layout/back-link";
-import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { requireUser } from "@/lib/auth";
+import { BackLink } from '@/components/layout/back-link'
+import { PageHeader } from '@/components/layout/page-header'
+import { Card, CardContent } from '@/components/ui/card'
+import { requireUser } from '@/lib/auth'
 import type {
   DocumentGenerationContext,
   DocumentTemplate,
   DocumentTemplateField,
-} from "@/lib/document-templates/types";
-import { createServerClient } from "@/lib/supabase/server";
+} from '@/lib/document-templates/types'
+import { createServerClient } from '@/lib/supabase/server'
 
-import { GenerateDocumentForm } from "./generate-document-form";
+import { GenerateDocumentForm } from './generate-document-form'
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 
 function row(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null
 }
 
 export default async function GenerateDocumentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client_id?: string; project_id?: string; lead_id?: string }>;
+  searchParams: Promise<{ client_id?: string; project_id?: string; lead_id?: string }>
 }) {
-  await requireUser();
-  const { client_id: clientId, project_id: projectId, lead_id: leadId } = await searchParams;
-  if (!clientId && !projectId && !leadId) notFound();
+  await requireUser()
+  const { client_id: clientId, project_id: projectId, lead_id: leadId } = await searchParams
+  if (!clientId && !projectId && !leadId) notFound()
 
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const [
     { data: client },
     { data: project },
@@ -38,87 +38,86 @@ export default async function GenerateDocumentPage({
   ] = await Promise.all([
     clientId
       ? supabase
-          .from("clients")
+          .from('clients')
           .select(
-            "id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country",
+            'id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country',
           )
-          .eq("id", clientId)
-          .is("deleted_at", null)
+          .eq('id', clientId)
+          .is('deleted_at', null)
           .maybeSingle()
       : Promise.resolve({ data: null }),
     projectId
       ? supabase
-          .from("projects")
-          .select("id, name, client_id")
-          .eq("id", projectId)
-          .is("deleted_at", null)
+          .from('projects')
+          .select('id, name, client_id')
+          .eq('id', projectId)
+          .is('deleted_at', null)
           .maybeSingle()
       : Promise.resolve({ data: null }),
     leadId
       ? supabase
-          .from("leads")
-          .select("id, name, company, email, phone")
-          .eq("id", leadId)
-          .is("deleted_at", null)
+          .from('leads')
+          .select('id, name, company, email, phone')
+          .eq('id', leadId)
+          .is('deleted_at', null)
           .maybeSingle()
       : Promise.resolve({ data: null }),
     supabase
-      .from("settings")
+      .from('settings')
       .select(
-        "company_name, company_nif, company_address, company_address_street, company_address_zip, company_address_city, company_address_province, company_address_country",
+        'company_name, company_nif, company_address, company_address_street, company_address_zip, company_address_city, company_address_province, company_address_country',
       )
-      .eq("id", 1)
+      .eq('id', 1)
       .maybeSingle(),
     supabase
-      .from("document_templates")
+      .from('document_templates')
       .select(
-        "id, name, slug, description, fields, storage_path, mime_type, size_bytes, version, is_active, created_at",
+        'id, name, slug, description, fields, storage_path, mime_type, size_bytes, version, is_active, created_at',
       )
-      .is("deleted_at", null)
-      .eq("is_active", true)
-      .order("name"),
-  ]);
-  if (!client && !project && !lead) notFound();
+      .is('deleted_at', null)
+      .eq('is_active', true)
+      .order('name'),
+  ])
+  if (!client && !project && !lead) notFound()
 
   const resolvedClient =
     client ??
     (project?.client_id
       ? (
           await supabase
-            .from("clients")
+            .from('clients')
             .select(
-              "id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country",
+              'id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country',
             )
-            .eq("id", project.client_id)
-            .is("deleted_at", null)
+            .eq('id', project.client_id)
+            .is('deleted_at', null)
             .maybeSingle()
         ).data
       : null) ??
     (leadId
       ? (
           await supabase
-            .from("clients")
+            .from('clients')
             .select(
-              "id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country",
+              'id, name, nif, email, phone, contact_person, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country',
             )
-            .eq("lead_id", leadId)
-            .is("deleted_at", null)
+            .eq('lead_id', leadId)
+            .is('deleted_at', null)
             .maybeSingle()
         ).data
-      : null);
+      : null)
   const context: DocumentGenerationContext = {
     lead: row(lead),
     client: row(resolvedClient),
     project: row(project),
     company: row(company),
-  };
+  }
   const templates = (templateRows ?? []).map((template) => ({
     ...(template as unknown as DocumentTemplate),
     size_bytes: Number(template.size_bytes ?? 0),
     fields: (Array.isArray(template.fields) ? template.fields : []) as DocumentTemplateField[],
-  }));
-  const subject =
-    context.client?.name ?? context.lead?.name ?? context.project?.name ?? "documento";
+  }))
+  const subject = context.client?.name ?? context.lead?.name ?? context.project?.name ?? 'documento'
 
   return (
     <div className="flex flex-col gap-6">
@@ -155,5 +154,5 @@ export default async function GenerateDocumentPage({
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

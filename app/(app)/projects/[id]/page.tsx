@@ -1,57 +1,57 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
 
-import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
-import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
-import { PageHeader } from "@/components/layout/page-header";
-import { AttachmentSection } from "@/components/ui/attachment-section";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CopySummaryButton } from "@/components/ui/copy-summary-button";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { requireUser } from "@/lib/auth";
-import { githubDefaultInstallationId, isAIEnabled } from "@/lib/env";
-import { computeProjectProfitability } from "@/lib/finance";
-import { getProjectWorkspace } from "@/lib/projects/queries";
-import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from "@/lib/status";
-import { formatDate, formatEUR } from "@/lib/utils";
+import { RemindersSection } from '@/app/(app)/inicio/_components/reminders-section'
+import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
+import { PageHeader } from '@/components/layout/page-header'
+import { AttachmentSection } from '@/components/ui/attachment-section'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CopySummaryButton } from '@/components/ui/copy-summary-button'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { requireUser } from '@/lib/auth'
+import { githubDefaultInstallationId, isAIEnabled } from '@/lib/env'
+import { computeProjectProfitability } from '@/lib/finance'
+import { getProjectWorkspace } from '@/lib/projects/queries'
+import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from '@/lib/status'
+import { formatDate, formatEUR } from '@/lib/utils'
 
-import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
-import { TaskCreateDialog } from "../../tasks/task-create-dialog";
-import { GitHubModeBadge } from "../github-mode-badge";
-import type { GitHubSyncMode } from "../github-sync-section";
-import { AiKickoffPanel } from "./ai-kickoff-panel";
-import { type ChecklistItemRow, ChecklistSection } from "./checklist-section";
-import { ClientUpdatePanel } from "./client-update-panel";
-import { DeleteProjectButton } from "./delete-project-button";
-import { LinkProposalButton } from "./link-proposal-button";
-import { MonthlyInvoiceSection } from "./monthly-invoice-section";
-import { ProjectEditDialog } from "./project-edit-dialog";
-import { ProjectPortalSection } from "./project-portal-section";
-import { ProjectTasksViewToggle } from "./project-tasks-view-toggle";
-import { type KanbanTask, TasksKanban } from "./tasks/tasks-kanban";
-import { type WorkLogRow, WorkLogSection } from "./work-log-section";
-import { WorkspacePathsForm } from "./workspace-paths-form";
+import { ScheduleReminderDialog } from '../../reminders/schedule-reminder-dialog'
+import { TaskCreateDialog } from '../../tasks/task-create-dialog'
+import { GitHubModeBadge } from '../github-mode-badge'
+import type { GitHubSyncMode } from '../github-sync-section'
+import { AiKickoffPanel } from './ai-kickoff-panel'
+import { type ChecklistItemRow, ChecklistSection } from './checklist-section'
+import { ClientUpdatePanel } from './client-update-panel'
+import { DeleteProjectButton } from './delete-project-button'
+import { LinkProposalButton } from './link-proposal-button'
+import { MonthlyInvoiceSection } from './monthly-invoice-section'
+import { ProjectEditDialog } from './project-edit-dialog'
+import { ProjectPortalSection } from './project-portal-section'
+import { ProjectTasksViewToggle } from './project-tasks-view-toggle'
+import { type KanbanTask, TasksKanban } from './tasks/tasks-kanban'
+import { type WorkLogRow, WorkLogSection } from './work-log-section'
+import { WorkspacePathsForm } from './workspace-paths-form'
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 
 export default async function ProjectDetailPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ tasks_view?: string }>;
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ tasks_view?: string }>
 }) {
-  const { id } = await params;
-  const { tasks_view } = await searchParams;
-  const isBoard = tasks_view === "board";
-  const user = await requireUser();
-  const canEdit = user.role !== "viewer";
+  const { id } = await params
+  const { tasks_view } = await searchParams
+  const isBoard = tasks_view === 'board'
+  const user = await requireUser()
+  const canEdit = user.role !== 'viewer'
   const workspace = await getProjectWorkspace(id, {
     includeClients: canEdit,
-    tasksView: isBoard ? "board" : "list",
-  });
-  if (!workspace) notFound();
+    tasksView: isBoard ? 'board' : 'list',
+  })
+  if (!workspace) notFound()
   const {
     project,
     client,
@@ -69,22 +69,22 @@ export default async function ProjectDetailPage({
     unlinkedProposals,
     reminders,
     clientRequests,
-  } = workspace;
+  } = workspace
 
   const pendingReminders = ((reminders ?? []) as Array<Record<string, unknown>>).map((r) => ({
     id: r.id as string,
     title: r.title as string,
     remind_at: r.start_at as string,
-  }));
+  }))
 
   const workLogs: WorkLogRow[] = ((workLogsData ?? []) as Array<Record<string, unknown>>).map(
     (w) => {
       const m = w.team_members as {
-        id: string;
-        name: string;
-        avatar_url: string | null;
-        github_handle: string | null;
-      } | null;
+        id: string
+        name: string
+        avatar_url: string | null
+        github_handle: string | null
+      } | null
       return {
         id: w.id as string,
         work_date: w.work_date as string,
@@ -100,25 +100,25 @@ export default async function ProjectDetailPage({
               github_handle: m.github_handle ?? null,
             }
           : null,
-      };
+      }
     },
-  );
+  )
   const invoicedTotal = ((invoiceTotals ?? []) as Array<{ total: number | string | null }>).reduce(
     (sum, r) => sum + Number(r.total ?? 0),
     0,
-  );
+  )
 
   // Profitability: revenue excludes drafts/cancelled, hours are valued with the
   // company-wide internal hourly cost (Ajustes › Empresa), expenses exclude cancelled.
   const computableRevenue = (
     (invoiceTotals ?? []) as Array<{ total: number | string | null; status: string | null }>
   )
-    .filter((r) => r.status !== "draft" && r.status !== "cancelled")
-    .reduce((sum, r) => sum + Number(r.total ?? 0), 0);
+    .filter((r) => r.status !== 'draft' && r.status !== 'cancelled')
+    .reduce((sum, r) => sum + Number(r.total ?? 0), 0)
   const expensesTotal = ((expenseTotals ?? []) as Array<{ total: number | string | null }>).reduce(
     (sum, r) => sum + Number(r.total ?? 0),
     0,
-  );
+  )
   const profitability = computeProjectProfitability({
     revenue: computableRevenue,
     hours: workLogs.reduce((sum, w) => sum + w.hours, 0),
@@ -127,7 +127,7 @@ export default async function ProjectDetailPage({
         ?.internal_hourly_cost ?? 0,
     ),
     expenses: expensesTotal,
-  });
+  })
 
   return (
     <div className="flex flex-col gap-6">
@@ -135,7 +135,7 @@ export default async function ProjectDetailPage({
         title={project.name as string}
         description={client?.name}
         breadcrumbs={[
-          { label: "Proyectos", href: "/projects" },
+          { label: 'Proyectos', href: '/projects' },
           ...(client ? [{ label: client.name, href: `/clients/${client.id}` }] : []),
           { label: project.name as string },
         ]}
@@ -148,12 +148,12 @@ export default async function ProjectDetailPage({
             ) : null}
             <CopySummaryButton
               lines={(() => {
-                const parts: string[] = [];
+                const parts: string[] = []
                 parts.push(
                   [`🗂️ ${project.name as string}`, client && `— ${client.name}`]
                     .filter(Boolean)
-                    .join(" "),
-                );
+                    .join(' '),
+                )
                 parts.push(
                   [
                     `Estado: ${PROJECT_STATUS[project.status as keyof typeof PROJECT_STATUS]?.label ?? project.status}`,
@@ -161,22 +161,22 @@ export default async function ProjectDetailPage({
                       `Facturación: ${project.billing_type as string}`,
                   ]
                     .filter(Boolean)
-                    .join(" · "),
-                );
+                    .join(' · '),
+                )
                 const dates = [
                   (project.starts_at as string | null) &&
                     `Inicio: ${formatDate(project.starts_at as string)}`,
                   (project.ends_at as string | null) &&
                     `Fin: ${formatDate(project.ends_at as string)}`,
-                ].filter(Boolean);
-                if (dates.length) parts.push(dates.join(" · "));
-                return parts;
+                ].filter(Boolean)
+                if (dates.length) parts.push(dates.join(' · '))
+                return parts
               })()}
               urlPath={`/projects/${id}`}
             />
-            <GitHubModeBadge mode={(project.github_sync_mode as GitHubSyncMode | null) ?? "none"} />
+            <GitHubModeBadge mode={(project.github_sync_mode as GitHubSyncMode | null) ?? 'none'} />
             <StatusBadge meta={PROJECT_STATUS} value={project.status as string} />
-            {user.role === "owner" || user.role === "admin" ? (
+            {user.role === 'owner' || user.role === 'admin' ? (
               <Button asChild size="sm" variant="outline">
                 <Link href={`/webs/new?project_id=${id}`}>Nueva web</Link>
               </Button>
@@ -185,17 +185,17 @@ export default async function ProjectDetailPage({
               <ProjectEditDialog
                 project={{
                   id: project.id as string,
-                  client_id: (client?.id as string | undefined) ?? "",
+                  client_id: (client?.id as string | undefined) ?? '',
                   name: project.name as string,
                   status: project.status as string,
                   starts_at: (project.starts_at as string | null) ?? null,
                   ends_at: (project.ends_at as string | null) ?? null,
                   description: (project.description as string | null) ?? null,
-                  billing_type: (project.billing_type as "fixed" | "hourly" | null) ?? "fixed",
+                  billing_type: (project.billing_type as 'fixed' | 'hourly' | null) ?? 'fixed',
                   hourly_rate: project.hourly_rate != null ? Number(project.hourly_rate) : null,
                   hourly_vat_rate:
                     project.hourly_vat_rate != null ? Number(project.hourly_vat_rate) : null,
-                  github_sync_mode: (project.github_sync_mode as GitHubSyncMode | null) ?? "none",
+                  github_sync_mode: (project.github_sync_mode as GitHubSyncMode | null) ?? 'none',
                   github_repo: (project.github_repo as string | null) ?? null,
                   github_installation_id: (project.github_installation_id as number | null) ?? null,
                   github_auto_sync: (project.github_auto_sync as boolean | null) ?? true,
@@ -222,7 +222,7 @@ export default async function ProjectDetailPage({
                   {client.name}
                 </Link>
               ) : (
-                "—"
+                '—'
               )}
             </DetailRow>
             <DetailRow label="Estado">{project.status as string}</DetailRow>
@@ -265,7 +265,7 @@ export default async function ProjectDetailPage({
           clientEmail={(client?.email as string | null) ?? null}
           clientPhone={(client?.phone as string | null) ?? null}
           canEdit={canEdit}
-          canPublish={user.role === "owner" || user.role === "admin"}
+          canPublish={user.role === 'owner' || user.role === 'admin'}
         />
       ) : null}
 
@@ -285,7 +285,7 @@ export default async function ProjectDetailPage({
         </CardContent>
       </Card>
 
-      {canEdit && (proposals ?? []).some((proposal) => proposal.status === "accepted") ? (
+      {canEdit && (proposals ?? []).some((proposal) => proposal.status === 'accepted') ? (
         <Card>
           <CardHeader>
             <CardTitle>Arranque asistido</CardTitle>
@@ -326,7 +326,7 @@ export default async function ProjectDetailPage({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Tareas</CardTitle>
           <div className="flex items-center gap-2">
-            <ProjectTasksViewToggle view={isBoard ? "board" : "list"} />
+            <ProjectTasksViewToggle view={isBoard ? 'board' : 'list'} />
             <TaskCreateDialog
               projectId={id}
               members={(members ?? []) as Array<{ id: string; name: string }>}
@@ -334,7 +334,7 @@ export default async function ProjectDetailPage({
             />
           </div>
         </CardHeader>
-        <CardContent className={isBoard ? "px-4 pt-0 pb-4" : "px-0"}>
+        <CardContent className={isBoard ? 'px-4 pt-0 pb-4' : 'px-0'}>
           {!tasks || tasks.length === 0 ? (
             <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
           ) : isBoard ? (
@@ -344,13 +344,13 @@ export default async function ProjectDetailPage({
               currentUserId={user.id}
               tasks={(
                 tasks as unknown as Array<{
-                  id: string;
-                  title: string;
-                  status: KanbanTask["status"];
-                  priority: KanbanTask["priority"];
-                  due_date: string | null;
-                  kanban_order: string;
-                  team_members: { id: string; name: string } | null;
+                  id: string
+                  title: string
+                  status: KanbanTask['status']
+                  priority: KanbanTask['priority']
+                  due_date: string | null
+                  kanban_order: string
+                  team_members: { id: string; name: string } | null
                 }>
               ).map((t) => ({
                 id: t.id,
@@ -423,12 +423,12 @@ export default async function ProjectDetailPage({
         projectId={id}
         logs={workLogs}
         invoicedTotal={invoicedTotal}
-        billingType={(project.billing_type as "fixed" | "hourly" | null) ?? "fixed"}
+        billingType={(project.billing_type as 'fixed' | 'hourly' | null) ?? 'fixed'}
         hourlyRate={project.hourly_rate != null ? Number(project.hourly_rate) : null}
         canEdit={canEdit}
       />
 
-      {canEdit && project.billing_type === "hourly" && Number(project.hourly_rate ?? 0) > 0 ? (
+      {canEdit && project.billing_type === 'hourly' && Number(project.hourly_rate ?? 0) > 0 ? (
         <MonthlyInvoiceSection
           projectId={id}
           hourlyRate={Number(project.hourly_rate)}
@@ -470,8 +470,8 @@ export default async function ProjectDetailPage({
               <dd
                 className={`mt-1 text-2xl font-semibold tabular-nums ${
                   profitability.margin >= 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-red-600 dark:text-red-400"
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-red-600 dark:text-red-400'
                 }`}
               >
                 {formatEUR(profitability.margin)}
@@ -489,16 +489,16 @@ export default async function ProjectDetailPage({
               <dd className="mt-1 text-lg font-medium tabular-nums">
                 {profitability.effectiveRate !== null
                   ? `${formatEUR(profitability.effectiveRate)}/h`
-                  : "—"}
+                  : '—'}
               </dd>
             </div>
           </div>
           {profitability.hourlyCost === 0 ? (
             <p className="text-xs text-muted-foreground">
-              Configura el{" "}
+              Configura el{' '}
               <Link href="/settings/company" className="text-primary hover:underline">
                 coste/hora interno
-              </Link>{" "}
+              </Link>{' '}
               para valorar las horas en el margen.
             </p>
           ) : null}
@@ -515,9 +515,9 @@ export default async function ProjectDetailPage({
                 projectId={id}
                 unlinkdProposals={
                   (unlinkedProposals ?? []) as {
-                    id: string;
-                    number: string | null;
-                    title: string | null;
+                    id: string
+                    number: string | null
+                    title: string | null
                   }[]
                 }
               />
@@ -595,13 +595,13 @@ export default async function ProjectDetailPage({
           entityType="project"
           entityId={id}
           attachments={
-            (attachments ?? []) as import("@/components/ui/attachment-section").AttachmentItem[]
+            (attachments ?? []) as import('@/components/ui/attachment-section').AttachmentItem[]
           }
           canEdit={canEdit}
         />
       </div>
     </div>
-  );
+  )
 }
 
 function ProfitStat({ label, value }: { label: string; value: string }) {
@@ -610,5 +610,5 @@ function ProfitStat({ label, value }: { label: string; value: string }) {
       <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{label}</dt>
       <dd className="mt-0.5 text-sm font-medium tabular-nums">{value}</dd>
     </div>
-  );
+  )
 }

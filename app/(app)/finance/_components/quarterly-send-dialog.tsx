@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,21 +7,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@doscientos/ui";
-import { Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+} from '@doscientos/ui'
+import { Mail } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { type FormEvent, useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { formatDateTime } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { formatDateTime } from '@/lib/utils'
 
-import { sendQuarterlyAdvisorEmail } from "../actions";
-import type { HandoffQuarter } from "./quarterly-handoff-card";
+import { sendQuarterlyAdvisorEmail } from '../actions'
+import type { HandoffQuarter } from './quarterly-handoff-card'
 
 export function QuarterlySendDialog({
   open,
@@ -30,44 +30,44 @@ export function QuarterlySendDialog({
   advisorEmail,
   onSent,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  quarter: HandoffQuarter;
-  advisorEmail: string;
-  onSent: (message: string) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  quarter: HandoffQuarter
+  advisorEmail: string
+  onSent: (message: string) => void
 }) {
-  const router = useRouter();
-  const feedback = useFormFeedback();
-  const [to, setTo] = useState(advisorEmail);
-  const [message, setMessage] = useState("");
-  const [attachDocuments, setAttachDocuments] = useState(true);
+  const router = useRouter()
+  const feedback = useFormFeedback()
+  const [to, setTo] = useState(advisorEmail)
+  const [message, setMessage] = useState('')
+  const [attachDocuments, setAttachDocuments] = useState(true)
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    feedback.setPending();
+    event.preventDefault()
+    feedback.setPending()
     const result = await sendQuarterlyAdvisorEmail({
       year: quarter.year,
       quarter: quarter.quarter,
       to: to.trim(),
       message: message.trim() || undefined,
       attachDocuments,
-    });
+    })
     if (!result.ok) {
-      feedback.setError(result.error);
-      return;
+      feedback.setError(result.error)
+      return
     }
     const skipped = result.skipped.length
-      ? ` (${result.skipped.length} archivo${result.skipped.length === 1 ? "" : "s"} no adjuntado${result.skipped.length === 1 ? "" : "s"})`
-      : "";
+      ? ` (${result.skipped.length} archivo${result.skipped.length === 1 ? '' : 's'} no adjuntado${result.skipped.length === 1 ? '' : 's'})`
+      : ''
     const text = result.mocked
       ? `Email simulado (sin Resend)${skipped}`
-      : `${quarter.label} enviado con ${result.attachments} documento${result.attachments === 1 ? "" : "s"}${skipped}`;
-    feedback.reset();
-    onSent(text);
-    setMessage("");
-    onOpenChange(false);
-    router.refresh();
-  };
+      : `${quarter.label} enviado con ${result.attachments} documento${result.attachments === 1 ? '' : 's'}${skipped}`
+    feedback.reset()
+    onSent(text)
+    setMessage('')
+    onOpenChange(false)
+    router.refresh()
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -76,7 +76,7 @@ export function QuarterlySendDialog({
           <DialogTitle>Enviar {quarter.label} a la gestoría</DialogTitle>
           <DialogDescription>
             Se enviará el Excel con facturas emitidas y gastos del trimestre
-            {attachDocuments ? ", junto con los PDFs de facturas y justificantes de gastos." : "."}
+            {attachDocuments ? ', junto con los PDFs de facturas y justificantes de gastos.' : '.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="grid gap-4">
@@ -132,11 +132,11 @@ export function QuarterlySendDialog({
             </Button>
             <Button type="submit" size="sm" disabled={feedback.pending}>
               <Mail className="h-4 w-4" aria-hidden />
-              {feedback.pending ? "Enviando…" : "Enviar email"}
+              {feedback.pending ? 'Enviando…' : 'Enviar email'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,27 +1,21 @@
-"use client";
+'use client'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@doscientos/ui";
-import { Copy, Pencil, Plus, Power, Trash as Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useMemo, useState, useTransition } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@doscientos/ui'
+import { Copy, Pencil, Plus, Power, Trash as Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { type FormEvent, useMemo, useState, useTransition } from 'react'
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import { buildSignatureHtml } from "@/lib/email/signature";
-import { appendSignature, markdownToHtml, renderTemplate } from "@/lib/email/templates";
-import { formatDate } from "@/lib/utils";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
+import { buildSignatureHtml } from '@/lib/email/signature'
+import { appendSignature, markdownToHtml, renderTemplate } from '@/lib/email/templates'
+import { formatDate } from '@/lib/utils'
 
 import {
   createEmailTemplate,
@@ -30,118 +24,118 @@ import {
   type EmailTemplateInput,
   toggleEmailTemplateActive,
   updateEmailTemplate,
-} from "./actions";
+} from './actions'
 
-type Props = { templates: EmailTemplate[] };
+type Props = { templates: EmailTemplate[] }
 
 const EMPTY_FORM: EmailTemplateInput = {
-  name: "",
-  slug: "",
-  subject: "",
-  body_html: "",
+  name: '',
+  slug: '',
+  subject: '',
+  body_html: '',
   include_signature: true,
-};
+}
 
 /** Datos ficticios de un lead para previsualizar la plantilla en tiempo real. */
 const SAMPLE_VARS: Record<string, string> = {
-  nombre: "María García",
-  empresa: "Acme Studio",
-  email: "maria.garcia@acme.com",
-  sender_name: "Pol Gubau",
-};
+  nombre: 'María García',
+  empresa: 'Acme Studio',
+  email: 'maria.garcia@acme.com',
+  sender_name: 'Pol Gubau',
+}
 
 /** Firma ficticia para la previsualización. */
 const SAMPLE_SIGNATURE = buildSignatureHtml({
-  name: "Pol Gubau",
-  jobTitle: "Diseño y Estrategia",
-  contactEmail: "pol@doscientos.es",
-  phone: "600 000 000",
-});
+  name: 'Pol Gubau',
+  jobTitle: 'Diseño y Estrategia',
+  contactEmail: 'pol@doscientos.es',
+  phone: '600 000 000',
+})
 
 export function EmailTemplatesManager({ templates }: Props) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<EmailTemplate | null>(null);
-  const [form, setForm] = useState<EmailTemplateInput>(EMPTY_FORM);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<EmailTemplate | null>(null)
+  const [form, setForm] = useState<EmailTemplateInput>(EMPTY_FORM)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
-  const previewSubject = useMemo(() => renderTemplate(form.subject, SAMPLE_VARS), [form.subject]);
+  const previewSubject = useMemo(() => renderTemplate(form.subject, SAMPLE_VARS), [form.subject])
   const previewBody = useMemo(() => {
-    const html = markdownToHtml(renderTemplate(form.body_html, SAMPLE_VARS));
-    return form.include_signature ? appendSignature(html, SAMPLE_SIGNATURE) : html;
-  }, [form.body_html, form.include_signature]);
+    const html = markdownToHtml(renderTemplate(form.body_html, SAMPLE_VARS))
+    return form.include_signature ? appendSignature(html, SAMPLE_SIGNATURE) : html
+  }, [form.body_html, form.include_signature])
 
   function openCreate() {
-    setEditing(null);
-    setForm(EMPTY_FORM);
-    setError(null);
-    setOpen(true);
+    setEditing(null)
+    setForm(EMPTY_FORM)
+    setError(null)
+    setOpen(true)
   }
 
   function openEdit(tpl: EmailTemplate) {
-    setEditing(tpl);
+    setEditing(tpl)
     setForm({
       name: tpl.name,
       slug: tpl.slug,
       subject: tpl.subject,
       body_html: tpl.body_html,
       include_signature: tpl.include_signature,
-    });
-    setError(null);
-    setOpen(true);
+    })
+    setError(null)
+    setOpen(true)
   }
 
   /** Abre el formulario de creación precargado con los datos de una plantilla existente. */
   function openDuplicate(tpl: EmailTemplate) {
-    setEditing(null);
+    setEditing(null)
     setForm({
       name: `${tpl.name} (copia)`,
       slug: `${tpl.slug}-copia`,
       subject: tpl.subject,
       body_html: tpl.body_html,
       include_signature: tpl.include_signature,
-    });
-    setError(null);
-    setOpen(true);
+    })
+    setError(null)
+    setOpen(true)
   }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
     startTransition(async () => {
       const res = editing
         ? await updateEmailTemplate(editing.id, form)
-        : await createEmailTemplate(form);
+        : await createEmailTemplate(form)
       if (!res.ok) {
-        setError(res.error);
-        return;
+        setError(res.error)
+        return
       }
-      setOpen(false);
-      router.refresh();
-    });
+      setOpen(false)
+      router.refresh()
+    })
   }
 
   function handleToggle(tpl: EmailTemplate) {
     startTransition(async () => {
-      await toggleEmailTemplateActive(tpl.id, !tpl.active);
-      router.refresh();
-    });
+      await toggleEmailTemplateActive(tpl.id, !tpl.active)
+      router.refresh()
+    })
   }
 
   function handleDelete(tpl: EmailTemplate) {
     const confirmed = window.confirm(
       `¿Eliminar la plantilla "${tpl.name}"?\n\nEsta acción no se puede deshacer.`,
-    );
-    if (!confirmed) return;
+    )
+    if (!confirmed) return
     startTransition(async () => {
-      const res = await deleteEmailTemplate(tpl.id);
+      const res = await deleteEmailTemplate(tpl.id)
       if (!res.ok) {
-        setError(res.error);
-        return;
+        setError(res.error)
+        return
       }
-      router.refresh();
-    });
+      router.refresh()
+    })
   }
 
   return (
@@ -195,8 +189,8 @@ export function EmailTemplatesManager({ templates }: Props) {
                     </div>
                   </td>
                   <td className="px-4 py-2.5 align-middle">
-                    <Badge variant={tpl.active ? "success" : "neutral"}>
-                      {tpl.active ? "Activa" : "Inactiva"}
+                    <Badge variant={tpl.active ? 'success' : 'neutral'}>
+                      {tpl.active ? 'Activa' : 'Inactiva'}
                     </Badge>
                   </td>
                   <td className="px-4 py-2.5 align-middle text-xs text-muted-foreground">
@@ -224,7 +218,7 @@ export function EmailTemplatesManager({ templates }: Props) {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => handleToggle(tpl)}
-                        title={tpl.active ? "Desactivar" : "Activar"}
+                        title={tpl.active ? 'Desactivar' : 'Activar'}
                         disabled={isPending}
                       >
                         <Power className="size-3.5" />
@@ -252,7 +246,7 @@ export function EmailTemplatesManager({ templates }: Props) {
         <DialogContent className="max-h-[92vh] gap-0 overflow-hidden p-0 sm:max-w-5xl">
           <form onSubmit={handleSubmit} className="flex max-h-[92vh] flex-col">
             <DialogHeader className="border-b border-border px-5 py-4">
-              <DialogTitle>{editing ? "Editar plantilla" : "Nueva plantilla"}</DialogTitle>
+              <DialogTitle>{editing ? 'Editar plantilla' : 'Nueva plantilla'}</DialogTitle>
               <DialogDescription>
                 Edita los campos y comprueba a la derecha cómo se verá el email con un lead de
                 ejemplo.
@@ -303,16 +297,16 @@ export function EmailTemplatesManager({ templates }: Props) {
                     value={form.body_html}
                     onChange={(e) => setForm((f) => ({ ...f, body_html: e.target.value }))}
                     rows={16}
-                    placeholder={"Hola **{{nombre}}**,\n\nGracias por tu interés…"}
+                    placeholder={'Hola **{{nombre}}**,\n\nGracias por tu interés…'}
                     required
                     className="min-h-80 font-mono text-xs"
                   />
                   <p className="text-xs text-muted-foreground">
                     Se escribe en Markdown (se convierte a HTML al previsualizar y enviar).
-                    Variables disponibles: <code className="font-mono">{"{{nombre}}"}</code>{" "}
-                    <code className="font-mono">{"{{empresa}}"}</code>{" "}
-                    <code className="font-mono">{"{{email}}"}</code>{" "}
-                    <code className="font-mono">{"{{sender_name}}"}</code>
+                    Variables disponibles: <code className="font-mono">{'{{nombre}}'}</code>{' '}
+                    <code className="font-mono">{'{{empresa}}'}</code>{' '}
+                    <code className="font-mono">{'{{email}}'}</code>{' '}
+                    <code className="font-mono">{'{{sender_name}}'}</code>
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -364,16 +358,16 @@ export function EmailTemplatesManager({ templates }: Props) {
                   <p className="mb-1 font-medium text-foreground/80">Datos del lead de ejemplo</p>
                   <ul className="space-y-0.5">
                     <li>
-                      <code className="font-mono">{"{{nombre}}"}</code> → {SAMPLE_VARS.nombre}
+                      <code className="font-mono">{'{{nombre}}'}</code> → {SAMPLE_VARS.nombre}
                     </li>
                     <li>
-                      <code className="font-mono">{"{{empresa}}"}</code> → {SAMPLE_VARS.empresa}
+                      <code className="font-mono">{'{{empresa}}'}</code> → {SAMPLE_VARS.empresa}
                     </li>
                     <li>
-                      <code className="font-mono">{"{{email}}"}</code> → {SAMPLE_VARS.email}
+                      <code className="font-mono">{'{{email}}'}</code> → {SAMPLE_VARS.email}
                     </li>
                     <li>
-                      <code className="font-mono">{"{{sender_name}}"}</code> →{" "}
+                      <code className="font-mono">{'{{sender_name}}'}</code> →{' '}
                       {SAMPLE_VARS.sender_name}
                     </li>
                   </ul>
@@ -387,12 +381,12 @@ export function EmailTemplatesManager({ templates }: Props) {
                 Cancelar
               </Button>
               <SubmitButton loading={isPending}>
-                {editing ? "Guardar cambios" : "Crear plantilla"}
+                {editing ? 'Guardar cambios' : 'Crear plantilla'}
               </SubmitButton>
             </div>
           </form>
         </DialogContent>
       </Dialog>
     </section>
-  );
+  )
 }

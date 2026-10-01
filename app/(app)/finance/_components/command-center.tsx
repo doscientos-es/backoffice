@@ -1,26 +1,26 @@
-"use client";
-import { useMemo, useState } from "react";
+'use client'
+import { useMemo, useState } from 'react'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import type { CommandCenterMetrics } from "@/lib/finance/command-center";
-import { formatEUR } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import type { CommandCenterMetrics } from '@/lib/finance/command-center'
+import { formatEUR } from '@/lib/utils'
 
 export function CommandCenter({ metrics }: { metrics: CommandCenterMetrics }) {
   const [taxRate, setTaxRate] = useState(10),
     [target, setTarget] = useState(10000),
-    [months, setMonths] = useState(6);
+    [months, setMonths] = useState(6)
   const model = useMemo(() => {
-    const gross = metrics.revenue - metrics.directCosts;
-    const preTax = gross - metrics.fixedCosts;
-    const avg = metrics.invoiceCount ? metrics.revenue / metrics.invoiceCount : 0;
-    const cac = metrics.wonLeads ? metrics.adSpend / metrics.wonLeads : 0;
+    const gross = metrics.revenue - metrics.directCosts
+    const preTax = gross - metrics.fixedCosts
+    const avg = metrics.invoiceCount ? metrics.revenue / metrics.invoiceCount : 0
+    const cac = metrics.wonLeads ? metrics.adSpend / metrics.wonLeads : 0
     const targetRevenue =
       (target / Math.max(0.01, 1 - taxRate / 100) + metrics.fixedCosts) /
-      Math.max(0.01, 1 - metrics.directCosts / Math.max(metrics.revenue, 1));
-    return { gross, preTax, avg, cac, targetRevenue, monthly: targetRevenue / Math.max(1, months) };
-  }, [metrics, taxRate, target, months]);
-  const eur = (v: number) => formatEUR(Math.round(v * 100) / 100);
+      Math.max(0.01, 1 - metrics.directCosts / Math.max(metrics.revenue, 1))
+    return { gross, preTax, avg, cac, targetRevenue, monthly: targetRevenue / Math.max(1, months) }
+  }, [metrics, taxRate, target, months])
+  const eur = (v: number) => formatEUR(Math.round(v * 100) / 100)
   return (
     <section className="flex flex-col gap-4" aria-labelledby="command-center-title">
       <div>
@@ -33,10 +33,10 @@ export function CommandCenter({ metrics }: { metrics: CommandCenterMetrics }) {
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ["Margen bruto", model.gross, "Ingresos − costes directos"],
-          ["Beneficio pre impuestos", model.preTax, "Después de estructura"],
-          ["Ticket medio", model.avg, `${metrics.invoiceCount} facturas`],
-          ["CAC publicitario", model.cac, `${metrics.wonLeads} clientes ganados`],
+          ['Margen bruto', model.gross, 'Ingresos − costes directos'],
+          ['Beneficio pre impuestos', model.preTax, 'Después de estructura'],
+          ['Ticket medio', model.avg, `${metrics.invoiceCount} facturas`],
+          ['CAC publicitario', model.cac, `${metrics.wonLeads} clientes ganados`],
         ].map(([label, value, hint]) => (
           <Card key={String(label)}>
             <CardContent className="p-4">
@@ -99,9 +99,9 @@ export function CommandCenter({ metrics }: { metrics: CommandCenterMetrics }) {
       </Card>
       <p className="text-xs text-muted-foreground">
         Vista de gestión, no liquidación fiscal. Costes directos {eur(metrics.directCosts)} ·
-        estructura {eur(metrics.fixedCosts)} · horas {metrics.hours.toFixed(1)} h · Ads{" "}
+        estructura {eur(metrics.fixedCosts)} · horas {metrics.hours.toFixed(1)} h · Ads{' '}
         {eur(metrics.adSpend)}.
       </p>
     </section>
-  );
+  )
 }

@@ -1,40 +1,40 @@
-import Link from "next/link";
-import type { ReactNode } from "react";
+import Link from 'next/link'
+import type { ReactNode } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Markdown } from "@/components/ui/markdown";
-import { BILLING_CYCLE_LABELS, type BillingCycle } from "@/lib/finance";
-import type { PaymentPlanItem, ScopeModule } from "@/lib/proposals/scope";
-import { formatDate, formatEUR } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Markdown } from '@/components/ui/markdown'
+import { BILLING_CYCLE_LABELS, type BillingCycle } from '@/lib/finance'
+import type { PaymentPlanItem, ScopeModule } from '@/lib/proposals/scope'
+import { formatDate, formatEUR } from '@/lib/utils'
 
 type Item = {
-  id: string;
-  description: string;
-  quantity: number;
-  unit_price: number;
-  vat_rate: number;
-  subtotal: number;
-  billing_cycle: string | null;
-};
+  id: string
+  description: string
+  quantity: number
+  unit_price: number
+  vat_rate: number
+  subtotal: number
+  billing_cycle: string | null
+}
 
-type TeamMember = { id: string; name: string; job_title: string | null };
+type TeamMember = { id: string; name: string; job_title: string | null }
 
 type Props = {
-  total: number;
-  validUntil: string | null;
-  paymentPlan: PaymentPlanItem[];
-  paymentTerms: string | null;
-  items: Item[];
-  scopeModules: ScopeModule[];
-  deliverables: string | null;
-  acceptanceCriteria: string | null;
-  notes: string | null;
-  team: TeamMember[];
-  mainContent?: ReactNode;
-  sidebarTop?: ReactNode;
-  sidebar?: ReactNode;
-};
+  total: number
+  validUntil: string | null
+  paymentPlan: PaymentPlanItem[]
+  paymentTerms: string | null
+  items: Item[]
+  scopeModules: ScopeModule[]
+  deliverables: string | null
+  acceptanceCriteria: string | null
+  notes: string | null
+  team: TeamMember[]
+  mainContent?: ReactNode
+  sidebarTop?: ReactNode
+  sidebar?: ReactNode
+}
 
 /** Read-only, scannable proposal view; actions intentionally live outside it. */
 export function ProposalOverview({
@@ -106,9 +106,9 @@ export function ProposalOverview({
                     <p className="font-medium">{item.description}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {item.quantity} × {formatEUR(item.unit_price)} · IVA {item.vat_rate} %
-                      {item.billing_cycle && item.billing_cycle !== "none"
+                      {item.billing_cycle && item.billing_cycle !== 'none'
                         ? ` · ${BILLING_CYCLE_LABELS[item.billing_cycle as BillingCycle] ?? item.billing_cycle}`
-                        : ""}
+                        : ''}
                     </p>
                   </div>
                   <span className="font-medium tabular-nums">{formatEUR(item.subtotal)}</span>
@@ -154,7 +154,7 @@ export function ProposalOverview({
                   <li key={member.id}>
                     <p className="font-medium">{member.name}</p>
                     <p className="text-muted-foreground">
-                      {member.job_title ?? "Equipo Doscientos"}
+                      {member.job_title ?? 'Equipo Doscientos'}
                     </p>
                   </li>
                 ))}
@@ -167,5 +167,5 @@ export function ProposalOverview({
         {sidebar}
       </div>
     </div>
-  );
+  )
 }

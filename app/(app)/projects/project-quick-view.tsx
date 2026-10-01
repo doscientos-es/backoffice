@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   DrawerClose,
@@ -6,7 +6,7 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-} from "@doscientos/ui";
+} from '@doscientos/ui'
 import {
   Dialog,
   DialogContent,
@@ -14,34 +14,34 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@doscientos/ui";
-import { ArrowUpRight, Building2, Clock, ExternalLink, Trash as Trash2, X } from "lucide-react";
-import Link from "next/link";
-import { type ReactNode, useState, useTransition } from "react";
-import { sileo } from "sileo";
+} from '@doscientos/ui'
+import { ArrowUpRight, Building2, Clock, ExternalLink, Trash as Trash2, X } from 'lucide-react'
+import Link from 'next/link'
+import { type ReactNode, useState, useTransition } from 'react'
+import { sileo } from 'sileo'
 
-import { Button } from "@/components/ui/button";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { Input } from "@/components/ui/input";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { computeHoursFromRange } from "@/lib/schemas/work-log";
-import { PROJECT_STATUS, type ProjectStatus } from "@/lib/status";
-import { relativeTime } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { Input } from '@/components/ui/input'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { computeHoursFromRange } from '@/lib/schemas/work-log'
+import { PROJECT_STATUS, type ProjectStatus } from '@/lib/status'
+import { relativeTime } from '@/lib/utils'
 
-import { addWorkLog } from "./[id]/work-log-actions";
-import { GitHubModeBadge } from "./github-mode-badge";
-import type { GitHubSyncMode } from "./github-sync-section";
+import { addWorkLog } from './[id]/work-log-actions'
+import { GitHubModeBadge } from './github-mode-badge'
+import type { GitHubSyncMode } from './github-sync-section'
 
 export type QuickProject = {
-  id: string;
-  name: string;
-  client_name: string;
-  status: ProjectStatus;
-  description: string | null;
-  updated_at: string;
-  github_sync_mode?: GitHubSyncMode | null;
-  github_repo?: string | null;
-};
+  id: string
+  name: string
+  client_name: string
+  status: ProjectStatus
+  description: string | null
+  updated_at: string
+  github_sync_mode?: GitHubSyncMode | null
+  github_repo?: string | null
+}
 
 export function ProjectQuickView({
   project,
@@ -49,11 +49,11 @@ export function ProjectQuickView({
   onDeleteAction,
   onCloseAction,
 }: {
-  project: QuickProject | null;
-  canEdit?: boolean;
+  project: QuickProject | null
+  canEdit?: boolean
   /** Optimistically removes the project from the list and runs the delete. */
-  onDeleteAction: (id: string) => void;
-  onCloseAction: () => void;
+  onDeleteAction: (id: string) => void
+  onCloseAction: () => void
 }) {
   return (
     <DrawerContent
@@ -69,10 +69,10 @@ export function ProjectQuickView({
         </ErrorBoundary>
       ) : null}
     </DrawerContent>
-  );
+  )
 }
 
-type BodyProps = { project: QuickProject; canEdit: boolean; onDeleteAction: (id: string) => void };
+type BodyProps = { project: QuickProject; canEdit: boolean; onDeleteAction: (id: string) => void }
 
 function Body({ project, canEdit, onDeleteAction }: BodyProps) {
   return (
@@ -82,7 +82,7 @@ function Body({ project, canEdit, onDeleteAction }: BodyProps) {
           <DrawerTitle>{project.name}</DrawerTitle>
           <DrawerDescription className="flex flex-wrap items-center gap-1.5">
             <StatusBadge meta={PROJECT_STATUS} value={project.status} />
-            <GitHubModeBadge mode={project.github_sync_mode ?? "none"} />
+            <GitHubModeBadge mode={project.github_sync_mode ?? 'none'} />
             <span className="text-[11px] tabular-nums">{relativeTime(project.updated_at)}</span>
           </DrawerDescription>
         </div>
@@ -103,7 +103,7 @@ function Body({ project, canEdit, onDeleteAction }: BodyProps) {
                 rel="noreferrer"
                 className="text-primary hover:underline"
               >
-                {project.github_repo.replace(/^https?:\/\//, "")}
+                {project.github_repo.replace(/^https?:\/\//, '')}
               </a>
             </Row>
           ) : null}
@@ -143,29 +143,29 @@ function Body({ project, canEdit, onDeleteAction }: BodyProps) {
         </Button>
       </footer>
     </>
-  );
+  )
 }
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+const todayISO = () => new Date().toISOString().slice(0, 10)
 
 function QuickAddHours({ projectId }: { projectId: string }) {
-  const [date, setDate] = useState(todayISO);
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [directHours, setDirectHours] = useState("");
-  const [note, setNote] = useState("");
-  const [adding, startAdd] = useTransition();
+  const [date, setDate] = useState(todayISO)
+  const [start, setStart] = useState('')
+  const [end, setEnd] = useState('')
+  const [directHours, setDirectHours] = useState('')
+  const [note, setNote] = useState('')
+  const [adding, startAdd] = useTransition()
 
-  const duration = start && end ? computeHoursFromRange(start, end) : Number(directHours) || null;
+  const duration = start && end ? computeHoursFromRange(start, end) : Number(directHours) || null
 
   function onAdd() {
     if (!duration || duration <= 0) {
-      sileo.error({ title: "Indica las horas o un rango de inicio y fin." });
-      return;
+      sileo.error({ title: 'Indica las horas o un rango de inicio y fin.' })
+      return
     }
     if (start && end && duration === null) {
-      sileo.error({ title: "La hora de fin debe ser posterior a la de inicio." });
-      return;
+      sileo.error({ title: 'La hora de fin debe ser posterior a la de inicio.' })
+      return
     }
     startAdd(async () => {
       const res = await addWorkLog({
@@ -175,29 +175,23 @@ function QuickAddHours({ projectId }: { projectId: string }) {
         end_time: end || undefined,
         hours: start && end ? undefined : duration,
         note,
-      });
+      })
       if (!res.ok) {
-        sileo.error({ title: res.error });
-        return;
+        sileo.error({ title: res.error })
+        return
       }
-      sileo.success({ title: "Horas registradas." });
-      setStart("");
-      setEnd("");
-      setDirectHours("");
-      setNote("");
-    });
+      sileo.success({ title: 'Horas registradas.' })
+      setStart('')
+      setEnd('')
+      setDirectHours('')
+      setNote('')
+    })
   }
 
-  const hh = duration !== null ? Math.floor(Math.round(duration * 60) / 60) : null;
-  const mm = duration !== null ? Math.round(duration * 60) % 60 : null;
+  const hh = duration !== null ? Math.floor(Math.round(duration * 60) / 60) : null
+  const mm = duration !== null ? Math.round(duration * 60) % 60 : null
   const durationLabel =
-    duration !== null
-      ? hh === 0
-        ? `${mm} min`
-        : mm === 0
-          ? `${hh} h`
-          : `${hh} h ${mm} min`
-      : null;
+    duration !== null ? (hh === 0 ? `${mm} min` : mm === 0 ? `${hh} h` : `${hh} h ${mm} min`) : null
 
   return (
     <div className="flex flex-col gap-2">
@@ -240,10 +234,10 @@ function QuickAddHours({ projectId }: { projectId: string }) {
         step="0.25"
         value={directHours}
         onChange={(e) => {
-          setDirectHours(e.target.value);
+          setDirectHours(e.target.value)
           if (e.target.value) {
-            setStart("");
-            setEnd("");
+            setStart('')
+            setEnd('')
           }
         }}
         placeholder="Horas directas (p. ej. 2)"
@@ -264,7 +258,7 @@ function QuickAddHours({ projectId }: { projectId: string }) {
         </Button>
       </div>
     </div>
-  );
+  )
 }
 
 function DeleteProjectButton({
@@ -272,16 +266,16 @@ function DeleteProjectButton({
   projectName,
   onConfirmAction,
 }: {
-  projectId: string;
-  projectName: string;
+  projectId: string
+  projectName: string
   /** Triggers the optimistic removal + delete in the parent list. */
-  onConfirmAction: (id: string) => void;
+  onConfirmAction: (id: string) => void
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   function onConfirm() {
-    setOpen(false);
-    onConfirmAction(projectId);
+    setOpen(false)
+    onConfirmAction(projectId)
   }
 
   return (
@@ -313,7 +307,7 @@ function DeleteProjectButton({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 function Heading({ children }: { children: ReactNode }) {
@@ -321,7 +315,7 @@ function Heading({ children }: { children: ReactNode }) {
     <p className="text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
       {children}
     </p>
-  );
+  )
 }
 
 function Row({ icon, children }: { icon: ReactNode; children: ReactNode }) {
@@ -330,5 +324,5 @@ function Row({ icon, children }: { icon: ReactNode; children: ReactNode }) {
       <span className="text-muted-foreground">{icon}</span>
       <span className="truncate">{children}</span>
     </div>
-  );
+  )
 }

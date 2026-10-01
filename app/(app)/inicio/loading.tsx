@@ -1,6 +1,6 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton'
 
-const KPI_KEYS = ["a", "b", "c", "d"] as const;
+const KPI_KEYS = ['a', 'b', 'c', 'd'] as const
 
 export default function InicioLoading() {
   return (
@@ -33,5 +33,5 @@ export default function InicioLoading() {
         </div>
       </section>
     </div>
-  );
+  )
 }

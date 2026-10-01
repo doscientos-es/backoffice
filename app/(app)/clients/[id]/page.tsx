@@ -1,19 +1,19 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
 
-import { RemindersSection } from "@/app/(app)/inicio/_components/reminders-section";
-import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CopyButton } from "@/components/ui/copy-button";
-import { CopySummaryButton } from "@/components/ui/copy-summary-button";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { formatAddress } from "@/lib/address";
-import { requireUser } from "@/lib/auth";
-import { getClientDetail } from "@/lib/clients/queries";
-import { listActiveMembers } from "@/lib/members/queries";
+import { RemindersSection } from '@/app/(app)/inicio/_components/reminders-section'
+import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
+import { PageHeader } from '@/components/layout/page-header'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CopyButton } from '@/components/ui/copy-button'
+import { CopySummaryButton } from '@/components/ui/copy-summary-button'
+import { EntityAvatar } from '@/components/ui/entity-avatar'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { formatAddress } from '@/lib/address'
+import { requireUser } from '@/lib/auth'
+import { getClientDetail } from '@/lib/clients/queries'
+import { listActiveMembers } from '@/lib/members/queries'
 import {
   INVOICE_STATUS,
   type InvoiceStatus,
@@ -23,29 +23,29 @@ import {
   type ProposalStatus,
   TASK_STATUS,
   type TaskStatus,
-} from "@/lib/status";
-import { formatDate, formatEUR } from "@/lib/utils";
+} from '@/lib/status'
+import { formatDate, formatEUR } from '@/lib/utils'
 
-import { ScheduleReminderDialog } from "../../reminders/schedule-reminder-dialog";
-import { TaskCreateDialog } from "../../tasks/task-create-dialog";
-import { ClientEditDialog } from "./client-edit-dialog";
-import { DeleteClientButton } from "./delete-client-button";
-import { FiscalVerificationCard } from "./fiscal-verification-card";
+import { ScheduleReminderDialog } from '../../reminders/schedule-reminder-dialog'
+import { TaskCreateDialog } from '../../tasks/task-create-dialog'
+import { ClientEditDialog } from './client-edit-dialog'
+import { DeleteClientButton } from './delete-client-button'
+import { FiscalVerificationCard } from './fiscal-verification-card'
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const user = await requireUser();
-  const canEdit = user.role !== "viewer";
+  const { id } = await params
+  const user = await requireUser()
+  const canEdit = user.role !== 'viewer'
 
   const [result, members] = await Promise.all([
     getClientDetail(id),
     canEdit ? listActiveMembers() : Promise.resolve([]),
-  ]);
-  if (!result) notFound();
+  ])
+  if (!result) notFound()
 
-  const { client, originLead, projects, proposals, invoices, tasks, reminders } = result;
+  const { client, originLead, projects, proposals, invoices, tasks, reminders } = result
 
   return (
     <div className="flex flex-col gap-6">
@@ -60,11 +60,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           />
         }
         breadcrumbs={[
-          { label: "Clientes", href: "/clients" },
+          { label: 'Clientes', href: '/clients' },
           { label: (client.label as string | null)?.trim() || (client.name as string) },
         ]}
         actions={
-          user.role !== "viewer" ? (
+          user.role !== 'viewer' ? (
             <div className="flex items-center gap-2">
               <Button asChild size="sm" variant="outline">
                 <Link href={`/document-templates/generate?client_id=${client.id as string}`}>
@@ -78,7 +78,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     (client.nif as string | null) ? `(${client.nif as string})` : null,
                   ]
                     .filter(Boolean)
-                    .join(" "),
+                    .join(' '),
                   ...((
                     [
                       (client.email as string | null) ? `Email: ${client.email as string}` : null,
@@ -91,7 +91,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                           (client.phone as string | null) && `Tel: ${client.phone as string}`,
                         ]
                           .filter(Boolean)
-                          .join(" · "),
+                          .join(' · '),
                       ]
                     : []),
                   (client.contact_person as string | null)
@@ -110,7 +110,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                         city: client.billing_address_city as string | null,
                         province: client.billing_address_province as string | null,
                         country: client.billing_address_country as string | null,
-                      }).replace(/\n/g, ", ")}`
+                      }).replace(/\n/g, ', ')}`
                     : null,
                 ].filter((x): x is string => Boolean(x))}
                 urlPath={`/clients/${client.id as string}`}
@@ -148,10 +148,10 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </CardHeader>
         <CardContent>
           <DetailGrid>
-            <DetailRow label="Email">{(client.email as string | null) ?? "—"}</DetailRow>
-            <DetailRow label="Teléfono">{(client.phone as string | null) ?? "—"}</DetailRow>
+            <DetailRow label="Email">{(client.email as string | null) ?? '—'}</DetailRow>
+            <DetailRow label="Teléfono">{(client.phone as string | null) ?? '—'}</DetailRow>
             <DetailRow label="Contacto">
-              {(client.contact_person as string | null) ?? "—"}
+              {(client.contact_person as string | null) ?? '—'}
             </DetailRow>
             {originLead ? (
               <DetailRow label="Lead de origen">
@@ -183,7 +183,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     city: client.billing_address_city as string | null,
                     province: client.billing_address_province as string | null,
                     country: client.billing_address_country as string | null,
-                  }).replace(/\n/g, ", ")}
+                  }).replace(/\n/g, ', ')}
                   successMessage="Dirección copiada"
                   label="Copiar dirección completa"
                 />
@@ -396,5 +396,5 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </Card>
       </div>
     </div>
-  );
+  )
 }

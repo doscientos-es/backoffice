@@ -1,1 +1,1 @@
-export * from "@/primitives/hooks/use-action-form";
+export * from '@/primitives/hooks/use-action-form'

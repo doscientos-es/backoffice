@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,48 +7,48 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@doscientos/ui";
-import { Check, FileText, LoaderCircle as Loader2, Paperclip, Sparkles, X } from "lucide-react";
-import { useRef, useState } from "react";
+} from '@doscientos/ui'
+import { Check, FileText, LoaderCircle as Loader2, Paperclip, Sparkles, X } from 'lucide-react'
+import { useRef, useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import type { ExpenseInvoiceSuggestion } from "@/lib/finance/invoice-extraction";
+import { Button } from '@/components/ui/button'
+import type { ExpenseInvoiceSuggestion } from '@/lib/finance/invoice-extraction'
 
 export type InvoiceExtractionMeta = {
-  source: "ai" | "rules";
-  warning: string | null;
-};
+  source: 'ai' | 'rules'
+  warning: string | null
+}
 
 type LargeFileReview = {
-  reason: string;
-  sizeBytes: number;
-  pageCount: number | null;
-};
+  reason: string
+  sizeBytes: number
+  pageCount: number | null
+}
 
 interface Props {
   /** Fired once the PDF is stored as an (orphan) attachment, and on removal. */
-  onAttached: (invoice: { id: string; name: string } | null) => void;
+  onAttached: (invoice: { id: string; name: string } | null) => void
   /** Fired when extraction succeeds; the parent applies the data to the form. */
-  onExtracted: (suggestion: ExpenseInvoiceSuggestion, meta: InvoiceExtractionMeta) => void;
+  onExtracted: (suggestion: ExpenseInvoiceSuggestion, meta: InvoiceExtractionMeta) => void
   /** Lets the parent block submit while an upload/extraction is in flight. */
-  onPendingChange: (pending: boolean) => void;
-  onReviewChange: (reviewed: boolean) => void;
+  onPendingChange: (pending: boolean) => void
+  onReviewChange: (reviewed: boolean) => void
 }
 
-type Phase = "idle" | "uploading" | "extracting" | "done";
+type Phase = 'idle' | 'uploading' | 'extracting' | 'done'
 
-const EXTRACTION_TIMEOUT_MS = 45_000;
+const EXTRACTION_TIMEOUT_MS = 45_000
 
 async function readJson<T>(response: Response): Promise<T> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
+  const contentType = response.headers.get('content-type') ?? ''
+  if (!contentType.includes('application/json')) {
     throw new Error(
       response.ok
-        ? "El servidor devolvió una respuesta no válida"
+        ? 'El servidor devolvió una respuesta no válida'
         : `Error del servidor (${response.status})`,
-    );
+    )
   }
-  return (await response.json()) as T;
+  return (await response.json()) as T
 }
 
 /**
@@ -62,131 +62,131 @@ export function ExpenseInvoiceUpload({
   onPendingChange,
   onReviewChange,
 }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [attachmentId, setAttachmentId] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [meta, setMeta] = useState<InvoiceExtractionMeta | null>(null);
-  const [extractFailed, setExtractFailed] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [suggestion, setSuggestion] = useState<ExpenseInvoiceSuggestion | null>(null);
-  const [scanOpen, setScanOpen] = useState(false);
-  const [largeFileReview, setLargeFileReview] = useState<LargeFileReview | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [phase, setPhase] = useState<Phase>('idle')
+  const [attachmentId, setAttachmentId] = useState<string | null>(null)
+  const [fileName, setFileName] = useState<string | null>(null)
+  const [meta, setMeta] = useState<InvoiceExtractionMeta | null>(null)
+  const [extractFailed, setExtractFailed] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [suggestion, setSuggestion] = useState<ExpenseInvoiceSuggestion | null>(null)
+  const [scanOpen, setScanOpen] = useState(false)
+  const [largeFileReview, setLargeFileReview] = useState<LargeFileReview | null>(null)
 
-  const busy = phase === "uploading" || phase === "extracting";
+  const busy = phase === 'uploading' || phase === 'extracting'
 
   async function extractAttachment(attachmentId: string, confirmLarge = false) {
-    setPhase("extracting");
-    setScanOpen(true);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), EXTRACTION_TIMEOUT_MS);
+    setPhase('extracting')
+    setScanOpen(true)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), EXTRACTION_TIMEOUT_MS)
 
     try {
-      const extractRes = await fetch("/api/expenses/extract-invoice", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
+      const extractRes = await fetch('/api/expenses/extract-invoice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ attachment_id: attachmentId, confirm_large: confirmLarge }),
         signal: controller.signal,
-      });
+      })
       const extractJson = await readJson<{
-        suggestion?: ExpenseInvoiceSuggestion;
-        source?: "ai" | "rules";
-        warning?: string | null;
-        error?: string;
-        requires_confirmation?: boolean;
-        reason?: string;
-        size_bytes?: number;
-        page_count?: number | null;
-      }>(extractRes);
+        suggestion?: ExpenseInvoiceSuggestion
+        source?: 'ai' | 'rules'
+        warning?: string | null
+        error?: string
+        requires_confirmation?: boolean
+        reason?: string
+        size_bytes?: number
+        page_count?: number | null
+      }>(extractRes)
 
       if (extractRes.status === 409 && extractJson.requires_confirmation) {
-        setScanOpen(false);
+        setScanOpen(false)
         setLargeFileReview({
-          reason: extractJson.reason ?? "Este documento puede tener un coste de análisis elevado.",
+          reason: extractJson.reason ?? 'Este documento puede tener un coste de análisis elevado.',
           sizeBytes: extractJson.size_bytes ?? 0,
           pageCount: extractJson.page_count ?? null,
-        });
-        return;
+        })
+        return
       }
 
       if (extractRes.ok && extractJson.suggestion) {
         const extractionMeta: InvoiceExtractionMeta = {
-          source: extractJson.source ?? "rules",
+          source: extractJson.source ?? 'rules',
           warning: extractJson.warning ?? null,
-        };
-        setMeta(extractionMeta);
-        setSuggestion(extractJson.suggestion);
-        onReviewChange(false);
-        setScanOpen(true);
+        }
+        setMeta(extractionMeta)
+        setSuggestion(extractJson.suggestion)
+        onReviewChange(false)
+        setScanOpen(true)
       } else {
-        setScanOpen(false);
-        setExtractFailed(true);
-        if (extractJson.error) setError(extractJson.error);
+        setScanOpen(false)
+        setExtractFailed(true)
+        if (extractJson.error) setError(extractJson.error)
       }
     } catch (err) {
-      setScanOpen(false);
-      setExtractFailed(true);
+      setScanOpen(false)
+      setExtractFailed(true)
       setError(
-        err instanceof Error && err.name === "AbortError"
-          ? "El análisis está tardando demasiado. La factura queda adjunta y puedes rellenar el gasto a mano."
+        err instanceof Error && err.name === 'AbortError'
+          ? 'El análisis está tardando demasiado. La factura queda adjunta y puedes rellenar el gasto a mano.'
           : err instanceof Error
             ? err.message
-            : "No se pudo analizar la factura. La factura queda adjunta y puedes rellenar el gasto a mano.",
-      );
+            : 'No se pudo analizar la factura. La factura queda adjunta y puedes rellenar el gasto a mano.',
+      )
     } finally {
-      clearTimeout(timeoutId);
-      setPhase("done");
+      clearTimeout(timeoutId)
+      setPhase('done')
     }
   }
 
   async function handleFile(file: File) {
-    setError(null);
-    setMeta(null);
-    setExtractFailed(false);
-    setSuggestion(null);
-    onReviewChange(false);
-    setLargeFileReview(null);
-    setPhase("uploading");
-    onPendingChange(true);
+    setError(null)
+    setMeta(null)
+    setExtractFailed(false)
+    setSuggestion(null)
+    onReviewChange(false)
+    setLargeFileReview(null)
+    setPhase('uploading')
+    onPendingChange(true)
     try {
-      const formData = new FormData();
-      formData.set("file", file);
-      const uploadRes = await fetch("/api/attachments/upload", { method: "POST", body: formData });
-      const uploadJson = await readJson<{ id?: string; error?: string }>(uploadRes);
+      const formData = new FormData()
+      formData.set('file', file)
+      const uploadRes = await fetch('/api/attachments/upload', { method: 'POST', body: formData })
+      const uploadJson = await readJson<{ id?: string; error?: string }>(uploadRes)
       if (!uploadRes.ok || !uploadJson.id) {
-        throw new Error(uploadJson.error ?? "No se pudo subir la factura");
+        throw new Error(uploadJson.error ?? 'No se pudo subir la factura')
       }
 
-      setFileName(file.name);
-      setAttachmentId(uploadJson.id);
-      onAttached({ id: uploadJson.id, name: file.name });
+      setFileName(file.name)
+      setAttachmentId(uploadJson.id)
+      onAttached({ id: uploadJson.id, name: file.name })
 
-      await extractAttachment(uploadJson.id);
+      await extractAttachment(uploadJson.id)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error de red");
-      setScanOpen(false);
-      setFileName(null);
-      setAttachmentId(null);
-      onAttached(null);
-      setPhase("idle");
+      setError(err instanceof Error ? err.message : 'Error de red')
+      setScanOpen(false)
+      setFileName(null)
+      setAttachmentId(null)
+      onAttached(null)
+      setPhase('idle')
     } finally {
-      onPendingChange(false);
+      onPendingChange(false)
     }
   }
 
   function clear() {
-    if (inputRef.current) inputRef.current.value = "";
-    setFileName(null);
-    setAttachmentId(null);
-    setMeta(null);
-    setExtractFailed(false);
-    setError(null);
-    setSuggestion(null);
-    onReviewChange(false);
-    setLargeFileReview(null);
-    setScanOpen(false);
-    setPhase("idle");
-    onAttached(null);
+    if (inputRef.current) inputRef.current.value = ''
+    setFileName(null)
+    setAttachmentId(null)
+    setMeta(null)
+    setExtractFailed(false)
+    setError(null)
+    setSuggestion(null)
+    onReviewChange(false)
+    setLargeFileReview(null)
+    setScanOpen(false)
+    setPhase('idle')
+    onAttached(null)
   }
 
   return (
@@ -200,8 +200,8 @@ export function ExpenseInvoiceUpload({
             className="sr-only"
             aria-label="Factura en PDF o foto"
             onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleFile(file);
+              const file = e.target.files?.[0]
+              if (file) void handleFile(file)
             }}
           />
           <Button
@@ -216,13 +216,13 @@ export function ExpenseInvoiceUpload({
             ) : (
               <Paperclip className="size-3.5" />
             )}
-            {phase === "uploading"
-              ? "Subiendo…"
-              : phase === "extracting"
-                ? "Analizando…"
+            {phase === 'uploading'
+              ? 'Subiendo…'
+              : phase === 'extracting'
+                ? 'Analizando…'
                 : fileName
-                  ? "Cambiar factura"
-                  : "Adjuntar factura (PDF o foto)"}
+                  ? 'Cambiar factura'
+                  : 'Adjuntar factura (PDF o foto)'}
           </Button>
           {fileName ? (
             <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
@@ -230,14 +230,14 @@ export function ExpenseInvoiceUpload({
               <span className="max-w-64 truncate">{fileName}</span>
             </span>
           ) : null}
-          {phase === "done" ? (
+          {phase === 'done' ? (
             <Button type="button" variant="ghost" size="sm" onClick={clear}>
               <X className="size-3.5" />
               Quitar
             </Button>
           ) : null}
         </div>
-        {phase === "idle" && !fileName ? (
+        {phase === 'idle' && !fileName ? (
           <p className="text-xs text-muted-foreground">
             Sube la factura en PDF o como foto y rellenaremos el formulario con sus datos. Quedará
             adjunta al gasto al crearlo.
@@ -245,9 +245,9 @@ export function ExpenseInvoiceUpload({
         ) : null}
         {meta ? (
           <p className="text-xs text-muted-foreground">
-            {meta.source === "ai"
-              ? "Datos aplicados con IA. Revísalos antes de crear el gasto."
-              : "Datos aplicados con reglas locales. Revísalos antes de crear el gasto."}
+            {meta.source === 'ai'
+              ? 'Datos aplicados con IA. Revísalos antes de crear el gasto.'
+              : 'Datos aplicados con reglas locales. Revísalos antes de crear el gasto.'}
           </p>
         ) : null}
         {suggestion || extractFailed ? (
@@ -259,8 +259,8 @@ export function ExpenseInvoiceUpload({
             />
             <span>
               {suggestion
-                ? "He revisado los datos rellenados y el formulario completo antes de crear el gasto."
-                : "He revisado el formulario completo y la factura adjunta antes de crear el gasto."}
+                ? 'He revisado los datos rellenados y el formulario completo antes de crear el gasto.'
+                : 'He revisado el formulario completo y la factura adjunta antes de crear el gasto.'}
             </span>
           </label>
         ) : null}
@@ -283,12 +283,12 @@ export function ExpenseInvoiceUpload({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="size-5 text-primary" />
-              {suggestion ? "Factura analizada" : "Analizando factura"}
+              {suggestion ? 'Factura analizada' : 'Analizando factura'}
             </DialogTitle>
             <DialogDescription>
               {suggestion
-                ? "He encontrado datos que puedo importar al nuevo gasto. Revisa el resultado antes de aceptarlo."
-                : "Estoy leyendo proveedor, fecha e importes."}
+                ? 'He encontrado datos que puedo importar al nuevo gasto. Revisa el resultado antes de aceptarlo.'
+                : 'Estoy leyendo proveedor, fecha e importes.'}
             </DialogDescription>
           </DialogHeader>
           {!suggestion ? (
@@ -375,10 +375,10 @@ export function ExpenseInvoiceUpload({
                 onClick={() => {
                   if (suggestion)
                     onExtracted(suggestion, {
-                      source: meta?.source ?? "rules",
+                      source: meta?.source ?? 'rules',
                       warning: meta?.warning ?? null,
-                    });
-                  setScanOpen(false);
+                    })
+                  setScanOpen(false)
                 }}
               >
                 <Check className="size-4" /> Importar datos
@@ -390,7 +390,7 @@ export function ExpenseInvoiceUpload({
       <Dialog
         open={largeFileReview !== null}
         onOpenChange={(open) => {
-          if (!open) setLargeFileReview(null);
+          if (!open) setLargeFileReview(null)
         }}
       >
         <DialogContent className="sm:max-w-md">
@@ -402,8 +402,8 @@ export function ExpenseInvoiceUpload({
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-lg bg-muted/40 p-3 text-sm">
-            {largeFileReview?.pageCount ? `${largeFileReview.pageCount} páginas · ` : ""}
-            {largeFileReview ? `${(largeFileReview.sizeBytes / 1024 / 1024).toFixed(1)} MB` : ""}
+            {largeFileReview?.pageCount ? `${largeFileReview.pageCount} páginas · ` : ''}
+            {largeFileReview ? `${(largeFileReview.sizeBytes / 1024 / 1024).toFixed(1)} MB` : ''}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setLargeFileReview(null)}>
@@ -412,18 +412,18 @@ export function ExpenseInvoiceUpload({
             <Button
               type="button"
               onClick={() => {
-                if (!attachmentId) return;
-                setLargeFileReview(null);
-                onPendingChange(true);
+                if (!attachmentId) return
+                setLargeFileReview(null)
+                onPendingChange(true)
                 void extractAttachment(attachmentId, true)
                   .catch((err) => {
                     setError(
-                      err instanceof Error ? err.message : "No se pudo analizar el documento",
-                    );
-                    setScanOpen(false);
-                    setPhase("done");
+                      err instanceof Error ? err.message : 'No se pudo analizar el documento',
+                    )
+                    setScanOpen(false)
+                    setPhase('done')
                   })
-                  .finally(() => onPendingChange(false));
+                  .finally(() => onPendingChange(false))
               }}
               disabled={!attachmentId || busy}
             >
@@ -433,5 +433,5 @@ export function ExpenseInvoiceUpload({
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

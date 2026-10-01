@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Archive,
@@ -10,17 +10,17 @@ import {
   Plus,
   Sparkles,
   X,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useId, useMemo, useState } from "react";
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { type FormEvent, useEffect, useId, useMemo, useState } from 'react'
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import type { LeadDiscoveryQuestion } from "@/lib/leads/types";
-import { readJsonResponse } from "@/lib/utils/http";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import type { LeadDiscoveryQuestion } from '@/lib/leads/types'
+import { readJsonResponse } from '@/lib/utils/http'
 
 import {
   acceptLeadDiscoverySuggestion,
@@ -28,44 +28,44 @@ import {
   dismissLeadDiscoverySuggestion,
   saveLeadDiscoveryQuestion,
   setLeadDiscoveryQuestionStatus,
-} from "../actions";
+} from '../actions'
 
 type Props = {
-  leadId: string;
-  initialQuestions: LeadDiscoveryQuestion[];
-  aiEnabled: boolean;
-  canEdit: boolean;
-};
+  leadId: string
+  initialQuestions: LeadDiscoveryQuestion[]
+  aiEnabled: boolean
+  canEdit: boolean
+}
 
-const STATUS_LABEL: Record<LeadDiscoveryQuestion["status"], string> = {
-  open: "Pendiente",
-  needs_review: "Revisar propuesta IA",
-  answered: "Respondida",
-  deferred: "Pospuesta",
-  not_applicable: "No aplica",
-  archived: "Archivada",
-};
+const STATUS_LABEL: Record<LeadDiscoveryQuestion['status'], string> = {
+  open: 'Pendiente',
+  needs_review: 'Revisar propuesta IA',
+  answered: 'Respondida',
+  deferred: 'Pospuesta',
+  not_applicable: 'No aplica',
+  archived: 'Archivada',
+}
 
-const STATUS_TONE: Record<LeadDiscoveryQuestion["status"], string> = {
-  open: "border-primary/20 bg-primary/5 text-primary",
-  needs_review: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  answered: "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-  deferred: "border-border bg-muted/60 text-muted-foreground",
-  not_applicable: "border-border bg-muted/60 text-muted-foreground",
-  archived: "border-border bg-muted/60 text-muted-foreground",
-};
+const STATUS_TONE: Record<LeadDiscoveryQuestion['status'], string> = {
+  open: 'border-primary/20 bg-primary/5 text-primary',
+  needs_review: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  answered: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  deferred: 'border-border bg-muted/60 text-muted-foreground',
+  not_applicable: 'border-border bg-muted/60 text-muted-foreground',
+  archived: 'border-border bg-muted/60 text-muted-foreground',
+}
 
 const CATEGORY_LABEL: Record<string, string> = {
-  workflow: "Proceso",
-  users: "Usuarios",
-  scope: "Alcance",
-  integrations: "Integraciones",
-  data: "Datos",
-  budget: "Presupuesto",
-  decision: "Decisión",
-  timeline: "Calendario",
-  other: "General",
-};
+  workflow: 'Proceso',
+  users: 'Usuarios',
+  scope: 'Alcance',
+  integrations: 'Integraciones',
+  data: 'Datos',
+  budget: 'Presupuesto',
+  decision: 'Decisión',
+  timeline: 'Calendario',
+  other: 'General',
+}
 
 export function LeadDiscoveryQuestionsPanel({
   leadId,
@@ -73,84 +73,84 @@ export function LeadDiscoveryQuestionsPanel({
   aiEnabled,
   canEdit,
 }: Props) {
-  const router = useRouter();
-  const contentId = useId();
-  const [questions, setQuestions] = useState(initialQuestions);
-  const [expanded, setExpanded] = useState(true);
-  const [showResolved, setShowResolved] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [newQuestion, setNewQuestion] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const contentId = useId()
+  const [questions, setQuestions] = useState(initialQuestions)
+  const [expanded, setExpanded] = useState(true)
+  const [showResolved, setShowResolved] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [newQuestion, setNewQuestion] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => setQuestions(initialQuestions), [initialQuestions]);
+  useEffect(() => setQuestions(initialQuestions), [initialQuestions])
 
   const visibleQuestions = useMemo(
     () =>
       questions.filter(
         (question) =>
-          question.status !== "archived" &&
-          (showResolved || !["answered", "not_applicable"].includes(question.status)),
+          question.status !== 'archived' &&
+          (showResolved || !['answered', 'not_applicable'].includes(question.status)),
       ),
     [questions, showResolved],
-  );
+  )
   const resolvedCount = questions.filter((question) =>
-    ["answered", "not_applicable"].includes(question.status),
-  ).length;
-  const openCount = questions.filter((question) => question.status === "open").length;
-  const reviewCount = questions.filter((question) => question.status === "needs_review").length;
-  const deferredCount = questions.filter((question) => question.status === "deferred").length;
-  const unresolvedCount = openCount + reviewCount + deferredCount;
+    ['answered', 'not_applicable'].includes(question.status),
+  ).length
+  const openCount = questions.filter((question) => question.status === 'open').length
+  const reviewCount = questions.filter((question) => question.status === 'needs_review').length
+  const deferredCount = questions.filter((question) => question.status === 'deferred').length
+  const unresolvedCount = openCount + reviewCount + deferredCount
   const statusSummary = [
-    openCount ? `${openCount} ${openCount === 1 ? "abierta" : "abiertas"}` : "",
-    reviewCount ? `${reviewCount} por revisar` : "",
-    deferredCount ? `${deferredCount} ${deferredCount === 1 ? "pospuesta" : "pospuestas"}` : "",
+    openCount ? `${openCount} ${openCount === 1 ? 'abierta' : 'abiertas'}` : '',
+    reviewCount ? `${reviewCount} por revisar` : '',
+    deferredCount ? `${deferredCount} ${deferredCount === 1 ? 'pospuesta' : 'pospuestas'}` : '',
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(' · ')
   const headerSummary =
-    statusSummary || (resolvedCount ? "Guion cubierto por ahora" : "Prepara la conversación");
+    statusSummary || (resolvedCount ? 'Guion cubierto por ahora' : 'Prepara la conversación')
 
   async function addQuestion(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canEdit || !newQuestion.trim()) return;
-    setBusy(true);
-    setError(null);
+    event.preventDefault()
+    if (!canEdit || !newQuestion.trim()) return
+    setBusy(true)
+    setError(null)
     const result = await createLeadDiscoveryQuestion({
       leadId,
       question: newQuestion.trim(),
-      category: "other",
-      rationale: "",
+      category: 'other',
+      rationale: '',
       priority: 2,
-    });
-    setBusy(false);
-    if (!result.ok) return setError(result.error);
-    setNewQuestion("");
-    setAdding(false);
-    router.refresh();
+    })
+    setBusy(false)
+    if (!result.ok) return setError(result.error)
+    setNewQuestion('')
+    setAdding(false)
+    router.refresh()
   }
 
   async function generateScript() {
-    setBusy(true);
-    setError(null);
+    setBusy(true)
+    setError(null)
     try {
-      const response = await fetch("/api/crm/ai/discovery-questions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/crm/ai/discovery-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lead_id: leadId }),
-      });
+      })
       const json = await readJsonResponse<{ error?: string; added?: number }>(
         response,
-        "No se pudo generar el guion.",
-      );
-      if (!response.ok) throw new Error(json.error ?? "No se pudo generar el guion.");
+        'No se pudo generar el guion.',
+      )
+      if (!response.ok) throw new Error(json.error ?? 'No se pudo generar el guion.')
       if (!json.added)
-        setError("No han salido preguntas nuevas; el guion actual ya cubre el contexto conocido.");
-      router.refresh();
+        setError('No han salido preguntas nuevas; el guion actual ya cubre el contexto conocido.')
+      router.refresh()
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No se pudo generar el guion.");
+      setError(reason instanceof Error ? reason.message : 'No se pudo generar el guion.')
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
   }
 
@@ -173,7 +173,7 @@ export function LeadDiscoveryQuestionsPanel({
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="truncate text-sm font-semibold">Preguntas por resolver</span>
                   <Badge
-                    variant={unresolvedCount ? "secondary" : "outline"}
+                    variant={unresolvedCount ? 'secondary' : 'outline'}
                     className="shrink-0 transition-colors duration-200"
                   >
                     {unresolvedCount}
@@ -184,7 +184,7 @@ export function LeadDiscoveryQuestionsPanel({
                 </span>
               </span>
               <ChevronDown
-                className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
+                className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none ${expanded ? 'rotate-180' : ''}`}
                 aria-hidden="true"
               />
             </button>
@@ -217,8 +217,8 @@ export function LeadDiscoveryQuestionsPanel({
                 aria-label="Añadir pregunta"
                 title="Añadir pregunta"
                 onClick={() => {
-                  setExpanded(true);
-                  setAdding((value) => !value);
+                  setExpanded(true)
+                  setAdding((value) => !value)
                 }}
               >
                 <Plus className="size-4" />
@@ -231,7 +231,7 @@ export function LeadDiscoveryQuestionsPanel({
         id={contentId}
         aria-hidden={!expanded}
         inert={!expanded}
-        className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+        className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
       >
         <div className="min-h-0 overflow-hidden">
           <CardContent className="flex flex-col gap-2 pt-0">
@@ -251,7 +251,7 @@ export function LeadDiscoveryQuestionsPanel({
                     Cancelar
                   </Button>
                   <Button type="submit" size="sm" disabled={busy || newQuestion.trim().length < 3}>
-                    {busy ? "Guardando…" : "Añadir"}
+                    {busy ? 'Guardando…' : 'Añadir'}
                   </Button>
                 </div>
               </form>
@@ -266,9 +266,9 @@ export function LeadDiscoveryQuestionsPanel({
                 aria-expanded={showResolved}
                 onClick={() => setShowResolved((value) => !value)}
               >
-                {showResolved ? "Ocultar" : "Mostrar"} resueltas ({resolvedCount})
+                {showResolved ? 'Ocultar' : 'Mostrar'} resueltas ({resolvedCount})
                 <ChevronDown
-                  className={`size-3 transition-transform duration-200 motion-reduce:transition-none ${showResolved ? "rotate-180" : ""}`}
+                  className={`size-3 transition-transform duration-200 motion-reduce:transition-none ${showResolved ? 'rotate-180' : ''}`}
                   aria-hidden="true"
                 />
               </Button>
@@ -293,7 +293,7 @@ export function LeadDiscoveryQuestionsPanel({
               </div>
             ) : !adding ? (
               <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-5 text-center motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in">
-                {questions.some((question) => question.status !== "archived") ? (
+                {questions.some((question) => question.status !== 'archived') ? (
                   <CheckCircle2
                     className="mx-auto mb-2 size-5 text-emerald-600"
                     aria-hidden="true"
@@ -305,14 +305,14 @@ export function LeadDiscoveryQuestionsPanel({
                   />
                 )}
                 <p className="text-sm font-medium">
-                  {questions.some((question) => question.status !== "archived")
-                    ? "Todo cubierto por ahora"
-                    : "Prepara el discovery"}
+                  {questions.some((question) => question.status !== 'archived')
+                    ? 'Todo cubierto por ahora'
+                    : 'Prepara el discovery'}
                 </p>
                 <p className="mx-auto mt-1 max-w-56 text-xs leading-relaxed text-muted-foreground">
-                  {questions.some((question) => question.status !== "archived")
-                    ? "No quedan preguntas pendientes. Puedes mostrar las resueltas para repasar."
-                    : "Añade una pregunta o genera un guion con IA para empezar."}
+                  {questions.some((question) => question.status !== 'archived')
+                    ? 'No quedan preguntas pendientes. Puedes mostrar las resueltas para repasar.'
+                    : 'Añade una pregunta o genera un guion con IA para empezar.'}
                 </p>
               </div>
             ) : null}
@@ -329,7 +329,7 @@ export function LeadDiscoveryQuestionsPanel({
         </div>
       </div>
     </Card>
-  );
+  )
 }
 
 function DiscoveryQuestionCard({
@@ -338,28 +338,28 @@ function DiscoveryQuestionCard({
   canEdit,
   onChanged,
 }: {
-  leadId: string;
-  question: LeadDiscoveryQuestion;
-  canEdit: boolean;
-  onChanged: () => void;
+  leadId: string
+  question: LeadDiscoveryQuestion
+  canEdit: boolean
+  onChanged: () => void
 }) {
-  const [questionDraft, setQuestionDraft] = useState(question.question);
-  const [answerDraft, setAnswerDraft] = useState(question.answer ?? "");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [questionDraft, setQuestionDraft] = useState(question.question)
+  const [answerDraft, setAnswerDraft] = useState(question.answer ?? '')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    setQuestionDraft(question.question);
-    setAnswerDraft(question.answer ?? "");
-  }, [question]);
+    setQuestionDraft(question.question)
+    setAnswerDraft(question.answer ?? '')
+  }, [question])
 
   async function run(action: () => Promise<{ ok: boolean; error?: string }>) {
-    setBusy(true);
-    setError(null);
-    const result = await action();
-    setBusy(false);
-    if (!result.ok) return setError(result.error ?? "No se pudo guardar el cambio.");
-    onChanged();
+    setBusy(true)
+    setError(null)
+    const result = await action()
+    setBusy(false)
+    if (!result.ok) return setError(result.error ?? 'No se pudo guardar el cambio.')
+    onChanged()
   }
 
   return (
@@ -378,14 +378,14 @@ function DiscoveryQuestionCard({
             </Badge>
             <Badge
               variant="outline"
-              className={`h-5 px-1.5 text-[10px] font-medium ${question.priority === 1 ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300" : "border-border/70 text-muted-foreground"}`}
-              aria-label={`Prioridad ${question.priority === 1 ? "alta" : question.priority === 3 ? "baja" : "media"}`}
+              className={`h-5 px-1.5 text-[10px] font-medium ${question.priority === 1 ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-border/70 text-muted-foreground'}`}
+              aria-label={`Prioridad ${question.priority === 1 ? 'alta' : question.priority === 3 ? 'baja' : 'media'}`}
             >
               {question.priority === 1
-                ? "Prioridad alta"
+                ? 'Prioridad alta'
                 : question.priority === 3
-                  ? "Prioridad baja"
-                  : "Prioridad media"}
+                  ? 'Prioridad baja'
+                  : 'Prioridad media'}
             </Badge>
             <Badge
               variant="outline"
@@ -406,7 +406,7 @@ function DiscoveryQuestionCard({
             <p className="text-sm leading-snug font-medium">{question.question}</p>
           )}
         </div>
-        {question.origin === "ai" ? <Badge variant="outline">IA</Badge> : null}
+        {question.origin === 'ai' ? <Badge variant="outline">IA</Badge> : null}
       </div>
 
       {question.rationale ? (
@@ -452,7 +452,7 @@ function DiscoveryQuestionCard({
               <Button
                 type="button"
                 size="xs"
-                disabled={busy || question.answer_source === "manual"}
+                disabled={busy || question.answer_source === 'manual'}
                 onClick={() =>
                   void run(() => acceptLeadDiscoverySuggestion({ leadId, questionId: question.id }))
                 }
@@ -485,9 +485,9 @@ function DiscoveryQuestionCard({
       {question.answer_source ? (
         <p className="-mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <CheckCircle2 className="size-3 text-emerald-600" aria-hidden="true" />
-          {question.answer_source === "manual"
-            ? "Respuesta editada manualmente"
-            : "Respuesta confirmada desde sugerencia IA"}
+          {question.answer_source === 'manual'
+            ? 'Respuesta editada manualmente'
+            : 'Respuesta confirmada desde sugerencia IA'}
         </p>
       ) : null}
 
@@ -505,7 +505,7 @@ function DiscoveryQuestionCard({
                   setLeadDiscoveryQuestionStatus({
                     leadId,
                     questionId: question.id,
-                    status: "deferred",
+                    status: 'deferred',
                   }),
                 )
               }
@@ -525,7 +525,7 @@ function DiscoveryQuestionCard({
                   setLeadDiscoveryQuestionStatus({
                     leadId,
                     questionId: question.id,
-                    status: "archived",
+                    status: 'archived',
                   }),
                 )
               }
@@ -551,7 +551,7 @@ function DiscoveryQuestionCard({
               )
             }
           >
-            {busy ? <LoaderCircle className="size-3.5 motion-safe:animate-spin" /> : "Guardar"}
+            {busy ? <LoaderCircle className="size-3.5 motion-safe:animate-spin" /> : 'Guardar'}
           </Button>
         </div>
       ) : null}
@@ -564,5 +564,5 @@ function DiscoveryQuestionCard({
         </p>
       ) : null}
     </article>
-  );
+  )
 }

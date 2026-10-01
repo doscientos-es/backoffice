@@ -1,32 +1,32 @@
-"use server";
+'use server'
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+import { z } from 'zod'
 
-import { ProjectKickoffEmail } from "@/components/email";
-import { defineAction } from "@/lib/actions/define-action";
-import { requireRole } from "@/lib/auth";
-import { VersionConflictError } from "@/lib/concurrency/version-conflict";
-import { externalAppUrl } from "@/lib/email/app-url";
-import { renderEmail } from "@/lib/email/render";
-import { sendEmail } from "@/lib/email/resend";
-import { publicEnv } from "@/lib/env";
-import { parseGithubRepoUrl } from "@/lib/integrations/github-sync";
-import { buildPortalAccessPatch } from "@/lib/portal/access";
-import { uuidIdInput } from "@/lib/schemas/common";
-import { UpdatePortalAccessInput } from "@/lib/schemas/portal";
+import { ProjectKickoffEmail } from '@/components/email'
+import { defineAction } from '@/lib/actions/define-action'
+import { requireRole } from '@/lib/auth'
+import { VersionConflictError } from '@/lib/concurrency/version-conflict'
+import { externalAppUrl } from '@/lib/email/app-url'
+import { renderEmail } from '@/lib/email/render'
+import { sendEmail } from '@/lib/email/resend'
+import { publicEnv } from '@/lib/env'
+import { parseGithubRepoUrl } from '@/lib/integrations/github-sync'
+import { buildPortalAccessPatch } from '@/lib/portal/access'
+import { uuidIdInput } from '@/lib/schemas/common'
+import { UpdatePortalAccessInput } from '@/lib/schemas/portal'
 import {
   ProjectInput,
   UpdateProjectInput,
   UpdateProjectWorkspacePathsInput,
-} from "@/lib/schemas/project";
-import { createServerClient } from "@/lib/supabase/server";
+} from '@/lib/schemas/project'
+import { createServerClient } from '@/lib/supabase/server'
 
 // biome-ignore lint/suspicious/noExplicitAny: complex dynamic payload from form
 function buildDbPayload(p: any) {
-  const repo = p.github_repo ? parseGithubRepoUrl(p.github_repo) : null;
-  const isHourly = p.billing_type === "hourly";
+  const repo = p.github_repo ? parseGithubRepoUrl(p.github_repo) : null
+  const isHourly = p.billing_type === 'hourly'
   return {
     client_id: p.client_id,
     name: p.name,
@@ -38,92 +38,92 @@ function buildDbPayload(p: any) {
     hourly_rate: isHourly ? (p.hourly_rate ?? null) : null,
     hourly_vat_rate: isHourly ? p.hourly_vat_rate : 21,
     github_sync_mode: p.github_sync_mode,
-    github_auto_sync: p.github_sync_mode === "bidirectional" ? p.github_auto_sync : true,
-    github_repo: p.github_sync_mode === "none" ? null : (p.github_repo ?? null),
-    github_repo_owner: p.github_sync_mode === "none" ? null : (repo?.owner ?? null),
-    github_repo_name: p.github_sync_mode === "none" ? null : (repo?.name ?? null),
+    github_auto_sync: p.github_sync_mode === 'bidirectional' ? p.github_auto_sync : true,
+    github_repo: p.github_sync_mode === 'none' ? null : (p.github_repo ?? null),
+    github_repo_owner: p.github_sync_mode === 'none' ? null : (repo?.owner ?? null),
+    github_repo_name: p.github_sync_mode === 'none' ? null : (repo?.name ?? null),
     github_installation_id:
-      p.github_sync_mode === "bidirectional" ? (p.github_installation_id ?? null) : null,
-  };
+      p.github_sync_mode === 'bidirectional' ? (p.github_installation_id ?? null) : null,
+  }
 }
 
 export const createProject = defineAction({
-  name: "projects.create",
+  name: 'projects.create',
   schema: ProjectInput,
   handler: async (input) => {
-    const supabase = await createServerClient();
+    const supabase = await createServerClient()
     const { data, error } = await supabase
-      .from("projects")
+      .from('projects')
       .insert(buildDbPayload(input))
-      .select("id")
-      .single();
+      .select('id')
+      .single()
 
-    if (error || !data) throw new Error(error?.message ?? "No se pudo crear el proyecto");
+    if (error || !data) throw new Error(error?.message ?? 'No se pudo crear el proyecto')
 
     // Apply onboarding template if requested
     if (input.template_id) {
       const { data: tplItems } = await supabase
-        .from("onboarding_template_items")
-        .select("label, position")
-        .eq("template_id", input.template_id)
-        .order("position");
+        .from('onboarding_template_items')
+        .select('label, position')
+        .eq('template_id', input.template_id)
+        .order('position')
 
       if (tplItems && tplItems.length > 0) {
-        await supabase.from("project_checklist_items").insert(
+        await supabase.from('project_checklist_items').insert(
           tplItems.map((item) => ({
             project_id: data.id,
             label: item.label as string,
             position: item.position as number,
           })),
-        );
+        )
       }
     }
 
-    revalidatePath("/projects");
-    redirect(`/projects/${data.id}`);
+    revalidatePath('/projects')
+    redirect(`/projects/${data.id}`)
   },
-});
+})
 
 export const updateProject = defineAction({
-  name: "projects.update",
+  name: 'projects.update',
   schema: UpdateProjectInput,
-  revalidate: (_payload, input) => ["/projects", `/projects/${input.id}`],
+  revalidate: (_payload, input) => ['/projects', `/projects/${input.id}`],
   handler: async (input) => {
-    const supabase = await createServerClient();
-    const { id, expected_version } = input;
+    const supabase = await createServerClient()
+    const { id, expected_version } = input
     const { data, error } = await supabase
-      .from("projects")
+      .from('projects')
       .update(buildDbPayload(input))
-      .eq("id", id)
-      .eq("version", expected_version)
-      .select("version")
-      .maybeSingle();
+      .eq('id', id)
+      .eq('version', expected_version)
+      .select('version')
+      .maybeSingle()
 
-    if (error) throw new Error(error.message);
-    if (!data) throw new VersionConflictError();
-    return { version: Number(data.version) };
+    if (error) throw new Error(error.message)
+    if (!data) throw new VersionConflictError()
+    return { version: Number(data.version) }
   },
-});
+})
 
 export const updateProjectWorkspacePaths = defineAction({
-  name: "projects.updateWorkspacePaths",
+  name: 'projects.updateWorkspacePaths',
   schema: UpdateProjectWorkspacePathsInput,
   revalidate: (_payload, input) => [`/projects/${input.id}`],
   handler: async (input) => {
-    const supabase = await createServerClient();
+    const supabase = await createServerClient()
     const { data, error } = await supabase
-      .from("projects")
+      .from('projects')
       .update({ workspace_paths: input.workspace_paths })
-      .eq("id", input.id)
-      .eq("version", input.expected_version)
-      .select("version")
-      .maybeSingle();
+      .eq('id', input.id)
+      .eq('version', input.expected_version)
+      .select('version')
+      .maybeSingle()
 
-    if (error) throw new Error(error.message);
-    if (!data) throw new VersionConflictError();
-    return { version: Number(data.version) };
+    if (error) throw new Error(error.message)
+    if (!data) throw new VersionConflictError()
+    return { version: Number(data.version) }
   },
-});
+})
 
 /**
  * Soft-deletes a project by stamping `deleted_at`. The list and detail
@@ -132,132 +132,132 @@ export const updateProjectWorkspacePaths = defineAction({
  * a hard delete occurs (FKs are `on delete set null`).
  */
 export const deleteProject = defineAction({
-  name: "projects.delete",
+  name: 'projects.delete',
   schema: uuidIdInput,
-  revalidate: () => ["/projects"],
+  revalidate: () => ['/projects'],
   handler: async (input) => {
-    const supabase = await createServerClient();
+    const supabase = await createServerClient()
     const { error } = await supabase
-      .from("projects")
+      .from('projects')
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", input.id);
+      .eq('id', input.id)
 
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(error.message)
   },
-});
+})
 
 /**
  * Reverses a soft-delete by clearing `deleted_at`. Backs the "Deshacer" toast
  * shown after `deleteProject`, returning the project to the UI.
  */
 export const restoreProject = defineAction({
-  name: "projects.restore",
+  name: 'projects.restore',
   schema: uuidIdInput,
-  revalidate: (_payload, input) => [`/projects/${input.id}`, "/projects"],
+  revalidate: (_payload, input) => [`/projects/${input.id}`, '/projects'],
   handler: async (input) => {
-    const supabase = await createServerClient();
+    const supabase = await createServerClient()
     const { error } = await supabase
-      .from("projects")
+      .from('projects')
       .update({ deleted_at: null })
-      .eq("id", input.id);
+      .eq('id', input.id)
 
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(error.message)
   },
-});
+})
 
 export async function updateProjectPortalAccess(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    await requireRole(["owner", "admin", "member"]);
+    await requireRole(['owner', 'admin', 'member'])
   } catch {
-    return { ok: false, error: "No autorizado" };
+    return { ok: false, error: 'No autorizado' }
   }
-  const parsed = UpdatePortalAccessInput.safeParse(input);
+  const parsed = UpdatePortalAccessInput.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos no válidos" };
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos no válidos' }
   }
-  const patch = buildPortalAccessPatch(parsed.data);
-  if (Object.keys(patch).length === 0) return { ok: true };
+  const patch = buildPortalAccessPatch(parsed.data)
+  if (Object.keys(patch).length === 0) return { ok: true }
 
-  const supabase = await createServerClient();
-  const { error } = await supabase.from("projects").update(patch).eq("id", parsed.data.id);
-  if (error) return { ok: false, error: error.message };
+  const supabase = await createServerClient()
+  const { error } = await supabase.from('projects').update(patch).eq('id', parsed.data.id)
+  if (error) return { ok: false, error: error.message }
 
-  revalidatePath(`/projects/${parsed.data.id}`);
-  return { ok: true };
+  revalidatePath(`/projects/${parsed.data.id}`)
+  return { ok: true }
 }
 
 const PublishProjectPortalInput = z.object({
   id: z.string().uuid(),
-  message: z.string().trim().max(1000, "El mensaje es demasiado largo").optional(),
+  message: z.string().trim().max(1000, 'El mensaje es demasiado largo').optional(),
   resend: z.boolean().optional(),
-});
+})
 
 export async function publishProjectPortal(input: unknown) {
-  const user = await requireRole(["owner", "admin"]);
-  const parsed = PublishProjectPortalInput.safeParse(input);
+  const user = await requireRole(['owner', 'admin'])
+  const parsed = PublishProjectPortalInput.safeParse(input)
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+    return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Datos no válidos' }
   }
 
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const { data, error } = await supabase
-    .from("projects")
+    .from('projects')
     .select(
-      "id, name, portal_token, is_client_visible, portal_invite_sent_at, portal_invite_recipient, portal_invite_resend_id, clients(name, email, lead_id, leads(language))",
+      'id, name, portal_token, is_client_visible, portal_invite_sent_at, portal_invite_recipient, portal_invite_resend_id, clients(name, email, lead_id, leads(language))',
     )
-    .eq("id", parsed.data.id)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (error || !data) return { ok: false as const, error: "Proyecto no encontrado" };
+    .eq('id', parsed.data.id)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (error || !data) return { ok: false as const, error: 'Proyecto no encontrado' }
 
   const project = data as unknown as {
-    id: string;
-    name: string;
-    portal_token: string | null;
-    is_client_visible: boolean;
-    portal_invite_sent_at: string | null;
-    portal_invite_recipient: string | null;
-    portal_invite_resend_id: string | null;
+    id: string
+    name: string
+    portal_token: string | null
+    is_client_visible: boolean
+    portal_invite_sent_at: string | null
+    portal_invite_recipient: string | null
+    portal_invite_resend_id: string | null
     clients: {
-      name: string;
-      email: string | null;
-      lead_id: string | null;
-      leads: { language: "es" | "ca" | "en" | null } | null;
-    } | null;
-  };
+      name: string
+      email: string | null
+      lead_id: string | null
+      leads: { language: 'es' | 'ca' | 'en' | null } | null
+    } | null
+  }
   if (!project.portal_token)
-    return { ok: false as const, error: "El proyecto no tiene enlace público" };
-  if (!project.clients?.email) return { ok: false as const, error: "El cliente no tiene email" };
+    return { ok: false as const, error: 'El proyecto no tiene enlace público' }
+  if (!project.clients?.email) return { ok: false as const, error: 'El cliente no tiene email' }
   if (project.portal_invite_sent_at && !parsed.data.resend && project.is_client_visible) {
-    return { ok: true as const, sentAt: project.portal_invite_sent_at, alreadySent: true };
+    return { ok: true as const, sentAt: project.portal_invite_sent_at, alreadySent: true }
   }
 
-  const claimedAt = new Date().toISOString();
+  const claimedAt = new Date().toISOString()
   let claim = supabase
-    .from("projects")
+    .from('projects')
     .update({
       is_client_visible: true,
       portal_invite_sent_at: claimedAt,
       portal_invite_recipient: project.clients.email,
       portal_invite_resend_id: null,
     })
-    .eq("id", project.id);
+    .eq('id', project.id)
   if (!parsed.data.resend) {
     claim = project.portal_invite_sent_at
-      ? claim.eq("portal_invite_sent_at", project.portal_invite_sent_at)
-      : claim.is("portal_invite_sent_at", null);
+      ? claim.eq('portal_invite_sent_at', project.portal_invite_sent_at)
+      : claim.is('portal_invite_sent_at', null)
   }
-  const { data: claimed, error: claimError } = await claim.select("id").maybeSingle();
+  const { data: claimed, error: claimError } = await claim.select('id').maybeSingle()
   if (claimError || !claimed) {
-    return { ok: false as const, error: "El portal ya está siendo publicado" };
+    return { ok: false as const, error: 'El portal ya está siendo publicado' }
   }
 
   try {
-    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL);
-    const language = project.clients?.leads?.language ?? "es";
-    const portalUrl = `${appUrl}/p/project/${project.portal_token}?lang=${language}`;
+    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
+    const language = project.clients?.leads?.language ?? 'es'
+    const portalUrl = `${appUrl}/p/project/${project.portal_token}?lang=${language}`
     const html = await renderEmail(
       ProjectKickoffEmail({
         clientName: project.clients.name,
@@ -267,76 +267,76 @@ export async function publishProjectPortal(input: unknown) {
         message: parsed.data.message || undefined,
         language,
       }),
-    );
+    )
     const sent = await sendEmail({
       fromName: user.name,
       fromAlias: user.emailAlias ?? user.email,
       to: project.clients.email,
       replyTo: user.email,
       subject:
-        language === "ca"
+        language === 'ca'
           ? `Comencem amb ${project.name}`
-          : language === "en"
+          : language === 'en'
             ? `Getting started with ${project.name}`
             : `Arrancamos con ${project.name}`,
       html,
-      tags: { project_id: project.id, kind: "project_kickoff" },
-    });
+      tags: { project_id: project.id, kind: 'project_kickoff' },
+    })
     await supabase
-      .from("projects")
+      .from('projects')
       .update({ portal_invite_resend_id: sent.id })
-      .eq("id", project.id)
-      .eq("portal_invite_sent_at", claimedAt);
-    revalidatePath(`/projects/${project.id}`);
-    return { ok: true as const, sentAt: claimedAt };
+      .eq('id', project.id)
+      .eq('portal_invite_sent_at', claimedAt)
+    revalidatePath(`/projects/${project.id}`)
+    return { ok: true as const, sentAt: claimedAt }
   } catch {
     await supabase
-      .from("projects")
+      .from('projects')
       .update({
         is_client_visible: project.is_client_visible,
         portal_invite_sent_at: project.portal_invite_sent_at,
         portal_invite_recipient: project.portal_invite_recipient,
         portal_invite_resend_id: project.portal_invite_resend_id,
       })
-      .eq("id", project.id)
-      .eq("portal_invite_sent_at", claimedAt);
-    return { ok: false as const, error: "No se pudo enviar el email. El portal no se publicó." };
+      .eq('id', project.id)
+      .eq('portal_invite_sent_at', claimedAt)
+    return { ok: false as const, error: 'No se pudo enviar el email. El portal no se publicó.' }
   }
 }
 
 const ProjectPortalEmailInput = z.object({
   id: z.string().uuid(),
-  to: z.string().trim().email("El email no es válido").optional(),
-  message: z.string().trim().max(1000, "El mensaje es demasiado largo").optional(),
-});
+  to: z.string().trim().email('El email no es válido').optional(),
+  message: z.string().trim().max(1000, 'El mensaje es demasiado largo').optional(),
+})
 
 type ProjectPortalEmailData = {
-  id: string;
-  name: string;
-  portal_token: string | null;
-  is_client_visible: boolean;
+  id: string
+  name: string
+  portal_token: string | null
+  is_client_visible: boolean
   clients: {
-    name: string;
-    email: string | null;
-    phone: string | null;
-    lead_id: string | null;
-    leads: { language: "es" | "ca" | "en" | null } | null;
-  } | null;
-};
+    name: string
+    email: string | null
+    phone: string | null
+    lead_id: string | null
+    leads: { language: 'es' | 'ca' | 'en' | null } | null
+  } | null
+}
 
 async function findProjectPortalEmailData(id: string): Promise<ProjectPortalEmailData | null> {
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const { data, error } = await supabase
-    .from("projects")
+    .from('projects')
     .select(
-      "id, name, portal_token, is_client_visible, clients(name, email, phone, lead_id, leads(language))",
+      'id, name, portal_token, is_client_visible, clients(name, email, phone, lead_id, leads(language))',
     )
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
+    .eq('id', id)
+    .is('deleted_at', null)
+    .maybeSingle()
 
-  if (error || !data) return null;
-  return data as unknown as ProjectPortalEmailData;
+  if (error || !data) return null
+  return data as unknown as ProjectPortalEmailData
 }
 
 async function renderProjectPortalEmail(
@@ -344,50 +344,50 @@ async function renderProjectPortalEmail(
   message: string | undefined,
 ) {
   if (!project.portal_token)
-    return { ok: false as const, error: "El proyecto no tiene enlace público" };
+    return { ok: false as const, error: 'El proyecto no tiene enlace público' }
 
-  const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL);
-  const language = project.clients?.leads?.language ?? "es";
-  const portalUrl = `${appUrl}/p/project/${project.portal_token}?lang=${language}`;
+  const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
+  const language = project.clients?.leads?.language ?? 'es'
+  const portalUrl = `${appUrl}/p/project/${project.portal_token}?lang=${language}`
   const html = await renderEmail(
     ProjectKickoffEmail({
-      clientName: project.clients?.name ?? "Hola",
+      clientName: project.clients?.name ?? 'Hola',
       projectName: project.name,
       portalUrl,
       appUrl,
       message,
       language,
     }),
-  );
+  )
 
   return {
     ok: true as const,
     subject:
-      language === "ca"
+      language === 'ca'
         ? `Comencem amb ${project.name}`
-        : language === "en"
+        : language === 'en'
           ? `Getting started with ${project.name}`
           : `Arrancamos con ${project.name}`,
     html,
     portalUrl,
     clientEmail: project.clients?.email ?? null,
     clientPhone: project.clients?.phone ?? null,
-    clientName: project.clients?.name ?? "cliente",
-  };
+    clientName: project.clients?.name ?? 'cliente',
+  }
 }
 
 /** Renders the project kick-off email so the team can review it before re-sending. */
 export async function previewProjectPortalEmail(input: unknown) {
-  await requireRole(["owner", "admin", "member"]);
-  const parsed = ProjectPortalEmailInput.safeParse(input);
+  await requireRole(['owner', 'admin', 'member'])
+  const parsed = ProjectPortalEmailInput.safeParse(input)
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+    return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Datos no válidos' }
   }
 
-  const project = await findProjectPortalEmailData(parsed.data.id);
-  if (!project) return { ok: false as const, error: "Proyecto no encontrado" };
-  const rendered = await renderProjectPortalEmail(project, parsed.data.message);
-  if (!rendered.ok) return rendered;
+  const project = await findProjectPortalEmailData(parsed.data.id)
+  if (!project) return { ok: false as const, error: 'Proyecto no encontrado' }
+  const rendered = await renderProjectPortalEmail(project, parsed.data.message)
+  if (!rendered.ok) return rendered
 
   return {
     ok: true as const,
@@ -398,55 +398,55 @@ export async function previewProjectPortalEmail(input: unknown) {
     clientName: rendered.clientName,
     projectName: project.name,
     portalUrl: rendered.portalUrl,
-  };
+  }
 }
 
 /** Sends the already-published project portal link by email. */
 export async function sendProjectPortalEmail(input: unknown) {
-  const user = await requireRole(["owner", "admin", "member"]);
-  const parsed = ProjectPortalEmailInput.safeParse(input);
+  const user = await requireRole(['owner', 'admin', 'member'])
+  const parsed = ProjectPortalEmailInput.safeParse(input)
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.errors[0]?.message ?? "Datos no válidos" };
+    return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Datos no válidos' }
   }
 
-  const project = await findProjectPortalEmailData(parsed.data.id);
-  if (!project) return { ok: false as const, error: "Proyecto no encontrado" };
+  const project = await findProjectPortalEmailData(parsed.data.id)
+  if (!project) return { ok: false as const, error: 'Proyecto no encontrado' }
   if (!project.is_client_visible)
-    return { ok: false as const, error: "Activa primero el portal del cliente" };
+    return { ok: false as const, error: 'Activa primero el portal del cliente' }
 
-  const recipient = parsed.data.to ?? project.clients?.email ?? null;
-  if (!recipient) return { ok: false as const, error: "El cliente no tiene email registrado" };
+  const recipient = parsed.data.to ?? project.clients?.email ?? null
+  if (!recipient) return { ok: false as const, error: 'El cliente no tiene email registrado' }
 
-  const rendered = await renderProjectPortalEmail(project, parsed.data.message);
-  if (!rendered.ok) return rendered;
+  const rendered = await renderProjectPortalEmail(project, parsed.data.message)
+  if (!rendered.ok) return rendered
 
   try {
     const sent = await sendEmail({
       fromName: user.name,
-      fromAlias: user.emailAlias ?? "hola",
+      fromAlias: user.emailAlias ?? 'hola',
       to: recipient,
       replyTo: user.contactEmail ?? user.email,
       subject: rendered.subject,
       html: rendered.html,
-      tags: { project_id: project.id, kind: "project_kickoff" },
-    });
+      tags: { project_id: project.id, kind: 'project_kickoff' },
+    })
 
-    const sentAt = new Date().toISOString();
-    const supabase = await createServerClient();
+    const sentAt = new Date().toISOString()
+    const supabase = await createServerClient()
     await supabase
-      .from("projects")
+      .from('projects')
       .update({
         portal_invite_sent_at: sentAt,
         portal_invite_recipient: recipient,
         portal_invite_resend_id: sent.id,
       })
-      .eq("id", project.id);
-    revalidatePath(`/projects/${project.id}`);
-    return { ok: true as const, portalUrl: rendered.portalUrl, mocked: sent.mocked };
+      .eq('id', project.id)
+    revalidatePath(`/projects/${project.id}`)
+    return { ok: true as const, portalUrl: rendered.portalUrl, mocked: sent.mocked }
   } catch (error) {
     return {
       ok: false as const,
-      error: error instanceof Error ? error.message : "No se pudo enviar el email",
-    };
+      error: error instanceof Error ? error.message : 'No se pudo enviar el email',
+    }
   }
 }

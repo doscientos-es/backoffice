@@ -1,30 +1,30 @@
-import { Globe, Plus, ShieldAlert } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Suspense } from "react";
+import { Globe, Plus, ShieldAlert } from 'lucide-react'
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { Suspense } from 'react'
 
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { requireUser } from "@/lib/auth";
-import { domainExpiryDays, domainExpiryState } from "@/lib/webs/domain-expiry";
-import { listWebProjects } from "@/lib/webs/queries";
-import type { WebProjectListItem } from "@/lib/webs/types";
+import { PageHeader } from '@/components/layout/page-header'
+import { Button } from '@/components/ui/button'
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
+import { requireUser } from '@/lib/auth'
+import { domainExpiryDays, domainExpiryState } from '@/lib/webs/domain-expiry'
+import { listWebProjects } from '@/lib/webs/queries'
+import type { WebProjectListItem } from '@/lib/webs/types'
 
-import { WebCard } from "./_components/web-card";
-import { WebFilters } from "./_components/web-filters";
+import { WebCard } from './_components/web-card'
+import { WebFilters } from './_components/web-filters'
 
-export const metadata: Metadata = { title: "Webs · doscientos" };
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: 'Webs · doscientos' }
+export const dynamic = 'force-dynamic'
 
 // ─── Alert bar (no event handlers → safe in Server Component) ───────────────
 
 function ExpiryAlertBar({ sites }: { sites: WebProjectListItem[] }) {
   const urgent = sites.filter((s) => {
-    const state = domainExpiryState(domainExpiryDays(s.domain_expires_at));
-    return state === "expired" || state === "critical";
-  });
-  if (urgent.length === 0) return null;
+    const state = domainExpiryState(domainExpiryDays(s.domain_expires_at))
+    return state === 'expired' || state === 'critical'
+  })
+  if (urgent.length === 0) return null
   return (
     <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-sm text-destructive">
       <ShieldAlert className="size-4 shrink-0" />
@@ -34,7 +34,7 @@ function ExpiryAlertBar({ sites }: { sites: WebProjectListItem[] }) {
           : `${urgent.length} dominios requieren atención inmediata.`}
       </span>
     </div>
-  );
+  )
 }
 
 function Section({ title, sites }: { title: string; sites: WebProjectListItem[] }) {
@@ -54,33 +54,33 @@ function Section({ title, sites }: { title: string; sites: WebProjectListItem[] 
         ))}
       </div>
     </section>
-  );
+  )
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 type PageProps = {
-  searchParams: Promise<{ q?: string; type?: string }>;
-};
+  searchParams: Promise<{ q?: string; type?: string }>
+}
 
 export default async function WebsPage({ searchParams }: PageProps) {
-  await requireUser();
-  const [sites, { q = "", type = "all" }] = await Promise.all([listWebProjects(), searchParams]);
+  await requireUser()
+  const [sites, { q = '', type = 'all' }] = await Promise.all([listWebProjects(), searchParams])
 
-  const query = q.trim().toLowerCase();
+  const query = q.trim().toLowerCase()
   const filtered = sites.filter((s) => {
-    const matchesType = type === "own" ? s.is_own : type === "clients" ? !s.is_own : true;
+    const matchesType = type === 'own' ? s.is_own : type === 'clients' ? !s.is_own : true
     const matchesQuery =
       !query ||
       s.name.toLowerCase().includes(query) ||
       s.url.toLowerCase().includes(query) ||
-      (s.client_name ?? "").toLowerCase().includes(query) ||
-      s.tech_stack.some((t) => t.toLowerCase().includes(query));
-    return matchesType && matchesQuery;
-  });
+      (s.client_name ?? '').toLowerCase().includes(query) ||
+      s.tech_stack.some((t) => t.toLowerCase().includes(query))
+    return matchesType && matchesQuery
+  })
 
-  const own = filtered.filter((s) => s.is_own);
-  const clients = filtered.filter((s) => !s.is_own);
+  const own = filtered.filter((s) => s.is_own)
+  const clients = filtered.filter((s) => !s.is_own)
 
   return (
     <div className="flex flex-col gap-6">
@@ -113,7 +113,7 @@ export default async function WebsPage({ searchParams }: PageProps) {
           </EmptyHeader>
           <EmptyHeader>
             <EmptyTitle>
-              {sites.length === 0 ? "Aún no hay webs registradas." : "Sin coincidencias."}
+              {sites.length === 0 ? 'Aún no hay webs registradas.' : 'Sin coincidencias.'}
             </EmptyTitle>
           </EmptyHeader>
           {sites.length === 0 && (
@@ -134,5 +134,5 @@ export default async function WebsPage({ searchParams }: PageProps) {
         </div>
       )}
     </div>
-  );
+  )
 }

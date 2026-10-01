@@ -1,25 +1,25 @@
-import { FileText } from "lucide-react";
-import type { Metadata } from "next";
+import { FileText } from 'lucide-react'
+import type { Metadata } from 'next'
 
-import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requirePageRole } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
+import { PageHeader } from '@/components/layout/page-header'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { requirePageRole } from '@/lib/auth'
+import { createServerClient } from '@/lib/supabase/server'
 
-import { TemplateUploadForm } from "./template-upload-form";
+import { TemplateUploadForm } from './template-upload-form'
 
-export const metadata: Metadata = { title: "Plantillas de documentos · doscientos" };
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: 'Plantillas de documentos · doscientos' }
+export const dynamic = 'force-dynamic'
 
 export default async function DocumentTemplatesPage() {
-  await requirePageRole(["owner", "admin"]);
-  const supabase = await createServerClient();
+  await requirePageRole(['owner', 'admin'])
+  const supabase = await createServerClient()
   const { data, error } = await supabase
-    .from("document_templates")
-    .select("id, name, slug, description, fields, version, is_active, created_at")
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .from('document_templates')
+    .select('id, name, slug, description, fields, version, is_active, created_at')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
 
   return (
     <div className="flex flex-col gap-6">
@@ -54,7 +54,7 @@ export default async function DocumentTemplatesPage() {
           ) : (
             <div className="divide-y divide-border">
               {(data ?? []).map((template) => {
-                const fields = Array.isArray(template.fields) ? template.fields : [];
+                const fields = Array.isArray(template.fields) ? template.fields : []
                 return (
                   <div
                     key={template.id as string}
@@ -67,16 +67,16 @@ export default async function DocumentTemplatesPage() {
                         {template.version as number}
                       </p>
                     </div>
-                    <Badge variant={template.is_active ? "success" : "neutral"}>
-                      {template.is_active ? "Activa" : "Archivada"}
+                    <Badge variant={template.is_active ? 'success' : 'neutral'}>
+                      {template.is_active ? 'Activa' : 'Archivada'}
                     </Badge>
                   </div>
-                );
+                )
               })}
             </div>
           )}
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

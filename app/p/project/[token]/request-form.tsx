@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,172 +7,172 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@doscientos/ui";
-import { MessageSquarePlus, Send } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+} from '@doscientos/ui'
+import { MessageSquarePlus, Send } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 
-import { submitProjectRequest } from "./actions";
+import { submitProjectRequest } from './actions'
 
 export function ProjectRequestDialog({
   token,
-  language = "es",
+  language = 'es',
 }: {
-  token: string;
-  language?: "es" | "ca" | "en";
+  token: string
+  language?: 'es' | 'ca' | 'en'
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm">
           <MessageSquarePlus className="size-3.5" aria-hidden="true" />
-          {language === "ca" ? "Nova" : language === "en" ? "New" : "Nueva"}
+          {language === 'ca' ? 'Nova' : language === 'en' ? 'New' : 'Nueva'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-lg">
-            {language === "ca"
-              ? "Nova sol·licitud"
-              : language === "en"
-                ? "New request"
-                : "Nueva solicitud"}
+            {language === 'ca'
+              ? 'Nova sol·licitud'
+              : language === 'en'
+                ? 'New request'
+                : 'Nueva solicitud'}
           </DialogTitle>
           <DialogDescription>
-            {language === "ca"
-              ? "Explica’ns què necessites i quedarà registrat al projecte."
-              : language === "en"
-                ? "Tell us what you need and it will be recorded in the project."
-                : "Cuéntanos qué necesitas y quedará registrado en el proyecto."}
+            {language === 'ca'
+              ? 'Explica’ns què necessites i quedarà registrat al projecte.'
+              : language === 'en'
+                ? 'Tell us what you need and it will be recorded in the project.'
+                : 'Cuéntanos qué necesitas y quedará registrado en el proyecto.'}
           </DialogDescription>
         </DialogHeader>
         <ProjectRequestForm token={token} language={language} onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 export function ProjectRequestForm({
   token,
-  language = "es",
+  language = 'es',
   onSuccess,
 }: {
-  token: string;
-  language?: "es" | "ca" | "en";
-  onSuccess?: () => void;
+  token: string
+  language?: 'es' | 'ca' | 'en'
+  onSuccess?: () => void
 }) {
-  const router = useRouter();
-  const feedback = useFormFeedback();
-  const [sent, setSent] = useState(false);
+  const router = useRouter()
+  const feedback = useFormFeedback()
+  const [sent, setSent] = useState(false)
   const copy =
-    language === "ca"
+    language === 'ca'
       ? {
-          sent: "Sol·licitud enviada correctament",
-          retry: "No s’ha pogut enviar. Comprova la connexió i torna-ho a provar.",
-          form: "Nova sol·licitud",
-          name: "Nom",
-          yourName: "El teu nom",
-          emailOptional: "Email (opcional)",
-          category: "En què et podem ajudar?",
+          sent: 'Sol·licitud enviada correctament',
+          retry: 'No s’ha pogut enviar. Comprova la connexió i torna-ho a provar.',
+          form: 'Nova sol·licitud',
+          name: 'Nom',
+          yourName: 'El teu nom',
+          emailOptional: 'Email (opcional)',
+          category: 'En què et podem ajudar?',
           options: [
-            "Tinc una consulta",
-            "Vull comunicar una incidència",
-            "Necessito demanar un canvi",
-            "Vull lliurar material",
-            "Necessito manteniment",
-            "Vull presentar una queixa",
+            'Tinc una consulta',
+            'Vull comunicar una incidència',
+            'Necessito demanar un canvi',
+            'Vull lliurar material',
+            'Necessito manteniment',
+            'Vull presentar una queixa',
           ],
-          subject: "Assumpte",
-          subjectPlaceholder: "Resumeix breument la sol·licitud",
-          description: "Descripció",
-          descriptionPlaceholder: "Inclou el context i tots els detalls que consideris útils…",
-          sending: "Enviant…",
-          another: "Enviar una altra sol·licitud",
-          submit: "Enviar sol·licitud",
+          subject: 'Assumpte',
+          subjectPlaceholder: 'Resumeix breument la sol·licitud',
+          description: 'Descripció',
+          descriptionPlaceholder: 'Inclou el context i tots els detalls que consideris útils…',
+          sending: 'Enviant…',
+          another: 'Enviar una altra sol·licitud',
+          submit: 'Enviar sol·licitud',
         }
-      : language === "en"
+      : language === 'en'
         ? {
-            sent: "Request sent successfully",
-            retry: "Could not send. Check your connection and try again.",
-            form: "New request",
-            name: "Name",
-            yourName: "Your name",
-            emailOptional: "Email (optional)",
-            category: "How can we help?",
+            sent: 'Request sent successfully',
+            retry: 'Could not send. Check your connection and try again.',
+            form: 'New request',
+            name: 'Name',
+            yourName: 'Your name',
+            emailOptional: 'Email (optional)',
+            category: 'How can we help?',
             options: [
-              "I have a question",
-              "I want to report an issue",
-              "I need to request a change",
-              "I want to provide materials",
-              "I need maintenance",
-              "I want to submit a complaint",
+              'I have a question',
+              'I want to report an issue',
+              'I need to request a change',
+              'I want to provide materials',
+              'I need maintenance',
+              'I want to submit a complaint',
             ],
-            subject: "Subject",
-            subjectPlaceholder: "Briefly summarize your request",
-            description: "Description",
-            descriptionPlaceholder: "Include the context and any useful details…",
-            sending: "Sending…",
-            another: "Send another request",
-            submit: "Send request",
+            subject: 'Subject',
+            subjectPlaceholder: 'Briefly summarize your request',
+            description: 'Description',
+            descriptionPlaceholder: 'Include the context and any useful details…',
+            sending: 'Sending…',
+            another: 'Send another request',
+            submit: 'Send request',
           }
         : {
-            sent: "Solicitud enviada correctamente",
-            retry: "No se pudo enviar. Comprueba tu conexión e inténtalo de nuevo.",
-            form: "Nueva solicitud",
-            name: "Nombre",
-            yourName: "Tu nombre",
-            emailOptional: "Email (opcional)",
-            category: "¿En qué podemos ayudarte?",
+            sent: 'Solicitud enviada correctamente',
+            retry: 'No se pudo enviar. Comprueba tu conexión e inténtalo de nuevo.',
+            form: 'Nueva solicitud',
+            name: 'Nombre',
+            yourName: 'Tu nombre',
+            emailOptional: 'Email (opcional)',
+            category: '¿En qué podemos ayudarte?',
             options: [
-              "Tengo una consulta",
-              "Quiero comunicar una incidencia",
-              "Necesito solicitar un cambio",
-              "Quiero entregar material",
-              "Necesito mantenimiento",
-              "Quiero presentar una queja",
+              'Tengo una consulta',
+              'Quiero comunicar una incidencia',
+              'Necesito solicitar un cambio',
+              'Quiero entregar material',
+              'Necesito mantenimiento',
+              'Quiero presentar una queja',
             ],
-            subject: "Asunto",
-            subjectPlaceholder: "Resume brevemente tu solicitud",
-            description: "Descripción",
+            subject: 'Asunto',
+            subjectPlaceholder: 'Resume brevemente tu solicitud',
+            description: 'Descripción',
             descriptionPlaceholder:
-              "Incluye el contexto y todos los detalles que consideres útiles…",
-            sending: "Enviando…",
-            another: "Enviar otra solicitud",
-            submit: "Enviar solicitud",
-          };
+              'Incluye el contexto y todos los detalles que consideres útiles…',
+            sending: 'Enviando…',
+            another: 'Enviar otra solicitud',
+            submit: 'Enviar solicitud',
+          }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    feedback.setPending();
-    setSent(false);
-    const form = event.currentTarget;
-    const data = new FormData(form);
+    event.preventDefault()
+    feedback.setPending()
+    setSent(false)
+    const form = event.currentTarget
+    const data = new FormData(form)
     try {
       const result = await submitProjectRequest({
         token,
-        category: data.get("category")?.toString(),
-        subject: data.get("subject")?.toString(),
-        body: data.get("body")?.toString(),
-        requesterName: data.get("requester_name")?.toString(),
-        requesterEmail: data.get("requester_email")?.toString(),
-        website: data.get("website")?.toString(),
-      });
-      if (!result.ok) return feedback.setError(result.error);
-      form.reset();
-      setSent(true);
-      feedback.setSuccess(copy.sent);
-      router.refresh();
-      onSuccess?.();
+        category: data.get('category')?.toString(),
+        subject: data.get('subject')?.toString(),
+        body: data.get('body')?.toString(),
+        requesterName: data.get('requester_name')?.toString(),
+        requesterEmail: data.get('requester_email')?.toString(),
+        website: data.get('website')?.toString(),
+      })
+      if (!result.ok) return feedback.setError(result.error)
+      form.reset()
+      setSent(true)
+      feedback.setSuccess(copy.sent)
+      router.refresh()
+      onSuccess?.()
     } catch {
-      feedback.setError(copy.retry);
+      feedback.setError(copy.retry)
     }
   }
 
@@ -220,7 +220,7 @@ export function ProjectRequestForm({
           className="h-10 bg-white dark:bg-white/[0.04]"
         >
           {(
-            ["question", "incident", "change", "material", "maintenance", "complaint"] as const
+            ['question', 'incident', 'change', 'material', 'maintenance', 'complaint'] as const
           ).map((value, index) => (
             <option key={value} value={value}>
               {copy.options[index]}
@@ -275,5 +275,5 @@ export function ProjectRequestForm({
         </Button>
       </div>
     </form>
-  );
+  )
 }

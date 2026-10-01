@@ -5,12 +5,12 @@
  * to *why* something failed without string-matching messages. All extend
  * {@link SocialError} for a single `instanceof` catch-all.
  */
-import type { SocialPlatform } from "./types";
+import type { SocialPlatform } from './types'
 
 export class SocialError extends Error {
   constructor(message: string) {
-    super(message);
-    this.name = new.target.name;
+    super(message)
+    this.name = new.target.name
   }
 }
 
@@ -20,7 +20,7 @@ export class NotConfiguredError extends SocialError {
     readonly platform: SocialPlatform,
     detail?: string,
   ) {
-    super(detail ?? `${platform} no está configurado. Añade sus credenciales en el entorno.`);
+    super(detail ?? `${platform} no está configurado. Añade sus credenciales en el entorno.`)
   }
 }
 
@@ -30,7 +30,7 @@ export class UnsupportedMediaError extends SocialError {
     readonly platform: SocialPlatform,
     reason: string,
   ) {
-    super(reason);
+    super(reason)
   }
 }
 
@@ -40,12 +40,12 @@ export class PublishError extends SocialError {
     readonly platform: SocialPlatform,
     reason: string,
   ) {
-    super(reason);
+    super(reason)
   }
 }
 
 /** Narrow unknown thrown values to a human-readable message. */
 export function toErrorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message;
-  return typeof err === "string" ? err : "Error desconocido";
+  if (err instanceof Error) return err.message
+  return typeof err === 'string' ? err : 'Error desconocido'
 }

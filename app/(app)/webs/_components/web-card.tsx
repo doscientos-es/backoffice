@@ -4,62 +4,62 @@ import {
   Globe,
   HardDrive as Server,
   ShieldAlert,
-} from "lucide-react";
-import Link from "next/link";
-import { Suspense } from "react";
+} from 'lucide-react'
+import Link from 'next/link'
+import { Suspense } from 'react'
 
-import { HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";
-import { cn, relativeTime } from "@/lib/utils";
-import type { ExpiryState } from "@/lib/webs/domain-expiry";
-import { domainExpiryDays, domainExpiryState } from "@/lib/webs/domain-expiry";
-import { checkSiteStatus } from "@/lib/webs/og";
-import type { WebProjectListItem } from "@/lib/webs/types";
+import { HOSTING_PROVIDER_LABELS } from '@/lib/schemas/web-project'
+import { cn, relativeTime } from '@/lib/utils'
+import type { ExpiryState } from '@/lib/webs/domain-expiry'
+import { domainExpiryDays, domainExpiryState } from '@/lib/webs/domain-expiry'
+import { checkSiteStatus } from '@/lib/webs/og'
+import type { WebProjectListItem } from '@/lib/webs/types'
 
-import { WebCardExternalLink } from "./web-card-external-link";
+import { WebCardExternalLink } from './web-card-external-link'
 
 // ─── Status dot ──────────────────────────────────────────────────────────────
 
 async function SiteStatusDot({ url }: { url: string }) {
-  const s = await checkSiteStatus(url);
+  const s = await checkSiteStatus(url)
   const label = s.ok
-    ? `Online · ${s.status}${s.latencyMs !== null ? ` · ${s.latencyMs}ms` : ""}`
-    : (s.error ?? `Error ${s.status ?? ""}`);
+    ? `Online · ${s.status}${s.latencyMs !== null ? ` · ${s.latencyMs}ms` : ''}`
+    : (s.error ?? `Error ${s.status ?? ''}`)
   return (
     <span
       role="img"
       className={cn(
-        "absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-card",
-        s.ok ? "bg-green-500" : "bg-destructive",
+        'absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-card',
+        s.ok ? 'bg-green-500' : 'bg-destructive',
       )}
       title={label}
       aria-label={label}
     />
-  );
+  )
 }
 
 function ExpiryBadge({ days, state }: { days: number; state: ExpiryState }) {
-  if (state === "expired")
+  if (state === 'expired')
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
         <ShieldAlert className="size-3" />
         Dominio vencido
       </span>
-    );
-  if (state === "critical")
+    )
+  if (state === 'critical')
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
         <AlertTriangle className="size-3" />
-        Vence en {days} día{days !== 1 ? "s" : ""}
+        Vence en {days} día{days !== 1 ? 's' : ''}
       </span>
-    );
-  if (state === "warning")
+    )
+  if (state === 'warning')
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
         <Clock className="size-3" />
         Vence en {days} días
       </span>
-    );
-  return null;
+    )
+  return null
 }
 
 // ─── card ────────────────────────────────────────────────────────────────────
@@ -67,31 +67,31 @@ function ExpiryBadge({ days, state }: { days: number; state: ExpiryState }) {
 export function WebCard({ site }: { site: WebProjectListItem }) {
   const hostname = (() => {
     try {
-      return new URL(site.url).hostname;
+      return new URL(site.url).hostname
     } catch {
-      return site.url;
+      return site.url
     }
-  })();
+  })()
 
-  const days = domainExpiryDays(site.domain_expires_at);
-  const expiry = domainExpiryState(days);
+  const days = domainExpiryDays(site.domain_expires_at)
+  const expiry = domainExpiryState(days)
 
   const hostingLabel = site.hosting_provider
     ? (HOSTING_PROVIDER_LABELS[site.hosting_provider as keyof typeof HOSTING_PROVIDER_LABELS] ??
       site.hosting_provider)
-    : null;
+    : null
 
   return (
     <Link
       href={`/webs/${site.id}`}
       className={cn(
-        "group relative flex flex-col rounded-xl border bg-card transition-all",
-        "hover:-translate-y-px hover:shadow-md",
-        expiry === "warning"
-          ? "border-amber-300/60 dark:border-amber-700/50"
-          : expiry === "critical" || expiry === "expired"
-            ? "border-destructive/40"
-            : "border-border hover:border-primary/30",
+        'group relative flex flex-col rounded-xl border bg-card transition-all',
+        'hover:-translate-y-px hover:shadow-md',
+        expiry === 'warning'
+          ? 'border-amber-300/60 dark:border-amber-700/50'
+          : expiry === 'critical' || expiry === 'expired'
+            ? 'border-destructive/40'
+            : 'border-border hover:border-primary/30',
       )}
     >
       {/* Header */}
@@ -143,7 +143,7 @@ export function WebCard({ site }: { site: WebProjectListItem }) {
 
       {/* Footer */}
       <div className="mt-auto flex flex-wrap items-center gap-1.5 rounded-b-xl border-t border-border/60 bg-muted/30 px-4 py-2.5">
-        {days !== null && expiry !== "ok" && expiry !== null && (
+        {days !== null && expiry !== 'ok' && expiry !== null && (
           <ExpiryBadge days={days} state={expiry} />
         )}
         {hostingLabel && (
@@ -175,5 +175,5 @@ export function WebCard({ site }: { site: WebProjectListItem }) {
         )}
       </div>
     </Link>
-  );
+  )
 }

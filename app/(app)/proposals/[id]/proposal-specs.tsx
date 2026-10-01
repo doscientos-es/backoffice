@@ -1,56 +1,56 @@
-"use client";
+'use client'
 
-import { Eye, EyeOff, Pencil, Save, Sparkle as Sparkles, Trash as Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { Eye, EyeOff, Pencil, Save, Sparkle as Sparkles, Trash as Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 
-import { AiNotice } from "@/components/ui/ai-notice";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Markdown } from "@/components/ui/markdown";
-import { Textarea } from "@/components/ui/textarea";
-import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
+import { AiNotice } from '@/components/ui/ai-notice'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Markdown } from '@/components/ui/markdown'
+import { Textarea } from '@/components/ui/textarea'
+import { VersionConflictDialog } from '@/components/ui/version-conflict-dialog'
 
-import { deleteSpec, toggleSpecVisibility, updateSpec } from "./spec-actions";
+import { deleteSpec, toggleSpecVisibility, updateSpec } from './spec-actions'
 
 export type ProposalSpec = {
-  id: string;
-  title: string;
-  body_markdown: string;
-  is_client_visible: boolean;
-  portal_token: string | null;
-  updated_at: string;
-  version: number;
-};
+  id: string
+  title: string
+  body_markdown: string
+  is_client_visible: boolean
+  portal_token: string | null
+  updated_at: string
+  version: number
+}
 
 type Props = {
-  proposalId: string;
-  specs: ProposalSpec[];
-  aiEnabled: boolean;
-  locked: boolean;
-};
+  proposalId: string
+  specs: ProposalSpec[]
+  aiEnabled: boolean
+  locked: boolean
+}
 
 export function ProposalSpecs({ proposalId, specs, aiEnabled, locked }: Props) {
-  const router = useRouter();
-  const feedback = useFormFeedback();
-  const [generating, setGenerating] = useState(false);
+  const router = useRouter()
+  const feedback = useFormFeedback()
+  const [generating, setGenerating] = useState(false)
 
   async function handleGenerate() {
-    setGenerating(true);
-    feedback.setPending();
+    setGenerating(true)
+    feedback.setPending()
     try {
-      const res = await fetch(`/api/proposals/${proposalId}/generate-spec`, { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "No se pudo generar la spec.");
-      feedback.setSuccess("Documentación generada");
-      router.refresh();
+      const res = await fetch(`/api/proposals/${proposalId}/generate-spec`, { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'No se pudo generar la spec.')
+      feedback.setSuccess('Documentación generada')
+      router.refresh()
     } catch (err) {
-      feedback.setError(err instanceof Error ? err.message : "Error desconocido");
+      feedback.setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
-      setGenerating(false);
+      setGenerating(false)
     }
   }
 
@@ -74,7 +74,7 @@ export function ProposalSpecs({ proposalId, specs, aiEnabled, locked }: Props) {
               disabled={generating || locked}
             >
               <Sparkles className="size-3.5" />
-              {generating ? "Generando…" : "Generar con IA"}
+              {generating ? 'Generando…' : 'Generar con IA'}
             </Button>
           ) : (
             <AiNotice inline />
@@ -95,59 +95,59 @@ export function ProposalSpecs({ proposalId, specs, aiEnabled, locked }: Props) {
         </ul>
       )}
     </div>
-  );
+  )
 }
 
 function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
-  const router = useRouter();
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(spec.title);
-  const [body, setBody] = useState(spec.body_markdown);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [conflictOpen, setConflictOpen] = useState(false);
-  const feedback = useFormFeedback();
-  const [deleting, startTransition] = useTransition();
+  const router = useRouter()
+  const [editing, setEditing] = useState(false)
+  const [title, setTitle] = useState(spec.title)
+  const [body, setBody] = useState(spec.body_markdown)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [conflictOpen, setConflictOpen] = useState(false)
+  const feedback = useFormFeedback()
+  const [deleting, startTransition] = useTransition()
 
   async function handleSave() {
-    feedback.setPending();
+    feedback.setPending()
     const res = await updateSpec({
       id: spec.id,
       expected_version: spec.version,
       title,
       body_markdown: body,
-    });
+    })
     if (res.ok) {
-      feedback.setSuccess("Guardado");
-      setEditing(false);
-      startTransition(() => router.refresh());
-    } else if (res.code === "conflict") setConflictOpen(true);
-    else feedback.setError(res.error);
+      feedback.setSuccess('Guardado')
+      setEditing(false)
+      startTransition(() => router.refresh())
+    } else if (res.code === 'conflict') setConflictOpen(true)
+    else feedback.setError(res.error)
   }
 
   async function handleToggle() {
-    feedback.setPending();
+    feedback.setPending()
     const res = await toggleSpecVisibility({
       id: spec.id,
       expected_version: spec.version,
       is_client_visible: !spec.is_client_visible,
-    });
+    })
     if (res.ok) {
-      feedback.setSuccess(spec.is_client_visible ? "Ocultada" : "Visible para cliente");
-      startTransition(() => router.refresh());
-    } else if (res.code === "conflict") setConflictOpen(true);
-    else feedback.setError(res.error);
+      feedback.setSuccess(spec.is_client_visible ? 'Ocultada' : 'Visible para cliente')
+      startTransition(() => router.refresh())
+    } else if (res.code === 'conflict') setConflictOpen(true)
+    else feedback.setError(res.error)
   }
 
   // Hard delete (irreversible): a `proposal_specs` row is removed permanently,
   // so this keeps an explicit ConfirmDialog rather than the undo-toast pattern.
   function handleDelete() {
-    feedback.setPending();
-    setConfirmDelete(false);
+    feedback.setPending()
+    setConfirmDelete(false)
     startTransition(async () => {
-      const res = await deleteSpec({ id: spec.id });
-      if (res.ok) router.refresh();
-      else feedback.setError(res.error);
-    });
+      const res = await deleteSpec({ id: spec.id })
+      if (res.ok) router.refresh()
+      else feedback.setError(res.error)
+    })
   }
 
   return (
@@ -164,8 +164,8 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
             <p className="truncate text-sm font-medium">{spec.title}</p>
           )}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant={spec.is_client_visible ? "success" : "neutral"}>
-              {spec.is_client_visible ? "Visible cliente" : "Privada"}
+            <Badge variant={spec.is_client_visible ? 'success' : 'neutral'}>
+              {spec.is_client_visible ? 'Visible cliente' : 'Privada'}
             </Badge>
             {spec.is_client_visible && spec.portal_token ? (
               <a
@@ -236,8 +236,8 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
         entityName="documento técnico"
         onKeepEditing={() => setConflictOpen(false)}
         onReload={() => {
-          setConflictOpen(false);
-          router.refresh();
+          setConflictOpen(false)
+          router.refresh()
         }}
       />
 
@@ -260,5 +260,5 @@ function SpecRow({ spec, locked }: { spec: ProposalSpec; locked: boolean }) {
         </details>
       )}
     </li>
-  );
+  )
 }

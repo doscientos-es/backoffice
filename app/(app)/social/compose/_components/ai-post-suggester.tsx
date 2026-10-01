@@ -1,55 +1,55 @@
-"use client";
+'use client'
 
-import { LoaderCircle as Loader2, Sparkle as Sparkles } from "lucide-react";
-import { useState } from "react";
+import { LoaderCircle as Loader2, Sparkle as Sparkles } from 'lucide-react'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { normalizeHashtags, type SocialPostSuggestion } from "@/lib/social/ai-suggestion";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { normalizeHashtags, type SocialPostSuggestion } from '@/lib/social/ai-suggestion'
+import { cn } from '@/lib/utils'
 
 export function AIPostSuggester({
   disabled,
   onSuggestion,
 }: {
-  disabled?: boolean;
-  onSuggestion: (suggestion: SocialPostSuggestion) => void;
+  disabled?: boolean
+  onSuggestion: (suggestion: SocialPostSuggestion) => void
 }) {
-  const [directive, setDirective] = useState("");
-  const [suggestion, setSuggestion] = useState<SocialPostSuggestion | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [directive, setDirective] = useState('')
+  const [suggestion, setSuggestion] = useState<SocialPostSuggestion | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function suggest() {
-    if (loading || disabled) return;
-    setLoading(true);
-    setError(null);
+    if (loading || disabled) return
+    setLoading(true)
+    setError(null)
     try {
-      const response = await fetch("/api/social/ai/suggest-post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/social/ai/suggest-post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ directive: directive.trim() || undefined }),
-      });
-      const result = (await response.json()) as SocialPostSuggestion & { error?: string };
+      })
+      const result = (await response.json()) as SocialPostSuggestion & { error?: string }
       if (!response.ok) {
         setError(
-          result.error === "ai_disabled"
-            ? "La IA no está configurada."
-            : result.error === "rate_limited"
-              ? "Has alcanzado el límite temporal de propuestas."
-              : "No se ha podido generar la propuesta.",
-        );
-        return;
+          result.error === 'ai_disabled'
+            ? 'La IA no está configurada.'
+            : result.error === 'rate_limited'
+              ? 'Has alcanzado el límite temporal de propuestas.'
+              : 'No se ha podido generar la propuesta.',
+        )
+        return
       }
-      const normalizedResult = { ...result, hashtags: normalizeHashtags(result.hashtags) };
-      setSuggestion(normalizedResult);
-      onSuggestion(normalizedResult);
+      const normalizedResult = { ...result, hashtags: normalizeHashtags(result.hashtags) }
+      setSuggestion(normalizedResult)
+      onSuggestion(normalizedResult)
     } catch {
-      setError("Error de red al generar la propuesta.");
+      setError('Error de red al generar la propuesta.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -90,7 +90,7 @@ export function AIPostSuggester({
           disabled={disabled || loading}
         >
           {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-          {loading ? "Analizando contexto…" : "Proponer publicación"}
+          {loading ? 'Analizando contexto…' : 'Proponer publicación'}
         </Button>
 
         {error && (
@@ -119,21 +119,21 @@ export function AIPostSuggester({
               </p>
               <p className="text-sm whitespace-pre-wrap">{suggestion.caption}</p>
               {suggestion.hashtags.length > 0 && (
-                <p className="mt-2 text-xs text-primary">{suggestion.hashtags.join(" ")}</p>
+                <p className="mt-2 text-xs text-primary">{suggestion.hashtags.join(' ')}</p>
               )}
             </div>
           </div>
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function Brief({ label, value }: { label: string; value: string }) {
   return (
-    <div className={cn("rounded-lg border border-border/70 p-3", value && "bg-background/50")}>
+    <div className={cn('rounded-lg border border-border/70 p-3', value && 'bg-background/50')}>
       <p className="mb-1 text-[11px] font-medium text-muted-foreground">{label}</p>
       <p className="text-xs leading-relaxed whitespace-pre-wrap">{value}</p>
     </div>
-  );
+  )
 }

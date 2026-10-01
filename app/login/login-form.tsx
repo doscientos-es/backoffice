@@ -1,85 +1,85 @@
-"use client";
+'use client'
 
-import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { ChevronDown, Eye, EyeOff, LoaderCircle as Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import HCaptcha from '@hcaptcha/react-hcaptcha'
+import { ChevronDown, Eye, EyeOff, LoaderCircle as Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { publicEnv } from "@/lib/env";
-import { getBrowserClient } from "@/lib/supabase/browser";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { publicEnv } from '@/lib/env'
+import { getBrowserClient } from '@/lib/supabase/browser'
+import { cn } from '@/lib/utils'
 
 export function LoginForm() {
-  const search = useSearchParams();
-  const next = safeNext(search.get("next"));
-  const urlError = search.get("error");
+  const search = useSearchParams()
+  const next = safeNext(search.get('next'))
+  const urlError = search.get('error')
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaRequired, setCaptchaRequired] = useState(false);
-  const [showEmailForm, setShowEmailForm] = useState(false);
-  const hcaptchaRef = useRef<HCaptcha>(null);
-  const googleLoginStartedRef = useRef(false);
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaRequired, setCaptchaRequired] = useState(false)
+  const [showEmailForm, setShowEmailForm] = useState(false)
+  const hcaptchaRef = useRef<HCaptcha>(null)
+  const googleLoginStartedRef = useRef(false)
 
   // Stale auth cookies (e.g. session without a team_members row) would loop
   // the user back here forever. Clear them so the next login is clean.
   useEffect(() => {
-    if (!urlError || urlError === "no_session") return;
-    void getBrowserClient().auth.signOut();
-  }, [urlError]);
+    if (!urlError || urlError === 'no_session') return
+    void getBrowserClient().auth.signOut()
+  }, [urlError])
 
   const displayedError = useMemo(
     () => formError ?? (urlError ? authFailureMessage(urlError) : null),
     [formError, urlError],
-  );
+  )
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setFormError(null);
+    e.preventDefault()
+    setFormError(null)
     if (captchaRequired && !captchaToken) {
-      setFormError("Por favor, completa el captcha.");
-      return;
+      setFormError('Por favor, completa el captcha.')
+      return
     }
-    setLoading(true);
+    setLoading(true)
     try {
-      const response = await fetch("/api/auth/password-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/auth/password-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, captchaToken: captchaToken ?? undefined }),
-      });
+      })
       const result = (await response.json().catch(() => null)) as {
-        error?: string;
-        captchaRequired?: boolean;
-      } | null;
+        error?: string
+        captchaRequired?: boolean
+      } | null
       if (!response.ok) {
-        setLoading(false);
-        if (result?.captchaRequired) setCaptchaRequired(true);
-        setFormError(friendlyError(result?.error ?? ""));
-        hcaptchaRef.current?.resetCaptcha();
-        return;
+        setLoading(false)
+        if (result?.captchaRequired) setCaptchaRequired(true)
+        setFormError(friendlyError(result?.error ?? ''))
+        hcaptchaRef.current?.resetCaptcha()
+        return
       }
     } catch {
-      setLoading(false);
-      setFormError("No se pudo iniciar sesión. Comprueba tu conexión e inténtalo de nuevo.");
-      return;
+      setLoading(false)
+      setFormError('No se pudo iniciar sesión. Comprueba tu conexión e inténtalo de nuevo.')
+      return
     }
     // Hard navigation (not router.replace + refresh): forces the browser to
     // re-send the freshly-set auth cookies on a real request and bypasses the
     // client Router Cache, which in production could still hold a pre-fetched
     // unauthenticated RSC payload and bounce the user back to /login on the
     // first attempt. Keep loading=true so the button stays in "Entrando…".
-    window.location.assign(next);
+    window.location.assign(next)
   }
 
   // Google OAuth. We do NOT restrict to @doscientos.es (no `hd` param): access
@@ -91,20 +91,20 @@ export function LoginForm() {
     // The state update below is asynchronous. Guard synchronously as well so
     // a double click cannot start two PKCE flows and overwrite the verifier
     // cookie before the first callback reaches the server.
-    if (googleLoginStartedRef.current) return;
-    googleLoginStartedRef.current = true;
-    setFormError(null);
-    setGoogleLoading(true);
-    const supabase = getBrowserClient();
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+    if (googleLoginStartedRef.current) return
+    googleLoginStartedRef.current = true
+    setFormError(null)
+    setGoogleLoading(true)
+    const supabase = getBrowserClient()
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo, queryParams: { prompt: "select_account" } },
-    });
+      provider: 'google',
+      options: { redirectTo, queryParams: { prompt: 'select_account' } },
+    })
     if (oauthError) {
-      googleLoginStartedRef.current = false;
-      setGoogleLoading(false);
-      setFormError(friendlyError(oauthError.message));
+      googleLoginStartedRef.current = false
+      setGoogleLoading(false)
+      setFormError(friendlyError(oauthError.message))
     }
   }
 
@@ -117,8 +117,8 @@ export function LoginForm() {
             id="login-error"
             role="alert"
             className={cn(
-              "rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs",
-              "text-destructive",
+              'rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs',
+              'text-destructive',
             )}
           >
             {displayedError}
@@ -177,7 +177,7 @@ export function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   aria-invalid={displayedError ? true : undefined}
-                  aria-describedby={displayedError ? "login-error" : undefined}
+                  aria-describedby={displayedError ? 'login-error' : undefined}
                   disabled={loading}
                 />
               </Field>
@@ -197,14 +197,14 @@ export function LoginForm() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
                     required
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     aria-invalid={displayedError ? true : undefined}
-                    aria-describedby={displayedError ? "login-error" : undefined}
+                    aria-describedby={displayedError ? 'login-error' : undefined}
                     disabled={loading}
                     className="pr-9"
                   />
@@ -212,7 +212,7 @@ export function LoginForm() {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     tabIndex={-1}
-                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                     aria-pressed={showPassword}
                     className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-(--text-muted) hover:text-primary disabled:pointer-events-none"
                     disabled={loading}
@@ -242,14 +242,14 @@ export function LoginForm() {
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Entrando…
                 </>
               ) : (
-                "Entrar"
+                'Entrar'
               )}
             </Button>
           </form>
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 /**
@@ -259,19 +259,19 @@ export function LoginForm() {
  * protocol-relative URL like `//evil.com`).
  */
 function safeNext(raw: string | null): string {
-  if (!raw?.startsWith("/") || raw.startsWith("//")) return "/inicio";
-  return raw;
+  if (!raw?.startsWith('/') || raw.startsWith('//')) return '/inicio'
+  return raw
 }
 
 function friendlyError(raw: string): string {
-  const m = raw.toLowerCase();
-  if (m === "captcha_required") return "Completa el captcha para continuar.";
-  if (m === "invalid_credentials") return "Email o contraseña incorrectos.";
-  if (m === "rate_limited") return "Demasiados intentos. Inténtalo en unos minutos.";
-  if (m.includes("invalid login credentials")) return "Email o contraseña incorrectos.";
-  if (m.includes("email not confirmed")) return "Tu email aún no está confirmado.";
-  if (m.includes("rate limit")) return "Demasiados intentos. Inténtalo en unos minutos.";
-  return raw;
+  const m = raw.toLowerCase()
+  if (m === 'captcha_required') return 'Completa el captcha para continuar.'
+  if (m === 'invalid_credentials') return 'Email o contraseña incorrectos.'
+  if (m === 'rate_limited') return 'Demasiados intentos. Inténtalo en unos minutos.'
+  if (m.includes('invalid login credentials')) return 'Email o contraseña incorrectos.'
+  if (m.includes('email not confirmed')) return 'Tu email aún no está confirmado.'
+  if (m.includes('rate limit')) return 'Demasiados intentos. Inténtalo en unos minutos.'
+  return raw
 }
 
 /**
@@ -296,7 +296,7 @@ export function LoginFormSkeleton() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 /** Multi-colour Google "G" mark (inline SVG so it keeps its brand colours). */
@@ -321,29 +321,29 @@ function GoogleIcon({ className }: { className?: string }) {
         d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.47.89 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58Z"
       />
     </svg>
-  );
+  )
 }
 
 function authFailureMessage(reason: string): string {
   switch (reason) {
-    case "no_team_member":
-      return "Tu cuenta no está autorizada en este workspace. Contacta con un administrador para que te dé acceso.";
-    case "team_member_deleted":
-      return "Tu acceso ha sido revocado. Contacta con un administrador si crees que es un error.";
-    case "db_error":
-      return "No se pudo verificar tu acceso. Inténtalo de nuevo en unos segundos.";
-    case "forbidden":
-      return "No tienes permisos para esa sección.";
-    case "callback_exchange_failed":
-    case "callback_no_code":
-      return "El enlace ha caducado o ya fue utilizado. Solicita uno nuevo.";
+    case 'no_team_member':
+      return 'Tu cuenta no está autorizada en este workspace. Contacta con un administrador para que te dé acceso.'
+    case 'team_member_deleted':
+      return 'Tu acceso ha sido revocado. Contacta con un administrador si crees que es un error.'
+    case 'db_error':
+      return 'No se pudo verificar tu acceso. Inténtalo de nuevo en unos segundos.'
+    case 'forbidden':
+      return 'No tienes permisos para esa sección.'
+    case 'callback_exchange_failed':
+    case 'callback_no_code':
+      return 'El enlace ha caducado o ya fue utilizado. Solicita uno nuevo.'
     default:
       // Any other `callback_*` code is a provider-level OAuth error (e.g.
       // Supabase returning "Signups not allowed for oauthproviders" when
       // disable_signup=true and the Google email has no matching auth.users row).
-      if (reason.startsWith("callback_")) {
-        return "No se pudo completar el inicio de sesión con Google. Asegúrate de usar el email con el que fuiste invitado, o contacta con un administrador.";
+      if (reason.startsWith('callback_')) {
+        return 'No se pudo completar el inicio de sesión con Google. Asegúrate de usar el email con el que fuiste invitado, o contacta con un administrador.'
       }
-      return "Sesión expirada. Vuelve a entrar.";
+      return 'Sesión expirada. Vuelve a entrar.'
   }
 }

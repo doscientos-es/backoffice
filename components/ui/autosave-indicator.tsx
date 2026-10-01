@@ -1,1 +1,1 @@
-export * from "@/primitives/ui/autosave-indicator";
+export * from '@/primitives/ui/autosave-indicator'

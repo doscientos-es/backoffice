@@ -1,33 +1,33 @@
-"use client";
+'use client'
 
-import { ArrowRight, Eye, MousePointerClick, Send } from "lucide-react";
-import Link from "next/link";
+import { ArrowRight, Eye, MousePointerClick, Send } from 'lucide-react'
+import Link from 'next/link'
 
-import { ListPage, type ListPageProps } from "@/components/layout/list-page";
-import { MemberLabel } from "@/components/ui/member-avatar";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { getLeadInitials, leadDisplayName } from "@/lib/leads/utils";
-import type { RecoveryLead } from "@/lib/recovery/types";
-import { RECOVERY_STATE } from "@/lib/status";
-import { formatEUR, relativeTime } from "@/lib/utils";
+import { ListPage, type ListPageProps } from '@/components/layout/list-page'
+import { MemberLabel } from '@/components/ui/member-avatar'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { getLeadInitials, leadDisplayName } from '@/lib/leads/utils'
+import type { RecoveryLead } from '@/lib/recovery/types'
+import { RECOVERY_STATE } from '@/lib/status'
+import { formatEUR, relativeTime } from '@/lib/utils'
 
-import { RecoveryActions } from "./recovery-actions";
+import { RecoveryActions } from './recovery-actions'
 
-type RecoveryListProps = Omit<ListPageProps, "rows"> & {
-  leads: RecoveryLead[];
-  aiEnabled?: boolean;
-};
+type RecoveryListProps = Omit<ListPageProps, 'rows'> & {
+  leads: RecoveryLead[]
+  aiEnabled?: boolean
+}
 
 function LeadInitials({ lead }: { lead: RecoveryLead }) {
   return (
     <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary uppercase">
       {getLeadInitials(lead)}
     </span>
-  );
+  )
 }
 
 function EngagementCell({ lead }: { lead: RecoveryLead }) {
-  const lastSignal = lead.lastClickedAt ?? lead.lastOpenedAt ?? lead.lastContactedAt;
+  const lastSignal = lead.lastClickedAt ?? lead.lastOpenedAt ?? lead.lastContactedAt
 
   return (
     <div className="flex min-w-36 flex-col gap-1">
@@ -55,10 +55,10 @@ function EngagementCell({ lead }: { lead: RecoveryLead }) {
         </span>
       </div>
       <span className="text-[11px] text-muted-foreground">
-        {lastSignal ? `Última señal ${relativeTime(lastSignal)}` : "Sin actividad"}
+        {lastSignal ? `Última señal ${relativeTime(lastSignal)}` : 'Sin actividad'}
       </span>
     </div>
-  );
+  )
 }
 
 export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryListProps) {
@@ -66,14 +66,14 @@ export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryLis
     id: l.id,
     csvValues: [
       leadDisplayName(l),
-      l.company ?? "",
-      l.lost_reason ?? "",
+      l.company ?? '',
+      l.lost_reason ?? '',
       RECOVERY_STATE[l.recoveryState].label,
       `clics:${l.clickCount} aperturas:${l.openCount} contactos:${l.outreachCount}`,
-      l.assignee?.name ?? "",
-      l.lost_at ?? "",
-      l.estimated_value?.toString() ?? "",
-      "",
+      l.assignee?.name ?? '',
+      l.lost_at ?? '',
+      l.estimated_value?.toString() ?? '',
+      '',
     ],
     cells: [
       <Link
@@ -87,9 +87,9 @@ export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryLis
         </span>
         <ArrowRight className="size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover/leadname:translate-x-0 group-hover/leadname:opacity-60" />
       </Link>,
-      l.company ?? "—",
+      l.company ?? '—',
       <span key="reason" className="text-muted-foreground">
-        {l.lost_reason ?? "—"}
+        {l.lost_reason ?? '—'}
       </span>,
       <StatusBadge key="state" meta={RECOVERY_STATE} value={l.recoveryState} />,
       <EngagementCell key="engagement" lead={l} />,
@@ -102,7 +102,7 @@ export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryLis
       </span>,
       <RecoveryActions key="actions" lead={l} aiEnabled={aiEnabled} />,
     ],
-  }));
+  }))
 
-  return <ListPage {...props} rows={rows} />;
+  return <ListPage {...props} rows={rows} />
 }

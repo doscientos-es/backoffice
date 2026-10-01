@@ -1,96 +1,93 @@
-"use client";
+'use client'
 
-import { LoaderCircle as Loader2, Paperclip } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { LoaderCircle as Loader2, Paperclip } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { DateField } from "@/components/ui/date-field";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { todayIsoLocal } from "@/lib/utils/date";
+import { Button } from '@/components/ui/button'
+import { DateField } from '@/components/ui/date-field'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { todayIsoLocal } from '@/lib/utils/date'
 
 const CATEGORIES = [
-  { value: "legal", label: "Legal" },
-  { value: "hr", label: "RRHH" },
-  { value: "finance", label: "Finanzas" },
-  { value: "templates", label: "Plantillas" },
-  { value: "policies", label: "Políticas" },
-  { value: "meetings", label: "Actas" },
-  { value: "other", label: "Otro" },
-] as const;
+  { value: 'legal', label: 'Legal' },
+  { value: 'hr', label: 'RRHH' },
+  { value: 'finance', label: 'Finanzas' },
+  { value: 'templates', label: 'Plantillas' },
+  { value: 'policies', label: 'Políticas' },
+  { value: 'meetings', label: 'Actas' },
+  { value: 'other', label: 'Otro' },
+] as const
 
-const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg";
+const ACCEPTED = '.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg'
 
 /** Human message for responses that did not carry a JSON `error` (usually platform-level failures). */
 function uploadErrorMessage(status: number): string {
-  if (status === 401)
-    return "Tu sesión ha caducado. Recarga la página e inicia sesión de nuevo.";
-  if (status === 403) return "No tienes permiso para subir documentos.";
+  if (status === 401) return 'Tu sesión ha caducado. Recarga la página e inicia sesión de nuevo.'
+  if (status === 403) return 'No tienes permiso para subir documentos.'
   if (status === 413)
-    return "El archivo es demasiado grande para el servidor. Prueba con uno más pequeño.";
+    return 'El archivo es demasiado grande para el servidor. Prueba con uno más pequeño.'
   if (status === 408 || status === 504) {
-    return "El servidor tardó demasiado en procesar el archivo. Inténtalo de nuevo o prueba con uno más pequeño.";
+    return 'El servidor tardó demasiado en procesar el archivo. Inténtalo de nuevo o prueba con uno más pequeño.'
   }
   if (status >= 500)
-    return `Error del servidor (${status}) al subir el documento. Inténtalo de nuevo.`;
-  return `No se pudo subir el documento (${status}).`;
+    return `Error del servidor (${status}) al subir el documento. Inténtalo de nuevo.`
+  return `No se pudo subir el documento (${status}).`
 }
 
 export function UploadForm() {
-  const router = useRouter();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [fileName, setFileName] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   // Avoid SSR/client hydration mismatch: set today's date after mount only.
-  const [effectiveDate, setEffectiveDate] = useState("");
+  const [effectiveDate, setEffectiveDate] = useState('')
   useEffect(() => {
-    setEffectiveDate(todayIsoLocal());
-  }, []);
+    setEffectiveDate(todayIsoLocal())
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    const form = e.currentTarget
+    const formData = new FormData(form)
 
-    const file = fileRef.current?.files?.[0];
+    const file = fileRef.current?.files?.[0]
     if (!file) {
-      setError("Selecciona un archivo");
-      return;
+      setError('Selecciona un archivo')
+      return
     }
 
-    formData.set("file", file);
+    formData.set('file', file)
 
-    setUploading(true);
+    setUploading(true)
     try {
-      const res = await fetch("/api/internal-docs/upload", {
-        method: "POST",
+      const res = await fetch('/api/internal-docs/upload', {
+        method: 'POST',
         body: formData,
-      });
+      })
       // The body may not be JSON (e.g. platform 413/504 HTML pages), so parse defensively.
       const json = (await res.json().catch(() => null)) as {
-        id?: string;
-        error?: string;
-      } | null;
+        id?: string
+        error?: string
+      } | null
 
       if (!res.ok || !json?.id) {
-        setError(json?.error ?? uploadErrorMessage(res.status));
-        return;
+        setError(json?.error ?? uploadErrorMessage(res.status))
+        return
       }
 
-      router.push(`/internal-docs/${json.id}`);
+      router.push(`/internal-docs/${json.id}`)
     } catch {
-      setError(
-        "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
-      );
+      setError('No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.')
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
   }
 
@@ -119,9 +116,7 @@ export function UploadForm() {
             Seleccionar archivo
           </Button>
           {fileName ? (
-            <span className="max-w-xs truncate text-sm text-muted-foreground">
-              {fileName}
-            </span>
+            <span className="max-w-xs truncate text-sm text-muted-foreground">{fileName}</span>
           ) : (
             <span className="text-sm text-muted-foreground">
               Máx. 50 MB · PDF, Word, Excel, imagen
@@ -203,10 +198,10 @@ export function UploadForm() {
               Subiendo…
             </>
           ) : (
-            "Subir documento"
+            'Subir documento'
           )}
         </Button>
       </div>
     </form>
-  );
+  )
 }

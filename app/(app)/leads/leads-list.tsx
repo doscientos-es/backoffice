@@ -1,43 +1,43 @@
-"use client";
+'use client'
 
-import { ArrowRight, Bell, CheckCircle2, ListTodo, UserRound } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+import { ArrowRight, Bell, CheckCircle2, ListTodo, UserRound } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
 
-import { ListPage, type ListPageProps } from "@/components/layout/list-page";
-import { MemberLabel } from "@/components/ui/member-avatar";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { requiresCyaProspectSoftwareCommission } from "@/lib/leads/attribution";
-import type { LeadListItem } from "@/lib/leads/types";
-import { getLeadInitials, leadDisplayName } from "@/lib/leads/utils";
-import type { MemberOption } from "@/lib/members/queries";
-import { LEAD_STATUS } from "@/lib/status";
-import { relativeTime } from "@/lib/utils";
+import { ListPage, type ListPageProps } from '@/components/layout/list-page'
+import { MemberLabel } from '@/components/ui/member-avatar'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
+import type { LeadListItem } from '@/lib/leads/types'
+import { getLeadInitials, leadDisplayName } from '@/lib/leads/utils'
+import type { MemberOption } from '@/lib/members/queries'
+import { LEAD_STATUS } from '@/lib/status'
+import { relativeTime } from '@/lib/utils'
 
 import {
   bulkAssignLeadsToMe,
   bulkCreateLeadTasks,
   bulkScheduleLeadReminders,
   bulkUpdateLeadStatus,
-} from "./actions";
-import { LeadFastActions } from "./lead-fast-actions";
-import { LeadQuickView } from "./lead-quick-view";
-import type { KanbanLead } from "./leads-kanban";
+} from './actions'
+import { LeadFastActions } from './lead-fast-actions'
+import { LeadQuickView } from './lead-quick-view'
+import type { KanbanLead } from './leads-kanban'
 
-type LeadsListProps = Omit<ListPageProps, "rows"> & {
-  leads: LeadListItem[];
-  aiEnabled?: boolean;
-  canEdit?: boolean;
-  members?: MemberOption[];
-  senderName?: string;
-};
+type LeadsListProps = Omit<ListPageProps, 'rows'> & {
+  leads: LeadListItem[]
+  aiEnabled?: boolean
+  canEdit?: boolean
+  members?: MemberOption[]
+  senderName?: string
+}
 
 function LeadInitials({ lead }: { lead: KanbanLead }) {
   return (
     <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary uppercase">
       {getLeadInitials(lead)}
     </span>
-  );
+  )
 }
 
 export function LeadsList({
@@ -45,27 +45,27 @@ export function LeadsList({
   aiEnabled = false,
   canEdit = false,
   members = [],
-  senderName = "",
+  senderName = '',
   ...props
 }: LeadsListProps) {
-  const [selectedLead, setSelectedLead] = useState<KanbanLead | null>(null);
+  const [selectedLead, setSelectedLead] = useState<KanbanLead | null>(null)
 
   const rows = leads.map((l) => ({
     id: l.id,
     data: l as KanbanLead,
     csvValues: [
       leadDisplayName(l),
-      l.company ?? "",
-      l.email ?? "",
+      l.company ?? '',
+      l.email ?? '',
       l.status,
-      l.assignee?.name ?? "",
+      l.assignee?.name ?? '',
       l.created_at,
-      l.company_size ?? "",
-      l.solution_type ?? "",
-      l.urgency ?? "",
-      l.source ?? "",
-      l.marketing_campaign_name ?? "",
-      l.score?.toString() ?? "",
+      l.company_size ?? '',
+      l.solution_type ?? '',
+      l.urgency ?? '',
+      l.source ?? '',
+      l.marketing_campaign_name ?? '',
+      l.score?.toString() ?? '',
     ],
     cells: [
       <Link
@@ -93,7 +93,7 @@ export function LeadsList({
       ) : null,
       <div key="campaign" className="flex min-w-32 flex-col gap-0.5">
         <span className="truncate" title={l.marketing_campaign_name ?? undefined}>
-          {l.marketing_campaign_name ?? "—"}
+          {l.marketing_campaign_name ?? '—'}
         </span>
         {requiresCyaProspectSoftwareCommission(l.marketing_campaign_name) && (
           <span className="text-[11px] font-medium text-warning">Comisión CYA · 20 %</span>
@@ -101,12 +101,12 @@ export function LeadsList({
       </div>,
       <div key="status" className="flex flex-col gap-0.5">
         <StatusBadge meta={LEAD_STATUS} value={l.status} />
-        {(l.status === "lost" || l.status === "not_interested") && l.lost_reason && (
+        {(l.status === 'lost' || l.status === 'not_interested') && l.lost_reason && (
           <span className="max-w-36 truncate text-[11px] text-destructive/80">{l.lost_reason}</span>
         )}
       </div>,
       <span key="score" className="text-muted-foreground tabular-nums">
-        {l.score ?? "—"}
+        {l.score ?? '—'}
       </span>,
       <MemberLabel key="assignee" member={l.assignee} size="sm" />,
       <span key="created" className="tabular-nums">
@@ -117,7 +117,7 @@ export function LeadsList({
         <LeadFastActions lead={l} aiEnabled={aiEnabled} senderName={senderName} />
       </div>,
     ],
-  }));
+  }))
 
   return (
     <>
@@ -126,35 +126,35 @@ export function LeadsList({
         rows={rows}
         bulkActions={[
           {
-            label: "Asignarme",
+            label: 'Asignarme',
             icon: UserRound,
             onAction: async (ids) => {
-              const result = await bulkAssignLeadsToMe({ ids });
-              if (!result.ok) throw new Error(result.error);
+              const result = await bulkAssignLeadsToMe({ ids })
+              if (!result.ok) throw new Error(result.error)
             },
           },
           {
-            label: "Crear seguimiento",
+            label: 'Crear seguimiento',
             icon: ListTodo,
             onAction: async (ids) => {
-              const result = await bulkCreateLeadTasks({ ids });
-              if (!result.ok) throw new Error(result.error);
+              const result = await bulkCreateLeadTasks({ ids })
+              if (!result.ok) throw new Error(result.error)
             },
           },
           {
-            label: "Recordatorio mañana",
+            label: 'Recordatorio mañana',
             icon: Bell,
             onAction: async (ids) => {
-              const result = await bulkScheduleLeadReminders({ ids });
-              if (!result.ok) throw new Error(result.error);
+              const result = await bulkScheduleLeadReminders({ ids })
+              if (!result.ok) throw new Error(result.error)
             },
           },
-          ...(["contacted", "in_conversation", "quoted", "won", "lost"] as const).map((status) => ({
+          ...(['contacted', 'in_conversation', 'quoted', 'won', 'lost'] as const).map((status) => ({
             label: `Estado: ${LEAD_STATUS[status].label}`,
-            icon: status === "won" ? CheckCircle2 : undefined,
+            icon: status === 'won' ? CheckCircle2 : undefined,
             onAction: async (ids: string[]) => {
-              const result = await bulkUpdateLeadStatus({ ids, status });
-              if (!result.ok) throw new Error(result.error);
+              const result = await bulkUpdateLeadStatus({ ids, status })
+              if (!result.ok) throw new Error(result.error)
             },
           })),
         ]}
@@ -169,5 +169,5 @@ export function LeadsList({
         onCloseAction={() => setSelectedLead(null)}
       />
     </>
-  );
+  )
 }

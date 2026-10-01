@@ -1,13 +1,13 @@
-import { BellRing, CalendarClock, FileText as FileWarning, ShieldAlert } from "lucide-react";
-import Link from "next/link";
+import { BellRing, CalendarClock, FileText as FileWarning, ShieldAlert } from 'lucide-react'
+import Link from 'next/link'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AvisosData, OverdueInvoiceRow, ReminderRow } from "@/lib/dashboard/types";
-import { formatDate, formatEUR, relativeTime } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import type { AvisosData, OverdueInvoiceRow, ReminderRow } from '@/lib/dashboard/types'
+import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 
-export type { AvisosData, OverdueInvoiceRow, ReminderRow };
+export type { AvisosData, OverdueInvoiceRow, ReminderRow }
 
-export type AvisosPanelProps = AvisosData & { showFinance?: boolean };
+export type AvisosPanelProps = AvisosData & { showFinance?: boolean }
 
 export function AvisosPanel({
   overdueInvoices,
@@ -15,14 +15,14 @@ export function AvisosPanel({
   certExpiresAt,
   showFinance = true,
 }: AvisosPanelProps) {
-  const visibleOverdue = showFinance ? overdueInvoices : [];
-  const visibleCertExpiry = showFinance ? certExpiresAt : null;
+  const visibleOverdue = showFinance ? overdueInvoices : []
+  const visibleCertExpiry = showFinance ? certExpiresAt : null
 
   // Sin avisos: no renderizar nada.
-  const empty = reminders.length === 0 && visibleOverdue.length === 0 && !visibleCertExpiry;
+  const empty = reminders.length === 0 && visibleOverdue.length === 0 && !visibleCertExpiry
 
   if (empty) {
-    return null;
+    return null
   }
 
   return (
@@ -39,7 +39,7 @@ export function AvisosPanel({
             <div className="flex-1">
               <p className="text-sm font-medium">Certificado Verifactu por caducar</p>
               <p className="text-xs text-muted-foreground">
-                Caduca el {formatDate(visibleCertExpiry)} ({relativeTime(visibleCertExpiry)}).{" "}
+                Caduca el {formatDate(visibleCertExpiry)} ({relativeTime(visibleCertExpiry)}).{' '}
                 <Link href="/settings" className="underline">
                   Renovar
                 </Link>
@@ -64,7 +64,7 @@ export function AvisosPanel({
                     ) : null}
                   </Link>
                   <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                    {formatEUR(inv.total)} · venció{" "}
+                    {formatEUR(inv.total)} · venció{' '}
                     {relativeTime(inv.due_date ?? new Date().toISOString())}
                   </span>
                 </li>
@@ -94,7 +94,7 @@ export function AvisosPanel({
         ) : null}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function Section({
@@ -102,9 +102,9 @@ function Section({
   title,
   children,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
+  icon: React.ReactNode
+  title: string
+  children: React.ReactNode
 }) {
   return (
     <div>
@@ -116,5 +116,5 @@ function Section({
       </div>
       {children}
     </div>
-  );
+  )
 }

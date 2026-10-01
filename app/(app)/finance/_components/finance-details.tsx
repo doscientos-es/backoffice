@@ -1,20 +1,20 @@
-import Link from "next/link";
+import Link from 'next/link'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireUser } from "@/lib/auth";
-import { EXPENSE_CATEGORY_LABELS } from "@/lib/finance";
-import { getExpenseVendorSuggestions, getFinanceDetails } from "@/lib/finance/queries";
-import { createServerClient } from "@/lib/supabase/server";
-import { formatDate, formatEUR } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { requireUser } from '@/lib/auth'
+import { EXPENSE_CATEGORY_LABELS } from '@/lib/finance'
+import { getExpenseVendorSuggestions, getFinanceDetails } from '@/lib/finance/queries'
+import { createServerClient } from '@/lib/supabase/server'
+import { formatDate, formatEUR } from '@/lib/utils'
 
-import { ExpenseListActions } from "../expenses/_components/expense-list-actions";
-import { FinanceCategoryChart } from "../finance-category-chart";
+import { ExpenseListActions } from '../expenses/_components/expense-list-actions'
+import { FinanceCategoryChart } from '../finance-category-chart'
 
-type Props = { since: string; until: string; rangeLabel: string };
+type Props = { since: string; until: string; rangeLabel: string }
 
 export async function FinanceDetails({ since, until, rangeLabel }: Props) {
-  const user = await requireUser();
-  const supabase = await createServerClient();
+  const user = await requireUser()
+  const supabase = await createServerClient()
   const [
     { topCategories, recentExpenses, recentInvoices, memberContributions },
     { data: projectsRaw },
@@ -23,30 +23,30 @@ export async function FinanceDetails({ since, until, rangeLabel }: Props) {
   ] = await Promise.all([
     getFinanceDetails(since, until),
     supabase
-      .from("projects")
-      .select("id, name, clients(name)")
-      .is("deleted_at", null)
-      .order("name"),
-    supabase.from("team_members").select("id, name").is("deleted_at", null).order("name"),
+      .from('projects')
+      .select('id, name, clients(name)')
+      .is('deleted_at', null)
+      .order('name'),
+    supabase.from('team_members').select('id, name').is('deleted_at', null).order('name'),
     getExpenseVendorSuggestions(),
-  ]);
+  ])
 
   const projects = (projectsRaw ?? []).map((p) => ({
     id: p.id as string,
     name: p.name as string,
     clientName: (p.clients as unknown as { name: string } | null)?.name ?? null,
-  }));
-  const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>;
-  const canEdit = user.role !== "viewer";
-  const canDelete = user.role === "owner" || user.role === "admin";
+  }))
+  const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>
+  const canEdit = user.role !== 'viewer'
+  const canDelete = user.role === 'owner' || user.role === 'admin'
 
   const categorySlices = topCategories.map(([cat, total]) => ({
     name: EXPENSE_CATEGORY_LABELS[cat] ?? cat,
     value: total,
-  }));
+  }))
   const memberBars = [...memberContributions]
     .sort((a, b) => b.total - a.total)
-    .map((c) => ({ name: c.memberName, value: c.total }));
+    .map((c) => ({ name: c.memberName, value: c.total }))
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,7 +79,7 @@ export async function FinanceDetails({ since, until, rangeLabel }: Props) {
                     className="flex items-center justify-between px-6 py-2.5 text-sm"
                   >
                     <Link href={`/invoices/${inv.id}`} className="font-medium hover:underline">
-                      {inv.full_number ?? "—"}
+                      {inv.full_number ?? '—'}
                       {inv.client_name ? (
                         <span className="ml-2 text-muted-foreground">· {inv.client_name}</span>
                       ) : null}
@@ -118,7 +118,7 @@ export async function FinanceDetails({ since, until, rangeLabel }: Props) {
                   <Link href={`/finance/expenses/${e.id}`} className="font-medium hover:underline">
                     {e.vendor}
                     <span className="ml-2 text-xs text-muted-foreground">
-                      {EXPENSE_CATEGORY_LABELS[e.category] ?? e.category} ·{" "}
+                      {EXPENSE_CATEGORY_LABELS[e.category] ?? e.category} ·{' '}
                       {formatDate(e.expense_date)}
                     </span>
                   </Link>
@@ -159,5 +159,5 @@ export async function FinanceDetails({ since, until, rangeLabel }: Props) {
         </Card>
       )}
     </div>
-  );
+  )
 }

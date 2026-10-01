@@ -1,18 +1,18 @@
-import Link from "next/link";
+import Link from 'next/link'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/empty-state";
-import { getRevenueSeries } from "@/lib/dashboard/queries";
-import type { DashboardRange } from "@/lib/dashboard/types";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
+import { getRevenueSeries } from '@/lib/dashboard/queries'
+import type { DashboardRange } from '@/lib/dashboard/types'
 
-import { RevenueChart } from "../revenue-chart";
+import { RevenueChart } from '../revenue-chart'
 
 export async function RevenueWidget({ range }: { range: DashboardRange }) {
-  const data = await getRevenueSeries(range);
+  const data = await getRevenueSeries(range)
   const hasData = [data.billed, data.collected].some((metric) =>
     metric.totals.some((point) => point.current > 0 || point.previous > 0),
-  );
+  )
 
   return (
     <Card>
@@ -45,5 +45,5 @@ export async function RevenueWidget({ range }: { range: DashboardRange }) {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

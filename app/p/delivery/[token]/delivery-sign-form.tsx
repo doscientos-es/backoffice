@@ -1,45 +1,45 @@
-"use client";
+'use client'
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
-import { signDeliveryNote } from "./actions";
+import { signDeliveryNote } from './actions'
 
 export function DeliverySignForm({ token, consent }: { token: string; consent: string }) {
-  const router = useRouter();
-  const feedback = useFormFeedback({ successResetMs: 0 });
-  const [signerName, setSignerName] = useState("");
-  const [signerRole, setSignerRole] = useState("");
-  const [accepted, setAccepted] = useState(false);
+  const router = useRouter()
+  const feedback = useFormFeedback({ successResetMs: 0 })
+  const [signerName, setSignerName] = useState('')
+  const [signerRole, setSignerRole] = useState('')
+  const [accepted, setAccepted] = useState(false)
 
   const onSign = async () => {
     if (!signerName.trim()) {
-      feedback.setError("Indica tu nombre completo");
-      return;
+      feedback.setError('Indica tu nombre completo')
+      return
     }
     if (!accepted) {
-      feedback.setError("Debes confirmar la conformidad para firmar el albarán");
-      return;
+      feedback.setError('Debes confirmar la conformidad para firmar el albarán')
+      return
     }
-    feedback.setPending();
+    feedback.setPending()
     const res = await signDeliveryNote(token, {
       signer_name: signerName.trim(),
       signer_role: signerRole.trim() || undefined,
       accepts_terms: true,
-    });
+    })
     if (!res.ok) {
-      feedback.setError(res.error);
-      return;
+      feedback.setError(res.error)
+      return
     }
-    feedback.setSuccess("Albarán firmado");
-    router.refresh();
-  };
+    feedback.setSuccess('Albarán firmado')
+    router.refresh()
+  }
 
   return (
     <Card>
@@ -82,9 +82,9 @@ export function DeliverySignForm({ token, consent }: { token: string; consent: s
         </label>
         <FormFeedback state={feedback.state} pendingLabel="Firmando…" />
         <Button className="w-full" onClick={onSign} disabled={feedback.pending}>
-          {feedback.pending ? "Firmando…" : "Firmar albarán"}
+          {feedback.pending ? 'Firmando…' : 'Firmar albarán'}
         </Button>
       </CardContent>
     </Card>
-  );
+  )
 }

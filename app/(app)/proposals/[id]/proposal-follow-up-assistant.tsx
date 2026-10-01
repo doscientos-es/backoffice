@@ -1,89 +1,89 @@
-"use client";
+'use client'
 
-import { Check, Copy, Mail, MessageCircle, Phone, Sparkle as Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Check, Copy, Mail, MessageCircle, Phone, Sparkle as Sparkles } from 'lucide-react'
+import { useState } from 'react'
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import { readJsonResponse } from "@/lib/utils/http";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
+import { readJsonResponse } from '@/lib/utils/http'
 
-import { createTask } from "../../tasks/actions";
+import { createTask } from '../../tasks/actions'
 
 type Recommendation = {
-  headline: string;
-  rationale: string;
-  urgency: "low" | "medium" | "high" | "urgent";
-  channel: "email" | "whatsapp" | "call" | "internal";
-  action: string;
-  message: string;
-  task: { title: string; description: string };
-};
+  headline: string
+  rationale: string
+  urgency: 'low' | 'medium' | 'high' | 'urgent'
+  channel: 'email' | 'whatsapp' | 'call' | 'internal'
+  action: string
+  message: string
+  task: { title: string; description: string }
+}
 
 export function ProposalFollowUpAssistant({
   proposalId,
   leadId,
   clientId,
 }: {
-  proposalId: string;
-  leadId: string | null;
-  clientId: string | null;
+  proposalId: string
+  leadId: string | null
+  clientId: string | null
 }) {
-  const [data, setData] = useState<Recommendation | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<Recommendation | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [applying, setApplying] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function generate() {
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
     try {
-      const response = await fetch("/api/crm/ai/next-best-action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/crm/ai/next-best-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ proposal_id: proposalId }),
-      });
-      const json = await readJsonResponse<any>(response, "No se pudo preparar la recomendación.");
-      if (!response.ok) throw new Error(json.error ?? "No se pudo preparar el seguimiento.");
-      setData(json as Recommendation);
+      })
+      const json = await readJsonResponse<any>(response, 'No se pudo preparar la recomendación.')
+      if (!response.ok) throw new Error(json.error ?? 'No se pudo preparar el seguimiento.')
+      setData(json as Recommendation)
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Error desconocido.");
+      setError(reason instanceof Error ? reason.message : 'Error desconocido.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   async function applyTask() {
-    if (!data) return;
-    setApplying(true);
-    setError(null);
+    if (!data) return
+    setApplying(true)
+    setError(null)
     try {
       await createTask({
         title: data.task.title,
         description: data.task.description,
         priority: data.urgency,
-        status: "todo",
-        lead_id: leadId ?? "",
-        client_id: clientId ?? "",
-        project_id: "",
+        status: 'todo',
+        lead_id: leadId ?? '',
+        client_id: clientId ?? '',
+        project_id: '',
         member_ids: [],
-        due_date: "",
-      });
-      setData({ ...data, task: { ...data.task, title: "Tarea creada" } });
+        due_date: '',
+      })
+      setData({ ...data, task: { ...data.task, title: 'Tarea creada' } })
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No se pudo crear la tarea.");
+      setError(reason instanceof Error ? reason.message : 'No se pudo crear la tarea.')
     } finally {
-      setApplying(false);
+      setApplying(false)
     }
   }
 
   async function copyMessage() {
-    if (!data?.message) return;
-    await navigator.clipboard.writeText(data.message);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    if (!data?.message) return
+    await navigator.clipboard.writeText(data.message)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }
 
   return (
@@ -96,8 +96,8 @@ export function ProposalFollowUpAssistant({
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={generate} disabled={loading}>
-          <Sparkles className={cn("size-3.5", loading && "animate-spin")} />
-          {loading ? "Analizando…" : data ? "Actualizar" : "Preparar acción"}
+          <Sparkles className={cn('size-3.5', loading && 'animate-spin')} />
+          {loading ? 'Analizando…' : data ? 'Actualizar' : 'Preparar acción'}
         </Button>
       </div>
       {data ? (
@@ -105,18 +105,18 @@ export function ProposalFollowUpAssistant({
           <div className="flex items-center gap-2">
             <Badge
               variant={
-                data.urgency === "urgent"
-                  ? "danger"
-                  : data.urgency === "high"
-                    ? "warning"
-                    : "outline"
+                data.urgency === 'urgent'
+                  ? 'danger'
+                  : data.urgency === 'high'
+                    ? 'warning'
+                    : 'outline'
               }
             >
-              {data.urgency === "high"
-                ? "Prioritaria"
-                : data.urgency === "urgent"
-                  ? "Urgente"
-                  : "Seguimiento"}
+              {data.urgency === 'high'
+                ? 'Prioritaria'
+                : data.urgency === 'urgent'
+                  ? 'Urgente'
+                  : 'Seguimiento'}
             </Badge>
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <ChannelIcon channel={data.channel} /> {data.channel}
@@ -135,7 +135,7 @@ export function ProposalFollowUpAssistant({
                   ) : (
                     <Copy className="size-3" />
                   )}
-                  {copied ? "Copiado" : "Copiar"}
+                  {copied ? 'Copiado' : 'Copiar'}
                 </Button>
               </div>
               <Textarea
@@ -150,25 +150,25 @@ export function ProposalFollowUpAssistant({
               size="sm"
               variant="outline"
               onClick={applyTask}
-              disabled={applying || data.task.title === "Tarea creada"}
+              disabled={applying || data.task.title === 'Tarea creada'}
             >
               {applying
-                ? "Creando…"
-                : data.task.title === "Tarea creada"
-                  ? "Tarea creada"
-                  : "Crear tarea"}
+                ? 'Creando…'
+                : data.task.title === 'Tarea creada'
+                  ? 'Tarea creada'
+                  : 'Crear tarea'}
             </Button>
           </div>
         </div>
       ) : null}
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
-  );
+  )
 }
 
-function ChannelIcon({ channel }: { channel: Recommendation["channel"] }) {
-  if (channel === "email") return <Mail className="size-3" />;
-  if (channel === "whatsapp") return <MessageCircle className="size-3" />;
-  if (channel === "call") return <Phone className="size-3" />;
-  return <Sparkles className="size-3" />;
+function ChannelIcon({ channel }: { channel: Recommendation['channel'] }) {
+  if (channel === 'email') return <Mail className="size-3" />
+  if (channel === 'whatsapp') return <MessageCircle className="size-3" />
+  if (channel === 'call') return <Phone className="size-3" />
+  return <Sparkles className="size-3" />
 }

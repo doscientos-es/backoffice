@@ -1,9 +1,9 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
-const KPI_SKELETON_KEYS = ["kpi-a", "kpi-b", "kpi-c", "kpi-d"] as const;
-const TABLE_ROW_KEYS = ["row-a", "row-b", "row-c", "row-d", "row-e"] as const;
-const TABLE_COL_WIDTHS = [180, 100, 80, 80, 100] as const;
+const KPI_SKELETON_KEYS = ['kpi-a', 'kpi-b', 'kpi-c', 'kpi-d'] as const
+const TABLE_ROW_KEYS = ['row-a', 'row-b', 'row-c', 'row-d', 'row-e'] as const
+const TABLE_COL_WIDTHS = [180, 100, 80, 80, 100] as const
 
 export function KpiSkeleton() {
   return (
@@ -20,7 +20,7 @@ export function KpiSkeleton() {
         </Card>
       ))}
     </div>
-  );
+  )
 }
 
 export function RoiSkeleton() {
@@ -35,7 +35,7 @@ export function RoiSkeleton() {
         ))}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export function InsightsSkeleton() {
@@ -48,12 +48,12 @@ export function InsightsSkeleton() {
         <Skeleton className="h-56 w-full rounded-md" />
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export function AttributionSkeleton() {
-  const COL_WIDTHS = [120, 60, 80, 70, 80, 90] as const;
-  const ROW_KEYS = ["af-a", "af-b", "af-c"] as const;
+  const COL_WIDTHS = [120, 60, 80, 70, 80, 90] as const
+  const ROW_KEYS = ['af-a', 'af-b', 'af-c'] as const
   return (
     <Card>
       <CardHeader>
@@ -76,7 +76,7 @@ export function AttributionSkeleton() {
         ))}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export function TableSkeleton() {
@@ -102,5 +102,5 @@ export function TableSkeleton() {
         ))}
       </CardContent>
     </Card>
-  );
+  )
 }

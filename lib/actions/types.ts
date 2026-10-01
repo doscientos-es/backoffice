@@ -1,1 +1,1 @@
-export * from "@/primitives/lib/types";
+export * from '@/primitives/lib/types'

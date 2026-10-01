@@ -15,28 +15,28 @@
  * everywhere the board groups leads.
  */
 
-import type { ReminderActionType } from "@/lib/reminders/action-types";
-import type { LeadStatus } from "@/lib/status";
+import type { ReminderActionType } from '@/lib/reminders/action-types'
+import type { LeadStatus } from '@/lib/status'
 
 /** Stages that still require human follow-up (the rest are closed/parked). */
 export const ACTIVE_LEAD_STATUSES = [
-  "new",
-  "contacted",
-  "in_conversation",
-  "qualifying",
-  "quoted",
-] as const;
+  'new',
+  'contacted',
+  'in_conversation',
+  'qualifying',
+  'quoted',
+] as const
 
-export const TERMINAL_LEAD_STATUSES = ["won", "lost", "not_interested", "archived"] as const;
+export const TERMINAL_LEAD_STATUSES = ['won', 'lost', 'not_interested', 'archived'] as const
 
 /** Closed-out stages, used by the recovery funnel and the closure dialogs. */
-export const CLOSURE_LEAD_STATUSES = ["lost", "not_interested"] as const;
+export const CLOSURE_LEAD_STATUSES = ['lost', 'not_interested'] as const
 
-const ACTIVE_SET: ReadonlySet<LeadStatus> = new Set(ACTIVE_LEAD_STATUSES);
-const TERMINAL_SET: ReadonlySet<LeadStatus> = new Set(TERMINAL_LEAD_STATUSES);
+const ACTIVE_SET: ReadonlySet<LeadStatus> = new Set(ACTIVE_LEAD_STATUSES)
+const TERMINAL_SET: ReadonlySet<LeadStatus> = new Set(TERMINAL_LEAD_STATUSES)
 
-export const isActiveLeadStatus = (status: LeadStatus): boolean => ACTIVE_SET.has(status);
-export const isTerminalLeadStatus = (status: LeadStatus): boolean => TERMINAL_SET.has(status);
+export const isActiveLeadStatus = (status: LeadStatus): boolean => ACTIVE_SET.has(status)
+export const isTerminalLeadStatus = (status: LeadStatus): boolean => TERMINAL_SET.has(status)
 
 /**
  * Board column a status renders into. Only `qualifying` differs from the
@@ -44,20 +44,20 @@ export const isTerminalLeadStatus = (status: LeadStatus): boolean => TERMINAL_SE
  * stranded in a column that is no longer offered.
  */
 export function boardColumnFor(status: LeadStatus): LeadStatus {
-  return status === "qualifying" ? "in_conversation" : status;
+  return status === 'qualifying' ? 'in_conversation' : status
 }
 
 /** Statuses offered in selects and filters: everything except the legacy one. */
 export const SELECTABLE_LEAD_STATUSES = [
-  "new",
-  "contacted",
-  "in_conversation",
-  "quoted",
-  "won",
-  "lost",
-  "not_interested",
-  "archived",
-] as const;
+  'new',
+  'contacted',
+  'in_conversation',
+  'quoted',
+  'won',
+  'lost',
+  'not_interested',
+  'archived',
+] as const
 
 /**
  * Enum values a status filter has to match. Filtering by `in_conversation`
@@ -65,7 +65,7 @@ export const SELECTABLE_LEAD_STATUSES = [
  * into that column.
  */
 export function statusFilterValues(status: LeadStatus): LeadStatus[] {
-  return status === "in_conversation" ? ["in_conversation", "qualifying"] : [status];
+  return status === 'in_conversation' ? ['in_conversation', 'qualifying'] : [status]
 }
 
 /**
@@ -83,15 +83,15 @@ export const STAGE_ROT_DAYS: Readonly<Record<LeadStatus, number | null>> = {
   lost: null,
   not_interested: null,
   archived: null,
-};
+}
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000
 
 /** True when the lead has sat in its stage longer than that stage allows. */
 export function isRotting(status: LeadStatus, lastActivityAt: string): boolean {
-  const days = STAGE_ROT_DAYS[status];
-  if (days == null) return false;
-  return Date.now() - new Date(lastActivityAt).getTime() > days * DAY_MS;
+  const days = STAGE_ROT_DAYS[status]
+  if (days == null) return false
+  return Date.now() - new Date(lastActivityAt).getTime() > days * DAY_MS
 }
 
 // ---------------------------------------------------------------------------
@@ -100,30 +100,30 @@ export function isRotting(status: LeadStatus, lastActivityAt: string): boolean {
 
 /** Pending reminder driving the card, mirrors `tasks` where `kind='reminder'`. */
 export type LeadNextAction = {
-  id: string;
-  title: string;
-  remind_at: string;
-  action_type: ReminderActionType;
-};
+  id: string
+  title: string
+  remind_at: string
+  action_type: ReminderActionType
+}
 
 /**
  * `missing` is the one that matters: an active lead with nothing scheduled is
  * how deals quietly die, so the board surfaces it as loudly as an overdue one.
  */
-export type NextActionState = "overdue" | "today" | "scheduled" | "missing" | "none";
+export type NextActionState = 'overdue' | 'today' | 'scheduled' | 'missing' | 'none'
 
 export function nextActionState(
   status: LeadStatus,
   nextAction: LeadNextAction | null,
   now = new Date(),
 ): NextActionState {
-  if (!nextAction) return isActiveLeadStatus(status) ? "missing" : "none";
-  const due = new Date(nextAction.remind_at).getTime();
-  if (due < now.getTime()) return "overdue";
-  const endOfToday = new Date();
-  endOfToday.setTime(now.getTime());
-  endOfToday.setHours(23, 59, 59, 999);
-  return due <= endOfToday.getTime() ? "today" : "scheduled";
+  if (!nextAction) return isActiveLeadStatus(status) ? 'missing' : 'none'
+  const due = new Date(nextAction.remind_at).getTime()
+  if (due < now.getTime()) return 'overdue'
+  const endOfToday = new Date()
+  endOfToday.setTime(now.getTime())
+  endOfToday.setHours(23, 59, 59, 999)
+  return due <= endOfToday.getTime() ? 'today' : 'scheduled'
 }
 
 /** Sort weight: the riskiest cards float to the top of their column. */
@@ -133,17 +133,17 @@ const NEXT_ACTION_RANK: Readonly<Record<NextActionState, number>> = {
   today: 2,
   scheduled: 3,
   none: 4,
-};
+}
 
-export const nextActionRank = (state: NextActionState): number => NEXT_ACTION_RANK[state];
+export const nextActionRank = (state: NextActionState): number => NEXT_ACTION_RANK[state]
 
 // ---------------------------------------------------------------------------
 // Conversation direction
 // ---------------------------------------------------------------------------
 
 /** Interaction types that represent a real touch, either way. */
-const OUTBOUND_TYPES: ReadonlySet<string> = new Set(["email_sent", "call"]);
-const INBOUND_TYPES: ReadonlySet<string> = new Set(["email_received", "meeting"]);
+const OUTBOUND_TYPES: ReadonlySet<string> = new Set(['email_sent', 'call'])
+const INBOUND_TYPES: ReadonlySet<string> = new Set(['email_received', 'meeting'])
 
 /**
  * Timestamp of our last outbound touch when nothing came back after it — i.e.
@@ -156,8 +156,8 @@ export function waitingForReplySince(
   interactions: readonly { type: string; created_at: string }[],
 ): string | null {
   for (const i of interactions) {
-    if (INBOUND_TYPES.has(i.type)) return null;
-    if (OUTBOUND_TYPES.has(i.type)) return i.created_at;
+    if (INBOUND_TYPES.has(i.type)) return null
+    if (OUTBOUND_TYPES.has(i.type)) return i.created_at
   }
-  return null;
+  return null
 }

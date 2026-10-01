@@ -5,5 +5,5 @@
  * use the raw `name` (razón social).
  */
 export function clientDisplayName(client: { name: string; label?: string | null }): string {
-  return client.label?.trim() || client.name;
+  return client.label?.trim() || client.name
 }

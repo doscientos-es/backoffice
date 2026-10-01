@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 // Compartido entre el drawer de la lista de leads y la ficha del lead.
 // Única fuente de verdad para las 3 fast actions (llamada, email, nota)
@@ -11,64 +11,64 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@doscientos/ui";
-import { FileText, LoaderCircle as Loader2, Mail, Plus, Phone, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type ReactNode, type SubmitEvent, useEffect, useState } from "react";
+} from '@doscientos/ui'
+import { FileText, LoaderCircle as Loader2, Mail, Plus, Phone, Sparkles } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { type ReactNode, type SubmitEvent, useEffect, useState } from 'react'
 
-import { GoogleMeetIcon } from "@/components/icons/google-meet-icon";
-import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { EntityCombobox } from "@/components/ui/entity-combobox";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
+import { GoogleMeetIcon } from '@/components/icons/google-meet-icon'
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { EntityCombobox } from '@/components/ui/entity-combobox'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
 import {
   DEFAULT_MEETING_DURATION,
   MEETING_DURATIONS,
   type MeetingDuration,
   defaultMeetingStart,
-} from "@/lib/calendar/date-presets";
-import { publicEnv } from "@/lib/env";
-import { buildLeadWhatsAppMessage } from "@/lib/leads/whatsapp";
-import { buildBookingUrl } from "@/lib/recovery/utils";
-import { defaultFollowUpDateTime } from "@/lib/reminders/date-presets";
-import type { CallOutcome } from "@/lib/schemas/lead";
-import { cn } from "@/lib/utils";
-import { todayIsoLocal } from "@/lib/utils/date";
-import { addMinutesToDatetimeLocal, datetimeLocalToIso } from "@/lib/utils/date-time";
+} from '@/lib/calendar/date-presets'
+import { publicEnv } from '@/lib/env'
+import { buildLeadWhatsAppMessage } from '@/lib/leads/whatsapp'
+import { buildBookingUrl } from '@/lib/recovery/utils'
+import { defaultFollowUpDateTime } from '@/lib/reminders/date-presets'
+import type { CallOutcome } from '@/lib/schemas/lead'
+import { cn } from '@/lib/utils'
+import { todayIsoLocal } from '@/lib/utils/date'
+import { addMinutesToDatetimeLocal, datetimeLocalToIso } from '@/lib/utils/date-time'
 
-import { createReminder } from "../reminders/actions";
-import { EmailComposer } from "./[id]/email-composer";
-import type { MomTestValues } from "./[id]/mom-test-checklist";
-import { MomTestQuickDialog } from "./[id]/mom-test-quick-dialog";
-import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from "./actions";
-import { CallDateField } from "./call-date-field";
-import { CallDigestDialog } from "./call-digest-dialog";
-import { WhatsAppComposer } from "./whatsapp-composer";
+import { createReminder } from '../reminders/actions'
+import { EmailComposer } from './[id]/email-composer'
+import type { MomTestValues } from './[id]/mom-test-checklist'
+import { MomTestQuickDialog } from './[id]/mom-test-quick-dialog'
+import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from './actions'
+import { CallDateField } from './call-date-field'
+import { CallDigestDialog } from './call-digest-dialog'
+import { WhatsAppComposer } from './whatsapp-composer'
 
-const CALL_NOTES_MAX_LENGTH = 8_000;
+const CALL_NOTES_MAX_LENGTH = 8_000
 
 // ─── QMeetDialog ──────────────────────────────────────────────────────────────
 
 /** Shape passed for Meet invitee selection — subset of team_members with email. */
-export type MeetMember = { id: string; name: string; email: string };
+export type MeetMember = { id: string; name: string; email: string }
 
 /** Compact primary action tile with an icon and a concise label. */
 export function QuickActionTile({
   icon,
   label,
-  tone = "default",
+  tone = 'default',
   ...props
 }: {
-  icon: ReactNode;
-  label: string;
-  tone?: "default" | "whatsapp";
+  icon: ReactNode
+  label: string
+  tone?: 'default' | 'whatsapp'
 } & React.ComponentProps<typeof Button>) {
   return (
     <Button
@@ -76,17 +76,17 @@ export function QuickActionTile({
       variant="outline"
       size="sm"
       className={cn(
-        "h-8 w-full min-w-0 justify-start gap-2 border-border/80 bg-card/60 px-2.5 text-left font-medium [&>span]:min-w-0",
-        "transition-colors hover:border-foreground/25 hover:bg-muted/60",
-        tone === "whatsapp" &&
-          "border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10",
+        'h-8 w-full min-w-0 justify-start gap-2 border-border/80 bg-card/60 px-2.5 text-left font-medium [&>span]:min-w-0',
+        'transition-colors hover:border-foreground/25 hover:bg-muted/60',
+        tone === 'whatsapp' &&
+          'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
       )}
       {...props}
     >
       {icon}
       <span className="truncate text-xs">{label}</span>
     </Button>
-  );
+  )
 }
 
 function LastAttemptDialog({
@@ -100,74 +100,74 @@ function LastAttemptDialog({
   open,
   onOpenChange,
 }: {
-  leadId: string;
-  leadName: string;
-  leadEmail: string | null;
-  leadPhone: string | null;
-  leadLanguage?: string | null;
-  senderName: string;
-  aiEnabled?: boolean;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  leadId: string
+  leadName: string
+  leadEmail: string | null
+  leadPhone: string | null
+  leadLanguage?: string | null
+  senderName: string
+  aiEnabled?: boolean
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
-  const [channel, setChannel] = useState<"whatsapp" | "email">("whatsapp");
+  const [channel, setChannel] = useState<'whatsapp' | 'email'>('whatsapp')
   const message = buildLeadWhatsAppMessage(
     { id: leadId, name: leadName, email: leadEmail },
     senderName,
     publicEnv.NEXT_PUBLIC_CAL_LINK,
-    leadLanguage === "ca" || leadLanguage === "en" ? leadLanguage : "es",
-  );
-  const firstName = leadName.split(" ")[0] || leadName;
+    leadLanguage === 'ca' || leadLanguage === 'en' ? leadLanguage : 'es',
+  )
+  const firstName = leadName.split(' ')[0] || leadName
   const bookingUrl = buildBookingUrl(publicEnv.NEXT_PUBLIC_CAL_LINK, {
     id: leadId,
     name: leadName,
     email: leadEmail,
-  });
+  })
   const emailSubject =
-    leadLanguage === "ca"
+    leadLanguage === 'ca'
       ? `Parlem del que necessites, ${firstName}?`
-      : leadLanguage === "en"
+      : leadLanguage === 'en'
         ? `Shall we talk about what you need, ${firstName}?`
-        : `¿Hablamos sobre lo que necesitas, ${firstName}?`;
+        : `¿Hablamos sobre lo que necesitas, ${firstName}?`
   const emailBody =
-    leadLanguage === "ca"
+    leadLanguage === 'ca'
       ? [
           `Hola ${firstName},`,
-          `\nSoc ${senderName || "l’equip"}, de Doscientos.`,
-          "\nEns vas deixar les teves dades en un formulari d’un dels nostres anuncis de Meta. T’escric perquè he intentat trucar-te diverses vegades, però no t’he pogut localitzar.",
-          "\nEns agradaria entendre què necessites i veure si et podem ajudar.",
+          `\nSoc ${senderName || 'l’equip'}, de Doscientos.`,
+          '\nEns vas deixar les teves dades en un formulari d’un dels nostres anuncis de Meta. T’escric perquè he intentat trucar-te diverses vegades, però no t’he pogut localitzar.',
+          '\nEns agradaria entendre què necessites i veure si et podem ajudar.',
           bookingUrl
             ? `\nPots respondre aquest correu o, si et va millor, reservar una reunió aquí: ${bookingUrl}`
-            : "\nPots respondre aquest correu i busquem un moment per parlar.",
-          "\nQuina opció et va millor?",
-          "\nUna salutació,",
-          senderName || "L’equip de Doscientos",
-        ].join("\n")
-      : leadLanguage === "en"
+            : '\nPots respondre aquest correu i busquem un moment per parlar.',
+          '\nQuina opció et va millor?',
+          '\nUna salutació,',
+          senderName || 'L’equip de Doscientos',
+        ].join('\n')
+      : leadLanguage === 'en'
         ? [
             `Hi ${firstName},`,
-            `\nI’m ${senderName || "the team"} from Doscientos.`,
-            "\nYou shared your details in a form on one of our Meta ads. I’m writing because I’ve tried calling a few times but haven’t been able to reach you.",
-            "\nWe’d like to understand what you need and see how we can help.",
+            `\nI’m ${senderName || 'the team'} from Doscientos.`,
+            '\nYou shared your details in a form on one of our Meta ads. I’m writing because I’ve tried calling a few times but haven’t been able to reach you.',
+            '\nWe’d like to understand what you need and see how we can help.',
             bookingUrl
               ? `\nYou can reply to this email or, if it’s easier, book a meeting here: ${bookingUrl}`
-              : "\nYou can reply to this email and we can find a time to talk.",
-            "\nWhich option works best for you?",
-            "\nBest,",
-            senderName || "The Doscientos team",
-          ].join("\n")
+              : '\nYou can reply to this email and we can find a time to talk.',
+            '\nWhich option works best for you?',
+            '\nBest,',
+            senderName || 'The Doscientos team',
+          ].join('\n')
         : [
             `Hola ${firstName},`,
-            `\nSoy ${senderName || "el equipo"}, de Doscientos.`,
-            "\nNos dejaste tus datos al completar un formulario en uno de nuestros anuncios de Meta. Te escribo porque he intentado llamarte varias veces, pero no he conseguido localizarte.",
-            "\nNos gustaría entender qué necesitas y ver si podemos ayudarte.",
+            `\nSoy ${senderName || 'el equipo'}, de Doscientos.`,
+            '\nNos dejaste tus datos al completar un formulario en uno de nuestros anuncios de Meta. Te escribo porque he intentado llamarte varias veces, pero no he conseguido localizarte.',
+            '\nNos gustaría entender qué necesitas y ver si podemos ayudarte.',
             bookingUrl
               ? `\nPuedes responderme a este email o, si te va mejor, agendar directamente una reunión aquí: ${bookingUrl}`
-              : "\nPuedes responderme a este email y buscamos un momento para hablar.",
-            "\n¿Qué opción te resulta más cómoda?",
-            "\nUn saludo,",
-            senderName || "El equipo de Doscientos",
-          ].join("\n");
+              : '\nPuedes responderme a este email y buscamos un momento para hablar.',
+            '\n¿Qué opción te resulta más cómoda?',
+            '\nUn saludo,',
+            senderName || 'El equipo de Doscientos',
+          ].join('\n')
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
@@ -181,26 +181,26 @@ function LastAttemptDialog({
         <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
           <button
             type="button"
-            onClick={() => setChannel("whatsapp")}
+            onClick={() => setChannel('whatsapp')}
             className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              channel === "whatsapp" ? "bg-background shadow-sm" : "text-muted-foreground",
+              'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+              channel === 'whatsapp' ? 'bg-background shadow-sm' : 'text-muted-foreground',
             )}
           >
             WhatsApp
           </button>
           <button
             type="button"
-            onClick={() => setChannel("email")}
+            onClick={() => setChannel('email')}
             className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              channel === "email" ? "bg-background shadow-sm" : "text-muted-foreground",
+              'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+              channel === 'email' ? 'bg-background shadow-sm' : 'text-muted-foreground',
             )}
           >
             Email
           </button>
         </div>
-        {channel === "whatsapp" ? (
+        {channel === 'whatsapp' ? (
           <WhatsAppComposer
             leadId={leadId}
             leadName={leadName}
@@ -217,7 +217,7 @@ function LastAttemptDialog({
         ) : (
           <EmailComposer
             leadId={leadId}
-            defaultTo={leadEmail ?? ""}
+            defaultTo={leadEmail ?? ''}
             defaultLanguage={leadLanguage ?? undefined}
             defaultSubject={emailSubject}
             defaultBody={emailBody}
@@ -231,7 +231,7 @@ function LastAttemptDialog({
         )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 // ─── Shared helper: member checkboxes ────────────────────────────────────────
@@ -241,11 +241,11 @@ function MemberCheckboxes({
   selected,
   onToggle,
 }: {
-  members: MeetMember[];
-  selected: Set<string>;
-  onToggle: (id: string) => void;
+  members: MeetMember[]
+  selected: Set<string>
+  onToggle: (id: string) => void
 }) {
-  if (members.length === 0) return null;
+  if (members.length === 0) return null
   return (
     <div className="flex flex-col gap-1.5">
       <Label className="text-xs font-medium">
@@ -269,23 +269,23 @@ function MemberCheckboxes({
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 function useMemberToggle() {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set())
   function toggle(id: string) {
     setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
   function emails(members: MeetMember[]) {
-    return members.filter((m) => selected.has(m.id)).map((m) => m.email);
+    return members.filter((m) => selected.has(m.id)).map((m) => m.email)
   }
-  return { selected, toggle, emails };
+  return { selected, toggle, emails }
 }
 
 // ─── QMeetDialog — scheduled meeting ─────────────────────────────────────────
@@ -297,31 +297,31 @@ export function QMeetDialog({
   projects,
   meetMembers = [],
 }: {
-  leadId: string;
-  leadName: string;
-  leadEmail: string | null;
-  projects: Array<{ id: string; name: string }>;
-  meetMembers?: MeetMember[];
+  leadId: string
+  leadName: string
+  leadEmail: string | null
+  projects: Array<{ id: string; name: string }>
+  meetMembers?: MeetMember[]
 }) {
-  const [open, setOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [title, setTitle] = useState(`Consultoría ${leadName} - Doscientos`);
-  const [start, setStart] = useState(defaultMeetingStart);
-  const [duration, setDuration] = useState<MeetingDuration>(DEFAULT_MEETING_DURATION);
-  const [description, setDescription] = useState("");
-  const [projectId, setProjectId] = useState("");
-  const members = useMemberToggle();
-  const feedback = useFormFeedback();
-  const router = useRouter();
+  const [open, setOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [title, setTitle] = useState(`Consultoría ${leadName} - Doscientos`)
+  const [start, setStart] = useState(defaultMeetingStart)
+  const [duration, setDuration] = useState<MeetingDuration>(DEFAULT_MEETING_DURATION)
+  const [description, setDescription] = useState('')
+  const [projectId, setProjectId] = useState('')
+  const members = useMemberToggle()
+  const feedback = useFormFeedback()
+  const router = useRouter()
 
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setConfirmOpen(true);
+    e.preventDefault()
+    setConfirmOpen(true)
   }
 
   async function handleConfirmSchedule() {
-    feedback.setPending();
-    const attendeeEmails = [...(leadEmail ? [leadEmail] : []), ...members.emails(meetMembers)];
+    feedback.setPending()
+    const attendeeEmails = [...(leadEmail ? [leadEmail] : []), ...members.emails(meetMembers)]
     const res = await scheduleLeadMeeting({
       leadId,
       title,
@@ -331,16 +331,16 @@ export function QMeetDialog({
       attendeeEmails: attendeeEmails.length > 0 ? attendeeEmails : undefined,
       projectId: projectId || undefined,
       withMeet: true,
-    });
+    })
     if (!res.ok) {
-      setConfirmOpen(false);
-      return feedback.setError(res.error);
+      setConfirmOpen(false)
+      return feedback.setError(res.error)
     }
-    setConfirmOpen(false);
-    feedback.setSuccess("Reunión creada");
-    router.refresh();
-    if (res.meetUrl) window.open(res.meetUrl, "_blank");
-    setTimeout(() => setOpen(false), 600);
+    setConfirmOpen(false)
+    feedback.setSuccess('Reunión creada')
+    router.refresh()
+    if (res.meetUrl) window.open(res.meetUrl, '_blank')
+    setTimeout(() => setOpen(false), 600)
   }
 
   return (
@@ -357,8 +357,8 @@ export function QMeetDialog({
             <DialogTitle>Agendar reunión Google Meet</DialogTitle>
             <DialogDescription>
               {leadEmail
-                ? "Se creará en el calendario compartido y se enviará una invitación por email."
-                : "Se creará en el calendario compartido. Este lead no tiene email registrado."}
+                ? 'Se creará en el calendario compartido y se enviará una invitación por email.'
+                : 'Se creará en el calendario compartido. Este lead no tiene email registrado.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={onSubmit} className="flex flex-col gap-3">
@@ -449,7 +449,7 @@ export function QMeetDialog({
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={leadEmail ? "¿Enviar invitación de reunión?" : "¿Crear reunión sin invitar al lead?"}
+        title={leadEmail ? '¿Enviar invitación de reunión?' : '¿Crear reunión sin invitar al lead?'}
         description={
           <>
             {leadEmail ? (
@@ -460,22 +460,22 @@ export function QMeetDialog({
               <p>Este lead no tiene email registrado y no recibirá una invitación.</p>
             )}
             <p className="mt-2">
-              <strong>{title}</strong> · {start.replace("T", " ")}.
+              <strong>{title}</strong> · {start.replace('T', ' ')}.
             </p>
             <p className="mt-2">
               {leadEmail
-                ? "El lead recibirá la invitación en su calendario."
-                : "La reunión se creará sin invitación para el lead."}
+                ? 'El lead recibirá la invitación en su calendario.'
+                : 'La reunión se creará sin invitación para el lead.'}
             </p>
           </>
         }
-        confirmLabel={leadEmail ? "Sí, enviar invitación" : "Sí, crear reunión"}
+        confirmLabel={leadEmail ? 'Sí, enviar invitación' : 'Sí, crear reunión'}
         cancelLabel="Volver a revisar"
         pending={feedback.pending}
         onConfirm={() => void handleConfirmSchedule()}
       />
     </>
-  );
+  )
 }
 
 // ─── QMeetNowDialog — instant Meet ───────────────────────────────────────────
@@ -486,28 +486,28 @@ export function QMeetNowDialog({
   leadEmail,
   meetMembers = [],
 }: {
-  leadId: string;
-  leadName: string;
-  leadEmail: string | null;
-  meetMembers?: MeetMember[];
+  leadId: string
+  leadName: string
+  leadEmail: string | null
+  meetMembers?: MeetMember[]
 }) {
-  const [open, setOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [description, setDescription] = useState("");
-  const members = useMemberToggle();
-  const feedback = useFormFeedback();
-  const router = useRouter();
+  const [open, setOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [description, setDescription] = useState('')
+  const members = useMemberToggle()
+  const feedback = useFormFeedback()
+  const router = useRouter()
 
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setConfirmOpen(true);
+    e.preventDefault()
+    setConfirmOpen(true)
   }
 
   async function handleConfirmCreate() {
-    feedback.setPending();
-    const now = new Date();
-    const endTime = new Date(now.getTime() + 60 * 60 * 1000);
-    const attendeeEmails = [...(leadEmail ? [leadEmail] : []), ...members.emails(meetMembers)];
+    feedback.setPending()
+    const now = new Date()
+    const endTime = new Date(now.getTime() + 60 * 60 * 1000)
+    const attendeeEmails = [...(leadEmail ? [leadEmail] : []), ...members.emails(meetMembers)]
     const res = await scheduleLeadMeeting({
       leadId,
       title: `Consultoría ${leadName} - Doscientos`,
@@ -516,16 +516,16 @@ export function QMeetNowDialog({
       end: endTime.toISOString(),
       attendeeEmails: attendeeEmails.length > 0 ? attendeeEmails : undefined,
       withMeet: true,
-    });
+    })
     if (!res.ok) {
-      setConfirmOpen(false);
-      return feedback.setError(res.error);
+      setConfirmOpen(false)
+      return feedback.setError(res.error)
     }
-    setConfirmOpen(false);
-    feedback.setSuccess("¡Meet creado!");
-    router.refresh();
-    if (res.meetUrl) window.open(res.meetUrl, "_blank");
-    setTimeout(() => setOpen(false), 600);
+    setConfirmOpen(false)
+    feedback.setSuccess('¡Meet creado!')
+    router.refresh()
+    if (res.meetUrl) window.open(res.meetUrl, '_blank')
+    setTimeout(() => setOpen(false), 600)
   }
 
   return (
@@ -542,8 +542,8 @@ export function QMeetNowDialog({
             <DialogTitle>Iniciar Meet ahora</DialogTitle>
             <DialogDescription>
               {leadEmail
-                ? "Se crea el enlace Meet, se abre en una nueva pestaña y se envía invitación."
-                : "Se crea el enlace Meet y se abre en una nueva pestaña. Este lead no tiene email registrado."}
+                ? 'Se crea el enlace Meet, se abre en una nueva pestaña y se envía invitación.'
+                : 'Se crea el enlace Meet y se abre en una nueva pestaña. Este lead no tiene email registrado.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={onSubmit} className="flex flex-col gap-3">
@@ -577,7 +577,7 @@ export function QMeetNowDialog({
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={leadEmail ? "¿Enviar invitación y abrir Meet?" : "¿Crear Meet sin invitar al lead?"}
+        title={leadEmail ? '¿Enviar invitación y abrir Meet?' : '¿Crear Meet sin invitar al lead?'}
         description={
           <>
             {leadEmail ? (
@@ -590,13 +590,13 @@ export function QMeetNowDialog({
             <p className="mt-2">También se abrirá el enlace de Meet en una nueva pestaña.</p>
           </>
         }
-        confirmLabel={leadEmail ? "Sí, crear y enviar" : "Sí, crear y abrir Meet"}
+        confirmLabel={leadEmail ? 'Sí, crear y enviar' : 'Sí, crear y abrir Meet'}
         cancelLabel="Volver a revisar"
         pending={feedback.pending}
         onConfirm={() => void handleConfirmCreate()}
       />
     </>
-  );
+  )
 }
 
 function FollowUpSection({
@@ -606,11 +606,11 @@ function FollowUpSection({
   remindAt,
   onRemindAtChange,
 }: {
-  idPrefix: string;
-  enabled: boolean;
-  onEnabledChange: (v: boolean) => void;
-  remindAt: string;
-  onRemindAtChange: (v: string) => void;
+  idPrefix: string
+  enabled: boolean
+  onEnabledChange: (v: boolean) => void
+  remindAt: string
+  onRemindAtChange: (v: string) => void
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-2.5">
@@ -631,7 +631,7 @@ function FollowUpSection({
         />
       )}
     </div>
-  );
+  )
 }
 
 export function QCallDialog({
@@ -644,87 +644,87 @@ export function QCallDialog({
   aiEnabled,
   openInitially = false,
   defaultDurationMinutes = null,
-  defaultOutcome = "connected",
+  defaultOutcome = 'connected',
   callSessionId,
 }: {
-  leadId: string;
-  leadName: string;
-  leadPhone: string | null;
-  leadEmail: string | null;
-  leadLanguage?: string | null;
-  senderName: string;
-  aiEnabled?: boolean;
-  openInitially?: boolean;
-  defaultDurationMinutes?: number | null;
-  defaultOutcome?: CallOutcome;
-  callSessionId?: string;
+  leadId: string
+  leadName: string
+  leadPhone: string | null
+  leadEmail: string | null
+  leadLanguage?: string | null
+  senderName: string
+  aiEnabled?: boolean
+  openInitially?: boolean
+  defaultDurationMinutes?: number | null
+  defaultOutcome?: CallOutcome
+  callSessionId?: string
 }) {
-  const [open, setOpen] = useState(false);
-  const [digestOpen, setDigestOpen] = useState(false);
-  const [digestKey, setDigestKey] = useState(0);
-  const [momTestOpen, setMomTestOpen] = useState(false);
-  const [digestAfterMomTest, setDigestAfterMomTest] = useState(false);
-  const [momTestValues, setMomTestValues] = useState<MomTestValues | null>(null);
-  const [whatsappOpen, setWhatsappOpen] = useState(false);
-  const [outcome, setOutcome] = useState<CallOutcome>("connected");
-  const [duration, setDuration] = useState(() => defaultDurationMinutes?.toString() ?? "");
-  const [callDate, setCallDate] = useState(todayIsoLocal);
-  const [notes, setNotes] = useState("");
-  const [transcript, setTranscript] = useState("");
-  const [followUpEnabled, setFollowUpEnabled] = useState(false);
-  const [followUpAt, setFollowUpAt] = useState(defaultFollowUpDateTime);
+  const [open, setOpen] = useState(false)
+  const [digestOpen, setDigestOpen] = useState(false)
+  const [digestKey, setDigestKey] = useState(0)
+  const [momTestOpen, setMomTestOpen] = useState(false)
+  const [digestAfterMomTest, setDigestAfterMomTest] = useState(false)
+  const [momTestValues, setMomTestValues] = useState<MomTestValues | null>(null)
+  const [whatsappOpen, setWhatsappOpen] = useState(false)
+  const [outcome, setOutcome] = useState<CallOutcome>('connected')
+  const [duration, setDuration] = useState(() => defaultDurationMinutes?.toString() ?? '')
+  const [callDate, setCallDate] = useState(todayIsoLocal)
+  const [notes, setNotes] = useState('')
+  const [transcript, setTranscript] = useState('')
+  const [followUpEnabled, setFollowUpEnabled] = useState(false)
+  const [followUpAt, setFollowUpAt] = useState(defaultFollowUpDateTime)
   // Meet notes import
-  const [showImport, setShowImport] = useState(false);
-  const [importUrl, setImportUrl] = useState("");
-  const [importing, setImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [summarizingNotes, setSummarizingNotes] = useState(false);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
-  const feedback = useFormFeedback();
-  const router = useRouter();
+  const [showImport, setShowImport] = useState(false)
+  const [importUrl, setImportUrl] = useState('')
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [summarizingNotes, setSummarizingNotes] = useState(false)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
+  const feedback = useFormFeedback()
+  const router = useRouter()
 
   useEffect(() => {
-    if (openInitially) setOpen(true);
-  }, [openInitially]);
+    if (openInitially) setOpen(true)
+  }, [openInitially])
 
   useEffect(() => {
-    if (!open) return;
-    setDuration(defaultDurationMinutes?.toString() ?? "");
-    setOutcome(defaultOutcome);
-  }, [defaultDurationMinutes, defaultOutcome, open]);
+    if (!open) return
+    setDuration(defaultDurationMinutes?.toString() ?? '')
+    setOutcome(defaultOutcome)
+  }, [defaultDurationMinutes, defaultOutcome, open])
 
   async function handleImportNotes() {
-    setImporting(true);
-    setImportError(null);
+    setImporting(true)
+    setImportError(null)
     try {
-      const res = await fetch("/api/crm/meet-notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/crm/meet-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ drive_url: importUrl }),
-      });
-      const json = (await res.json()) as { text?: string; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Error al importar");
-      setNotes(json.text ?? "");
-      setShowImport(false);
-      setImportUrl("");
+      })
+      const json = (await res.json()) as { text?: string; error?: string }
+      if (!res.ok) throw new Error(json.error ?? 'Error al importar')
+      setNotes(json.text ?? '')
+      setShowImport(false)
+      setImportUrl('')
     } catch (err) {
-      setImportError(err instanceof Error ? err.message : "Error al importar");
+      setImportError(err instanceof Error ? err.message : 'Error al importar')
     } finally {
-      setImporting(false);
+      setImporting(false)
     }
   }
 
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
+    e.preventDefault()
     if (notes.length > CALL_NOTES_MAX_LENGTH) {
       feedback.setError(
         aiEnabled
-          ? "Las notas superan 8.000 caracteres. Revísalas o utiliza «Resumir con IA»."
-          : "Las notas superan el límite de 8.000 caracteres. Reduce su extensión para guardarlas.",
-      );
-      return;
+          ? 'Las notas superan 8.000 caracteres. Revísalas o utiliza «Resumir con IA».'
+          : 'Las notas superan el límite de 8.000 caracteres. Reduce su extensión para guardarlas.',
+      )
+      return
     }
-    feedback.setPending();
+    feedback.setPending()
     const res = await logLeadCall({
       leadId,
       notes: notes || undefined,
@@ -733,53 +733,53 @@ export function QCallDialog({
       durationMinutes: duration ? Number(duration) : undefined,
       outcome,
       callDate,
-    });
-    if (!res.ok) return feedback.setError(res.error);
+    })
+    if (!res.ok) return feedback.setError(res.error)
     if (followUpEnabled && followUpAt) {
       await createReminder({
         leadId,
         title: `Llamar a ${leadName}`,
         remindAt: datetimeLocalToIso(followUpAt),
-      });
+      })
     }
-    feedback.setSuccess("Llamada registrada");
-    setNotes("");
-    setTranscript("");
-    setDuration(defaultDurationMinutes?.toString() ?? "");
-    setOutcome(defaultOutcome);
-    setCallDate(todayIsoLocal());
-    setFollowUpEnabled(false);
-    setDigestKey((key) => key + 1);
-    router.refresh();
-    setOpen(false);
+    feedback.setSuccess('Llamada registrada')
+    setNotes('')
+    setTranscript('')
+    setDuration(defaultDurationMinutes?.toString() ?? '')
+    setOutcome(defaultOutcome)
+    setCallDate(todayIsoLocal())
+    setFollowUpEnabled(false)
+    setDigestKey((key) => key + 1)
+    router.refresh()
+    setOpen(false)
     if (res.showMomTestPrompt) {
-      setMomTestValues(res.momTestValues);
-      setDigestAfterMomTest(true);
-      setMomTestOpen(true);
-    } else if (outcome === "connected") {
-      setDigestOpen(true);
+      setMomTestValues(res.momTestValues)
+      setDigestAfterMomTest(true)
+      setMomTestOpen(true)
+    } else if (outcome === 'connected') {
+      setDigestOpen(true)
     } else if (res.noAnswerStreak === 3) {
-      setWhatsappOpen(true);
+      setWhatsappOpen(true)
     }
   }
 
   async function handleSummarizeNotes() {
-    if (!aiEnabled || notes.length <= CALL_NOTES_MAX_LENGTH) return;
-    setSummarizingNotes(true);
-    setSummaryError(null);
+    if (!aiEnabled || notes.length <= CALL_NOTES_MAX_LENGTH) return
+    setSummarizingNotes(true)
+    setSummaryError(null)
     try {
-      const res = await fetch("/api/crm/ai/summarize-call-notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/crm/ai/summarize-call-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: notes }),
-      });
-      const json = (await res.json()) as { text?: string; error?: string };
-      if (!res.ok || !json.text) throw new Error(json.error ?? "No se pudo resumir las notas.");
-      setNotes(json.text);
+      })
+      const json = (await res.json()) as { text?: string; error?: string }
+      if (!res.ok || !json.text) throw new Error(json.error ?? 'No se pudo resumir las notas.')
+      setNotes(json.text)
     } catch (err) {
-      setSummaryError(err instanceof Error ? err.message : "No se pudo resumir las notas.");
+      setSummaryError(err instanceof Error ? err.message : 'No se pudo resumir las notas.')
     } finally {
-      setSummarizingNotes(false);
+      setSummarizingNotes(false)
     }
   }
 
@@ -837,7 +837,7 @@ export function QCallDialog({
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor={`qa-call-notes-${leadId}`} className="text-xs font-medium">
-                  Notas{" "}
+                  Notas{' '}
                   <span className="text-muted-foreground/60">
                     (o transcripción; opcionales si no hubo contacto)
                   </span>
@@ -845,8 +845,8 @@ export function QCallDialog({
                 <button
                   type="button"
                   onClick={() => {
-                    setShowImport(!showImport);
-                    setImportError(null);
+                    setShowImport(!showImport)
+                    setImportError(null)
                   }}
                   className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
@@ -874,7 +874,7 @@ export function QCallDialog({
                       onClick={handleImportNotes}
                       disabled={importing || !importUrl.trim()}
                     >
-                      {importing ? <Loader2 className="size-3 animate-spin" /> : "Importar"}
+                      {importing ? <Loader2 className="size-3 animate-spin" /> : 'Importar'}
                     </Button>
                   </div>
                   {importError && <p className="text-xs text-destructive">{importError}</p>}
@@ -885,17 +885,17 @@ export function QCallDialog({
                 rows={5}
                 value={notes}
                 onChange={(e) => {
-                  setNotes(e.target.value);
-                  setSummaryError(null);
+                  setNotes(e.target.value)
+                  setSummaryError(null)
                 }}
                 placeholder="Puntos clave, próximos pasos…"
               />
               <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                 <span
-                  className={notes.length > CALL_NOTES_MAX_LENGTH ? "text-destructive" : undefined}
+                  className={notes.length > CALL_NOTES_MAX_LENGTH ? 'text-destructive' : undefined}
                 >
-                  {notes.length.toLocaleString("es-ES")} /{" "}
-                  {CALL_NOTES_MAX_LENGTH.toLocaleString("es-ES")}
+                  {notes.length.toLocaleString('es-ES')} /{' '}
+                  {CALL_NOTES_MAX_LENGTH.toLocaleString('es-ES')}
                 </span>
                 {notes.length > CALL_NOTES_MAX_LENGTH && aiEnabled ? (
                   <Button
@@ -911,16 +911,16 @@ export function QCallDialog({
                     ) : (
                       <Sparkles className="size-3" />
                     )}
-                    {summarizingNotes ? "Resumiendo…" : "Resumir con IA"}
+                    {summarizingNotes ? 'Resumiendo…' : 'Resumir con IA'}
                   </Button>
                 ) : null}
               </div>
               {notes.length > CALL_NOTES_MAX_LENGTH ? (
                 <p className="text-xs text-destructive" role="alert">
-                  Las notas superan el límite de 8.000 caracteres.{" "}
+                  Las notas superan el límite de 8.000 caracteres.{' '}
                   {aiEnabled
-                    ? "Puedes resumirlas con IA antes de guardar."
-                    : "Reduce su extensión para poder guardarlas."}
+                    ? 'Puedes resumirlas con IA antes de guardar.'
+                    : 'Reduce su extensión para poder guardarlas.'}
                 </p>
               ) : null}
               {summaryError ? (
@@ -973,10 +973,10 @@ export function QCallDialog({
         leadId={leadId}
         open={momTestOpen}
         onOpenChange={(nextOpen) => {
-          setMomTestOpen(nextOpen);
+          setMomTestOpen(nextOpen)
           if (!nextOpen && digestAfterMomTest) {
-            setDigestAfterMomTest(false);
-            setDigestOpen(true);
+            setDigestAfterMomTest(false)
+            setDigestOpen(true)
           }
         }}
         initialValues={momTestValues}
@@ -993,7 +993,7 @@ export function QCallDialog({
         onOpenChange={setWhatsappOpen}
       />
     </>
-  );
+  )
 }
 
 export function QWhatsAppDialog({
@@ -1005,15 +1005,15 @@ export function QWhatsAppDialog({
   senderName,
   aiEnabled,
 }: {
-  leadId: string;
-  leadName: string;
-  leadEmail: string | null;
-  leadPhone: string | null;
-  leadLanguage?: string | null;
-  senderName: string;
-  aiEnabled?: boolean;
+  leadId: string
+  leadName: string
+  leadEmail: string | null
+  leadPhone: string | null
+  leadLanguage?: string | null
+  senderName: string
+  aiEnabled?: boolean
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -1029,8 +1029,8 @@ export function QWhatsAppDialog({
         onOverlayClick={(event) => {
           // Este diálogo se abre dentro del drawer del panel rápido. Evitamos
           // que el clic exterior cierre ambas capas y cerramos solo el diálogo.
-          event.stopPropagation();
-          setOpen(false);
+          event.stopPropagation()
+          setOpen(false)
         }}
       >
         <DialogHeader>
@@ -1051,33 +1051,33 @@ export function QWhatsAppDialog({
         />
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail: string | null }) {
-  const [open, setOpen] = useState(false);
-  const [direction, setDirection] = useState<"incoming" | "outgoing">("outgoing");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
-  const feedback = useFormFeedback();
-  const router = useRouter();
+  const [open, setOpen] = useState(false)
+  const [direction, setDirection] = useState<'incoming' | 'outgoing'>('outgoing')
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
+  const feedback = useFormFeedback()
+  const router = useRouter()
 
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
-    feedback.setPending();
+    e.preventDefault()
+    feedback.setPending()
     const res = await logLeadEmail({
       leadId,
       direction,
       subject,
       bodyHtml: body.trim() || undefined,
       counterparty: leadEmail ?? undefined,
-    });
-    if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Registrado");
-    setSubject("");
-    setBody("");
-    router.refresh();
-    setTimeout(() => setOpen(false), 400);
+    })
+    if (!res.ok) return feedback.setError(res.error)
+    feedback.setSuccess('Registrado')
+    setSubject('')
+    setBody('')
+    router.refresh()
+    setTimeout(() => setOpen(false), 400)
   }
 
   return (
@@ -1101,7 +1101,7 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
             <Select
               id={`qa-email-dir-${leadId}`}
               value={direction}
-              onChange={(e) => setDirection(e.target.value as "incoming" | "outgoing")}
+              onChange={(e) => setDirection(e.target.value as 'incoming' | 'outgoing')}
             >
               <option value="outgoing">Enviado</option>
               <option value="incoming">Recibido</option>
@@ -1122,7 +1122,7 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`qa-email-body-${leadId}`} className="text-xs font-medium">
-              Cuerpo{" "}
+              Cuerpo{' '}
               <span className="text-muted-foreground/60">(opcional, mejora el resumen IA)</span>
             </Label>
             <Textarea
@@ -1141,24 +1141,24 @@ export function QEmailDialog({ leadId, leadEmail }: { leadId: string; leadEmail:
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 export function QNoteDialog({ leadId }: { leadId: string }) {
-  const [open, setOpen] = useState(false);
-  const [content, setContent] = useState("");
-  const feedback = useFormFeedback();
-  const router = useRouter();
+  const [open, setOpen] = useState(false)
+  const [content, setContent] = useState('')
+  const feedback = useFormFeedback()
+  const router = useRouter()
 
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
-    feedback.setPending();
-    const res = await logLeadNote({ leadId, content });
-    if (!res.ok) return feedback.setError(res.error);
-    feedback.setSuccess("Nota guardada");
-    setContent("");
-    router.refresh();
-    setTimeout(() => setOpen(false), 400);
+    e.preventDefault()
+    feedback.setPending()
+    const res = await logLeadNote({ leadId, content })
+    if (!res.ok) return feedback.setError(res.error)
+    feedback.setSuccess('Nota guardada')
+    setContent('')
+    router.refresh()
+    setTimeout(() => setOpen(false), 400)
   }
 
   return (
@@ -1185,7 +1185,7 @@ export function QNoteDialog({ leadId }: { leadId: string }) {
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 export function QSendEmailDialog({
@@ -1194,17 +1194,17 @@ export function QSendEmailDialog({
   defaultLanguage,
   aiEnabled,
 }: {
-  leadId: string;
-  leadEmail: string | null;
-  defaultLanguage?: string | null;
-  aiEnabled?: boolean;
+  leadId: string
+  leadEmail: string | null
+  defaultLanguage?: string | null
+  aiEnabled?: boolean
 }) {
-  const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   function handleSuccess() {
-    router.refresh();
-    setTimeout(() => setOpen(false), 400);
+    router.refresh()
+    setTimeout(() => setOpen(false), 400)
   }
 
   return (
@@ -1222,7 +1222,7 @@ export function QSendEmailDialog({
         </DialogHeader>
         <EmailComposer
           leadId={leadId}
-          defaultTo={leadEmail ?? ""}
+          defaultTo={leadEmail ?? ''}
           defaultLanguage={defaultLanguage ?? undefined}
           disabled={!leadEmail}
           disabledReason="Este lead no tiene email registrado."
@@ -1231,5 +1231,5 @@ export function QSendEmailDialog({
         />
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,18 +1,18 @@
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
-import type { ReactNode } from "react";
+import { ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+import type { ReactNode } from 'react'
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 type MyDayColumnProps = {
-  icon: ReactNode;
-  title: string;
-  count: number;
-  href: string;
-  empty: ReactNode;
-  children: ReactNode;
-};
+  icon: ReactNode
+  title: string
+  count: number
+  href: string
+  empty: ReactNode
+  children: ReactNode
+}
 
 export function MyDayColumn({ icon, title, count, href, empty, children }: MyDayColumnProps) {
   return (
@@ -39,5 +39,5 @@ export function MyDayColumn({ icon, title, count, href, empty, children }: MyDay
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@doscientos/ui";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@doscientos/ui'
 import {
   ChevronRight,
   Circle as CircleDot,
@@ -11,52 +11,52 @@ import {
   Send,
   UserCheck,
   Users,
-} from "lucide-react";
-import Link from "next/link";
-import type { ComponentType, SVGProps } from "react";
+} from 'lucide-react'
+import Link from 'next/link'
+import type { ComponentType, SVGProps } from 'react'
 
-import { PageHeader } from "@/components/layout/page-header";
-import { StatCard } from "@/components/layout/stat-card";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { requirePageRole } from "@/lib/auth";
-import { groupIntoJourneys, type VisitorJourney } from "@/lib/conversion-events/journeys";
-import { eventLabel, stepLabel } from "@/lib/conversion-events/labels";
-import { type ConversionEventRow, listConversionEvents } from "@/lib/conversion-events/queries";
-import { formatDateTime, relativeTime, truncate } from "@/lib/utils";
+import { PageHeader } from '@/components/layout/page-header'
+import { StatCard } from '@/components/layout/stat-card'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
+import { requirePageRole } from '@/lib/auth'
+import { groupIntoJourneys, type VisitorJourney } from '@/lib/conversion-events/journeys'
+import { eventLabel, stepLabel } from '@/lib/conversion-events/labels'
+import { type ConversionEventRow, listConversionEvents } from '@/lib/conversion-events/queries'
+import { formatDateTime, relativeTime, truncate } from '@/lib/utils'
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+type SearchParams = Promise<Record<string, string | string[] | undefined>>
 
 function param(value: string | string[] | undefined): string | null {
-  if (Array.isArray(value)) return value[0] ?? null;
-  return value ?? null;
+  if (Array.isArray(value)) return value[0] ?? null
+  return value ?? null
 }
 
 function EventBadge({ name }: { name: string }) {
   const variant =
-    name === "whatsapp_click" || name === "lead_created"
-      ? "success"
-      : name.includes("diagnostic")
-        ? "info"
-        : "neutral";
-  return <Badge variant={variant}>{eventLabel(name)}</Badge>;
+    name === 'whatsapp_click' || name === 'lead_created'
+      ? 'success'
+      : name.includes('diagnostic')
+        ? 'info'
+        : 'neutral'
+  return <Badge variant={variant}>{eventLabel(name)}</Badge>
 }
 
 function eventIcon(name: string): ComponentType<SVGProps<SVGSVGElement>> {
-  if (name === "page_view") return Eye;
-  if (name === "whatsapp_click") return MessageCircle;
-  if (name === "cta_click") return MousePointerClick;
-  if (name === "form_started") return FileText;
-  if (name === "form_submit") return Send;
-  if (name === "lead_created") return UserCheck;
-  if (name.includes("diagnostic")) return ClipboardList;
-  return CircleDot;
+  if (name === 'page_view') return Eye
+  if (name === 'whatsapp_click') return MessageCircle
+  if (name === 'cta_click') return MousePointerClick
+  if (name === 'form_started') return FileText
+  if (name === 'form_submit') return Send
+  if (name === 'lead_created') return UserCheck
+  if (name.includes('diagnostic')) return ClipboardList
+  return CircleDot
 }
 
 function JourneyEventRow({ event }: { event: ConversionEventRow }) {
-  const Icon = eventIcon(event.event_name);
+  const Icon = eventIcon(event.event_name)
   return (
     <div className="relative flex gap-3 pb-5 last:pb-0">
       <span className="relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground">
@@ -83,21 +83,21 @@ function JourneyEventRow({ event }: { event: ConversionEventRow }) {
           className="mt-1 truncate text-xs text-muted-foreground"
           title={event.landing_path ?? undefined}
         >
-          {event.landing_path ?? "—"}
+          {event.landing_path ?? '—'}
           {event.landing_ref && ` · ref: ${event.landing_ref}`}
         </p>
       </div>
     </div>
-  );
+  )
 }
 
 function JourneyCard({ journey }: { journey: VisitorJourney }) {
-  const visitorParam = journey.visitorIds[0];
+  const visitorParam = journey.visitorIds[0]
   const previewEvents = (
     journey.events.length > 4 ? [journey.events[0], ...journey.events.slice(-3)] : journey.events
-  ).filter((event): event is ConversionEventRow => event !== undefined);
-  const hiddenEvents = journey.events.length - previewEvents.length;
-  const converted = Boolean(journey.lead);
+  ).filter((event): event is ConversionEventRow => event !== undefined)
+  const hiddenEvents = journey.events.length - previewEvents.length
+  const converted = Boolean(journey.lead)
 
   return (
     <Card className="transition-colors hover:bg-muted/30">
@@ -107,8 +107,8 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
             <span
               className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
                 converted
-                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                  : "bg-muted text-muted-foreground"
+                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                  : 'bg-muted text-muted-foreground'
               }`}
             >
               {converted ? (
@@ -134,7 +134,7 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
               </div>
               <p className="mt-1 truncate text-xs text-muted-foreground">
                 <span className="text-foreground">
-                  {journey.entryPath ?? "Sin página de entrada"}
+                  {journey.entryPath ?? 'Sin página de entrada'}
                 </span>
                 <span className="px-1.5 text-muted-foreground/60">·</span>
                 {journey.source}
@@ -155,7 +155,7 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
             <div className="text-right text-xs text-muted-foreground">
               <p className="font-medium text-foreground">{relativeTime(journey.lastSeen)}</p>
               <p>
-                {journey.events.length} {journey.events.length === 1 ? "evento" : "eventos"}
+                {journey.events.length} {journey.events.length === 1 ? 'evento' : 'eventos'}
               </p>
             </div>
           </div>
@@ -170,7 +170,7 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
             aria-label="Resumen del recorrido"
           >
             {previewEvents.map((event, index) => {
-              const Icon = eventIcon(event.event_name);
+              const Icon = eventIcon(event.event_name)
               return (
                 <li key={event.id} className="flex shrink-0 items-center gap-1">
                   {index > 0 && (
@@ -184,7 +184,7 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
                     <span className="truncate">{eventLabel(event.event_name)}</span>
                   </span>
                 </li>
-              );
+              )
             })}
           </ol>
         </div>
@@ -215,29 +215,29 @@ function JourneyCard({ journey }: { journey: VisitorJourney }) {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export default async function ConversionEventsPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: SearchParams
 }) {
-  await requirePageRole(["owner", "admin"]);
-  const sp = await searchParams;
-  const eventName = param(sp.event);
-  const visitorId = param(sp.visitor);
-  const events = await listConversionEvents({ eventName, visitorId, limit: 300 });
-  const journeys = groupIntoJourneys(events);
-  const convertedCount = journeys.filter((j) => j.lead).length;
-  const whatsappCount = journeys.filter((j) => j.hasWhatsappClick).length;
+  await requirePageRole(['owner', 'admin'])
+  const sp = await searchParams
+  const eventName = param(sp.event)
+  const visitorId = param(sp.visitor)
+  const events = await listConversionEvents({ eventName, visitorId, limit: 300 })
+  const journeys = groupIntoJourneys(events)
+  const convertedCount = journeys.filter((j) => j.lead).length
+  const whatsappCount = journeys.filter((j) => j.hasWhatsappClick).length
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Eventos de conversión"
         description="Recorridos de visitantes desde la primera visita hasta la conversión, agrupados por persona."
-        breadcrumbs={[{ label: "Marketing", href: "/marketing" }, { label: "Eventos" }]}
+        breadcrumbs={[{ label: 'Marketing', href: '/marketing' }, { label: 'Eventos' }]}
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -269,15 +269,15 @@ export default async function ConversionEventsPage({
             Filtrando por
             {eventName && (
               <>
-                {" "}
+                {' '}
                 evento <span className="font-medium text-foreground">{eventLabel(eventName)}</span>
               </>
             )}
-            {eventName && visitorId && " y"}
+            {eventName && visitorId && ' y'}
             {visitorId && (
               <>
-                {" "}
-                visitante{" "}
+                {' '}
+                visitante{' '}
                 <span className="font-medium text-foreground">{truncate(visitorId, 14)}</span>
               </>
             )}
@@ -299,7 +299,7 @@ export default async function ConversionEventsPage({
           <div className="flex items-center justify-between gap-3 px-1">
             <h2 className="text-sm font-medium">Actividad reciente</h2>
             <span className="text-xs text-muted-foreground">
-              {journeys.length} {journeys.length === 1 ? "recorrido" : "recorridos"}
+              {journeys.length} {journeys.length === 1 ? 'recorrido' : 'recorridos'}
             </span>
           </div>
           {journeys.map((journey) => (
@@ -308,5 +308,5 @@ export default async function ConversionEventsPage({
         </section>
       )}
     </div>
-  );
+  )
 }

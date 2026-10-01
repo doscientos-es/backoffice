@@ -1,7 +1,7 @@
-import { CircleUser as UserRoundX } from "lucide-react";
-import Link from "next/link";
+import { CircleUser as UserRoundX } from 'lucide-react'
+import Link from 'next/link'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 
 export default function LeadNotFound() {
   return (
@@ -27,5 +27,5 @@ export default function LeadNotFound() {
         </Button>
       </div>
     </div>
-  );
+  )
 }

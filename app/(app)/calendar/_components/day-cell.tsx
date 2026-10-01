@@ -1,29 +1,29 @@
-"use client";
+'use client'
 
-import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { format } from "date-fns";
+import { useDraggable, useDroppable } from '@dnd-kit/core'
+import { format } from 'date-fns'
 
-import type { CalendarEvent } from "@/lib/calendar/types";
-import { cn } from "@/lib/utils";
+import type { CalendarEvent } from '@/lib/calendar/types'
+import { cn } from '@/lib/utils'
 
-import { EventChip, useCalendarCreate } from "./calendar-grid";
+import { EventChip, useCalendarCreate } from './calendar-grid'
 
 type DayCellProps = {
-  day: Date;
-  events: CalendarEvent[];
-  isCurrentMonth: boolean;
-  isToday: boolean;
-};
+  day: Date
+  events: CalendarEvent[]
+  isCurrentMonth: boolean
+  isToday: boolean
+}
 
-const MAX_VISIBLE = 3;
+const MAX_VISIBLE = 3
 
 export function DayCell({ day, events, isCurrentMonth, isToday }: DayCellProps) {
-  const isoDate = format(day, "yyyy-MM-dd");
-  const { setNodeRef, isOver } = useDroppable({ id: isoDate });
-  const openCreate = useCalendarCreate();
+  const isoDate = format(day, 'yyyy-MM-dd')
+  const { setNodeRef, isOver } = useDroppable({ id: isoDate })
+  const openCreate = useCalendarCreate()
 
-  const visible = events.slice(0, MAX_VISIBLE);
-  const overflow = events.length - MAX_VISIBLE;
+  const visible = events.slice(0, MAX_VISIBLE)
+  const overflow = events.length - MAX_VISIBLE
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: mouse-only quick-create convenience; the "+" button below is the accessible equivalent
@@ -31,26 +31,26 @@ export function DayCell({ day, events, isCurrentMonth, isToday }: DayCellProps) 
       ref={setNodeRef}
       onClick={() => openCreate(isoDate)}
       className={cn(
-        "flex min-h-22.5 cursor-pointer flex-col gap-1 p-1.5 transition-colors",
-        isOver && "bg-secondary/60",
-        !isCurrentMonth && "opacity-40",
+        'flex min-h-22.5 cursor-pointer flex-col gap-1 p-1.5 transition-colors',
+        isOver && 'bg-secondary/60',
+        !isCurrentMonth && 'opacity-40',
       )}
     >
       <button
         type="button"
         onClick={(e) => {
-          e.stopPropagation();
-          openCreate(isoDate);
+          e.stopPropagation()
+          openCreate(isoDate)
         }}
         aria-label={`Crear evento el ${isoDate}`}
         className={cn(
-          "flex h-6 w-6 items-center justify-center self-end rounded-full text-xs font-medium transition-colors",
+          'flex h-6 w-6 items-center justify-center self-end rounded-full text-xs font-medium transition-colors',
           isToday
-            ? "bg-primary text-primary-foreground hover:bg-primary/80"
-            : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+            ? 'bg-primary text-primary-foreground hover:bg-primary/80'
+            : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
         )}
       >
-        {format(day, "d")}
+        {format(day, 'd')}
       </button>
       <div className="flex flex-col gap-0.5 overflow-hidden">
         {visible.map((e) =>
@@ -61,11 +61,11 @@ export function DayCell({ day, events, isCurrentMonth, isToday }: DayCellProps) 
         )}
       </div>
     </div>
-  );
+  )
 }
 
 function DraggableChip({ event }: { event: CalendarEvent }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: event.id });
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: event.id })
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: role/tabIndex/keyboard handling supplied by dnd-kit's {...attributes}/{...listeners}
     <div
@@ -73,9 +73,9 @@ function DraggableChip({ event }: { event: CalendarEvent }) {
       {...listeners}
       {...attributes}
       onClick={(e) => e.stopPropagation()}
-      className={cn("cursor-grab touch-none active:cursor-grabbing", isDragging && "opacity-40")}
+      className={cn('cursor-grab touch-none active:cursor-grabbing', isDragging && 'opacity-40')}
     >
       <EventChip event={event} />
     </div>
-  );
+  )
 }

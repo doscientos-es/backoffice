@@ -1,15 +1,15 @@
-"use client";
+'use client'
 
-import { TriangleAlert as AlertTriangle } from "lucide-react";
+import { TriangleAlert as AlertTriangle } from 'lucide-react'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 
 export default function PortalError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error: Error & { digest?: string }
+  reset: () => void
 }) {
   return (
     <div className="mx-4 my-10 flex min-h-[28rem] flex-col items-center justify-center gap-6 rounded-[1.75rem] border border-black/[0.07] bg-white px-6 py-16 text-center shadow-sm sm:mx-6 dark:border-white/[0.09] dark:bg-[#181b17]">
@@ -32,5 +32,5 @@ export default function PortalError({
         Reintentar
       </Button>
     </div>
-  );
+  )
 }

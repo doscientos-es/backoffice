@@ -1,43 +1,43 @@
-"use client";
+'use client'
 
-import { useState, useTransition } from "react";
+import { useState, useTransition } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { SubmitButton } from "@/components/ui/submit-button";
-import type { CompanyGoals } from "@/lib/dashboard/types";
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { SubmitButton } from '@/components/ui/submit-button'
+import type { CompanyGoals } from '@/lib/dashboard/types'
 
-import { upsertCompanyGoals } from "./actions";
+import { upsertCompanyGoals } from './actions'
 
 export function GoalsForm({ goals }: { goals: CompanyGoals }) {
   const [leadsNew, setLeadsNew] = useState(
-    goals.leads_new ? String(Math.round(goals.leads_new)) : "",
-  );
-  const [revenue, setRevenue] = useState(goals.revenue ? String(Math.round(goals.revenue)) : "");
+    goals.leads_new ? String(Math.round(goals.leads_new)) : '',
+  )
+  const [revenue, setRevenue] = useState(goals.revenue ? String(Math.round(goals.revenue)) : '')
   const [conversionRate, setConversionRate] = useState(
-    goals.conversion_rate ? String(Math.round(goals.conversion_rate * 100)) : "",
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-  const [isPending, startTransition] = useTransition();
+    goals.conversion_rate ? String(Math.round(goals.conversion_rate * 100)) : '',
+  )
+  const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setSaved(false);
+    e.preventDefault()
+    setError(null)
+    setSaved(false)
     startTransition(async () => {
       const result = await upsertCompanyGoals({
         leadsNew: leadsNew ? Number(leadsNew) : null,
         revenue: revenue ? Number(revenue) : null,
         conversionRate: conversionRate ? Number(conversionRate) : null,
-      });
+      })
       if (result.ok) {
-        setSaved(true);
+        setSaved(true)
       } else {
-        setError(result.error);
+        setError(result.error)
       }
-    });
+    })
   }
 
   return (
@@ -104,9 +104,9 @@ export function GoalsForm({ goals }: { goals: CompanyGoals }) {
             variant="ghost"
             size="sm"
             onClick={() => {
-              setLeadsNew("");
-              setRevenue("");
-              setConversionRate("");
+              setLeadsNew('')
+              setRevenue('')
+              setConversionRate('')
             }}
           >
             Borrar todo
@@ -114,5 +114,5 @@ export function GoalsForm({ goals }: { goals: CompanyGoals }) {
         )}
       </div>
     </form>
-  );
+  )
 }

@@ -1,59 +1,59 @@
-import { CalendarDays } from "lucide-react";
-import type { Metadata } from "next";
+import { CalendarDays } from 'lucide-react'
+import type { Metadata } from 'next'
 
 import {
   AccountsReceivableSkeleton,
   AccountsReceivableWidget,
-} from "@/components/finance/accounts-receivable-card";
+} from '@/components/finance/accounts-receivable-card'
 import {
   MonthExpensesSkeleton,
   MonthExpensesWidget,
-} from "@/components/finance/month-expenses-card";
-import { PasskeyStatusCard } from "@/components/security/passkey-status-card";
-import { SectionBoundary } from "@/components/ui/error-boundary";
-import { canViewFinance, requireUser } from "@/lib/auth";
-import { hasRegisteredPasskey } from "@/lib/security/webauthn";
-import { getGreeting, parseDashboardRange } from "@/lib/utils/date";
+} from '@/components/finance/month-expenses-card'
+import { PasskeyStatusCard } from '@/components/security/passkey-status-card'
+import { SectionBoundary } from '@/components/ui/error-boundary'
+import { canViewFinance, requireUser } from '@/lib/auth'
+import { hasRegisteredPasskey } from '@/lib/security/webauthn'
+import { getGreeting, parseDashboardRange } from '@/lib/utils/date'
 
-import { AvisosWidget } from "./_components/avisos-widget";
-import { EnablePushBanner } from "./_components/enable-push-banner";
-import { KpiGrid } from "./_components/kpi-grid";
-import { getMyDayScope } from "./_components/my-day-scope";
-import { MyDayScopeSelector } from "./_components/my-day-scope-selector";
-import { MyDayWidget } from "./_components/my-day-widget";
-import { RangeSelector } from "./_components/range-selector";
-import { RevenueWidget } from "./_components/revenue-widget";
+import { AvisosWidget } from './_components/avisos-widget'
+import { EnablePushBanner } from './_components/enable-push-banner'
+import { KpiGrid } from './_components/kpi-grid'
+import { getMyDayScope } from './_components/my-day-scope'
+import { MyDayScopeSelector } from './_components/my-day-scope-selector'
+import { MyDayWidget } from './_components/my-day-widget'
+import { RangeSelector } from './_components/range-selector'
+import { RevenueWidget } from './_components/revenue-widget'
 import {
   AvisosWidgetSkeleton,
   KpiGridSkeleton,
   MyDayWidgetSkeleton,
   RangeSelectorSkeleton,
   RevenueWidgetSkeleton,
-} from "./_components/widget-skeletons";
-import { ActionCenterWidget } from "./action-center-widget";
+} from './_components/widget-skeletons'
+import { ActionCenterWidget } from './action-center-widget'
 
-export const metadata: Metadata = { title: "Inicio · doscientos" };
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: 'Inicio · doscientos' }
+export const dynamic = 'force-dynamic'
 
 type PageProps = {
-  searchParams: Promise<{ range?: string | string[]; member?: string | string[] }>;
-};
+  searchParams: Promise<{ range?: string | string[]; member?: string | string[] }>
+}
 
 export default async function InicioPage({ searchParams }: PageProps) {
-  const [user, params] = await Promise.all([requireUser(), searchParams]);
+  const [user, params] = await Promise.all([requireUser(), searchParams])
   const [passkeyConfigured, myDayScope] = await Promise.all([
     hasRegisteredPasskey(user.id),
     getMyDayScope({ user, member: params.member }),
-  ]);
-  const range = parseDashboardRange(params.range);
-  const greeting = getGreeting();
-  const firstName = user.name.split(" ")[0];
-  const showFinance = canViewFinance(user.role);
-  const today = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
+  ])
+  const range = parseDashboardRange(params.range)
+  const greeting = getGreeting()
+  const firstName = user.name.split(' ')[0]
+  const showFinance = canViewFinance(user.role)
+  const today = new Intl.DateTimeFormat('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(new Date())
 
   return (
     <div className="flex flex-col gap-10 pb-4">
@@ -163,5 +163,5 @@ export default async function InicioPage({ searchParams }: PageProps) {
         </div>
       </section>
     </div>
-  );
+  )
 }

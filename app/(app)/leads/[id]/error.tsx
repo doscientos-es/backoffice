@@ -1,17 +1,17 @@
-"use client";
+'use client'
 
-import { TriangleAlert as AlertTriangle } from "lucide-react";
-import Link from "next/link";
+import { TriangleAlert as AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 
 /** Catches errors thrown while rendering an individual lead detail page. */
 export default function LeadDetailError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error: Error & { digest?: string }
+  reset: () => void
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-6 py-24 text-center">
@@ -34,5 +34,5 @@ export default function LeadDetailError({
         </Button>
       </div>
     </div>
-  );
+  )
 }

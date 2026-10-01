@@ -1,35 +1,35 @@
-"use client";
+'use client'
 
-import { LoaderCircle } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { LoaderCircle } from 'lucide-react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState, useTransition } from 'react'
 
-import { Select } from "@/components/ui/select";
+import { Select } from '@/components/ui/select'
 
-import type { MyDayScope } from "./my-day-types";
+import type { MyDayScope } from './my-day-types'
 
 export function MyDayScopeSelector({ scope }: { scope: MyDayScope }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [pending, startTransition] = useTransition();
-  const [selectedValue, setSelectedValue] = useState(scope.value);
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [pending, startTransition] = useTransition()
+  const [selectedValue, setSelectedValue] = useState(scope.value)
 
   useEffect(() => {
-    setSelectedValue(scope.value);
-  }, [scope.value]);
+    setSelectedValue(scope.value)
+  }, [scope.value])
 
   function updateScope(value: string) {
-    if (value === scope.value) return;
+    if (value === scope.value) return
 
-    setSelectedValue(value);
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set("member", value);
-    else params.delete("member");
-    const query = params.toString();
+    setSelectedValue(value)
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) params.set('member', value)
+    else params.delete('member')
+    const query = params.toString()
     startTransition(() => {
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    });
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    })
   }
 
   return (
@@ -66,5 +66,5 @@ export function MyDayScopeSelector({ scope }: { scope: MyDayScope }) {
         ) : null}
       </span>
     </div>
-  );
+  )
 }

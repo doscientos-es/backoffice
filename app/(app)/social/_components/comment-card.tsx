@@ -1,18 +1,18 @@
-"use client";
+'use client'
 
-import { Heart, MessageSquare, Undo2 as Reply } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+import { Heart, MessageSquare, Undo2 as Reply } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Textarea } from "@/components/ui/textarea";
-import type { CommentView } from "@/lib/social/types";
-import { cn, formatDateTime, relativeTime } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Textarea } from '@/components/ui/textarea'
+import type { CommentView } from '@/lib/social/types'
+import { cn, formatDateTime, relativeTime } from '@/lib/utils'
 
-import { replyToComment } from "../actions";
-import { PlatformChip } from "./platform";
+import { replyToComment } from '../actions'
+import { PlatformChip } from './platform'
 
 /**
  * Unified comment inbox item. Shows the original comment, platform info,
@@ -22,31 +22,31 @@ export function CommentCard({
   comment,
   showPostContext = true,
 }: {
-  comment: CommentView;
-  showPostContext?: boolean;
+  comment: CommentView
+  showPostContext?: boolean
 }) {
-  const [showReply, setShowReply] = useState(false);
-  const [replyText, setReplyText] = useState("");
-  const { state, setPending, setSuccess, setError, pending } = useFormFeedback();
+  const [showReply, setShowReply] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const { state, setPending, setSuccess, setError, pending } = useFormFeedback()
 
   async function handleReply() {
-    if (!replyText.trim()) return;
-    setPending();
+    if (!replyText.trim()) return
+    setPending()
     const res = await replyToComment({
       commentId: comment.id,
       message: replyText,
-    });
+    })
     if (!res.ok) {
-      setError(res.error);
-      return;
+      setError(res.error)
+      return
     }
-    setSuccess("Respuesta enviada");
-    setReplyText("");
-    setTimeout(() => setShowReply(false), 2000);
+    setSuccess('Respuesta enviada')
+    setReplyText('')
+    setTimeout(() => setShowReply(false), 2000)
   }
 
   return (
-    <Card className={cn("overflow-hidden", comment.replied && "bg-muted/30 opacity-80")}>
+    <Card className={cn('overflow-hidden', comment.replied && 'bg-muted/30 opacity-80')}>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
         <div className="flex min-w-0 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-2">
@@ -114,7 +114,7 @@ export function CommentCard({
                   Cancelar
                 </Button>
                 <Button size="sm" onClick={handleReply} disabled={pending || !replyText.trim()}>
-                  {pending ? "Enviando..." : "Enviar"}
+                  {pending ? 'Enviando...' : 'Enviar'}
                 </Button>
               </div>
             </div>
@@ -122,7 +122,7 @@ export function CommentCard({
         )}
       </CardFooter>
     </Card>
-  );
+  )
 }
 
 function PostContext({ comment }: { comment: CommentView }) {
@@ -132,22 +132,22 @@ function PostContext({ comment }: { comment: CommentView }) {
       <span className="shrink-0 font-medium">En post:</span>
       <span
         className="line-clamp-2 min-w-0 flex-1 break-words italic"
-        title={comment.postCaption || "(Sin texto)"}
+        title={comment.postCaption || '(Sin texto)'}
       >
-        "{comment.postCaption || "(Sin texto)"}"
+        "{comment.postCaption || '(Sin texto)'}"
       </span>
     </>
-  );
+  )
   const className =
-    "mt-3 flex min-w-0 items-start gap-1.5 rounded-lg border border-border/50 bg-muted/20 px-2 py-1.5 text-[11px] text-muted-foreground";
+    'mt-3 flex min-w-0 items-start gap-1.5 rounded-lg border border-border/50 bg-muted/20 px-2 py-1.5 text-[11px] text-muted-foreground'
 
-  if (!comment.postId) return <div className={className}>{content}</div>;
+  if (!comment.postId) return <div className={className}>{content}</div>
   return (
     <Link
       href={`/social/${comment.postId}`}
-      className={cn(className, "hover:border-border hover:bg-muted/40")}
+      className={cn(className, 'hover:border-border hover:bg-muted/40')}
     >
       {content}
     </Link>
-  );
+  )
 }

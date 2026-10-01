@@ -1,1 +1,1 @@
-export * from "@/primitives/ui/tabs";
+export * from '@/primitives/ui/tabs'

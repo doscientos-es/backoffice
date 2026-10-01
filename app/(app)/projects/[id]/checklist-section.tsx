@@ -1,58 +1,58 @@
-"use client";
+'use client'
 
-import { CircleCheck as CheckCircle2, Circle, Plus, Trash as Trash2 } from "lucide-react";
-import { useRef, useTransition } from "react";
+import { CircleCheck as CheckCircle2, Circle, Plus, Trash as Trash2 } from 'lucide-react'
+import { useRef, useTransition } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
-import { addChecklistItem, deleteChecklistItem, toggleChecklistItem } from "../checklist-actions";
+import { addChecklistItem, deleteChecklistItem, toggleChecklistItem } from '../checklist-actions'
 
 export type ChecklistItemRow = {
-  id: string;
-  label: string;
-  is_done: boolean;
-  position: number;
-};
+  id: string
+  label: string
+  is_done: boolean
+  position: number
+}
 
 export function ChecklistSection({
   projectId,
   items,
   canEdit,
 }: {
-  projectId: string;
-  items: ChecklistItemRow[];
-  canEdit: boolean;
+  projectId: string
+  items: ChecklistItemRow[]
+  canEdit: boolean
 }) {
-  const [pending, startTransition] = useTransition();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [pending, startTransition] = useTransition()
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const done = items.filter((i) => i.is_done);
-  const todo = items.filter((i) => !i.is_done);
-  const pct = items.length === 0 ? 0 : Math.round((done.length / items.length) * 100);
+  const done = items.filter((i) => i.is_done)
+  const todo = items.filter((i) => !i.is_done)
+  const pct = items.length === 0 ? 0 : Math.round((done.length / items.length) * 100)
 
   function handleToggle(id: string, current: boolean) {
     startTransition(async () => {
-      await toggleChecklistItem({ id, is_done: !current });
-    });
+      await toggleChecklistItem({ id, is_done: !current })
+    })
   }
 
   function handleDelete(id: string) {
     startTransition(async () => {
-      await deleteChecklistItem({ id });
-    });
+      await deleteChecklistItem({ id })
+    })
   }
 
   function handleAdd(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const label = inputRef.current?.value.trim();
-    if (!label) return;
+    e.preventDefault()
+    const label = inputRef.current?.value.trim()
+    if (!label) return
     startTransition(async () => {
-      await addChecklistItem({ project_id: projectId, label });
-      if (inputRef.current) inputRef.current.value = "";
-    });
+      await addChecklistItem({ project_id: projectId, label })
+      if (inputRef.current) inputRef.current.value = ''
+    })
   }
 
   return (
@@ -71,8 +71,8 @@ export function ChecklistSection({
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all",
-                  pct === 100 ? "bg-emerald-500" : "bg-primary",
+                  'h-full rounded-full transition-all',
+                  pct === 100 ? 'bg-emerald-500' : 'bg-primary',
                 )}
                 style={{ width: `${pct}%` }}
               />
@@ -126,7 +126,7 @@ export function ChecklistSection({
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function ItemRow({
@@ -135,10 +135,10 @@ function ItemRow({
   onToggle,
   onDelete,
 }: {
-  item: ChecklistItemRow;
-  canEdit: boolean;
-  onToggle: (id: string, current: boolean) => void;
-  onDelete: (id: string) => void;
+  item: ChecklistItemRow
+  canEdit: boolean
+  onToggle: (id: string, current: boolean) => void
+  onDelete: (id: string) => void
 }) {
   return (
     <div className="group flex items-center gap-3 px-6 py-1.5 transition-colors hover:bg-muted/40">
@@ -147,15 +147,15 @@ function ItemRow({
         onClick={() => canEdit && onToggle(item.id, item.is_done)}
         disabled={!canEdit}
         className={cn(
-          "shrink-0 transition-colors",
-          item.is_done ? "text-emerald-500" : "text-muted-foreground hover:text-foreground",
-          !canEdit && "cursor-default",
+          'shrink-0 transition-colors',
+          item.is_done ? 'text-emerald-500' : 'text-muted-foreground hover:text-foreground',
+          !canEdit && 'cursor-default',
         )}
-        aria-label={item.is_done ? "Marcar pendiente" : "Marcar hecho"}
+        aria-label={item.is_done ? 'Marcar pendiente' : 'Marcar hecho'}
       >
         {item.is_done ? <CheckCircle2 className="size-4" /> : <Circle className="size-4" />}
       </button>
-      <span className={cn("flex-1 text-sm", item.is_done && "text-muted-foreground line-through")}>
+      <span className={cn('flex-1 text-sm', item.is_done && 'text-muted-foreground line-through')}>
         {item.label}
       </span>
       {canEdit && (
@@ -169,5 +169,5 @@ function ItemRow({
         </button>
       )}
     </div>
-  );
+  )
 }

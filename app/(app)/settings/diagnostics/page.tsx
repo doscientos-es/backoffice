@@ -1,29 +1,28 @@
-import { PageHeader } from "@/components/layout/page-header";
-import { PasskeyStatusCard } from "@/components/security/passkey-status-card";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requirePageRole } from "@/lib/auth";
-import { getSystemStatus } from "@/lib/diagnostics/system-status";
-import { hasRegisteredPasskey } from "@/lib/security/webauthn";
-import { getVerifactuDiagnosticGate } from "@/lib/verifactu/diagnostics";
+import { PageHeader } from '@/components/layout/page-header'
+import { PasskeyStatusCard } from '@/components/security/passkey-status-card'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { requirePageRole } from '@/lib/auth'
+import { getSystemStatus } from '@/lib/diagnostics/system-status'
+import { hasRegisteredPasskey } from '@/lib/security/webauthn'
+import { getVerifactuDiagnosticGate } from '@/lib/verifactu/diagnostics'
 
-import { DiagnosticsPanel } from "./diagnostics-panel";
+import { DiagnosticsPanel } from './diagnostics-panel'
 
-export const metadata = { title: "Diagnóstico · Ajustes · doscientos" };
-export const dynamic = "force-dynamic";
+export const metadata = { title: 'Diagnóstico · Ajustes · doscientos' }
+export const dynamic = 'force-dynamic'
 
 export default async function DiagnosticsSettingsPage() {
-  const user = await requirePageRole(["owner", "admin"]);
-  const status = getSystemStatus();
-  const passkeyConfigured = await hasRegisteredPasskey(user.id);
-  const verifactuGate = await getVerifactuDiagnosticGate();
+  const user = await requirePageRole(['owner', 'admin'])
+  const status = getSystemStatus()
+  const passkeyConfigured = await hasRegisteredPasskey(user.id)
+  const verifactuGate = await getVerifactuDiagnosticGate()
 
-  const byKey = (key: string) =>
-    status.integrations.find((i) => i.key === key)?.configured ?? false;
+  const byKey = (key: string) => status.integrations.find((i) => i.key === key)?.configured ?? false
   const config = {
-    ai: byKey("ai"),
+    ai: byKey('ai'),
     verifactuGate,
-  };
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,8 +49,8 @@ export default async function DiagnosticsSettingsPage() {
                     <p className="truncate text-xs text-muted-foreground">{item.detail}</p>
                   ) : null}
                 </div>
-                <Badge variant={item.configured ? "success" : "neutral"} className="shrink-0">
-                  {item.configured ? "Configurado" : "No configurado"}
+                <Badge variant={item.configured ? 'success' : 'neutral'} className="shrink-0">
+                  {item.configured ? 'Configurado' : 'No configurado'}
                 </Badge>
               </li>
             ))}
@@ -61,7 +60,7 @@ export default async function DiagnosticsSettingsPage() {
             {status.runtime.map((item) => (
               <div key={item.key} className="flex items-center justify-between gap-3 text-sm">
                 <dt className="text-muted-foreground">{item.label}</dt>
-                <dd className="truncate font-mono text-xs">{item.value || "—"}</dd>
+                <dd className="truncate font-mono text-xs">{item.value || '—'}</dd>
               </div>
             ))}
           </dl>
@@ -72,5 +71,5 @@ export default async function DiagnosticsSettingsPage() {
 
       <DiagnosticsPanel config={config} />
     </div>
-  );
+  )
 }

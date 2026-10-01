@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/input-group";
+﻿export * from '@/primitives/ui/input-group'

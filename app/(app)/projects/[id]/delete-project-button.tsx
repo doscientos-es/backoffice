@@ -1,12 +1,12 @@
-"use client";
+'use client'
 
-import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@doscientos/ui";
-import { Ellipsis as MoreHorizontal, Trash as Trash2 } from "lucide-react";
+import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@doscientos/ui'
+import { Ellipsis as MoreHorizontal, Trash as Trash2 } from 'lucide-react'
 
-import { Button } from "@/components/ui/button";
-import { useUndoableDelete } from "@/lib/hooks/use-undoable-delete";
+import { Button } from '@/components/ui/button'
+import { useUndoableDelete } from '@/lib/hooks/use-undoable-delete'
 
-import { deleteProject, restoreProject } from "../actions";
+import { deleteProject, restoreProject } from '../actions'
 
 /**
  * Kebab menu hosting destructive actions for a project. Soft-deletes via
@@ -15,11 +15,11 @@ import { deleteProject, restoreProject } from "../actions";
  */
 export function DeleteProjectButton({ projectId }: { projectId: string }) {
   const { run: onDelete, pending } = useUndoableDelete({
-    successMessage: "Proyecto eliminado",
+    successMessage: 'Proyecto eliminado',
     onDelete: () => deleteProject({ id: projectId }),
     onRestore: () => restoreProject({ id: projectId }),
-    redirectTo: "/projects",
-  });
+    redirectTo: '/projects',
+  })
 
   return (
     <div className="flex items-center gap-2">
@@ -35,5 +35,5 @@ export function DeleteProjectButton({ projectId }: { projectId: string }) {
         </DropdownMenuContent>
       </DropdownMenuTrigger>
     </div>
-  );
+  )
 }

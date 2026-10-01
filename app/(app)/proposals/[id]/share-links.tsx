@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   TriangleAlert as AlertTriangle,
@@ -7,33 +7,33 @@ import {
   ExternalLink,
   FileText,
   Presentation,
-} from "lucide-react";
-import { useState } from "react";
-import { sileo } from "sileo";
+} from 'lucide-react'
+import { useState } from 'react'
+import { sileo } from 'sileo'
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
-type ShareLinkKind = "portal" | "deck";
+type ShareLinkKind = 'portal' | 'deck'
 
 type Meta = {
-  label: string;
-  path: (token: string) => string;
-  Icon: typeof FileText;
-};
+  label: string
+  path: (token: string) => string
+  Icon: typeof FileText
+}
 
 const META: Record<ShareLinkKind, Meta> = {
-  portal: { label: "Propuesta", path: (t) => `/p/proposal/${t}`, Icon: FileText },
-  deck: { label: "Presentación", path: (t) => `/deck/${t}`, Icon: Presentation },
-};
+  portal: { label: 'Propuesta', path: (t) => `/p/proposal/${t}`, Icon: FileText },
+  deck: { label: 'Presentación', path: (t) => `/deck/${t}`, Icon: Presentation },
+}
 
 function formatViewedAt(value: string): string {
-  return new Date(value).toLocaleString("es-ES", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return new Date(value).toLocaleString('es-ES', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 /**
@@ -48,10 +48,10 @@ export function ShareLinks({
   deckViewedAt,
   isDraft = false,
 }: {
-  token: string;
-  portalViewedAt: string | null;
-  deckViewedAt: string | null;
-  isDraft?: boolean;
+  token: string
+  portalViewedAt: string | null
+  deckViewedAt: string | null
+  isDraft?: boolean
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -67,7 +67,7 @@ export function ShareLinks({
       <ShareLinkRow kind="portal" token={token} lastViewedAt={portalViewedAt} isDraft={isDraft} />
       <ShareLinkRow kind="deck" token={token} lastViewedAt={deckViewedAt} isDraft={isDraft} />
     </div>
-  );
+  )
 }
 
 function ShareLinkRow({
@@ -76,37 +76,37 @@ function ShareLinkRow({
   lastViewedAt,
   isDraft = false,
 }: {
-  kind: ShareLinkKind;
-  token: string;
-  lastViewedAt: string | null;
-  isDraft?: boolean;
+  kind: ShareLinkKind
+  token: string
+  lastViewedAt: string | null
+  isDraft?: boolean
 }) {
-  const meta = META[kind];
-  const path = meta.path(token);
-  const [copied, setCopied] = useState(false);
+  const meta = META[kind]
+  const path = meta.path(token)
+  const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
     try {
-      const url = `${window.location.origin}${path}`;
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      sileo.success({ title: "Enlace copiado" });
-      window.setTimeout(() => setCopied(false), 1500);
+      const url = `${window.location.origin}${path}`
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      sileo.success({ title: 'Enlace copiado' })
+      window.setTimeout(() => setCopied(false), 1500)
     } catch {
-      sileo.error({ title: "No se pudo copiar el enlace" });
+      sileo.error({ title: 'No se pudo copiar el enlace' })
     }
-  };
+  }
 
   const handleOpen = () => {
-    window.open(path, "_blank", "noopener,noreferrer");
-  };
+    window.open(path, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <div
       className={cn(
-        "group flex items-center gap-3 rounded-lg border border-border/60 px-2.5 py-2 transition-colors",
-        "hover:border-border hover:bg-muted/40",
-        isDraft && "opacity-60",
+        'group flex items-center gap-3 rounded-lg border border-border/60 px-2.5 py-2 transition-colors',
+        'hover:border-border hover:bg-muted/40',
+        isDraft && 'opacity-60',
       )}
     >
       <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
@@ -172,5 +172,5 @@ function ShareLinkRow({
         </Button>
       </div>
     </div>
-  );
+  )
 }

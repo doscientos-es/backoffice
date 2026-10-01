@@ -1,15 +1,15 @@
-"use client";
+'use client'
 
-import { TriangleAlert as AlertTriangle } from "lucide-react";
+import { TriangleAlert as AlertTriangle } from 'lucide-react'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 
 export default function SettingsError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error: Error & { digest?: string }
+  reset: () => void
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-6 py-24 text-center">
@@ -27,5 +27,5 @@ export default function SettingsError({
         Reintentar
       </Button>
     </div>
-  );
+  )
 }

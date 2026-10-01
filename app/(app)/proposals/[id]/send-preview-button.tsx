@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,113 +7,113 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@doscientos/ui";
-import { CheckCheck, LoaderCircle as Loader2, Send } from "lucide-react";
-import { type FormEvent, useState, useTransition } from "react";
+} from '@doscientos/ui'
+import { CheckCheck, LoaderCircle as Loader2, Send } from 'lucide-react'
+import { type FormEvent, useState, useTransition } from 'react'
 
-import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { buildProposalWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { buildProposalWhatsAppMessage, buildWhatsAppUrl } from '@/lib/leads/whatsapp'
 
-import { markProposalAsSent, previewProposalEmail, sendPreviewLink } from "../actions";
+import { markProposalAsSent, previewProposalEmail, sendPreviewLink } from '../actions'
 
 type Props = {
-  id: string;
-  defaultEmail: string | null;
-  alreadySent: boolean;
-};
+  id: string
+  defaultEmail: string | null
+  alreadySent: boolean
+}
 
 /**
  * Lets the team review the exact rendered email and its recipient before the
  * public proposal URL is delivered.
  */
 export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
-  const [open, setOpen] = useState(false);
-  const [to, setTo] = useState(defaultEmail ?? "");
-  const [message, setMessage] = useState("");
-  const [phone, setPhone] = useState("");
-  const [clientName, setClientName] = useState("cliente");
-  const [proposalNumber, setProposalNumber] = useState("—");
-  const [portalUrl, setPortalUrl] = useState<string | null>(null);
-  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
-  const [previewMessage, setPreviewMessage] = useState("");
-  const [loadingPreview, setLoadingPreview] = useState(false);
-  const feedback = useFormFeedback({ successResetMs: 4000 });
-  const markFeedback = useFormFeedback({ successResetMs: 4000 });
-  const [pending, startTransition] = useTransition();
-  const [markPending, startMarkTransition] = useTransition();
+  const [open, setOpen] = useState(false)
+  const [to, setTo] = useState(defaultEmail ?? '')
+  const [message, setMessage] = useState('')
+  const [phone, setPhone] = useState('')
+  const [clientName, setClientName] = useState('cliente')
+  const [proposalNumber, setProposalNumber] = useState('—')
+  const [portalUrl, setPortalUrl] = useState<string | null>(null)
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
+  const [previewMessage, setPreviewMessage] = useState('')
+  const [loadingPreview, setLoadingPreview] = useState(false)
+  const feedback = useFormFeedback({ successResetMs: 4000 })
+  const markFeedback = useFormFeedback({ successResetMs: 4000 })
+  const [pending, startTransition] = useTransition()
+  const [markPending, startMarkTransition] = useTransition()
 
   const loadPreview = async () => {
-    setLoadingPreview(true);
-    const messageForPreview = message.trim();
+    setLoadingPreview(true)
+    const messageForPreview = message.trim()
     const res = await previewProposalEmail({
       id,
       message: messageForPreview || undefined,
-    });
+    })
     if (res.ok) {
-      setPreview({ subject: res.subject, html: res.html });
-      setPreviewMessage(message);
-      setPhone((current) => current || res.clientPhone || "");
-      setClientName(res.clientName);
-      setProposalNumber(res.proposalNumber);
-      setPortalUrl(res.portalUrl);
+      setPreview({ subject: res.subject, html: res.html })
+      setPreviewMessage(message)
+      setPhone((current) => current || res.clientPhone || '')
+      setClientName(res.clientName)
+      setProposalNumber(res.proposalNumber)
+      setPortalUrl(res.portalUrl)
     } else {
-      feedback.setError(res.error);
+      feedback.setError(res.error)
     }
-    setLoadingPreview(false);
-  };
+    setLoadingPreview(false)
+  }
 
   const onOpenChange = (next: boolean) => {
-    setOpen(next);
-    if (next) void loadPreview();
-  };
+    setOpen(next)
+    if (next) void loadPreview()
+  }
 
   const handleMarkAsSent = () => {
-    markFeedback.setPending();
+    markFeedback.setPending()
     startMarkTransition(async () => {
-      const res = await markProposalAsSent({ id });
+      const res = await markProposalAsSent({ id })
       if (!res.ok) {
-        markFeedback.setError(res.error);
+        markFeedback.setError(res.error)
       } else {
-        markFeedback.setSuccess("Marcada como enviada");
+        markFeedback.setSuccess('Marcada como enviada')
       }
-    });
-  };
+    })
+  }
 
   const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!preview || previewMessage !== message) {
-      feedback.setError("Actualiza la vista previa antes de enviar el email.");
-      return;
+      feedback.setError('Actualiza la vista previa antes de enviar el email.')
+      return
     }
-    feedback.setPending();
+    feedback.setPending()
     startTransition(async () => {
       const res = await sendPreviewLink({
         id,
         to: to.trim() || undefined,
         message: message.trim() || undefined,
-      });
+      })
       if (!res.ok) {
-        feedback.setError(res.error);
-        return;
+        feedback.setError(res.error)
+        return
       }
-      feedback.setSuccess(res.mocked ? "Email simulado (modo dev)" : "Email enviado");
-      setOpen(false);
-    });
-  };
+      feedback.setSuccess(res.mocked ? 'Email simulado (modo dev)' : 'Email enviado')
+      setOpen(false)
+    })
+  }
 
   const handleWhatsapp = () => {
-    if (!phone.trim() || !portalUrl) return;
-    const note = message.trim();
+    if (!phone.trim() || !portalUrl) return
+    const note = message.trim()
     const text = note
       ? `${note}\n\n${portalUrl}`
-      : buildProposalWhatsAppMessage(clientName, proposalNumber, portalUrl);
-    window.open(buildWhatsAppUrl(phone, text), "_blank", "noopener,noreferrer");
-  };
+      : buildProposalWhatsAppMessage(clientName, proposalNumber, portalUrl)
+    window.open(buildWhatsAppUrl(phone, text), '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <>
@@ -137,7 +137,7 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
           onClick={() => onOpenChange(true)}
           disabled={pending || markPending}
         >
-          <Send aria-hidden /> {alreadySent ? "Reenviar preview" : "Enviar preview al cliente"}
+          <Send aria-hidden /> {alreadySent ? 'Reenviar preview' : 'Enviar preview al cliente'}
         </Button>
       </div>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -222,7 +222,7 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
                 <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
                   Asunto
                 </p>
-                <p className="mt-1 text-sm font-medium">{preview?.subject ?? "Cargando email…"}</p>
+                <p className="mt-1 text-sm font-medium">{preview?.subject ?? 'Cargando email…'}</p>
               </div>
               <div className="h-105 bg-white">
                 {loadingPreview ? (
@@ -259,12 +259,12 @@ export function SendPreviewButton({ id, defaultEmail, alreadySent }: Props) {
                 size="sm"
                 disabled={pending || loadingPreview || !preview || previewMessage !== message}
               >
-                <Send aria-hidden /> {pending ? "Enviando…" : "Enviar email"}
+                <Send aria-hidden /> {pending ? 'Enviando…' : 'Enviar email'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

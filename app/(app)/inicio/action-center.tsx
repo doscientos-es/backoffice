@@ -1,26 +1,26 @@
-import { AlertTriangle, CheckSquare, FileSignature, Receipt, UserRound } from "lucide-react";
-import Link from "next/link";
+import { AlertTriangle, CheckSquare, FileSignature, Receipt, UserRound } from 'lucide-react'
+import Link from 'next/link'
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ActionCenterData, ActionCenterItem } from "@/lib/dashboard/types";
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import type { ActionCenterData, ActionCenterItem } from '@/lib/dashboard/types'
 
 const ICONS = {
   task: CheckSquare,
   lead: UserRound,
   proposal: FileSignature,
   invoice: Receipt,
-} as const;
+} as const
 
 const LABELS = {
-  task: "Tarea",
-  lead: "SLA comercial",
-  proposal: "Seguimiento",
-  invoice: "Cobro",
-} as const;
+  task: 'Tarea',
+  lead: 'SLA comercial',
+  proposal: 'Seguimiento',
+  invoice: 'Cobro',
+} as const
 
 export function ActionCenter({ items, total }: ActionCenterData) {
-  if (items.length === 0) return null;
+  if (items.length === 0) return null
 
   return (
     <Card className="border-primary/20 bg-primary/[0.03] shadow-sm">
@@ -43,18 +43,18 @@ export function ActionCenter({ items, total }: ActionCenterData) {
         </ul>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function ActionItem({ item }: { item: ActionCenterItem }) {
-  const Icon = ICONS[item.kind];
+  const Icon = ICONS[item.kind]
   return (
     <li className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
       <Icon className="size-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="truncate text-sm font-medium">{item.title}</span>
-          <Badge variant={item.severity === "urgent" ? "danger" : "warning"}>
+          <Badge variant={item.severity === 'urgent' ? 'danger' : 'warning'}>
             {LABELS[item.kind]}
           </Badge>
         </div>
@@ -64,5 +64,5 @@ function ActionItem({ item }: { item: ActionCenterItem }) {
         {item.actionLabel}
       </Link>
     </li>
-  );
+  )
 }

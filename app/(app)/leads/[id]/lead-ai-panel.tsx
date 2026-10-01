@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   CircleAlert as AlertCircle,
@@ -9,62 +9,62 @@ import {
   MessageCircle,
   Phone,
   Sparkle as Sparkles,
-} from "lucide-react";
-import { useState } from "react";
+} from 'lucide-react'
+import { useState } from 'react'
 
-import { AiNotice } from "@/components/ui/ai-notice";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import { readJsonResponse } from "@/lib/utils/http";
+import { AiNotice } from '@/components/ui/ai-notice'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
+import { readJsonResponse } from '@/lib/utils/http'
 
 import {
   type ScheduleMember,
   ScheduleReminderDialog,
-} from "../../reminders/schedule-reminder-dialog";
-import { createTask } from "../../tasks/actions";
+} from '../../reminders/schedule-reminder-dialog'
+import { createTask } from '../../tasks/actions'
 
 export type LeadAiData = {
-  ai_summary: string | null;
-  ai_suggested_next_step: string | null;
-  ai_suggested_next_step_at: string | null;
-  ai_temperature: "hot" | "warm" | "cold" | null;
-  ai_confidence: number | null;
-  ai_updated_at: string | null;
-  ai_tags: string[] | null;
-};
+  ai_summary: string | null
+  ai_suggested_next_step: string | null
+  ai_suggested_next_step_at: string | null
+  ai_temperature: 'hot' | 'warm' | 'cold' | null
+  ai_confidence: number | null
+  ai_updated_at: string | null
+  ai_tags: string[] | null
+}
 
 type NextBestAction = {
-  headline: string;
-  rationale: string;
-  urgency: "low" | "medium" | "high" | "urgent";
-  channel: "email" | "whatsapp" | "call" | "internal";
-  action: string;
-  message: string;
-  task: { title: string; description: string };
-};
+  headline: string
+  rationale: string
+  urgency: 'low' | 'medium' | 'high' | 'urgent'
+  channel: 'email' | 'whatsapp' | 'call' | 'internal'
+  action: string
+  message: string
+  task: { title: string; description: string }
+}
 
 type Props = {
-  leadId: string;
-  aiEnabled: boolean;
-  initialData: LeadAiData;
-  briefing: string;
-  members?: ScheduleMember[];
-};
+  leadId: string
+  aiEnabled: boolean
+  initialData: LeadAiData
+  briefing: string
+  members?: ScheduleMember[]
+}
 
 const TEMPERATURE_VARIANT = {
-  hot: "danger",
-  warm: "warning",
-  cold: "info",
-} as const;
+  hot: 'danger',
+  warm: 'warning',
+  cold: 'info',
+} as const
 
 const TEMPERATURE_LABEL = {
-  hot: "🔥 Caliente",
-  warm: "🌤 Tibio",
-  cold: "🧊 Frío",
-} as const;
+  hot: '🔥 Caliente',
+  warm: '🌤 Tibio',
+  cold: '🧊 Frío',
+} as const
 
 function AiSkeleton() {
   return (
@@ -88,49 +88,49 @@ function AiSkeleton() {
         <Skeleton className="h-4 w-[60%]" />
       </div>
     </div>
-  );
+  )
 }
 
 function formatAiUpdatedAt(value: string): string {
-  return new Intl.DateTimeFormat("es-ES", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+  return new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value))
 }
 
 export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members = [] }: Props) {
-  const [data, setData] = useState<LeadAiData>(initialData);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [fresh, setFresh] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [recommendation, setRecommendation] = useState<NextBestAction | null>(null);
-  const [recommending, setRecommending] = useState(false);
-  const [applyingTask, setApplyingTask] = useState(false);
-  const [messageCopied, setMessageCopied] = useState(false);
+  const [data, setData] = useState<LeadAiData>(initialData)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [fresh, setFresh] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [recommendation, setRecommendation] = useState<NextBestAction | null>(null)
+  const [recommending, setRecommending] = useState(false)
+  const [applyingTask, setApplyingTask] = useState(false)
+  const [messageCopied, setMessageCopied] = useState(false)
 
   async function handleCopyBriefing() {
     try {
-      await navigator.clipboard.writeText(briefing);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      await navigator.clipboard.writeText(briefing)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
     } catch {
-      setError("No se pudo copiar el briefing al portapapeles.");
+      setError('No se pudo copiar el briefing al portapapeles.')
     }
   }
 
   async function handleSummarize() {
-    setLoading(true);
-    setError(null);
-    setFresh(false);
+    setLoading(true)
+    setError(null)
+    setFresh(false)
     try {
-      const res = await fetch("/api/crm/ai/summarize-lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/crm/ai/summarize-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lead_id: leadId }),
-      });
-      const json = await readJsonResponse<any>(res, "No se pudo generar el resumen.");
-      if (!res.ok) throw new Error(json.error ?? "Error al generar el resumen.");
+      })
+      const json = await readJsonResponse<any>(res, 'No se pudo generar el resumen.')
+      if (!res.ok) throw new Error(json.error ?? 'Error al generar el resumen.')
       setData({
         ai_summary: json.summary,
         ai_suggested_next_step: json.suggested_next_step,
@@ -139,69 +139,69 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
         ai_confidence: json.confidence,
         ai_updated_at: json.ai_updated_at ?? new Date().toISOString(),
         ai_tags: (json.tags as string[] | null) ?? null,
-      });
-      setFresh(true);
+      })
+      setFresh(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido.");
+      setError(err instanceof Error ? err.message : 'Error desconocido.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   async function handleRecommend() {
-    setRecommending(true);
-    setError(null);
+    setRecommending(true)
+    setError(null)
     try {
-      const res = await fetch("/api/crm/ai/next-best-action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/crm/ai/next-best-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lead_id: leadId }),
-      });
-      const json = await readJsonResponse<any>(res, "No se pudo preparar la recomendación.");
-      if (!res.ok) throw new Error(json.error ?? "No se pudo preparar la recomendación.");
-      setRecommendation(json as NextBestAction);
+      })
+      const json = await readJsonResponse<any>(res, 'No se pudo preparar la recomendación.')
+      if (!res.ok) throw new Error(json.error ?? 'No se pudo preparar la recomendación.')
+      setRecommendation(json as NextBestAction)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido.");
+      setError(err instanceof Error ? err.message : 'Error desconocido.')
     } finally {
-      setRecommending(false);
+      setRecommending(false)
     }
   }
 
   async function handleApplyRecommendedTask() {
-    if (!recommendation) return;
-    setApplyingTask(true);
-    setError(null);
+    if (!recommendation) return
+    setApplyingTask(true)
+    setError(null)
     try {
       await createTask({
         title: recommendation.task.title,
         description: recommendation.task.description,
         priority: recommendation.urgency,
-        status: "todo",
+        status: 'todo',
         lead_id: leadId,
-        project_id: "",
-        client_id: "",
+        project_id: '',
+        client_id: '',
         member_ids: [],
-        due_date: "",
-      });
+        due_date: '',
+      })
       setRecommendation((current) =>
-        current ? { ...current, task: { ...current.task, title: "Tarea creada" } } : current,
-      );
+        current ? { ...current, task: { ...current.task, title: 'Tarea creada' } } : current,
+      )
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo crear la tarea.");
+      setError(err instanceof Error ? err.message : 'No se pudo crear la tarea.')
     } finally {
-      setApplyingTask(false);
+      setApplyingTask(false)
     }
   }
 
   async function handleCopyMessage() {
-    if (!recommendation?.message) return;
-    await navigator.clipboard.writeText(recommendation.message);
-    setMessageCopied(true);
-    setTimeout(() => setMessageCopied(false), 1500);
+    if (!recommendation?.message) return
+    await navigator.clipboard.writeText(recommendation.message)
+    setMessageCopied(true)
+    setTimeout(() => setMessageCopied(false), 1500)
   }
 
-  const hasSummary = Boolean(data.ai_summary);
-  const updatedAt = data.ai_updated_at ? formatAiUpdatedAt(data.ai_updated_at) : null;
+  const hasSummary = Boolean(data.ai_summary)
+  const updatedAt = data.ai_updated_at ? formatAiUpdatedAt(data.ai_updated_at) : null
 
   return (
     <div className="flex flex-col gap-4">
@@ -210,7 +210,7 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
       ) : loading ? (
         <AiSkeleton />
       ) : hasSummary ? (
-        <div className={cn("flex flex-col gap-3", fresh && "animate-in duration-500 fade-in")}>
+        <div className={cn('flex flex-col gap-3', fresh && 'animate-in duration-500 fade-in')}>
           <div className="flex items-center gap-2">
             {data.ai_temperature && (
               <Badge variant={TEMPERATURE_VARIANT[data.ai_temperature]}>
@@ -260,7 +260,7 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
               <p className="text-sm">{data.ai_suggested_next_step}</p>
               {data.ai_suggested_next_step_at && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Fecha sugerida: {new Date(data.ai_suggested_next_step_at).toLocaleString("es-ES")}
+                  Fecha sugerida: {new Date(data.ai_suggested_next_step_at).toLocaleString('es-ES')}
                 </p>
               )}
             </div>
@@ -289,8 +289,8 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
               </p>
             </div>
             <Button size="sm" variant="outline" onClick={handleRecommend} disabled={recommending}>
-              <Sparkles className={cn("size-3.5", recommending && "animate-spin")} />
-              {recommending ? "Pensando…" : recommendation ? "Recalcular" : "Recomendar"}
+              <Sparkles className={cn('size-3.5', recommending && 'animate-spin')} />
+              {recommending ? 'Pensando…' : recommendation ? 'Recalcular' : 'Recomendar'}
             </Button>
           </div>
           {recommendation ? (
@@ -298,18 +298,18 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
               <div className="flex items-center gap-2">
                 <Badge
                   variant={
-                    recommendation.urgency === "urgent"
-                      ? "danger"
-                      : recommendation.urgency === "high"
-                        ? "warning"
-                        : "outline"
+                    recommendation.urgency === 'urgent'
+                      ? 'danger'
+                      : recommendation.urgency === 'high'
+                        ? 'warning'
+                        : 'outline'
                   }
                 >
-                  {recommendation.urgency === "urgent"
-                    ? "Urgente"
-                    : recommendation.urgency === "high"
-                      ? "Prioritaria"
-                      : "Seguimiento"}
+                  {recommendation.urgency === 'urgent'
+                    ? 'Urgente'
+                    : recommendation.urgency === 'high'
+                      ? 'Prioritaria'
+                      : 'Seguimiento'}
                 </Badge>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <ChannelIcon channel={recommendation.channel} /> {recommendation.channel}
@@ -334,7 +334,7 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
                       ) : (
                         <Copy className="size-3" />
                       )}
-                      {messageCopied ? "Copiado" : "Copiar"}
+                      {messageCopied ? 'Copiado' : 'Copiar'}
                     </Button>
                   </div>
                   <Textarea
@@ -351,14 +351,14 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={applyingTask || recommendation.task.title === "Tarea creada"}
+                  disabled={applyingTask || recommendation.task.title === 'Tarea creada'}
                   onClick={handleApplyRecommendedTask}
                 >
                   {applyingTask
-                    ? "Creando…"
-                    : recommendation.task.title === "Tarea creada"
-                      ? "Tarea creada"
-                      : "Crear tarea"}
+                    ? 'Creando…'
+                    : recommendation.task.title === 'Tarea creada'
+                      ? 'Tarea creada'
+                      : 'Crear tarea'}
                 </Button>
               </div>
             </div>
@@ -380,7 +380,7 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
             ) : (
               <Copy className="size-3.5" />
             )}
-            {copied ? "Copiado" : "Copiar briefing"}
+            {copied ? 'Copiado' : 'Copiar briefing'}
           </Button>
         </div>
       </div>
@@ -388,18 +388,18 @@ export function LeadAiPanel({ leadId, aiEnabled, initialData, briefing, members 
       {aiEnabled ? (
         <div className="flex justify-end">
           <Button size="sm" variant="outline" onClick={handleSummarize} disabled={loading}>
-            <Sparkles className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-            {loading ? "Analizando…" : hasSummary ? "Actualizar análisis" : "Generar análisis"}
+            <Sparkles className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+            {loading ? 'Analizando…' : hasSummary ? 'Actualizar análisis' : 'Generar análisis'}
           </Button>
         </div>
       ) : null}
     </div>
-  );
+  )
 }
 
-function ChannelIcon({ channel }: { channel: NextBestAction["channel"] }) {
-  if (channel === "email") return <Mail className="size-3" />;
-  if (channel === "whatsapp") return <MessageCircle className="size-3" />;
-  if (channel === "call") return <Phone className="size-3" />;
-  return <Sparkles className="size-3" />;
+function ChannelIcon({ channel }: { channel: NextBestAction['channel'] }) {
+  if (channel === 'email') return <Mail className="size-3" />
+  if (channel === 'whatsapp') return <MessageCircle className="size-3" />
+  if (channel === 'call') return <Phone className="size-3" />
+  return <Sparkles className="size-3" />
 }

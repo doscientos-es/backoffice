@@ -1,10 +1,10 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
-const KPI_SKELETON_KEYS = ["kpi-a", "kpi-b", "kpi-c", "kpi-d"] as const;
-const AVISOS_SKELETON_KEYS = ["aviso-a", "aviso-b", "aviso-c", "aviso-d"] as const;
-const MY_DAY_SKELETON_KEYS = ["my-day-a", "my-day-b", "my-day-c"] as const;
-const MY_DAY_ROW_KEYS = ["row-a", "row-b", "row-c"] as const;
+const KPI_SKELETON_KEYS = ['kpi-a', 'kpi-b', 'kpi-c', 'kpi-d'] as const
+const AVISOS_SKELETON_KEYS = ['aviso-a', 'aviso-b', 'aviso-c', 'aviso-d'] as const
+const MY_DAY_SKELETON_KEYS = ['my-day-a', 'my-day-b', 'my-day-c'] as const
+const MY_DAY_ROW_KEYS = ['row-a', 'row-b', 'row-c'] as const
 
 export function MyDayWidgetSkeleton() {
   return (
@@ -29,7 +29,7 @@ export function MyDayWidgetSkeleton() {
         </Card>
       ))}
     </div>
-  );
+  )
 }
 
 export function KpiGridSkeleton() {
@@ -48,7 +48,7 @@ export function KpiGridSkeleton() {
         </Card>
       ))}
     </div>
-  );
+  )
 }
 
 export function AvisosWidgetSkeleton() {
@@ -67,7 +67,7 @@ export function AvisosWidgetSkeleton() {
         ))}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export function RangeSelectorSkeleton() {
@@ -77,7 +77,7 @@ export function RangeSelectorSkeleton() {
         <Skeleton key={w} className="rounded-md" style={{ height: 24, width: w }} />
       ))}
     </div>
-  );
+  )
 }
 
 export function RevenueWidgetSkeleton() {
@@ -90,5 +90,5 @@ export function RevenueWidgetSkeleton() {
         <Skeleton className="h-56 w-full rounded-md" />
       </CardContent>
     </Card>
-  );
+  )
 }

@@ -1,96 +1,96 @@
-"use client";
+'use client'
 
 import {
   Check,
   Clipboard as ClipboardCheck,
   LoaderCircle as Loader2,
   Sparkle as Sparkles,
-} from "lucide-react";
-import { useState } from "react";
+} from 'lucide-react'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
-import { readJsonResponse } from "@/lib/utils/http";
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { cn } from '@/lib/utils'
+import { readJsonResponse } from '@/lib/utils/http'
 
-import { createTask } from "../../tasks/actions";
-import { addChecklistItem } from "../checklist-actions";
+import { createTask } from '../../tasks/actions'
+import { addChecklistItem } from '../checklist-actions'
 
-type Task = { title: string; description: string; priority: "low" | "medium" | "high" | "urgent" };
+type Task = { title: string; description: string; priority: 'low' | 'medium' | 'high' | 'urgent' }
 type Plan = {
-  overview: string;
-  phases: { name: string; objective: string; tasks: Task[] }[];
-  checklist: string[];
-  kickoff_agenda: string[];
-};
+  overview: string
+  phases: { name: string; objective: string; tasks: Task[] }[]
+  checklist: string[]
+  kickoff_agenda: string[]
+}
 
 export function AiKickoffPanel({ projectId }: { projectId: string }) {
-  const [plan, setPlan] = useState<Plan | null>(null);
-  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
-  const [selectedChecklist, setSelectedChecklist] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [applied, setApplied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null)
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([])
+  const [selectedChecklist, setSelectedChecklist] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [applying, setApplying] = useState(false)
+  const [applied, setApplied] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function generate() {
-    setLoading(true);
-    setError(null);
-    setApplied(false);
+    setLoading(true)
+    setError(null)
+    setApplied(false)
     try {
       const response = await fetch(`/api/projects/${projectId}/generate-kickoff`, {
-        method: "POST",
-      });
-      const json = await readJsonResponse<any>(response, "No se pudo preparar el plan.");
-      if (!response.ok) throw new Error(json.error ?? "No se pudo preparar el plan.");
-      const result = json as Plan;
-      setPlan(result);
+        method: 'POST',
+      })
+      const json = await readJsonResponse<any>(response, 'No se pudo preparar el plan.')
+      if (!response.ok) throw new Error(json.error ?? 'No se pudo preparar el plan.')
+      const result = json as Plan
+      setPlan(result)
       setSelectedTasks(
         result.phases.flatMap((phase, phaseIndex) =>
           phase.tasks.map((_task, taskIndex) => taskKey(phaseIndex, taskIndex)),
         ),
-      );
-      setSelectedChecklist(result.checklist);
+      )
+      setSelectedChecklist(result.checklist)
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Error desconocido.");
+      setError(reason instanceof Error ? reason.message : 'Error desconocido.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   async function apply() {
-    if (!plan) return;
-    setApplying(true);
-    setError(null);
+    if (!plan) return
+    setApplying(true)
+    setError(null)
     try {
       const tasks = plan.phases.flatMap((phase, phaseIndex) =>
         phase.tasks.filter((_task, taskIndex) =>
           selectedTasks.includes(taskKey(phaseIndex, taskIndex)),
         ),
-      );
+      )
       await Promise.all([
         ...tasks.map((task) =>
           createTask({
             ...task,
-            status: "todo",
+            status: 'todo',
             project_id: projectId,
-            lead_id: "",
-            client_id: "",
+            lead_id: '',
+            client_id: '',
             member_ids: [],
-            due_date: "",
+            due_date: '',
           }),
         ),
         ...plan.checklist
           .filter((item) => selectedChecklist.includes(item))
           .map((label) => addChecklistItem({ project_id: projectId, label })),
-      ]);
-      setApplied(true);
-      setSelectedTasks([]);
-      setSelectedChecklist([]);
+      ])
+      setApplied(true)
+      setSelectedTasks([])
+      setSelectedChecklist([])
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No se pudo aplicar el plan.");
+      setError(reason instanceof Error ? reason.message : 'No se pudo aplicar el plan.')
     } finally {
-      setApplying(false);
+      setApplying(false)
     }
   }
 
@@ -104,8 +104,8 @@ export function AiKickoffPanel({ projectId }: { projectId: string }) {
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={generate} disabled={loading}>
-          <Sparkles className={cn("size-3.5", loading && "animate-spin")} />
-          {loading ? "Preparando…" : plan ? "Regenerar plan" : "Preparar plan"}
+          <Sparkles className={cn('size-3.5', loading && 'animate-spin')} />
+          {loading ? 'Preparando…' : plan ? 'Regenerar plan' : 'Preparar plan'}
         </Button>
       </div>
       {loading ? (
@@ -185,18 +185,18 @@ export function AiKickoffPanel({ projectId }: { projectId: string }) {
               }
             >
               {applied ? <Check className="size-3.5" /> : null}
-              {applying ? "Aplicando…" : applied ? "Plan aplicado" : "Aplicar selección"}
+              {applying ? 'Aplicando…' : applied ? 'Plan aplicado' : 'Aplicar selección'}
             </Button>
           </div>
         </div>
       ) : null}
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
-  );
+  )
 }
 
 function taskKey(phase: number, task: number) {
-  return `${phase}-${task}`;
+  return `${phase}-${task}`
 }
 function SelectRow({
   checked,
@@ -204,12 +204,12 @@ function SelectRow({
   label,
   detail,
 }: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  label: string;
-  detail?: string;
+  checked: boolean
+  onChange: (checked: boolean) => void
+  label: string
+  detail?: string
 }) {
-  const id = `kickoff-${label.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`;
+  const id = `kickoff-${label.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`
   return (
     <label
       htmlFor={id}
@@ -221,5 +221,5 @@ function SelectRow({
         {detail ? <span className="block text-[11px] text-muted-foreground">{detail}</span> : null}
       </span>
     </label>
-  );
+  )
 }

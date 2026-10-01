@@ -1,70 +1,70 @@
-"use client";
+'use client'
 
-import { CircleAlert as AlertCircle, Check, Copy, Sparkle as Sparkles } from "lucide-react";
-import { useState } from "react";
+import { CircleAlert as AlertCircle, Check, Copy, Sparkle as Sparkles } from 'lucide-react'
+import { useState } from 'react'
 
-import { AiNotice } from "@/components/ui/ai-notice";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import { readJsonResponse } from "@/lib/utils/http";
+import { AiNotice } from '@/components/ui/ai-notice'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
+import { readJsonResponse } from '@/lib/utils/http'
 
 type Props = {
-  projectId: string;
-  aiEnabled: boolean;
-};
+  projectId: string
+  aiEnabled: boolean
+}
 
 type ProjectUpdate = {
-  health: "on_track" | "attention" | "blocked";
-  summary: string;
-  progress: string[];
-  risks: string[];
-  next_steps: string[];
-  client_update: string;
-};
+  health: 'on_track' | 'attention' | 'blocked'
+  summary: string
+  progress: string[]
+  risks: string[]
+  next_steps: string[]
+  client_update: string
+}
 
 const HEALTH = {
-  on_track: { label: "En curso", variant: "success" as const },
-  attention: { label: "Atención", variant: "warning" as const },
-  blocked: { label: "Bloqueado", variant: "danger" as const },
-};
+  on_track: { label: 'En curso', variant: 'success' as const },
+  attention: { label: 'Atención', variant: 'warning' as const },
+  blocked: { label: 'Bloqueado', variant: 'danger' as const },
+}
 
 export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
-  const [loading, setLoading] = useState(false);
-  const [update, setUpdate] = useState<ProjectUpdate | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false)
+  const [update, setUpdate] = useState<ProjectUpdate | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   if (!aiEnabled) {
     return (
       <AiNotice message="La IA no está disponible. Añade AI_PROVIDER a las variables de entorno para generar updates de cliente." />
-    );
+    )
   }
 
   async function handleGenerate() {
-    setLoading(true);
-    setError(null);
-    setUpdate(null);
+    setLoading(true)
+    setError(null)
+    setUpdate(null)
     try {
       const res = await fetch(`/api/projects/${projectId}/generate-client-update`, {
-        method: "POST",
-      });
-      const json = await readJsonResponse<any>(res, "No se pudo preparar la actualización.");
-      if (!res.ok) throw new Error(json.error ?? "Error al generar el update.");
-      setUpdate(json.update as ProjectUpdate);
+        method: 'POST',
+      })
+      const json = await readJsonResponse<any>(res, 'No se pudo preparar la actualización.')
+      if (!res.ok) throw new Error(json.error ?? 'Error al generar el update.')
+      setUpdate(json.update as ProjectUpdate)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido.");
+      setError(err instanceof Error ? err.message : 'Error desconocido.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   async function handleCopy() {
-    if (!update) return;
-    await navigator.clipboard.writeText(update.client_update);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (!update) return
+    await navigator.clipboard.writeText(update.client_update)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
@@ -87,7 +87,7 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
       )}
 
       {update && !loading && (
-        <div className={cn("flex animate-in flex-col gap-2 duration-500 fade-in")}>
+        <div className={cn('flex animate-in flex-col gap-2 duration-500 fade-in')}>
           <div className="flex justify-end">
             <Button
               size="sm"
@@ -96,7 +96,7 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
               onClick={handleCopy}
             >
               {copied ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
-              {copied ? "Copiado" : "Copiar"}
+              {copied ? 'Copiado' : 'Copiar'}
             </Button>
           </div>
           <div className="animate-in rounded-lg border border-primary/15 bg-primary/[0.03] p-3 duration-300 fade-in slide-in-from-bottom-1">
@@ -142,21 +142,21 @@ export function ClientUpdatePanel({ projectId, aiEnabled }: Props) {
           disabled={loading}
           className="ml-auto"
         >
-          <Sparkles className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-          {loading ? "Generando…" : update ? "Regenerar" : "Generar update"}
+          <Sparkles className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+          {loading ? 'Generando…' : update ? 'Regenerar' : 'Generar update'}
         </Button>
       </div>
     </div>
-  );
+  )
 }
 
-function UpdateList({ title, items, tone }: { title: string; items: string[]; tone?: "warning" }) {
-  if (items.length === 0) return null;
+function UpdateList({ title, items, tone }: { title: string; items: string[]; tone?: 'warning' }) {
+  if (items.length === 0) return null
   return (
     <div
       className={cn(
-        "rounded-md bg-background/70 p-2.5",
-        tone === "warning" && "ring-1 ring-amber-500/20",
+        'rounded-md bg-background/70 p-2.5',
+        tone === 'warning' && 'ring-1 ring-amber-500/20',
       )}
     >
       <p className="mb-1 text-xs font-medium text-muted-foreground">{title}</p>
@@ -169,5 +169,5 @@ function UpdateList({ title, items, tone }: { title: string; items: string[]; to
         ))}
       </ul>
     </div>
-  );
+  )
 }

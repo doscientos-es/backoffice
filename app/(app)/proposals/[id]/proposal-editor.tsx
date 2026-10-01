@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   CircleAlert as AlertCircle,
@@ -7,27 +7,27 @@ import {
   ChevronRight,
   Save,
   Sparkle as Sparkles,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { LineItemsTable } from "@/components/finance/line-items-table";
-import { MaintenanceOfferEditor } from "@/components/proposals/maintenance-offer-editor";
-import { PaymentPlanEditor } from "@/components/proposals/payment-plan-editor";
-import { ProblemSolutionEditor } from "@/components/proposals/problem-solution-editor";
-import { ScopeModulesEditor } from "@/components/proposals/scope-modules-editor";
-import { AiNotice } from "@/components/ui/ai-notice";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AttachmentSection, type AttachmentItem } from "@/components/ui/attachment-section";
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Markdown } from "@/components/ui/markdown";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
-import { computeProposalTotals, EMPTY_LINE_ITEM, type LineItem } from "@/lib/finance";
+import { LineItemsTable } from '@/components/finance/line-items-table'
+import { MaintenanceOfferEditor } from '@/components/proposals/maintenance-offer-editor'
+import { PaymentPlanEditor } from '@/components/proposals/payment-plan-editor'
+import { ProblemSolutionEditor } from '@/components/proposals/problem-solution-editor'
+import { ScopeModulesEditor } from '@/components/proposals/scope-modules-editor'
+import { AiNotice } from '@/components/ui/ai-notice'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { AttachmentSection, type AttachmentItem } from '@/components/ui/attachment-section'
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Markdown } from '@/components/ui/markdown'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { VersionConflictDialog } from '@/components/ui/version-conflict-dialog'
+import { computeProposalTotals, EMPTY_LINE_ITEM, type LineItem } from '@/lib/finance'
 import {
   createEmptyPair,
   type EditableKeyPoint,
@@ -35,14 +35,14 @@ import {
   serializeKeyPoints,
   unzipPairs,
   zipKeyPoints,
-} from "@/lib/proposals/key-points";
+} from '@/lib/proposals/key-points'
 import {
   DEFAULT_MAINTENANCE_OFFER,
   type MaintenanceOffer,
   selectedMaintenancePlan,
-} from "@/lib/proposals/maintenance";
-import { DEFAULT_PROPOSAL_LEGAL_TERMS } from "@/lib/proposals/proposal-acceptance";
-import { ensureCalendarYearProration, recurringPaymentTerms } from "@/lib/proposals/recurring";
+} from '@/lib/proposals/maintenance'
+import { DEFAULT_PROPOSAL_LEGAL_TERMS } from '@/lib/proposals/proposal-acceptance'
+import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import {
   DEFAULT_CHANGE_MANAGEMENT_TERMS,
   PAYMENT_SCHEDULE_LABELS,
@@ -51,57 +51,57 @@ import {
   type PaymentPlanItem,
   type PaymentSchedule,
   type ScopeModule,
-} from "@/lib/proposals/scope";
-import { formatEUR } from "@/lib/utils";
+} from '@/lib/proposals/scope'
+import { formatEUR } from '@/lib/utils'
 
-import { setProposalTeamMembers, updateProposal } from "../actions";
+import { setProposalTeamMembers, updateProposal } from '../actions'
 
-export type EditableItem = LineItem;
+export type EditableItem = LineItem
 
 const EDITOR_STEPS = [
-  { label: "Datos", description: "Base de la propuesta" },
-  { label: "Alcance", description: "Qué vamos a entregar" },
-  { label: "Precio", description: "Partidas y condiciones" },
-  { label: "Revisión", description: "Equipo y comprobación final" },
-] as const;
+  { label: 'Datos', description: 'Base de la propuesta' },
+  { label: 'Alcance', description: 'Qué vamos a entregar' },
+  { label: 'Precio', description: 'Partidas y condiciones' },
+  { label: 'Revisión', description: 'Equipo y comprobación final' },
+] as const
 
-type ProposalTeamMember = { id: string; name: string; job_title: string | null };
+type ProposalTeamMember = { id: string; name: string; job_title: string | null }
 
 export type ProposalEditorProps = {
-  id: string;
-  initialTitle: string;
-  initialValidUntil: string | null;
-  initialNotes: string | null;
-  initialContextMarkdown: string | null;
-  initialProblems: EditableKeyPoint[];
-  initialSolutions: EditableKeyPoint[];
-  initialTerms: string | null;
-  initialScopeModules: ScopeModule[];
-  initialDeliverables: string | null;
-  initialAcceptanceCriteria: string | null;
-  initialPaymentSchedule: PaymentSchedule | null;
-  initialPaymentPlan: PaymentPlanItem[];
-  initialPaymentTerms: string | null;
-  initialChangeManagementTerms: string | null;
-  initialLegalTerms?: string | null;
-  initialMaintenanceOptions: MaintenanceOffer | null;
-  initialMaintenanceSelectedPlanId: string | null;
-  teamMembers: ProposalTeamMember[];
-  initialTeamMemberIds: string[];
-  initialItems: EditableItem[];
-  initialCreatedAt?: string | null;
-  initialAttachments: AttachmentItem[];
+  id: string
+  initialTitle: string
+  initialValidUntil: string | null
+  initialNotes: string | null
+  initialContextMarkdown: string | null
+  initialProblems: EditableKeyPoint[]
+  initialSolutions: EditableKeyPoint[]
+  initialTerms: string | null
+  initialScopeModules: ScopeModule[]
+  initialDeliverables: string | null
+  initialAcceptanceCriteria: string | null
+  initialPaymentSchedule: PaymentSchedule | null
+  initialPaymentPlan: PaymentPlanItem[]
+  initialPaymentTerms: string | null
+  initialChangeManagementTerms: string | null
+  initialLegalTerms?: string | null
+  initialMaintenanceOptions: MaintenanceOffer | null
+  initialMaintenanceSelectedPlanId: string | null
+  teamMembers: ProposalTeamMember[]
+  initialTeamMemberIds: string[]
+  initialItems: EditableItem[]
+  initialCreatedAt?: string | null
+  initialAttachments: AttachmentItem[]
   /** Optimistic-concurrency token captured with the record. */
-  initialVersion: number;
+  initialVersion: number
   /** When true, fields are read-only (proposal accepted/rejected). */
-  locked: boolean;
+  locked: boolean
   /** Gates the "generate problems/solutions with AI" affordance. */
-  aiEnabled: boolean;
+  aiEnabled: boolean
   /** The lead whose CRM briefing can be used to prepare this proposal. */
-  leadId: string | null;
+  leadId: string | null
   /** Runs once when arriving from the "Crear y prerrellenar" flow. */
-  autoGenerateDraft: boolean;
-};
+  autoGenerateDraft: boolean
+}
 
 /**
  * Inline editor for the proposal detail page. Changes remain local until the
@@ -141,91 +141,91 @@ export function ProposalEditor({
   leadId,
   autoGenerateDraft,
 }: ProposalEditorProps) {
-  const router = useRouter();
-  const [expectedVersion, setExpectedVersion] = useState(initialVersion);
-  const [conflictOpen, setConflictOpen] = useState(false);
-  const [title, setTitle] = useState(initialTitle);
-  const [validUntil, setValidUntil] = useState(initialValidUntil ?? "");
-  const [notes, setNotes] = useState(initialNotes ?? "");
-  const [notesPreview, setNotesPreview] = useState(false);
-  const [contextMarkdown, setContextMarkdown] = useState(initialContextMarkdown ?? "");
+  const router = useRouter()
+  const [expectedVersion, setExpectedVersion] = useState(initialVersion)
+  const [conflictOpen, setConflictOpen] = useState(false)
+  const [title, setTitle] = useState(initialTitle)
+  const [validUntil, setValidUntil] = useState(initialValidUntil ?? '')
+  const [notes, setNotes] = useState(initialNotes ?? '')
+  const [notesPreview, setNotesPreview] = useState(false)
+  const [contextMarkdown, setContextMarkdown] = useState(initialContextMarkdown ?? '')
   const [pairs, setPairs] = useState<EditablePair[]>(() =>
     zipKeyPoints(initialProblems, initialSolutions),
-  );
-  const [generating, setGenerating] = useState(false);
-  const aiFeedback = useFormFeedback();
-  const saveFeedback = useFormFeedback({ successResetMs: 4_000 });
-  const automaticDraftStarted = useRef(false);
-  const [terms, setTerms] = useState(initialTerms ?? "");
-  const [scopeModules, setScopeModules] = useState(initialScopeModules);
-  const [deliverables, setDeliverables] = useState(initialDeliverables ?? "");
-  const [acceptanceCriteria, setAcceptanceCriteria] = useState(initialAcceptanceCriteria ?? "");
-  const initialBillingItems = ensureCalendarYearProration(initialItems, initialCreatedAt);
-  const initialRecurringTerms = recurringPaymentTerms(initialBillingItems, initialCreatedAt);
-  const initialSchedule = initialPaymentSchedule ?? "half_half";
+  )
+  const [generating, setGenerating] = useState(false)
+  const aiFeedback = useFormFeedback()
+  const saveFeedback = useFormFeedback({ successResetMs: 4_000 })
+  const automaticDraftStarted = useRef(false)
+  const [terms, setTerms] = useState(initialTerms ?? '')
+  const [scopeModules, setScopeModules] = useState(initialScopeModules)
+  const [deliverables, setDeliverables] = useState(initialDeliverables ?? '')
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState(initialAcceptanceCriteria ?? '')
+  const initialBillingItems = ensureCalendarYearProration(initialItems, initialCreatedAt)
+  const initialRecurringTerms = recurringPaymentTerms(initialBillingItems, initialCreatedAt)
+  const initialSchedule = initialPaymentSchedule ?? 'half_half'
   const hasDefaultPaymentTerms =
     !initialPaymentTerms ||
-    (initialSchedule !== "custom" &&
-      initialPaymentTerms === PAYMENT_SCHEDULE_TEMPLATES[initialSchedule]);
-  const useAutomaticRecurringTerms = Boolean(initialRecurringTerms && hasDefaultPaymentTerms);
+    (initialSchedule !== 'custom' &&
+      initialPaymentTerms === PAYMENT_SCHEDULE_TEMPLATES[initialSchedule])
+  const useAutomaticRecurringTerms = Boolean(initialRecurringTerms && hasDefaultPaymentTerms)
   const hasRecurringItems = initialBillingItems.some(
-    (item) => item.billing_cycle && item.billing_cycle !== "none",
-  );
+    (item) => item.billing_cycle && item.billing_cycle !== 'none',
+  )
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule>(
-    hasRecurringItems && initialPaymentSchedule === "half_half"
-      ? "custom"
-      : (initialPaymentSchedule ?? "half_half"),
-  );
+    hasRecurringItems && initialPaymentSchedule === 'half_half'
+      ? 'custom'
+      : (initialPaymentSchedule ?? 'half_half'),
+  )
   const [paymentPlan, setPaymentPlan] = useState<PaymentPlanItem[]>(
     hasRecurringItems
       ? []
       : initialPaymentPlan.length > 0
         ? initialPaymentPlan
-        : paymentPlanForSchedule(initialPaymentSchedule ?? "half_half"),
-  );
+        : paymentPlanForSchedule(initialPaymentSchedule ?? 'half_half'),
+  )
   const [paymentTerms, setPaymentTerms] = useState(
     (useAutomaticRecurringTerms ? initialRecurringTerms : initialPaymentTerms) ??
       PAYMENT_SCHEDULE_TEMPLATES.half_half,
-  );
+  )
   const [paymentTermsCustomized, setPaymentTermsCustomized] = useState(
     Boolean(
       initialPaymentTerms &&
-        !useAutomaticRecurringTerms &&
-        !initialPaymentTerms.includes("Las cuotas recurrentes se facturarán"),
+      !useAutomaticRecurringTerms &&
+      !initialPaymentTerms.includes('Las cuotas recurrentes se facturarán'),
     ),
-  );
+  )
   const [changeManagementTerms, setChangeManagementTerms] = useState(
     initialChangeManagementTerms ?? DEFAULT_CHANGE_MANAGEMENT_TERMS,
-  );
-  const [legalTerms, setLegalTerms] = useState(initialLegalTerms ?? DEFAULT_PROPOSAL_LEGAL_TERMS);
+  )
+  const [legalTerms, setLegalTerms] = useState(initialLegalTerms ?? DEFAULT_PROPOSAL_LEGAL_TERMS)
   const [maintenanceOptions, setMaintenanceOptions] = useState<MaintenanceOffer>(
     initialMaintenanceOptions ?? DEFAULT_MAINTENANCE_OFFER,
-  );
+  )
   const [maintenanceSelectedPlanId, setMaintenanceSelectedPlanId] = useState<string | null>(
     initialMaintenanceSelectedPlanId,
-  );
-  const [teamMemberIds, setTeamMemberIds] = useState(initialTeamMemberIds);
-  const [activeStep, setActiveStep] = useState(0);
-  const stepTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  )
+  const [teamMemberIds, setTeamMemberIds] = useState(initialTeamMemberIds)
+  const [activeStep, setActiveStep] = useState(0)
+  const stepTabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const [items, setItems] = useState<EditableItem[]>(
     initialBillingItems.length > 0
       ? initialBillingItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
       : [{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() } as EditableItem],
-  );
+  )
 
   function handleItemsChange(nextItems: LineItem[]) {
-    const next = ensureCalendarYearProration(nextItems, initialCreatedAt) as EditableItem[];
-    setItems(next);
+    const next = ensureCalendarYearProration(nextItems, initialCreatedAt) as EditableItem[]
+    setItems(next)
     if (!paymentTermsCustomized) {
       setPaymentTerms(
         recurringPaymentTerms(next, initialCreatedAt) ??
-          PAYMENT_SCHEDULE_TEMPLATES[paymentSchedule === "custom" ? "half_half" : paymentSchedule],
-      );
+          PAYMENT_SCHEDULE_TEMPLATES[paymentSchedule === 'custom' ? 'half_half' : paymentSchedule],
+      )
     }
   }
 
   const payload = useMemo(() => {
-    const { problems, solutions } = unzipPairs(pairs);
+    const { problems, solutions } = unzipPairs(pairs)
     return {
       id,
       expected_version: expectedVersion,
@@ -247,7 +247,7 @@ export function ProposalEditor({
       maintenance_options: maintenanceOptions,
       maintenance_selected_plan_id: maintenanceSelectedPlanId,
       items,
-    };
+    }
   }, [
     id,
     expectedVersion,
@@ -268,154 +268,151 @@ export function ProposalEditor({
     maintenanceOptions,
     maintenanceSelectedPlanId,
     items,
-  ]);
+  ])
 
   async function handleGenerateNarrative() {
-    setGenerating(true);
-    aiFeedback.setPending();
+    setGenerating(true)
+    aiFeedback.setPending()
     try {
-      const res = await fetch(`/api/proposals/${id}/generate-narrative`, { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "No se pudo generar la narrativa.");
-      const incoming = (json.pairs ?? []) as Array<Omit<EditablePair, "id">>;
-      setPairs(incoming.map((p) => ({ ...createEmptyPair(), ...p })));
-      aiFeedback.setSuccess("Narrativa generada");
+      const res = await fetch(`/api/proposals/${id}/generate-narrative`, { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'No se pudo generar la narrativa.')
+      const incoming = (json.pairs ?? []) as Array<Omit<EditablePair, 'id'>>
+      setPairs(incoming.map((p) => ({ ...createEmptyPair(), ...p })))
+      aiFeedback.setSuccess('Narrativa generada')
     } catch (err) {
-      aiFeedback.setError(err instanceof Error ? err.message : "Error desconocido");
+      aiFeedback.setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
-      setGenerating(false);
+      setGenerating(false)
     }
   }
 
   const narrativeIsEmpty =
-    !notes.trim() && !contextMarkdown.trim() && pairs.length === 0 && !terms.trim();
+    !notes.trim() && !contextMarkdown.trim() && pairs.length === 0 && !terms.trim()
   const commercialScopeIsEmpty =
-    scopeModules.length === 0 && !deliverables.trim() && !acceptanceCriteria.trim();
+    scopeModules.length === 0 && !deliverables.trim() && !acceptanceCriteria.trim()
   const hasEmptyDraftFields =
     narrativeIsEmpty ||
     commercialScopeIsEmpty ||
     !paymentTerms.trim() ||
-    !changeManagementTerms.trim();
+    !changeManagementTerms.trim()
   const saveErrors =
-    saveFeedback.state.status === "error"
-      ? saveFeedback.state.message.split("\n").filter(Boolean)
-      : [];
-  const proposalTotals = useMemo(() => computeProposalTotals(items), [items]);
-  const selectedMaintenance = selectedMaintenancePlan(
-    maintenanceOptions,
-    maintenanceSelectedPlanId,
-  );
+    saveFeedback.state.status === 'error'
+      ? saveFeedback.state.message.split('\n').filter(Boolean)
+      : []
+  const proposalTotals = useMemo(() => computeProposalTotals(items), [items])
+  const selectedMaintenance = selectedMaintenancePlan(maintenanceOptions, maintenanceSelectedPlanId)
   const stepComplete = [
     Boolean(title.trim() && validUntil),
     Boolean(contextMarkdown.trim() || pairs.length || scopeModules.length || deliverables.trim()),
     Boolean(items.some((item) => item.description.trim() && Number(item.quantity) > 0)),
     !maintenanceOptions.enabled || Boolean(selectedMaintenance),
-  ];
-  const currentStep = EDITOR_STEPS[activeStep] ?? EDITOR_STEPS[0]!;
-  const nextStep = EDITOR_STEPS[activeStep + 1] ?? currentStep;
+  ]
+  const currentStep = EDITOR_STEPS[activeStep] ?? EDITOR_STEPS[0]!
+  const nextStep = EDITOR_STEPS[activeStep + 1] ?? currentStep
 
   function handleStepKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const lastStepIndex = EDITOR_STEPS.length - 1;
+    const lastStepIndex = EDITOR_STEPS.length - 1
     const nextIndex =
-      event.key === "ArrowRight" || event.key === "ArrowDown"
+      event.key === 'ArrowRight' || event.key === 'ArrowDown'
         ? index === lastStepIndex
           ? 0
           : index + 1
-        : event.key === "ArrowLeft" || event.key === "ArrowUp"
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
           ? index === 0
             ? lastStepIndex
             : index - 1
-          : event.key === "Home"
+          : event.key === 'Home'
             ? 0
-            : event.key === "End"
+            : event.key === 'End'
               ? lastStepIndex
-              : null;
+              : null
 
-    if (nextIndex === null) return;
+    if (nextIndex === null) return
 
-    event.preventDefault();
-    setActiveStep(nextIndex);
-    stepTabRefs.current[nextIndex]?.focus();
+    event.preventDefault()
+    setActiveStep(nextIndex)
+    stepTabRefs.current[nextIndex]?.focus()
   }
 
   async function handleSave() {
-    saveFeedback.setPending();
+    saveFeedback.setPending()
     try {
-      const result = await updateProposal(payload);
+      const result = await updateProposal(payload)
       if (!result.ok) {
-        if (result.code === "conflict") setConflictOpen(true);
-        else saveFeedback.setError(result.error);
-        return;
+        if (result.code === 'conflict') setConflictOpen(true)
+        else saveFeedback.setError(result.error)
+        return
       }
       const teamResult = await setProposalTeamMembers({
         proposal_id: id,
         member_ids: teamMemberIds,
-      });
+      })
       if (!teamResult.ok) {
-        setExpectedVersion(result.version);
+        setExpectedVersion(result.version)
         saveFeedback.setError(
           `La propuesta se guardó, pero no se pudo actualizar el equipo: ${teamResult.error}`,
-        );
-        return;
+        )
+        return
       }
-      setExpectedVersion(result.version);
-      saveFeedback.setSuccess("Propuesta guardada");
-      router.push(`/proposals/${id}`);
+      setExpectedVersion(result.version)
+      saveFeedback.setSuccess('Propuesta guardada')
+      router.push(`/proposals/${id}`)
     } catch (error) {
       saveFeedback.setError(
-        error instanceof Error ? error.message : "No se pudo guardar la propuesta",
-      );
+        error instanceof Error ? error.message : 'No se pudo guardar la propuesta',
+      )
     }
   }
 
   function handlePaymentScheduleChange(value: PaymentSchedule) {
-    setPaymentSchedule(value);
-    if (value !== "custom") setPaymentTerms(PAYMENT_SCHEDULE_TEMPLATES[value]);
-    setPaymentPlan(paymentPlanForSchedule(value));
+    setPaymentSchedule(value)
+    if (value !== 'custom') setPaymentTerms(PAYMENT_SCHEDULE_TEMPLATES[value])
+    setPaymentPlan(paymentPlanForSchedule(value))
   }
 
   const handleGenerateDraft = useCallback(async () => {
-    if (!leadId || generating || locked || !hasEmptyDraftFields) return;
-    setGenerating(true);
-    aiFeedback.setPending();
+    if (!leadId || generating || locked || !hasEmptyDraftFields) return
+    setGenerating(true)
+    aiFeedback.setPending()
     try {
-      const res = await fetch(`/api/proposals/${id}/generate-draft`, { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "No se pudo preparar la propuesta.");
+      const res = await fetch(`/api/proposals/${id}/generate-draft`, { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'No se pudo preparar la propuesta.')
 
-      const incoming = (json.pairs ?? []) as Array<Omit<EditablePair, "id">>;
-      const nextPairs = incoming.map((pair) => ({ ...createEmptyPair(), ...pair }));
-      const nextScopeModules = (json.scope_modules ?? []) as ScopeModule[];
-      const titleIsEmpty = !title.trim();
-      const notesAreEmpty = !notes.trim();
-      const contextIsEmpty = !contextMarkdown.trim();
-      const pairsAreEmpty = pairs.length === 0;
-      const termsAreEmpty = !terms.trim();
-      const modulesAreEmpty = scopeModules.length === 0;
-      const deliverablesAreEmpty = !deliverables.trim();
-      const acceptanceCriteriaAreEmpty = !acceptanceCriteria.trim();
-      const paymentTermsAreEmpty = !paymentTerms.trim();
-      const changeManagementTermsAreEmpty = !changeManagementTerms.trim();
-      if (titleIsEmpty) setTitle(json.title);
-      if (notesAreEmpty) setNotes(json.notes ?? "");
-      if (contextIsEmpty) setContextMarkdown(json.context_markdown ?? "");
-      if (pairsAreEmpty) setPairs(nextPairs);
-      if (termsAreEmpty) setTerms(json.terms ?? "");
-      if (modulesAreEmpty && nextScopeModules.length > 0) setScopeModules(nextScopeModules);
-      if (deliverablesAreEmpty) setDeliverables(json.deliverables ?? "");
-      if (acceptanceCriteriaAreEmpty) setAcceptanceCriteria(json.acceptance_criteria ?? "");
+      const incoming = (json.pairs ?? []) as Array<Omit<EditablePair, 'id'>>
+      const nextPairs = incoming.map((pair) => ({ ...createEmptyPair(), ...pair }))
+      const nextScopeModules = (json.scope_modules ?? []) as ScopeModule[]
+      const titleIsEmpty = !title.trim()
+      const notesAreEmpty = !notes.trim()
+      const contextIsEmpty = !contextMarkdown.trim()
+      const pairsAreEmpty = pairs.length === 0
+      const termsAreEmpty = !terms.trim()
+      const modulesAreEmpty = scopeModules.length === 0
+      const deliverablesAreEmpty = !deliverables.trim()
+      const acceptanceCriteriaAreEmpty = !acceptanceCriteria.trim()
+      const paymentTermsAreEmpty = !paymentTerms.trim()
+      const changeManagementTermsAreEmpty = !changeManagementTerms.trim()
+      if (titleIsEmpty) setTitle(json.title)
+      if (notesAreEmpty) setNotes(json.notes ?? '')
+      if (contextIsEmpty) setContextMarkdown(json.context_markdown ?? '')
+      if (pairsAreEmpty) setPairs(nextPairs)
+      if (termsAreEmpty) setTerms(json.terms ?? '')
+      if (modulesAreEmpty && nextScopeModules.length > 0) setScopeModules(nextScopeModules)
+      if (deliverablesAreEmpty) setDeliverables(json.deliverables ?? '')
+      if (acceptanceCriteriaAreEmpty) setAcceptanceCriteria(json.acceptance_criteria ?? '')
       if (paymentTermsAreEmpty) {
-        setPaymentSchedule(json.payment_schedule as PaymentSchedule);
-        setPaymentTerms(json.payment_terms ?? "");
+        setPaymentSchedule(json.payment_schedule as PaymentSchedule)
+        setPaymentTerms(json.payment_terms ?? '')
       }
       if (changeManagementTermsAreEmpty) {
-        setChangeManagementTerms(json.change_management_terms ?? "");
+        setChangeManagementTerms(json.change_management_terms ?? '')
       }
-      aiFeedback.setSuccess("Borrador preparado con el contexto del lead");
+      aiFeedback.setSuccess('Borrador preparado con el contexto del lead')
     } catch (err) {
-      aiFeedback.setError(err instanceof Error ? err.message : "Error desconocido");
+      aiFeedback.setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
-      setGenerating(false);
+      setGenerating(false)
     }
   }, [
     acceptanceCriteria,
@@ -434,7 +431,7 @@ export function ProposalEditor({
     scopeModules,
     terms,
     title,
-  ]);
+  ])
 
   useEffect(() => {
     if (
@@ -446,10 +443,10 @@ export function ProposalEditor({
       !commercialScopeIsEmpty ||
       automaticDraftStarted.current
     ) {
-      return;
+      return
     }
-    automaticDraftStarted.current = true;
-    void handleGenerateDraft();
+    automaticDraftStarted.current = true
+    void handleGenerateDraft()
   }, [
     autoGenerateDraft,
     aiEnabled,
@@ -458,7 +455,7 @@ export function ProposalEditor({
     narrativeIsEmpty,
     commercialScopeIsEmpty,
     handleGenerateDraft,
-  ]);
+  ])
 
   return (
     <>
@@ -474,13 +471,13 @@ export function ProposalEditor({
               <FormFeedback state={saveFeedback.state} pendingLabel="Guardando propuesta…" />
               <Button onClick={handleSave} disabled={saveFeedback.pending}>
                 <Save className="size-4" aria-hidden />
-                {saveFeedback.pending ? "Guardando…" : "Guardar y ver propuesta"}
+                {saveFeedback.pending ? 'Guardando…' : 'Guardar y ver propuesta'}
               </Button>
             </div>
           ) : null}
         </header>
 
-        {saveFeedback.state.status === "error" && saveErrors.length > 0 ? (
+        {saveFeedback.state.status === 'error' && saveErrors.length > 0 ? (
           <Alert variant="destructive" className="border-destructive/30 bg-destructive/5 px-4 py-3">
             <AlertCircle className="size-4" aria-hidden />
             <AlertTitle>No se ha podido guardar la propuesta</AlertTitle>
@@ -502,12 +499,12 @@ export function ProposalEditor({
             className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1 shadow-sm"
           >
             {EDITOR_STEPS.map((step, index) => {
-              const active = activeStep === index;
+              const active = activeStep === index
               return (
                 <button
                   key={step.label}
                   ref={(element) => {
-                    stepTabRefs.current[index] = element;
+                    stepTabRefs.current[index] = element
                   }}
                   type="button"
                   onClick={() => setActiveStep(index)}
@@ -516,25 +513,25 @@ export function ProposalEditor({
                   id={`proposal-step-tab-${index}`}
                   aria-controls="proposal-editor-panel"
                   aria-selected={active}
-                  aria-label={`Paso ${index + 1}: ${step.label}, ${stepComplete[index] ? "completado" : "pendiente"}`}
+                  aria-label={`Paso ${index + 1}: ${step.label}, ${stepComplete[index] ? 'completado' : 'pendiente'}`}
                   tabIndex={active ? 0 : -1}
-                  className={`flex min-w-36 flex-1 items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-w-0 ${active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"}`}
+                  className={`flex min-w-36 flex-1 items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-w-0 ${active ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
                 >
                   <span
-                    className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${active ? "bg-primary-foreground/20 text-primary-foreground" : stepComplete[index] ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}
+                    className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${active ? 'bg-primary-foreground/20 text-primary-foreground' : stepComplete[index] ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
                   >
                     {stepComplete[index] ? <Check className="size-3.5" aria-hidden /> : index + 1}
                   </span>
                   <span className="min-w-0">
                     <span className="block text-sm font-semibold">{step.label}</span>
                     <span
-                      className={`hidden truncate text-[11px] sm:block ${active ? "text-primary-foreground/75" : "text-muted-foreground"}`}
+                      className={`hidden truncate text-[11px] sm:block ${active ? 'text-primary-foreground/75' : 'text-muted-foreground'}`}
                     >
                       {step.description}
                     </span>
                   </span>
                 </button>
-              );
+              )
             })}
           </div>
         </nav>
@@ -583,7 +580,7 @@ export function ProposalEditor({
                       onClick={handleGenerateDraft}
                     >
                       <Sparkles className="size-4" aria-hidden />
-                      {generating ? "Preparando…" : "Crear borrador"}
+                      {generating ? 'Preparando…' : 'Crear borrador'}
                     </Button>
                   </div>
                 ) : null}
@@ -611,7 +608,7 @@ export function ProposalEditor({
                           onClick={() => setNotesPreview((preview) => !preview)}
                           className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                         >
-                          {notesPreview ? "Editar" : "Previsualizar"}
+                          {notesPreview ? 'Editar' : 'Previsualizar'}
                         </button>
                       ) : null}
                     </div>
@@ -782,8 +779,8 @@ export function ProposalEditor({
                       <Textarea
                         value={paymentTerms}
                         onChange={(event) => {
-                          setPaymentTermsCustomized(true);
-                          setPaymentTerms(event.target.value);
+                          setPaymentTermsCustomized(true)
+                          setPaymentTerms(event.target.value)
                         }}
                         disabled={locked}
                         rows={4}
@@ -884,7 +881,7 @@ export function ProposalEditor({
                         <span>
                           <span className="block text-sm font-medium">{member.name}</span>
                           <span className="block text-xs text-muted-foreground">
-                            {member.job_title ?? "Equipo Doscientos"}
+                            {member.job_title ?? 'Equipo Doscientos'}
                           </span>
                         </span>
                       </label>
@@ -904,8 +901,8 @@ export function ProposalEditor({
                         <p className="text-xs text-muted-foreground">Mantenimiento</p>
                         <p className="mt-1 text-lg font-semibold">
                           {selectedMaintenance
-                            ? `${selectedMaintenance.name} · ${formatEUR(selectedMaintenance.monthly_price)} / ${maintenanceOptions.billing_cycle === "monthly" ? "mes" : maintenanceOptions.billing_cycle === "quarterly" ? "trimestre" : "año"}`
-                            : "Pendiente de elegir"}
+                            ? `${selectedMaintenance.name} · ${formatEUR(selectedMaintenance.monthly_price)} / ${maintenanceOptions.billing_cycle === 'monthly' ? 'mes' : maintenanceOptions.billing_cycle === 'quarterly' ? 'trimestre' : 'año'}`
+                            : 'Pendiente de elegir'}
                         </p>
                       </div>
                     ) : null}
@@ -934,15 +931,15 @@ export function ProposalEditor({
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">Vigencia</span>
-                <span className="font-medium">{validUntil || "Pendiente"}</span>
+                <span className="font-medium">{validUntil || 'Pendiente'}</span>
               </div>
               {maintenanceOptions.enabled ? (
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Mantenimiento</span>
                   <span className="text-right font-medium">
                     {selectedMaintenance
-                      ? `${formatEUR(selectedMaintenance.monthly_price)} / ${maintenanceOptions.billing_cycle === "monthly" ? "mes" : maintenanceOptions.billing_cycle === "quarterly" ? "trimestre" : "año"}`
-                      : "Pendiente"}
+                      ? `${formatEUR(selectedMaintenance.monthly_price)} / ${maintenanceOptions.billing_cycle === 'monthly' ? 'mes' : maintenanceOptions.billing_cycle === 'quarterly' ? 'trimestre' : 'año'}`
+                      : 'Pendiente'}
                   </span>
                 </div>
               ) : null}
@@ -961,11 +958,11 @@ export function ProposalEditor({
                 {EDITOR_STEPS.map((step, index) => (
                   <div key={step.label} className="flex items-center gap-2 text-xs">
                     <Check
-                      className={`size-3.5 ${stepComplete[index] ? "text-primary" : "text-muted-foreground/40"}`}
+                      className={`size-3.5 ${stepComplete[index] ? 'text-primary' : 'text-muted-foreground/40'}`}
                       aria-hidden
                     />
                     <span
-                      className={stepComplete[index] ? "text-foreground" : "text-muted-foreground"}
+                      className={stepComplete[index] ? 'text-foreground' : 'text-muted-foreground'}
                     >
                       {step.label}
                     </span>
@@ -978,7 +975,7 @@ export function ProposalEditor({
 
         <footer className="sticky bottom-3 z-20 flex items-center justify-between gap-3 rounded-xl border border-border bg-background/95 p-3 shadow-sm backdrop-blur">
           <p className="hidden min-w-0 text-sm text-muted-foreground sm:block">
-            Paso {activeStep + 1} de {EDITOR_STEPS.length} ·{" "}
+            Paso {activeStep + 1} de {EDITOR_STEPS.length} ·{' '}
             <span className="font-medium text-foreground">{currentStep.label}</span>
           </p>
           <Button
@@ -996,17 +993,17 @@ export function ProposalEditor({
             disabled={activeStep === EDITOR_STEPS.length - 1 && (locked || saveFeedback.pending)}
             onClick={() => {
               if (activeStep === EDITOR_STEPS.length - 1) {
-                void handleSave();
-                return;
+                void handleSave()
+                return
               }
-              setActiveStep((step) => Math.min(EDITOR_STEPS.length - 1, step + 1));
+              setActiveStep((step) => Math.min(EDITOR_STEPS.length - 1, step + 1))
             }}
             className="flex-1 sm:flex-none"
           >
             {activeStep === EDITOR_STEPS.length - 1 ? (
               <>
                 <Save className="size-4" aria-hidden />
-                {saveFeedback.pending ? "Guardando…" : "Guardar y ver propuesta"}
+                {saveFeedback.pending ? 'Guardando…' : 'Guardar y ver propuesta'}
               </>
             ) : (
               <>
@@ -1022,10 +1019,10 @@ export function ProposalEditor({
         entityName="propuesta"
         onKeepEditing={() => setConflictOpen(false)}
         onReload={() => {
-          setConflictOpen(false);
-          router.refresh();
+          setConflictOpen(false)
+          router.refresh()
         }}
       />
     </>
-  );
+  )
 }

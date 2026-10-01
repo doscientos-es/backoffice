@@ -1,10 +1,10 @@
-"use client";
+'use client'
 
-import { Copy, Plus, Trash as Trash2 } from "lucide-react";
-import { useRef } from "react";
+import { Copy, Plus, Trash as Trash2 } from 'lucide-react'
+import { useRef } from 'react'
 
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import {
   BILLING_CYCLE_LABELS,
   BILLING_CYCLES,
@@ -14,27 +14,27 @@ import {
   computeProposalTotals,
   EMPTY_LINE_ITEM,
   type LineItem,
-} from "@/lib/finance";
-import { formatEUR } from "@/lib/utils";
+} from '@/lib/finance'
+import { formatEUR } from '@/lib/utils'
 
 export type LineItemsTableProps = {
-  items: LineItem[];
-  onChange: (items: LineItem[]) => void;
+  items: LineItem[]
+  onChange: (items: LineItem[]) => void
   /** When true, every input is disabled. Used by invoice/proposal edit views. */
-  locked?: boolean;
+  locked?: boolean
   /**
    * When true, renders the cadence selector per line and a bucketed totals
    * footer (one-time + recurring). Used by proposals; invoices keep the
    * one-shot layout.
    */
-  showBillingCycle?: boolean;
-};
+  showBillingCycle?: boolean
+}
 
-const RECURRING_CYCLES: ReadonlyArray<Exclude<BillingCycle, "none">> = [
-  "monthly",
-  "quarterly",
-  "yearly",
-];
+const RECURRING_CYCLES: ReadonlyArray<Exclude<BillingCycle, 'none'>> = [
+  'monthly',
+  'quarterly',
+  'yearly',
+]
 
 /**
  * Editable line-items table shared by invoice and proposal editors. Owns the
@@ -48,36 +48,36 @@ export function LineItemsTable({
   locked = false,
   showBillingCycle = false,
 }: LineItemsTableProps) {
-  const flat = computeLineTotals(items);
-  const bucketed = computeProposalTotals(items);
+  const flat = computeLineTotals(items)
+  const bucketed = computeProposalTotals(items)
   const recurringRows = showBillingCycle
     ? RECURRING_CYCLES.filter((c) => bucketed[c].total > 0)
-    : [];
-  const descriptionRefs = useRef(new Map<string, HTMLInputElement>());
+    : []
+  const descriptionRefs = useRef(new Map<string, HTMLInputElement>())
 
   const update = (i: number, patch: Partial<LineItem>) =>
-    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)))
   const focusDescription = (id: string) => {
-    requestAnimationFrame(() => descriptionRefs.current.get(id)?.focus());
-  };
+    requestAnimationFrame(() => descriptionRefs.current.get(id)?.focus())
+  }
   const add = () => {
-    const id = crypto.randomUUID();
-    onChange([...items, { ...EMPTY_LINE_ITEM, id }]);
-    focusDescription(id);
-  };
+    const id = crypto.randomUUID()
+    onChange([...items, { ...EMPTY_LINE_ITEM, id }])
+    focusDescription(id)
+  }
   const duplicate = (i: number) => {
-    const source = items[i];
-    if (!source) return;
-    const copy: LineItem = { ...source, id: crypto.randomUUID() };
-    onChange([...items.slice(0, i + 1), copy, ...items.slice(i + 1)]);
-    focusDescription(copy.id);
-  };
+    const source = items[i]
+    if (!source) return
+    const copy: LineItem = { ...source, id: crypto.randomUUID() }
+    onChange([...items.slice(0, i + 1), copy, ...items.slice(i + 1)])
+    focusDescription(copy.id)
+  }
   const remove = (i: number) =>
-    onChange(items.length === 1 ? items : items.filter((_, idx) => idx !== i));
+    onChange(items.length === 1 ? items : items.filter((_, idx) => idx !== i))
 
   const columns = showBillingCycle
-    ? "md:grid-cols-[minmax(12rem,1fr)_8rem_5rem_8rem_6rem_8rem_5rem]"
-    : "md:grid-cols-[minmax(12rem,1fr)_5rem_8rem_6rem_8rem_5rem]";
+    ? 'md:grid-cols-[minmax(12rem,1fr)_8rem_5rem_8rem_6rem_8rem_5rem]'
+    : 'md:grid-cols-[minmax(12rem,1fr)_5rem_8rem_6rem_8rem_5rem]'
 
   return (
     <div className="overflow-hidden">
@@ -107,15 +107,15 @@ export function LineItemsTable({
                 </span>
                 <Input
                   ref={(node) => {
-                    if (node) descriptionRefs.current.set(it.id, node);
-                    else descriptionRefs.current.delete(it.id);
+                    if (node) descriptionRefs.current.set(it.id, node)
+                    else descriptionRefs.current.delete(it.id)
                   }}
                   value={it.description}
                   onChange={(e) => update(i, { description: e.target.value })}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && !locked) {
-                      e.preventDefault();
-                      add();
+                    if (e.key === 'Enter' && !locked) {
+                      e.preventDefault()
+                      add()
                     }
                   }}
                   disabled={locked}
@@ -131,7 +131,7 @@ export function LineItemsTable({
                     Cadencia
                   </span>
                   <Select
-                    value={it.billing_cycle ?? "none"}
+                    value={it.billing_cycle ?? 'none'}
                     onChange={(e) => update(i, { billing_cycle: e.target.value as BillingCycle })}
                     disabled={locked}
                     aria-label={`Cadencia línea ${i + 1}`}
@@ -154,7 +154,7 @@ export function LineItemsTable({
                   inputMode="decimal"
                   step="0.01"
                   min="0"
-                  value={it.quantity || ""}
+                  value={it.quantity || ''}
                   onChange={(e) => update(i, { quantity: Number(e.target.value) || 0 })}
                   disabled={locked}
                   className="text-right tabular-nums"
@@ -172,7 +172,7 @@ export function LineItemsTable({
                     inputMode="decimal"
                     step="0.01"
                     min="0"
-                    value={it.unit_price || ""}
+                    value={it.unit_price || ''}
                     onChange={(e) => update(i, { unit_price: Number(e.target.value) || 0 })}
                     disabled={locked}
                     className="pr-8 text-right tabular-nums"
@@ -302,5 +302,5 @@ export function LineItemsTable({
         </dl>
       </div>
     </div>
-  );
+  )
 }

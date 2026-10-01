@@ -1,34 +1,34 @@
-"use client";
+'use client'
 
-import { Check } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Check } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { BILLING_CYCLE_LABELS } from "@/lib/finance";
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { BILLING_CYCLE_LABELS } from '@/lib/finance'
 import {
   MAINTENANCE_LIMITS,
   type MaintenanceOffer,
   recommendedMaintenancePlanId,
-} from "@/lib/proposals/maintenance";
-import { formatEUR } from "@/lib/utils";
+} from '@/lib/proposals/maintenance'
+import { formatEUR } from '@/lib/utils'
 
 type Props = {
-  offer: MaintenanceOffer;
-  selectedPlanId: string | null;
-  onChange: (offer: MaintenanceOffer) => void;
-  onSelectedPlanChange: (planId: string | null) => void;
-  locked: boolean;
-};
+  offer: MaintenanceOffer
+  selectedPlanId: string | null
+  onChange: (offer: MaintenanceOffer) => void
+  onSelectedPlanChange: (planId: string | null) => void
+  locked: boolean
+}
 
 function listLines(value: string, maxItems: number): string[] {
   return value
-    .split("\n")
-    .map((line) => line.replace(/^\s*(?:[-*•]|[0-9]+[.)])\s*/, "").trim())
+    .split('\n')
+    .map((line) => line.replace(/^\s*(?:[-*•]|[0-9]+[.)])\s*/, '').trim())
     .filter(Boolean)
-    .slice(0, maxItems);
+    .slice(0, maxItems)
 }
 
 function MaintenanceListTextarea({
@@ -41,30 +41,30 @@ function MaintenanceListTextarea({
   placeholder,
   className,
 }: {
-  items: string[];
-  onChange: (items: string[]) => void;
-  disabled: boolean;
-  maxItems: number;
-  label: string;
-  ariaLabel: string;
-  placeholder: string;
-  className: string;
+  items: string[]
+  onChange: (items: string[]) => void
+  disabled: boolean
+  maxItems: number
+  label: string
+  ariaLabel: string
+  placeholder: string
+  className: string
 }) {
-  const [draft, setDraft] = useState(() => items.join("\n"));
-  const editing = useRef(false);
-  const count = listLines(draft, maxItems).length;
+  const [draft, setDraft] = useState(() => items.join('\n'))
+  const editing = useRef(false)
+  const count = listLines(draft, maxItems).length
 
   useEffect(() => {
-    const nextDraft = items.join("\n");
-    if (!editing.current && draft !== nextDraft) setDraft(nextDraft);
-  }, [draft, items]);
+    const nextDraft = items.join('\n')
+    if (!editing.current && draft !== nextDraft) setDraft(nextDraft)
+  }, [draft, items])
 
   const commit = () => {
-    editing.current = false;
-    const nextItems = listLines(draft, maxItems);
-    setDraft(nextItems.join("\n"));
-    onChange(nextItems);
-  };
+    editing.current = false
+    const nextItems = listLines(draft, maxItems)
+    setDraft(nextItems.join('\n'))
+    onChange(nextItems)
+  }
 
   return (
     <>
@@ -77,11 +77,11 @@ function MaintenanceListTextarea({
       <Textarea
         value={draft}
         onChange={(event) => {
-          editing.current = true;
-          setDraft(event.target.value);
+          editing.current = true
+          setDraft(event.target.value)
         }}
         onFocus={() => {
-          editing.current = true;
+          editing.current = true
         }}
         onBlur={commit}
         disabled={disabled}
@@ -94,7 +94,7 @@ function MaintenanceListTextarea({
         Un punto por línea. Puedes pegar una lista con viñetas.
       </p>
     </>
-  );
+  )
 }
 
 /** Proposal-scoped maintenance plans. Copy and pricing remain editable per quote. */
@@ -105,13 +105,13 @@ export function MaintenanceOfferEditor({
   onSelectedPlanChange,
   locked,
 }: Props) {
-  const recommendedPlanId = recommendedMaintenancePlanId(offer);
-  const patchPlan = (index: number, patch: Partial<MaintenanceOffer["plans"][number]>) => {
+  const recommendedPlanId = recommendedMaintenancePlanId(offer)
+  const patchPlan = (index: number, patch: Partial<MaintenanceOffer['plans'][number]>) => {
     onChange({
       ...offer,
       plans: offer.plans.map((plan, current) => (current === index ? { ...plan, ...patch } : plan)),
-    });
-  };
+    })
+  }
 
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
@@ -128,8 +128,8 @@ export function MaintenanceOfferEditor({
           checked={offer.enabled}
           disabled={locked}
           onChange={(event) => {
-            onChange({ ...offer, enabled: event.target.checked });
-            if (!event.target.checked) onSelectedPlanChange(null);
+            onChange({ ...offer, enabled: event.target.checked })
+            if (!event.target.checked) onSelectedPlanChange(null)
           }}
           aria-label="Incluir mantenimiento en esta propuesta"
           className="mt-0.5 size-4 accent-primary"
@@ -172,14 +172,14 @@ export function MaintenanceOfferEditor({
                 onChange={(event) =>
                   onChange({
                     ...offer,
-                    billing_cycle: event.target.value as MaintenanceOffer["billing_cycle"],
+                    billing_cycle: event.target.value as MaintenanceOffer['billing_cycle'],
                   })
                 }
                 disabled={locked}
                 aria-label="Cadencia de facturación del mantenimiento"
                 className="bg-background"
               >
-                {(["monthly", "quarterly", "yearly"] as const).map((cycle) => (
+                {(['monthly', 'quarterly', 'yearly'] as const).map((cycle) => (
                   <option key={cycle} value={cycle}>
                     {BILLING_CYCLE_LABELS[cycle]}
                   </option>
@@ -192,17 +192,17 @@ export function MaintenanceOfferEditor({
           </div>
           <div className="flex flex-col gap-4">
             {offer.plans.map((plan, index) => {
-              const selected = selectedPlanId === plan.id;
-              const recommended = recommendedPlanId === plan.id;
+              const selected = selectedPlanId === plan.id
+              const recommended = recommendedPlanId === plan.id
               return (
                 <article
                   key={plan.id}
-                  className={`overflow-hidden rounded-xl border ${selected ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"}`}
+                  className={`overflow-hidden rounded-xl border ${selected ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-background'}`}
                 >
                   <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3">
                     <div className="flex items-center gap-2.5">
                       <span className="flex size-7 items-center justify-center rounded-full bg-background text-xs font-semibold text-muted-foreground tabular-nums shadow-sm">
-                        {String(index + 1).padStart(2, "0")}
+                        {String(index + 1).padStart(2, '0')}
                       </span>
                       <div>
                         <p className="text-sm font-semibold text-foreground">
@@ -308,27 +308,27 @@ export function MaintenanceOfferEditor({
                     <Button
                       type="button"
                       size="sm"
-                      variant={selected ? "secondary" : "outline"}
+                      variant={selected ? 'secondary' : 'outline'}
                       className="w-full sm:w-auto"
                       disabled={locked}
                       onClick={() => onSelectedPlanChange(selected ? null : plan.id)}
                     >
                       {selected
-                        ? "Quitar de la propuesta"
+                        ? 'Quitar de la propuesta'
                         : `Seleccionar · ${formatEUR(plan.monthly_price)}/mes`}
                     </Button>
                   </footer>
                 </article>
-              );
+              )
             })}
           </div>
           <p className="text-xs text-muted-foreground">
             {selectedPlanId
-              ? "Este plan queda incluido como cuota mensual y se podrá cambiar hasta que la propuesta sea aceptada."
-              : "No se ha seleccionado ningún plan. La propuesta seguirá siendo válida sin mantenimiento."}
+              ? 'Este plan queda incluido como cuota mensual y se podrá cambiar hasta que la propuesta sea aceptada.'
+              : 'No se ha seleccionado ningún plan. La propuesta seguirá siendo válida sin mantenimiento.'}
           </p>
         </>
       ) : null}
     </section>
-  );
+  )
 }

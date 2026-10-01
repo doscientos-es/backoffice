@@ -1,39 +1,39 @@
-import { ArrowRight, Clock as Clock3, ExternalLink } from "lucide-react";
+import { ArrowRight, Clock as Clock3, ExternalLink } from 'lucide-react'
 
-import { createTask } from "@/app/(app)/tasks/actions";
-import { type AttachmentItem, AttachmentSection } from "@/components/ui/attachment-section";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { findClarityPlaybackUrl } from "@/lib/conversion-events/journeys";
-import { CONVERSION_EVENT_LABEL, CONVERSION_STEP_LABEL } from "@/lib/conversion-events/labels";
-import { listLeadConversionEvents } from "@/lib/conversion-events/queries";
-import { listLeadDiagnostics } from "@/lib/diagnostics/queries";
-import { isGoogleEnabled } from "@/lib/env";
-import type { MemberOption } from "@/lib/members/queries";
-import { MEETING_PROJECT_STATUSES } from "@/lib/status";
-import { createServerClient } from "@/lib/supabase/server";
+import { createTask } from '@/app/(app)/tasks/actions'
+import { type AttachmentItem, AttachmentSection } from '@/components/ui/attachment-section'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { findClarityPlaybackUrl } from '@/lib/conversion-events/journeys'
+import { CONVERSION_EVENT_LABEL, CONVERSION_STEP_LABEL } from '@/lib/conversion-events/labels'
+import { listLeadConversionEvents } from '@/lib/conversion-events/queries'
+import { listLeadDiagnostics } from '@/lib/diagnostics/queries'
+import { isGoogleEnabled } from '@/lib/env'
+import type { MemberOption } from '@/lib/members/queries'
+import { MEETING_PROJECT_STATUSES } from '@/lib/status'
+import { createServerClient } from '@/lib/supabase/server'
 
-import { LeadQuickActions } from "./quick-actions";
+import { LeadQuickActions } from './quick-actions'
 
 function formatJourneyTime(value: string): string {
-  return new Intl.DateTimeFormat("es-ES", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+  return new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value))
 }
 
 export async function LeadConversionJourneySection({
   leadId,
   eventId,
 }: {
-  leadId: string;
-  eventId: string | null;
+  leadId: string
+  eventId: string | null
 }) {
-  const events = await listLeadConversionEvents({ id: leadId, event_id: eventId });
-  const journeyEvents = [...events].reverse();
-  const clarityUrl = findClarityPlaybackUrl(events);
+  const events = await listLeadConversionEvents({ id: leadId, event_id: eventId })
+  const journeyEvents = [...events].reverse()
+  const clarityUrl = findClarityPlaybackUrl(events)
 
   return (
     <Card>
@@ -64,15 +64,15 @@ export async function LeadConversionJourneySection({
           <div className="-mx-1 overflow-x-auto px-1 pb-2">
             <ol className="flex min-w-max items-center gap-3" aria-label="Pasos del journey">
               {journeyEvents.map((event, index) => {
-                const isConversion = ["lead_created", "form_submit", "whatsapp_click"].includes(
+                const isConversion = ['lead_created', 'form_submit', 'whatsapp_click'].includes(
                   event.event_name,
-                );
+                )
                 const attribution = [event.utm_source, event.utm_medium, event.utm_campaign]
                   .filter(Boolean)
-                  .join(" · ");
+                  .join(' · ')
                 const detail =
-                  CONVERSION_STEP_LABEL[event.conversion_step ?? ""] ??
-                  (attribution || event.landing_ref || "Sin UTM/ref");
+                  CONVERSION_STEP_LABEL[event.conversion_step ?? ''] ??
+                  (attribution || event.landing_ref || 'Sin UTM/ref')
 
                 return (
                   <li key={event.id} className="flex items-center gap-3">
@@ -88,14 +88,14 @@ export async function LeadConversionJourneySection({
                       </div>
                       <Badge
                         className="mt-2 max-w-full"
-                        variant={isConversion ? "success" : "neutral"}
+                        variant={isConversion ? 'success' : 'neutral'}
                       >
                         <span className="truncate">
                           {CONVERSION_EVENT_LABEL[event.event_name] ?? event.event_name}
                         </span>
                       </Badge>
                       <p className="mt-2 truncate text-sm font-medium">
-                        {event.landing_path ?? event.referrer ?? "Evento sin página"}
+                        {event.landing_path ?? event.referrer ?? 'Evento sin página'}
                       </p>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">{detail}</p>
                     </article>
@@ -106,21 +106,21 @@ export async function LeadConversionJourneySection({
                       />
                     )}
                   </li>
-                );
+                )
               })}
             </ol>
           </div>
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export async function LeadDiagnosticsSection({ leadId }: { leadId: string }) {
-  const diagnostics = await listLeadDiagnostics(leadId);
+  const diagnostics = await listLeadDiagnostics(leadId)
 
   if (diagnostics.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -128,7 +128,7 @@ export async function LeadDiagnosticsSection({ leadId }: { leadId: string }) {
       <CardHeader>
         <CardTitle className="text-base">Diagnósticos personalizados</CardTitle>
         <p className="mt-1 text-sm font-normal text-muted-foreground">
-          {`${diagnostics.length} ${diagnostics.length === 1 ? "diagnóstico disponible" : "diagnósticos disponibles"}.`}
+          {`${diagnostics.length} ${diagnostics.length === 1 ? 'diagnóstico disponible' : 'diagnósticos disponibles'}.`}
         </p>
       </CardHeader>
       <CardContent>
@@ -137,17 +137,17 @@ export async function LeadDiagnosticsSection({ leadId }: { leadId: string }) {
             <div key={diagnostic.id} className="rounded-lg border border-border p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-medium">{diagnostic.company || diagnostic.email}</p>
-                <Badge variant={diagnostic.report_opened_at ? "success" : "neutral"}>
+                <Badge variant={diagnostic.report_opened_at ? 'success' : 'neutral'}>
                   {diagnostic.report_opened_at
-                    ? "Informe abierto"
+                    ? 'Informe abierto'
                     : diagnostic.report_sent_at
-                      ? "Informe enviado"
-                      : "Completado"}
+                      ? 'Informe enviado'
+                      : 'Completado'}
                 </Badge>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                {diagnostic.metrics.monthlyHours ?? "—"} h/mes ·{" "}
-                {diagnostic.metrics.yearlyHours ?? "—"} h/año · {diagnostic.metrics.risk ?? "—"}
+                {diagnostic.metrics.monthlyHours ?? '—'} h/mes ·{' '}
+                {diagnostic.metrics.yearlyHours ?? '—'} h/año · {diagnostic.metrics.risk ?? '—'}
               </p>
               {diagnostic.metrics.primaryOpportunity ? (
                 <p className="mt-2 text-xs text-muted-foreground">
@@ -159,25 +159,25 @@ export async function LeadDiagnosticsSection({ leadId }: { leadId: string }) {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export async function LeadAttachmentsSection({
   leadId,
   canEdit,
 }: {
-  leadId: string;
-  canEdit: boolean;
+  leadId: string
+  canEdit: boolean
 }) {
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const { data, error } = await supabase
-    .from("attachments")
-    .select("id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link")
-    .eq("lead_id", leadId)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .from('attachments')
+    .select('id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link')
+    .eq('lead_id', leadId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(error.message)
 
   return (
     <AttachmentSection
@@ -186,7 +186,7 @@ export async function LeadAttachmentsSection({
       attachments={(data ?? []) as AttachmentItem[]}
       canEdit={canEdit}
     />
-  );
+  )
 }
 
 export async function LeadQuickActionsSection({
@@ -202,43 +202,43 @@ export async function LeadQuickActionsSection({
   scheduleMembers,
 }: {
   lead: {
-    id: string;
-    name: string;
-    email: string | null;
-    phone: string | null;
-    language?: string | null;
-    assigned_to: string | null;
-  };
-  senderName: string;
-  canEdit: boolean;
-  openCallInitially: boolean;
-  openScheduleInitially: boolean;
-  defaultDurationMinutes: number | null;
-  defaultCallOutcome?: "connected" | "no_answer";
-  callSessionId?: string;
-  aiEnabled: boolean;
-  scheduleMembers: MemberOption[];
+    id: string
+    name: string
+    email: string | null
+    phone: string | null
+    language?: string | null
+    assigned_to: string | null
+  }
+  senderName: string
+  canEdit: boolean
+  openCallInitially: boolean
+  openScheduleInitially: boolean
+  defaultDurationMinutes: number | null
+  defaultCallOutcome?: 'connected' | 'no_answer'
+  callSessionId?: string
+  aiEnabled: boolean
+  scheduleMembers: MemberOption[]
 }) {
-  const googleEnabled = isGoogleEnabled();
-  const supabase = await createServerClient();
+  const googleEnabled = isGoogleEnabled()
+  const supabase = await createServerClient()
   const projectsRequest = googleEnabled
     ? supabase
-        .from("projects")
-        .select("id, name")
-        .is("deleted_at", null)
-        .in("status", MEETING_PROJECT_STATUSES)
-        .order("name")
-    : Promise.resolve({ data: [] as Array<{ id: string; name: string }>, error: null });
+        .from('projects')
+        .select('id, name')
+        .is('deleted_at', null)
+        .in('status', MEETING_PROJECT_STATUSES)
+        .order('name')
+    : Promise.resolve({ data: [] as Array<{ id: string; name: string }>, error: null })
   const membersRequest = googleEnabled
-    ? supabase.from("team_members").select("id, name, email").is("deleted_at", null).order("name")
+    ? supabase.from('team_members').select('id, name, email').is('deleted_at', null).order('name')
     : Promise.resolve({
         data: [] as Array<{ id: string; name: string; email: string }>,
         error: null,
-      });
-  const [projectsResult, membersResult] = await Promise.all([projectsRequest, membersRequest]);
+      })
+  const [projectsResult, membersResult] = await Promise.all([projectsRequest, membersRequest])
 
-  if (projectsResult.error) throw new Error(projectsResult.error.message);
-  if (membersResult.error) throw new Error(membersResult.error.message);
+  if (projectsResult.error) throw new Error(projectsResult.error.message)
+  if (membersResult.error) throw new Error(membersResult.error.message)
 
   return (
     <LeadQuickActions
@@ -260,10 +260,10 @@ export async function LeadQuickActionsSection({
       meetMembers={(membersResult.data ?? []).map((member) => ({
         id: member.id,
         name: member.name,
-        email: member.email ?? "",
+        email: member.email ?? '',
       }))}
       scheduleMembers={scheduleMembers}
       createTaskAction={createTask}
     />
-  );
+  )
 }

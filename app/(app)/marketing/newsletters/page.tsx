@@ -1,66 +1,66 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
-import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { requireUser } from "@/lib/auth";
+import { PageHeader } from '@/components/layout/page-header'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { requireUser } from '@/lib/auth'
 import {
   countNewsletterAudience,
   getAudienceLabel,
   listNewsletterIssues,
   NEWSLETTER_AUDIENCES,
   type NewsletterIssue,
-} from "@/lib/marketing/newsletters";
+} from '@/lib/marketing/newsletters'
 
 import {
   createNewsletterIssueForm,
   publishNewsletterIssueForm,
   sendNewsletterIssueForm,
   sendNewsletterTestForm,
-} from "./actions";
+} from './actions'
 
-export const metadata: Metadata = { title: "Newsletters - doscientos" };
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: 'Newsletters - doscientos' }
+export const dynamic = 'force-dynamic'
 
-const statusLabel: Record<NewsletterIssue["status"], string> = {
-  draft: "Borrador",
-  scheduled: "Planificada",
-  sent: "Enviada",
-  published: "Publicada",
-  archived: "Archivada",
-};
+const statusLabel: Record<NewsletterIssue['status'], string> = {
+  draft: 'Borrador',
+  scheduled: 'Planificada',
+  sent: 'Enviada',
+  published: 'Publicada',
+  archived: 'Archivada',
+}
 
-const statusTone: Record<NewsletterIssue["status"], "neutral" | "info" | "success" | "warning"> = {
-  draft: "neutral",
-  scheduled: "info",
-  sent: "success",
-  published: "success",
-  archived: "warning",
-};
+const statusTone: Record<NewsletterIssue['status'], 'neutral' | 'info' | 'success' | 'warning'> = {
+  draft: 'neutral',
+  scheduled: 'info',
+  sent: 'success',
+  published: 'success',
+  archived: 'warning',
+}
 
 function canSend(issue: NewsletterIssue): boolean {
-  return !issue.sent_at && issue.status !== "archived";
+  return !issue.sent_at && issue.status !== 'archived'
 }
 
 function fmtDate(value: string | null): string {
-  if (!value) return "Sin fecha";
-  return new Intl.DateTimeFormat("es", { dateStyle: "medium", timeStyle: "short" }).format(
+  if (!value) return 'Sin fecha'
+  return new Intl.DateTimeFormat('es', { dateStyle: 'medium', timeStyle: 'short' }).format(
     new Date(value),
-  );
+  )
 }
 
 function rate(part: number, total: number): string {
-  if (total === 0) return "0%";
-  return `${Math.round((part / total) * 100)}%`;
+  if (total === 0) return '0%'
+  return `${Math.round((part / total) * 100)}%`
 }
 
 export default async function NewslettersPage() {
-  await requireUser();
+  await requireUser()
   const [issues, audienceCounts] = await Promise.all([
     listNewsletterIssues(),
     Promise.all(
@@ -69,17 +69,17 @@ export default async function NewslettersPage() {
         count: await countNewsletterAudience(audience.key),
       })),
     ),
-  ]);
-  const counts = new Map(audienceCounts.map((audience) => [audience.key, audience.count]));
-  const scheduled = issues.filter((issue) => issue.status === "scheduled").length;
-  const published = issues.filter((issue) => issue.published_at).length;
+  ])
+  const counts = new Map(audienceCounts.map((audience) => [audience.key, audience.count]))
+  const scheduled = issues.filter((issue) => issue.status === 'scheduled').length
+  const published = issues.filter((issue) => issue.published_at).length
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Newsletters"
         description="Planifica recursos, decide a quien llegan y conserva cada envio como activo publico."
-        breadcrumbs={[{ label: "Marketing", href: "/marketing" }, { label: "Newsletters" }]}
+        breadcrumbs={[{ label: 'Marketing', href: '/marketing' }, { label: 'Newsletters' }]}
         actions={
           <Button asChild variant="outline">
             <Link href="https://doscientos.es/recursos" target="_blank">
@@ -354,5 +354,5 @@ export default async function NewslettersPage() {
         </div>
       </section>
     </div>
-  );
+  )
 }

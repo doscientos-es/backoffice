@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,57 +7,57 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@doscientos/ui";
-import { Fingerprint, LoaderCircle, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+} from '@doscientos/ui'
+import { Fingerprint, LoaderCircle, ShieldCheck } from 'lucide-react'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import type { UserVerificationScope } from "@/lib/security/user-verification-scope";
+import { Button } from '@/components/ui/button'
+import type { UserVerificationScope } from '@/lib/security/user-verification-scope'
 import {
   completePasskeyAuthentication,
   preparePasskeyAuthentication,
-} from "@/lib/security/webauthn-client";
+} from '@/lib/security/webauthn-client'
 
-type VerificationResult = { ok: true } | { ok: false; error: string };
+type VerificationResult = { ok: true } | { ok: false; error: string }
 type PendingVerification = {
-  options: unknown;
-  resolve: (result: VerificationResult) => void;
-  scope: UserVerificationScope;
-};
+  options: unknown
+  resolve: (result: VerificationResult) => void
+  scope: UserVerificationScope
+}
 
 /**
  * Prepares a server challenge, then starts the device authenticator from an
  * explicit second click so browsers retain the required user activation.
  */
 export function usePasskeyVerification() {
-  const [pending, setPending] = useState<PendingVerification | null>(null);
-  const [completing, setCompleting] = useState(false);
+  const [pending, setPending] = useState<PendingVerification | null>(null)
+  const [completing, setCompleting] = useState(false)
 
   async function verifyWithPasskey(scope: UserVerificationScope): Promise<VerificationResult> {
-    const started = await preparePasskeyAuthentication(scope);
-    if (!started.ok) return started;
-    if (started.verified) return { ok: true };
+    const started = await preparePasskeyAuthentication(scope)
+    if (!started.ok) return started
+    if (started.verified) return { ok: true }
 
     return new Promise((resolve) => {
-      setPending({ options: started.options, resolve, scope });
-    });
+      setPending({ options: started.options, resolve, scope })
+    })
   }
 
   async function confirm() {
-    if (!pending) return;
+    if (!pending) return
 
-    setCompleting(true);
-    const verification = await completePasskeyAuthentication(pending.scope, pending.options);
-    setCompleting(false);
-    setPending(null);
-    pending.resolve(verification);
+    setCompleting(true)
+    const verification = await completePasskeyAuthentication(pending.scope, pending.options)
+    setCompleting(false)
+    setPending(null)
+    pending.resolve(verification)
   }
 
   function close() {
-    if (!pending || completing) return;
-    const { resolve } = pending;
-    setPending(null);
-    resolve({ ok: false, error: "La verificación se ha cancelado" });
+    if (!pending || completing) return
+    const { resolve } = pending
+    setPending(null)
+    resolve({ ok: false, error: 'La verificación se ha cancelado' })
   }
 
   const challenge = (
@@ -86,12 +86,12 @@ export function usePasskeyVerification() {
             ) : (
               <Fingerprint className="size-4" aria-hidden="true" />
             )}
-            {completing ? "Verificando…" : "Confirmar en este dispositivo"}
+            {completing ? 'Verificando…' : 'Confirmar en este dispositivo'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 
-  return { challenge, verifyWithPasskey };
+  return { challenge, verifyWithPasskey }
 }

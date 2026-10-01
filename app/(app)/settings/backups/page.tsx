@@ -1,28 +1,28 @@
-import { BackupsCard } from "@/app/(app)/webs/_components/backups-card";
-import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requirePageRole } from "@/lib/auth";
-import { BACKOFFICE_BACKUP_SLUG, getBackofficeBackupSetup } from "@/lib/backups/backoffice";
-import { serverEnv } from "@/lib/env";
-import { EXPORTABLE_TABLES } from "@/lib/exports/data";
-import { isFileBrowserConfigured } from "@/lib/filebrowser";
+import { BackupsCard } from '@/app/(app)/webs/_components/backups-card'
+import { PageHeader } from '@/components/layout/page-header'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { requirePageRole } from '@/lib/auth'
+import { BACKOFFICE_BACKUP_SLUG, getBackofficeBackupSetup } from '@/lib/backups/backoffice'
+import { serverEnv } from '@/lib/env'
+import { EXPORTABLE_TABLES } from '@/lib/exports/data'
+import { isFileBrowserConfigured } from '@/lib/filebrowser'
 
-import { BackupActions } from "./backup-actions";
+import { BackupActions } from './backup-actions'
 
-export const metadata = { title: "Copias de seguridad · Ajustes · doscientos" };
-export const dynamic = "force-dynamic";
+export const metadata = { title: 'Copias de seguridad · Ajustes · doscientos' }
+export const dynamic = 'force-dynamic'
 
 function labelForTable(table: string) {
-  return table.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return table.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
 export default async function BackupSettingsPage() {
-  const user = await requirePageRole(["owner", "admin"]);
-  const env = serverEnv();
-  const setup = getBackofficeBackupSetup(env);
-  const archiveConfigured = isFileBrowserConfigured();
-  const tables = EXPORTABLE_TABLES.map((value) => ({ value, label: labelForTable(value) }));
+  const user = await requirePageRole(['owner', 'admin'])
+  const env = serverEnv()
+  const setup = getBackofficeBackupSetup(env)
+  const archiveConfigured = isFileBrowserConfigured()
+  const tables = EXPORTABLE_TABLES.map((value) => ({ value, label: labelForTable(value) }))
 
   return (
     <div className="flex flex-col gap-6">
@@ -44,7 +44,7 @@ export default async function BackupSettingsPage() {
             runnerConfigured={setup.configured}
             tables={tables}
             showBackupAction={false}
-            canIncludePii={user.role === "owner"}
+            canIncludePii={user.role === 'owner'}
           />
           <p className="text-sm text-muted-foreground">
             Los archivos físicos de Supabase Storage no van en esta descarga; sus metadatos y rutas
@@ -63,8 +63,8 @@ export default async function BackupSettingsPage() {
                 el servidor de backups.
               </CardDescription>
             </div>
-            <Badge variant={setup.configured ? "success" : "neutral"}>
-              {setup.configured ? "Activo" : "Pendiente de configurar"}
+            <Badge variant={setup.configured ? 'success' : 'neutral'}>
+              {setup.configured ? 'Activo' : 'Pendiente de configurar'}
             </Badge>
           </div>
         </CardHeader>
@@ -94,5 +94,5 @@ export default async function BackupSettingsPage() {
         </Card>
       )}
     </div>
-  );
+  )
 }

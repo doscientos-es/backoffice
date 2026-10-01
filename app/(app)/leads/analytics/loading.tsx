@@ -1,5 +1,5 @@
-import { PageHeaderSkeleton } from "@/components/layout/page-header-skeleton";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeaderSkeleton } from '@/components/layout/page-header-skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function LeadAnalyticsLoading() {
   return (
@@ -12,5 +12,5 @@ export default function LeadAnalyticsLoading() {
       </div>
       <Skeleton className="h-80 w-full rounded-xl" />
     </div>
-  );
+  )
 }

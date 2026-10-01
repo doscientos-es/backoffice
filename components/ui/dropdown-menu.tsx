@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/dropdown-menu";
+﻿export * from '@/primitives/ui/dropdown-menu'

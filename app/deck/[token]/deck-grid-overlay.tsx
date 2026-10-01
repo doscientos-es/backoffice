@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { X } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
-import type { DeckSlide } from "./deck-slides";
+import type { DeckSlide } from './deck-slides'
 
 export function DeckGridOverlay({
   slides,
@@ -11,20 +11,20 @@ export function DeckGridOverlay({
   onSelect,
   onClose,
 }: {
-  slides: DeckSlide[];
-  current: number;
-  onSelect: (index: number) => void;
-  onClose: () => void;
+  slides: DeckSlide[]
+  current: number
+  onSelect: (index: number) => void
+  onClose: () => void
 }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
-    const el = dialogRef.current;
-    if (el && !el.open) el.showModal();
+    const el = dialogRef.current
+    if (el && !el.open) el.showModal()
     return () => {
-      if (el?.open) el.close();
-    };
-  }, []);
+      if (el?.open) el.close()
+    }
+  }, [])
 
   return (
     <dialog
@@ -32,8 +32,8 @@ export function DeckGridOverlay({
       className="deck-grid-overlay no-print"
       aria-label="Vista general de diapositivas"
       onCancel={(e) => {
-        e.preventDefault();
-        onClose();
+        e.preventDefault()
+        onClose()
       }}
     >
       <div className="mb-6 flex items-center justify-between gap-3 sm:mb-8">
@@ -50,7 +50,7 @@ export function DeckGridOverlay({
           onClick={onClose}
           aria-label="Cerrar"
           className="deck-btn flex-shrink-0"
-          style={{ color: "rgba(255,255,255,0.85)" }}
+          style={{ color: 'rgba(255,255,255,0.85)' }}
         >
           <X className="size-4" />
           <span className="deck-btn-label">Cerrar</span>
@@ -68,11 +68,11 @@ export function DeckGridOverlay({
             className="deck-grid-card"
             aria-label={`Ir a ${slide.label}`}
           >
-            <span className="deck-grid-card-index">{String(i + 1).padStart(2, "0")}</span>
+            <span className="deck-grid-card-index">{String(i + 1).padStart(2, '0')}</span>
             <span>{slide.label}</span>
           </button>
         ))}
       </div>
     </dialog>
-  );
+  )
 }

@@ -1,16 +1,13 @@
-export { EmailLayout, type EmailLayoutProps } from "./email-layout";
-export { EmailLogo, type EmailLogoProps } from "./email-logo";
-export { InvoiceEmail, type InvoiceEmailProps } from "./invoice-email";
-export { InternalDocumentEmail, type InternalDocumentEmailProps } from "./internal-document-email";
-export { LeadConfirmationEmail, type LeadConfirmationEmailProps } from "./lead-confirmation-email";
-export { NewLeadEmail, type NewLeadEmailProps } from "./new-lead-email";
-export { PaymentReceiptEmail, type PaymentReceiptEmailProps } from "./payment-receipt-email";
-export { ProjectKickoffEmail, type ProjectKickoffEmailProps } from "./project-kickoff-email";
-export { ProposalAcceptedEmail, type ProposalAcceptedEmailProps } from "./proposal-accepted-email";
-export { ProposalEmail, type ProposalEmailProps } from "./proposal-email";
-export { ProposalMessageEmail } from "./proposal-message-email";
-export {
-  QuarterlyAdvisorEmail,
-  type QuarterlyAdvisorEmailProps,
-} from "./quarterly-advisor-email";
-export { TeamInviteEmail, type TeamInviteEmailProps } from "./team-invite-email";
+export { EmailLayout, type EmailLayoutProps } from './email-layout'
+export { EmailLogo, type EmailLogoProps } from './email-logo'
+export { InvoiceEmail, type InvoiceEmailProps } from './invoice-email'
+export { InternalDocumentEmail, type InternalDocumentEmailProps } from './internal-document-email'
+export { LeadConfirmationEmail, type LeadConfirmationEmailProps } from './lead-confirmation-email'
+export { NewLeadEmail, type NewLeadEmailProps } from './new-lead-email'
+export { PaymentReceiptEmail, type PaymentReceiptEmailProps } from './payment-receipt-email'
+export { ProjectKickoffEmail, type ProjectKickoffEmailProps } from './project-kickoff-email'
+export { ProposalAcceptedEmail, type ProposalAcceptedEmailProps } from './proposal-accepted-email'
+export { ProposalEmail, type ProposalEmailProps } from './proposal-email'
+export { ProposalMessageEmail } from './proposal-message-email'
+export { QuarterlyAdvisorEmail, type QuarterlyAdvisorEmailProps } from './quarterly-advisor-email'
+export { TeamInviteEmail, type TeamInviteEmailProps } from './team-invite-email'

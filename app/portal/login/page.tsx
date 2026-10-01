@@ -1,32 +1,32 @@
-"use client";
+'use client'
 
-import { createBrowserClient } from "@supabase/ssr";
-import { FormEvent, useState } from "react";
+import { createBrowserClient } from '@supabase/ssr'
+import { FormEvent, useState } from 'react'
 
 export default function ClientPortalLoginPage() {
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
+    event.preventDefault()
+    setBusy(true)
+    setError('')
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    );
+    )
     const { error: authError } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
         shouldCreateUser: true,
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(window.location.pathname.startsWith("/portal/") ? window.location.pathname : "/portal")}`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(window.location.pathname.startsWith('/portal/') ? window.location.pathname : '/portal')}`,
       },
-    });
-    setBusy(false);
-    if (authError) setError("No hemos podido enviar el acceso. Inténtalo de nuevo.");
-    else setSent(true);
+    })
+    setBusy(false)
+    if (authError) setError('No hemos podido enviar el acceso. Inténtalo de nuevo.')
+    else setSent(true)
   }
 
   return (
@@ -56,7 +56,7 @@ export default function ClientPortalLoginPage() {
               disabled={busy}
               className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-60"
             >
-              {busy ? "Enviando…" : "Enviarme un enlace de acceso"}
+              {busy ? 'Enviando…' : 'Enviarme un enlace de acceso'}
             </button>
             {error ? (
               <p role="alert" className="text-sm text-destructive">
@@ -67,5 +67,5 @@ export default function ClientPortalLoginPage() {
         )}
       </section>
     </main>
-  );
+  )
 }

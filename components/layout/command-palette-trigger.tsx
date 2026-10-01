@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import { Search } from "lucide-react";
+import { Search } from 'lucide-react'
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils'
 
 /** Evento global para abrir el command palette desde cualquier botón. */
-export const OPEN_COMMAND_PALETTE_EVENT = "command-palette:open";
+export const OPEN_COMMAND_PALETTE_EVENT = 'command-palette:open'
 
 export function openCommandPalette() {
-  window.dispatchEvent(new Event(OPEN_COMMAND_PALETTE_EVENT));
+  window.dispatchEvent(new Event(OPEN_COMMAND_PALETTE_EVENT))
 }
 
 /**
@@ -17,26 +17,26 @@ export function openCommandPalette() {
  * - `icon`: botón de icono compacto (para el header móvil).
  */
 export function CommandPaletteTrigger({
-  variant = "field",
+  variant = 'field',
   className,
 }: {
-  variant?: "field" | "icon";
-  className?: string;
+  variant?: 'field' | 'icon'
+  className?: string
 }) {
-  if (variant === "icon") {
+  if (variant === 'icon') {
     return (
       <button
         type="button"
         aria-label="Buscar (⌘K)"
         onClick={openCommandPalette}
         className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+          'flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground',
           className,
         )}
       >
         <Search className="h-5 w-5" />
       </button>
-    );
+    )
   }
 
   return (
@@ -44,7 +44,7 @@ export function CommandPaletteTrigger({
       type="button"
       onClick={openCommandPalette}
       className={cn(
-        "group flex w-full items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground",
+        'group flex w-full items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground',
         className,
       )}
     >
@@ -54,5 +54,5 @@ export function CommandPaletteTrigger({
         ⌘K
       </kbd>
     </button>
-  );
+  )
 }

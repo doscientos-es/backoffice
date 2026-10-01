@@ -1,6 +1,6 @@
-import { FileX as FileX2 } from "lucide-react";
+import { FileX as FileX2 } from 'lucide-react'
 
-export const metadata = { title: "Documento no encontrado · doscientos" };
+export const metadata = { title: 'Documento no encontrado · doscientos' }
 
 export default function PortalNotFound() {
   return (
@@ -22,5 +22,5 @@ export default function PortalNotFound() {
         </p>
       </div>
     </div>
-  );
+  )
 }

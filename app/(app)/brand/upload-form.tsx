@@ -1,57 +1,57 @@
-"use client";
+'use client'
 
-import { ImageUp, LoaderCircle as Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { ImageUp, LoaderCircle as Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useRef, useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from '@/components/ui/button'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 
 const CATEGORIES = [
-  { value: "logo", label: "Logo" },
-  { value: "isotipo", label: "Isotipo" },
-  { value: "background", label: "Background" },
-  { value: "banner", label: "Banner" },
-  { value: "other", label: "Otro" },
-] as const;
+  { value: 'logo', label: 'Logo' },
+  { value: 'isotipo', label: 'Isotipo' },
+  { value: 'background', label: 'Background' },
+  { value: 'banner', label: 'Banner' },
+  { value: 'other', label: 'Otro' },
+] as const
 
-const ACCEPTED = ".png,.jpg,.jpeg,.webp,.svg,.gif";
+const ACCEPTED = '.png,.jpg,.jpeg,.webp,.svg,.gif'
 
 export function UploadAssetForm() {
-  const router = useRouter();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [fileName, setFileName] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    const file = fileRef.current?.files?.[0];
+    e.preventDefault()
+    setError(null)
+    const file = fileRef.current?.files?.[0]
     if (!file) {
-      setError("Selecciona un archivo");
-      return;
+      setError('Selecciona un archivo')
+      return
     }
-    const formData = new FormData(e.currentTarget);
-    formData.set("file", file);
-    setUploading(true);
+    const formData = new FormData(e.currentTarget)
+    formData.set('file', file)
+    setUploading(true)
     try {
-      const res = await fetch("/api/brand-assets/upload", { method: "POST", body: formData });
-      const json = (await res.json()) as { id?: string; error?: string };
+      const res = await fetch('/api/brand-assets/upload', { method: 'POST', body: formData })
+      const json = (await res.json()) as { id?: string; error?: string }
       if (!res.ok || !json.id) {
-        setError(json.error ?? "Error al subir");
-        return;
+        setError(json.error ?? 'Error al subir')
+        return
       }
-      router.push("/brand");
-      router.refresh();
+      router.push('/brand')
+      router.refresh()
     } catch {
-      setError("Error de red. Inténtalo de nuevo.");
+      setError('Error de red. Inténtalo de nuevo.')
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
   }
 
@@ -131,10 +131,10 @@ export function UploadAssetForm() {
               Subiendo…
             </>
           ) : (
-            "Subir asset"
+            'Subir asset'
           )}
         </Button>
       </div>
     </form>
-  );
+  )
 }

@@ -1,12 +1,12 @@
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation'
 
-import { requireUser } from "@/lib/auth";
+import { requireUser } from '@/lib/auth'
 
-import { OnboardingForm } from "./onboarding-form";
+import { OnboardingForm } from './onboarding-form'
 
 export default async function OnboardingPage() {
-  const user = await requireUser({ allowUnonboarded: true });
-  if (user.onboardedAt) redirect("/inicio");
+  const user = await requireUser({ allowUnonboarded: true })
+  if (user.onboardedAt) redirect('/inicio')
 
   return (
     <div className="flex flex-col gap-8">
@@ -27,5 +27,5 @@ export default async function OnboardingPage() {
         defaultPhone={user.phone}
       />
     </div>
-  );
+  )
 }

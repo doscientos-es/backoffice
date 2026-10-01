@@ -1,10 +1,10 @@
-import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
+import { ChevronLeft } from 'lucide-react'
+import Link from 'next/link'
 
 export type BackLinkProps = {
-  href: string;
-  label: string;
-};
+  href: string
+  label: string
+}
 
 export function BackLink({ href, label }: BackLinkProps) {
   return (
@@ -15,5 +15,5 @@ export function BackLink({ href, label }: BackLinkProps) {
       <ChevronLeft className="h-3.5 w-3.5" />
       {label}
     </Link>
-  );
+  )
 }

@@ -1,15 +1,15 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const navigation = vi.hoisted(() => ({
-  pathname: "/invoices",
+  pathname: '/invoices',
   params: new URLSearchParams(),
   push: vi.fn(),
   prefetch: vi.fn(),
   replace: vi.fn(),
-}));
+}))
 
-vi.mock("next/navigation", () => ({
+vi.mock('next/navigation', () => ({
   usePathname: () => navigation.pathname,
   useRouter: () => ({
     prefetch: navigation.prefetch,
@@ -17,34 +17,34 @@ vi.mock("next/navigation", () => ({
     replace: navigation.replace,
   }),
   useSearchParams: () => navigation.params,
-}));
-vi.mock("next/link", () => ({
-  default: ({ children, href, ...props }: React.ComponentProps<"a">) => (
+}))
+vi.mock('next/link', () => ({
+  default: ({ children, href, ...props }: React.ComponentProps<'a'>) => (
     <a href={href} {...props}>
       {children}
     </a>
   ),
-}));
+}))
 
-import { ListPage } from "./list-page";
+import { ListPage } from './list-page'
 
-describe("ListPage", () => {
+describe('ListPage', () => {
   beforeEach(() => {
-    navigation.push.mockReset();
-  });
+    navigation.push.mockReset()
+  })
 
-  it("does not navigate the row when an inner link is clicked", () => {
+  it('does not navigate the row when an inner link is clicked', () => {
     render(
       <ListPage
         title="Facturas"
         empty="Sin facturas"
-        headers={["Factura", "Cliente"]}
+        headers={['Factura', 'Cliente']}
         rows={[
           {
-            id: "invoice-1",
-            href: "/invoices/invoice-1",
+            id: 'invoice-1',
+            href: '/invoices/invoice-1',
             cells: [
-              "FAC-001",
+              'FAC-001',
               <a key="client" href="/clients/client-1">
                 Cliente
               </a>,
@@ -52,10 +52,10 @@ describe("ListPage", () => {
           },
         ]}
       />,
-    );
+    )
 
-    fireEvent.click(screen.getByRole("link", { name: "Cliente" }));
+    fireEvent.click(screen.getByRole('link', { name: 'Cliente' }))
 
-    expect(navigation.push).not.toHaveBeenCalled();
-  });
-});
+    expect(navigation.push).not.toHaveBeenCalled()
+  })
+})

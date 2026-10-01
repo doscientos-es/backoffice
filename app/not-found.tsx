@@ -1,9 +1,9 @@
-import { Search as SearchX } from "lucide-react";
-import Link from "next/link";
+import { Search as SearchX } from 'lucide-react'
+import Link from 'next/link'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 
-export const metadata = { title: "Página no encontrada · doscientos" };
+export const metadata = { title: 'Página no encontrada · doscientos' }
 
 export default function GlobalNotFound() {
   return (
@@ -27,5 +27,5 @@ export default function GlobalNotFound() {
         <Link href="/">Volver al inicio</Link>
       </Button>
     </div>
-  );
+  )
 }

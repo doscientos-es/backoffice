@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/hover-card";
+﻿export * from '@/primitives/ui/hover-card'

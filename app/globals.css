@@ -1,7 +1,7 @@
-@import "tailwindcss";
-@import "@doscientos/ui/styles.css";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import '@doscientos/ui/styles.css';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 #startup-splash {
   position: fixed;
@@ -231,7 +231,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-base);
-  font-feature-settings: "cv11", "ss01", "tnum";
+  font-feature-settings: 'cv11', 'ss01', 'tnum';
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -247,14 +247,14 @@ body:has(.app-shell) {
 /* Keep standard dialogs inset from the viewport before Tailwind's `sm` breakpoint.
  * The task quick view remains full-width because it is a dedicated working surface. */
 @media (max-width: 39.999rem) {
-  [data-slot="dialog-content"]:not(.max-sm\:max-w-none):not(.sm\:max-w-6xl) {
+  [data-slot='dialog-content']:not(.max-sm\:max-w-none):not(.sm\:max-w-6xl) {
     width: calc(100% - 3rem);
     max-width: 24rem;
   }
 }
 
 /* Focus ring (consistent across all interactive elements) */
-:where(button, [role="button"], a, input, textarea, select):focus-visible {
+:where(button, [role='button'], a, input, textarea, select):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: var(--radius-sm);

@@ -1,39 +1,39 @@
-import { BriefcaseBusiness, FileText, ReceiptText } from "lucide-react";
-import Link from "next/link";
+import { BriefcaseBusiness, FileText, ReceiptText } from 'lucide-react'
+import Link from 'next/link'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 type LeadRelatedLinksProps = {
-  leadId: string;
+  leadId: string
   counts: {
-    proposals: number;
-    projects: number;
-    invoices: number;
-  };
-};
+    proposals: number
+    projects: number
+    invoices: number
+  }
+}
 
 export function LeadRelatedLinks({ leadId, counts }: LeadRelatedLinksProps) {
   const links = [
     {
       href: `/proposals?lead=${leadId}`,
       icon: FileText,
-      label: "Propuestas",
+      label: 'Propuestas',
       count: counts.proposals,
     },
     {
       href: `/projects?lead=${leadId}`,
       icon: BriefcaseBusiness,
-      label: "Proyectos",
+      label: 'Proyectos',
       count: counts.projects,
     },
     {
       href: `/invoices?lead=${leadId}`,
       icon: ReceiptText,
-      label: "Facturas",
+      label: 'Facturas',
       count: counts.invoices,
     },
-  ];
+  ]
 
   return (
     <Card>
@@ -59,5 +59,5 @@ export function LeadRelatedLinks({ leadId, counts }: LeadRelatedLinksProps) {
         ))}
       </CardContent>
     </Card>
-  );
+  )
 }

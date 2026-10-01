@@ -1,5 +1,5 @@
-import { PageHeaderSkeleton } from "@/components/layout/page-header-skeleton";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeaderSkeleton } from '@/components/layout/page-header-skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function LeadRecoveryLoading() {
   return (
@@ -16,5 +16,5 @@ export default function LeadRecoveryLoading() {
         ))}
       </div>
     </div>
-  );
+  )
 }

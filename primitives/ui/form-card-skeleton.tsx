@@ -1,19 +1,19 @@
-import { Skeleton } from "@doscientos/ui";
+import { Skeleton } from '@doscientos/ui'
 
-import { cn } from "../lib/utils";
-import { Card, CardContent } from "./card";
+import { cn } from '../lib/utils'
+import { Card, CardContent } from './card'
 
 export type FormCardSkeletonProps = {
   /** Number of single-line form rows. */
-  rows?: number;
+  rows?: number
   /** Show a textarea-sized block at the end of the rows. */
-  withTextarea?: boolean;
+  withTextarea?: boolean
   /** Show cancel + submit buttons under a top border. */
-  withSubmit?: boolean;
+  withSubmit?: boolean
   /** Optional grid pattern: number of columns for the rows. */
-  columns?: 1 | 2;
-  className?: string;
-};
+  columns?: 1 | 2
+  className?: string
+}
 
 /** Mirrors the "Card + FormRow… + submit" pattern used across new/edit pages. */
 export function FormCardSkeleton({
@@ -27,7 +27,7 @@ export function FormCardSkeleton({
     <Card className={className}>
       <CardContent className="pt-6">
         <div className="flex flex-col gap-5">
-          <div className={cn("grid gap-5", columns === 2 ? "sm:grid-cols-2" : "grid-cols-1")}>
+          <div className={cn('grid gap-5', columns === 2 ? 'sm:grid-cols-2' : 'grid-cols-1')}>
             {Array.from({ length: rows }).map((_, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows, order never changes
               <FormRowSkeleton key={i} />
@@ -48,7 +48,7 @@ export function FormCardSkeleton({
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function FormRowSkeleton() {
@@ -57,5 +57,5 @@ function FormRowSkeleton() {
       <Skeleton className="h-3 w-24 rounded" />
       <Skeleton className="h-9 w-full rounded-md" />
     </div>
-  );
+  )
 }

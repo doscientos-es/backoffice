@@ -1,23 +1,23 @@
-import { ArrowRight, Download } from "lucide-react";
-import type { ReactNode } from "react";
+import { ArrowRight, Download } from 'lucide-react'
+import type { ReactNode } from 'react'
 
-import { LogoMark } from "@/components/branding";
-import { Markdown } from "@/components/ui/markdown";
+import { LogoMark } from '@/components/branding'
+import { Markdown } from '@/components/ui/markdown'
 import {
   BILLING_CYCLE_LABELS,
   type BillingCycle,
   computeProposalTotals,
   type ProposalTotals,
-} from "@/lib/finance";
-import type { KeyPoint } from "@/lib/proposals/key-points";
+} from '@/lib/finance'
+import type { KeyPoint } from '@/lib/proposals/key-points'
 import {
   PAYMENT_SCHEDULE_LABELS,
   type ScopeModule,
   scopeModuleDurationText,
-} from "@/lib/proposals/scope";
-import { formatDate, formatEUR } from "@/lib/utils";
+} from '@/lib/proposals/scope'
+import { formatDate, formatEUR } from '@/lib/utils'
 
-import type { DeckProposal, DeckProposalItem, DeckTeamMember } from "./page";
+import type { DeckProposal, DeckProposalItem, DeckTeamMember } from './page'
 
 function buildTotals(items: DeckProposalItem[]): ProposalTotals {
   return computeProposalTotals(
@@ -25,32 +25,32 @@ function buildTotals(items: DeckProposalItem[]): ProposalTotals {
       quantity: it.quantity,
       unit_price: it.unit_price,
       vat_rate: it.vat_rate,
-      billing_cycle: it.billing_cycle ?? "none",
+      billing_cycle: it.billing_cycle ?? 'none',
     })),
-  );
+  )
 }
 
 function hasRecurring(totals: ProposalTotals): boolean {
-  return totals.monthly.total > 0 || totals.quarterly.total > 0 || totals.yearly.total > 0;
+  return totals.monthly.total > 0 || totals.quarterly.total > 0 || totals.yearly.total > 0
 }
 
 export type DeckSlide = {
-  key: string;
-  label: string;
-  accent: "green" | "white" | "zinc";
-  element: ReactNode;
-};
+  key: string
+  label: string
+  accent: 'green' | 'white' | 'zinc'
+  element: ReactNode
+}
 
 function SlideWrapper({ children, watermark }: { children: ReactNode; watermark?: string }) {
-  if (!watermark) return <>{children}</>;
+  if (!watermark) return <>{children}</>
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "contents" }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'contents' }}>
       {children}
       <div className="deck-watermark" aria-hidden>
         {watermark}
       </div>
     </div>
-  );
+  )
 }
 
 function Stagger({
@@ -58,15 +58,15 @@ function Stagger({
   children,
   className,
 }: {
-  i: number;
-  children: ReactNode;
-  className?: string;
+  i: number
+  children: ReactNode
+  className?: string
 }) {
   return (
-    <div className={`deck-stagger ${className ?? ""}`} style={{ ["--i" as string]: i }}>
+    <div className={`deck-stagger ${className ?? ''}`} style={{ ['--i' as string]: i }}>
       {children}
     </div>
-  );
+  )
 }
 
 function CoverSlide({ proposal }: { proposal: DeckProposal }) {
@@ -110,21 +110,21 @@ function CoverSlide({ proposal }: { proposal: DeckProposal }) {
         </Stagger>
       )}
     </div>
-  );
+  )
 }
 
 function SectionSlide({
   label,
   title,
   children,
-  accent = "white",
+  accent = 'white',
 }: {
-  label: string;
-  title: string;
-  children: ReactNode;
-  accent?: "white" | "zinc";
+  label: string
+  title: string
+  children: ReactNode
+  accent?: 'white' | 'zinc'
 }) {
-  const bg = accent === "zinc" ? "bg-zinc-50" : "bg-white";
+  const bg = accent === 'zinc' ? 'bg-zinc-50' : 'bg-white'
   return (
     <div className={`deck-slide justify-center p-6 text-zinc-900 sm:p-10 md:p-16 lg:p-24 ${bg}`}>
       <Stagger i={0}>
@@ -141,7 +141,7 @@ function SectionSlide({
         {children}
       </Stagger>
     </div>
-  );
+  )
 }
 
 function ContextSlide({ proposal }: { proposal: DeckProposal }) {
@@ -149,12 +149,12 @@ function ContextSlide({ proposal }: { proposal: DeckProposal }) {
     <SectionSlide label="Contexto" title="Dónde estamos hoy">
       <div className="w-full max-w-3xl text-left">
         <Markdown
-          source={proposal.context_markdown ?? ""}
+          source={proposal.context_markdown ?? ''}
           className="deck-markdown deck-markdown-intro text-base text-zinc-700 sm:text-lg md:text-xl"
         />
       </div>
     </SectionSlide>
-  );
+  )
 }
 
 /**
@@ -170,14 +170,14 @@ function KeyPointsListSlide({
   accent,
   badgeVariant,
 }: {
-  label: string;
-  title: string;
-  items: KeyPoint[];
-  accent?: "white" | "zinc";
-  badgeVariant: "muted" | "brand";
+  label: string
+  title: string
+  items: KeyPoint[]
+  accent?: 'white' | 'zinc'
+  badgeVariant: 'muted' | 'brand'
 }) {
   const badgeClass =
-    badgeVariant === "brand" ? "bg-[#2A4227] text-white" : "bg-zinc-200 text-zinc-700";
+    badgeVariant === 'brand' ? 'bg-[#2A4227] text-white' : 'bg-zinc-200 text-zinc-700'
   return (
     <SectionSlide label={label} title={title} accent={accent}>
       <ul className="flex w-full max-w-3xl flex-col gap-4 text-left sm:gap-6">
@@ -185,12 +185,12 @@ function KeyPointsListSlide({
           <li
             key={kp.id}
             className="deck-stagger flex items-start gap-4 sm:gap-5"
-            style={{ ["--i" as string]: 3 + i }}
+            style={{ ['--i' as string]: 3 + i }}
           >
             <span
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums sm:h-10 sm:w-10 sm:text-sm ${badgeClass}`}
             >
-              {String(i + 1).padStart(2, "0")}
+              {String(i + 1).padStart(2, '0')}
             </span>
             <div className="min-w-0 pt-1 sm:pt-1.5">
               <p className="text-base font-semibold text-balance text-zinc-900 sm:text-lg md:text-xl">
@@ -206,16 +206,16 @@ function KeyPointsListSlide({
         ))}
       </ul>
     </SectionSlide>
-  );
+  )
 }
 
 function CadenceBadge({ cycle }: { cycle: BillingCycle }) {
-  if (cycle === "none") return null;
+  if (cycle === 'none') return null
   return (
     <span className="inline-flex items-center rounded-full bg-[#2A4227]/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-[#2A4227] uppercase sm:text-xs">
       {BILLING_CYCLE_LABELS[cycle]}
     </span>
-  );
+  )
 }
 
 function ServicesSlide({ items }: { items: DeckProposalItem[] }) {
@@ -223,15 +223,15 @@ function ServicesSlide({ items }: { items: DeckProposalItem[] }) {
     <SectionSlide label="Servicios" title="Qué ofrecemos" accent="zinc">
       <ul className="flex w-full max-w-3xl flex-col gap-4 text-left sm:gap-6">
         {items.map((item, i) => {
-          const cycle: BillingCycle = item.billing_cycle ?? "none";
+          const cycle: BillingCycle = item.billing_cycle ?? 'none'
           return (
             <li
               key={item.id}
               className="deck-stagger flex items-start gap-4 sm:gap-5"
-              style={{ ["--i" as string]: 3 + i }}
+              style={{ ['--i' as string]: 3 + i }}
             >
               <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#2A4227] text-xs font-bold text-white tabular-nums sm:h-10 sm:w-10 sm:text-sm">
-                {String(i + 1).padStart(2, "0")}
+                {String(i + 1).padStart(2, '0')}
               </span>
               <div className="min-w-0 pt-1 sm:pt-1.5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -247,17 +247,17 @@ function ServicesSlide({ items }: { items: DeckProposalItem[] }) {
                 )}
               </div>
             </li>
-          );
+          )
         })}
       </ul>
     </SectionSlide>
-  );
+  )
 }
 
 function ScopeModuleSlide({ module, index }: { module: ScopeModule; index: number }) {
   return (
     <SectionSlide
-      label={`Alcance · ${String(index + 1).padStart(2, "0")}`}
+      label={`Alcance · ${String(index + 1).padStart(2, '0')}`}
       title={module.title}
       accent="zinc"
     >
@@ -287,7 +287,7 @@ function ScopeModuleSlide({ module, index }: { module: ScopeModule; index: numbe
         ) : null}
       </div>
     </SectionSlide>
-  );
+  )
 }
 
 function ScopeList({
@@ -295,14 +295,14 @@ function ScopeList({
   items,
   tone,
 }: {
-  title: string;
-  items: string[];
-  tone: "included" | "excluded";
+  title: string
+  items: string[]
+  tone: 'included' | 'excluded'
 }) {
   return (
     <div>
       <p
-        className={`mb-3 text-xs font-semibold tracking-[0.2em] uppercase ${tone === "included" ? "text-[#2A4227]" : "text-zinc-500"}`}
+        className={`mb-3 text-xs font-semibold tracking-[0.2em] uppercase ${tone === 'included' ? 'text-[#2A4227]' : 'text-zinc-500'}`}
       >
         {title}
       </p>
@@ -315,12 +315,12 @@ function ScopeList({
         ))}
       </ul>
     </div>
-  );
+  )
 }
 
 function DeliverySlide({ proposal }: { proposal: DeckProposal }) {
-  const deliverables = proposal.deliverables?.trim();
-  const acceptanceCriteria = proposal.acceptance_criteria?.trim();
+  const deliverables = proposal.deliverables?.trim()
+  const acceptanceCriteria = proposal.acceptance_criteria?.trim()
   return (
     <SectionSlide label="Entrega" title="Cómo validaremos el proyecto">
       <div className="grid max-w-3xl gap-8 text-left sm:grid-cols-2">
@@ -338,11 +338,11 @@ function DeliverySlide({ proposal }: { proposal: DeckProposal }) {
         ) : null}
       </div>
     </SectionSlide>
-  );
+  )
 }
 
 function PricingTotals({ totals }: { totals: ProposalTotals }) {
-  const recurring = hasRecurring(totals);
+  const recurring = hasRecurring(totals)
   return (
     <div className="flex w-full flex-col items-end gap-3">
       <div className="flex flex-col items-end gap-2">
@@ -393,11 +393,11 @@ function PricingTotals({ totals }: { totals: ProposalTotals }) {
         </div>
       ) : null}
     </div>
-  );
+  )
 }
 
 function PricingSlide({ items }: { proposal: DeckProposal; items: DeckProposalItem[] }) {
-  const totals = buildTotals(items);
+  const totals = buildTotals(items)
   return (
     <SectionSlide label="Inversión" title="Detalle económico">
       <div className="w-full max-w-3xl">
@@ -420,7 +420,7 @@ function PricingSlide({ items }: { proposal: DeckProposal; items: DeckProposalIt
           </thead>
           <tbody>
             {items.map((item) => {
-              const cycle: BillingCycle = item.billing_cycle ?? "none";
+              const cycle: BillingCycle = item.billing_cycle ?? 'none'
               return (
                 <tr
                   key={item.id}
@@ -445,14 +445,14 @@ function PricingSlide({ items }: { proposal: DeckProposal; items: DeckProposalIt
                     {formatEUR(item.subtotal)}
                   </td>
                 </tr>
-              );
+              )
             })}
           </tbody>
         </table>
         <PricingTotals totals={totals} />
       </div>
     </SectionSlide>
-  );
+  )
 }
 
 function TeamSlide({ team }: { team: DeckTeamMember[] }) {
@@ -463,7 +463,7 @@ function TeamSlide({ team }: { team: DeckTeamMember[] }) {
           <div
             key={member.id}
             className="deck-stagger flex flex-col items-center gap-2 sm:gap-3"
-            style={{ ["--i" as string]: 3 + i }}
+            style={{ ['--i' as string]: 3 + i }}
           >
             <div className="size-16 overflow-hidden rounded-full bg-zinc-200 ring-2 ring-[#2A4227]/10 sm:h-20 sm:w-20">
               {member.avatar_url ? (
@@ -489,20 +489,20 @@ function TeamSlide({ team }: { team: DeckTeamMember[] }) {
         ))}
       </div>
     </SectionSlide>
-  );
+  )
 }
 
 function PricingBarChart({ items }: { proposal: DeckProposal; items: DeckProposalItem[] }) {
-  const maxVal = Math.max(...items.map((i) => i.subtotal), 1);
-  const totals = buildTotals(items);
+  const maxVal = Math.max(...items.map((i) => i.subtotal), 1)
+  const totals = buildTotals(items)
   return (
     <SectionSlide label="Inversión" title="Detalle económico">
       <div className="w-full max-w-3xl">
         <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:gap-5">
           {items.map((item, i) => {
-            const cycle: BillingCycle = item.billing_cycle ?? "none";
+            const cycle: BillingCycle = item.billing_cycle ?? 'none'
             return (
-              <div key={item.id} className="deck-stagger" style={{ ["--i" as string]: 3 + i }}>
+              <div key={item.id} className="deck-stagger" style={{ ['--i' as string]: 3 + i }}>
                 <div className="mb-1.5 flex justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="truncate text-left text-xs text-zinc-700 sm:text-sm">
@@ -521,7 +521,7 @@ function PricingBarChart({ items }: { proposal: DeckProposal; items: DeckProposa
                   />
                 </div>
               </div>
-            );
+            )
           })}
         </div>
         <div className="border-t border-zinc-200 pt-4">
@@ -529,7 +529,7 @@ function PricingBarChart({ items }: { proposal: DeckProposal; items: DeckProposa
         </div>
       </div>
     </SectionSlide>
-  );
+  )
 }
 
 function TermsSlide({ proposal }: { proposal: DeckProposal }) {
@@ -554,12 +554,12 @@ function TermsSlide({ proposal }: { proposal: DeckProposal }) {
           </div>
         ) : null}
         <Markdown
-          source={proposal.terms ?? ""}
+          source={proposal.terms ?? ''}
           className="deck-markdown deck-markdown-terms text-sm text-zinc-600 sm:text-base"
         />
       </div>
     </SectionSlide>
-  );
+  )
 }
 
 function ClosingSlide({ proposal, token }: { proposal: DeckProposal; token: string }) {
@@ -604,7 +604,7 @@ function ClosingSlide({ proposal, token }: { proposal: DeckProposal; token: stri
         </Stagger>
       )}
     </div>
-  );
+  )
 }
 
 export function buildSlides(
@@ -615,31 +615,31 @@ export function buildSlides(
   watermark?: string,
 ): DeckSlide[] {
   const wm = (el: ReactNode): ReactNode =>
-    watermark ? <SlideWrapper watermark={watermark}>{el}</SlideWrapper> : el;
+    watermark ? <SlideWrapper watermark={watermark}>{el}</SlideWrapper> : el
 
-  const slides: DeckSlide[] = [];
+  const slides: DeckSlide[] = []
   slides.push({
-    key: "cover",
-    label: "Portada",
-    accent: "green",
+    key: 'cover',
+    label: 'Portada',
+    accent: 'green',
     element: wm(<CoverSlide proposal={proposal} />),
-  });
+  })
   // Narrative (Context → Problems → Solutions) always lands before the
   // price so the client reads the framing first. Each block only renders
   // if it has content, so an empty proposal still flows naturally.
   if (proposal.context_markdown?.trim()) {
     slides.push({
-      key: "context",
-      label: "Contexto",
-      accent: "white",
+      key: 'context',
+      label: 'Contexto',
+      accent: 'white',
       element: wm(<ContextSlide proposal={proposal} />),
-    });
+    })
   }
   if (proposal.problems.length > 0) {
     slides.push({
-      key: "problems",
-      label: "Retos",
-      accent: "zinc",
+      key: 'problems',
+      label: 'Retos',
+      accent: 'zinc',
       element: wm(
         <KeyPointsListSlide
           label="Retos detectados"
@@ -649,13 +649,13 @@ export function buildSlides(
           badgeVariant="muted"
         />,
       ),
-    });
+    })
   }
   if (proposal.solutions.length > 0) {
     slides.push({
-      key: "solutions",
-      label: "Solución",
-      accent: "white",
+      key: 'solutions',
+      label: 'Solución',
+      accent: 'white',
       element: wm(
         <KeyPointsListSlide
           label="Nuestra propuesta"
@@ -665,60 +665,60 @@ export function buildSlides(
           badgeVariant="brand"
         />,
       ),
-    });
+    })
   }
   proposal.scope_modules.forEach((module, index) => {
     slides.push({
       key: `scope-${module.id}`,
       label: `Módulo ${index + 1}`,
-      accent: "zinc",
+      accent: 'zinc',
       element: wm(<ScopeModuleSlide module={module} index={index} />),
-    });
-  });
+    })
+  })
   if (proposal.deliverables?.trim() || proposal.acceptance_criteria?.trim()) {
     slides.push({
-      key: "delivery",
-      label: "Entrega",
-      accent: "white",
+      key: 'delivery',
+      label: 'Entrega',
+      accent: 'white',
       element: wm(<DeliverySlide proposal={proposal} />),
-    });
+    })
   }
   if (team.length > 0) {
     slides.push({
-      key: "team",
-      label: "Equipo",
-      accent: "white",
+      key: 'team',
+      label: 'Equipo',
+      accent: 'white',
       element: wm(<TeamSlide team={team} />),
-    });
+    })
   }
   if (items.length > 0) {
     slides.push({
-      key: "services",
-      label: "Servicios",
-      accent: "zinc",
+      key: 'services',
+      label: 'Servicios',
+      accent: 'zinc',
       element: wm(<ServicesSlide items={items} />),
-    });
+    })
     const pricing =
       items.length > 3 ? (
         <PricingBarChart proposal={proposal} items={items} />
       ) : (
         <PricingSlide proposal={proposal} items={items} />
-      );
-    slides.push({ key: "pricing", label: "Inversión", accent: "white", element: wm(pricing) });
+      )
+    slides.push({ key: 'pricing', label: 'Inversión', accent: 'white', element: wm(pricing) })
   }
   if (proposal.payment_terms || proposal.change_management_terms || proposal.terms) {
     slides.push({
-      key: "terms",
-      label: "Condiciones",
-      accent: "zinc",
+      key: 'terms',
+      label: 'Condiciones',
+      accent: 'zinc',
       element: wm(<TermsSlide proposal={proposal} />),
-    });
+    })
   }
   slides.push({
-    key: "closing",
-    label: "Cierre",
-    accent: "green",
+    key: 'closing',
+    label: 'Cierre',
+    accent: 'green',
     element: wm(<ClosingSlide proposal={proposal} token={token} />),
-  });
-  return slides;
+  })
+  return slides
 }

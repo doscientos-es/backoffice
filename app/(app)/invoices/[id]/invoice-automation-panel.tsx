@@ -1,22 +1,22 @@
-"use client";
+'use client'
 
-import { BellRing, CalendarClock, CircleX, LoaderCircle } from "lucide-react";
-import { useState, useTransition } from "react";
+import { BellRing, CalendarClock, CircleX, LoaderCircle } from 'lucide-react'
+import { useState, useTransition } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import type { InvoicePaymentFollowUp } from "@/lib/invoices/payment-follow-ups";
-import { formatDate } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import type { InvoicePaymentFollowUp } from '@/lib/invoices/payment-follow-ups'
+import { formatDate } from '@/lib/utils'
 
 import {
   cancelInvoicePaymentFollowUpAction,
   rescheduleInvoicePaymentFollowUpAction,
-} from "../automation-actions";
+} from '../automation-actions'
 
 function localDateTime(value: string): string {
-  const date = new Date(value);
-  const pad = (part: number) => String(part).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const date = new Date(value)
+  const pad = (part: number) => String(part).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 export function InvoiceAutomationPanel({
@@ -24,44 +24,44 @@ export function InvoiceAutomationPanel({
   automation,
   canEdit,
 }: {
-  invoiceId: string;
-  automation: InvoicePaymentFollowUp | null;
-  canEdit: boolean;
+  invoiceId: string
+  automation: InvoicePaymentFollowUp | null
+  canEdit: boolean
 }) {
-  const [pending, startTransition] = useTransition();
-  const [runAt, setRunAt] = useState(automation ? localDateTime(automation.run_at) : "");
-  const [error, setError] = useState<string | null>(null);
-  if (!automation) return null;
+  const [pending, startTransition] = useTransition()
+  const [runAt, setRunAt] = useState(automation ? localDateTime(automation.run_at) : '')
+  const [error, setError] = useState<string | null>(null)
+  if (!automation) return null
 
-  const active = automation.status === "pending" || automation.status === "failed";
+  const active = automation.status === 'pending' || automation.status === 'failed'
   const statusLabel =
-    automation.status === "sent"
-      ? "Enviado"
-      : automation.status === "cancelled"
-        ? "Cancelado"
-        : automation.status === "failed"
-          ? "Revisar: falló el envío"
-          : automation.status === "skipped"
-            ? "No enviado"
-            : "Pendiente";
+    automation.status === 'sent'
+      ? 'Enviado'
+      : automation.status === 'cancelled'
+        ? 'Cancelado'
+        : automation.status === 'failed'
+          ? 'Revisar: falló el envío'
+          : automation.status === 'skipped'
+            ? 'No enviado'
+            : 'Pendiente'
 
   function cancel() {
-    setError(null);
+    setError(null)
     startTransition(async () => {
-      const result = await cancelInvoicePaymentFollowUpAction({ invoiceId });
-      if (!result.ok) setError(result.error);
-    });
+      const result = await cancelInvoicePaymentFollowUpAction({ invoiceId })
+      if (!result.ok) setError(result.error)
+    })
   }
 
   function reschedule() {
-    setError(null);
+    setError(null)
     startTransition(async () => {
       const result = await rescheduleInvoicePaymentFollowUpAction({
         invoiceId,
         runAt: new Date(runAt).toISOString(),
-      });
-      if (!result.ok) setError(result.error);
-    });
+      })
+      if (!result.ok) setError(result.error)
+    })
   }
 
   return (
@@ -131,5 +131,5 @@ export function InvoiceAutomationPanel({
         </div>
       </div>
     </section>
-  );
+  )
 }

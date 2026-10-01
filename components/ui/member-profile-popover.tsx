@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import { Button, Popover, PopoverTrigger } from "@doscientos/ui";
-import { UserRound } from "lucide-react";
-import Link from "next/link";
-import type { ReactNode } from "react";
+import { Button, Popover, PopoverTrigger } from '@doscientos/ui'
+import { UserRound } from 'lucide-react'
+import Link from 'next/link'
+import type { ReactNode } from 'react'
 
-import type { AvatarMember } from "@/components/ui/member-avatar";
+import type { AvatarMember } from '@/components/ui/member-avatar'
 
-export type ProfiledMember = AvatarMember & { id: string };
+export type ProfiledMember = AvatarMember & { id: string }
 
 /**
  * Compact entry point to a member's profile. It is deliberately kept separate
@@ -18,9 +18,9 @@ export function MemberProfilePopover({
   avatar,
   profileAvatar,
 }: {
-  member: ProfiledMember;
-  avatar: ReactNode;
-  profileAvatar: ReactNode;
+  member: ProfiledMember
+  avatar: ReactNode
+  profileAvatar: ReactNode
 }) {
   return (
     <PopoverTrigger>
@@ -57,5 +57,5 @@ export function MemberProfilePopover({
         </Link>
       </Popover>
     </PopoverTrigger>
-  );
+  )
 }

@@ -1,1 +1,1 @@
-export * from "@/primitives/ui/detail-grid";
+export * from '@/primitives/ui/detail-grid'

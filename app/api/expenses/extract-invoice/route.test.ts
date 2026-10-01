@@ -1,29 +1,29 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const ID = "00000000-0000-4000-8000-000000000001";
+const ID = '00000000-0000-4000-8000-000000000001'
 const { state } = vi.hoisted(() => ({
   state: {
     authThrows: false,
-    role: "admin" as "owner" | "admin" | "member" | "viewer",
+    role: 'admin' as 'owner' | 'admin' | 'member' | 'viewer',
     attachment: {
-      id: "00000000-0000-4000-8000-000000000001",
-      expense_id: "expense-1",
-      mime_type: "application/pdf",
-      storage_path: "expense/a.pdf",
-      uploaded_by: "user-1",
+      id: '00000000-0000-4000-8000-000000000001',
+      expense_id: 'expense-1',
+      mime_type: 'application/pdf',
+      storage_path: 'expense/a.pdf',
+      uploaded_by: 'user-1',
     } as Record<string, unknown> | null,
     downloadError: null as string | null,
     requiresConfirmation: false,
   },
-}));
+}))
 
-vi.mock("@/lib/auth", () => ({
+vi.mock('@/lib/auth', () => ({
   requireUser: vi.fn(async () => {
-    if (state.authThrows) throw new Error("not authenticated");
-    return { id: "user-1", role: state.role };
+    if (state.authThrows) throw new Error('not authenticated')
+    return { id: 'user-1', role: state.role }
   }),
-}));
-vi.mock("@/lib/supabase/server", () => ({
+}))
+vi.mock('@/lib/supabase/server', () => ({
   createServerClient: vi.fn(async () => {
     const query = {
       select: () => query,
@@ -31,127 +31,127 @@ vi.mock("@/lib/supabase/server", () => ({
       not: () => query,
       is: () => query,
       maybeSingle: async () => ({ data: state.attachment, error: null }),
-    };
-    return { from: () => query };
+    }
+    return { from: () => query }
   }),
-}));
-vi.mock("@/lib/storage", () => ({
+}))
+vi.mock('@/lib/storage', () => ({
   getStorage: () => ({
     download: async () => ({
       data: state.downloadError ? null : new ArrayBuffer(8),
       error: state.downloadError,
     }),
   }),
-}));
-vi.mock("@/lib/finance/invoice-extraction", () => ({
+}))
+vi.mock('@/lib/finance/invoice-extraction', () => ({
   extractExpenseInvoice: vi.fn(async () =>
     state.requiresConfirmation
       ? {
           requiresConfirmation: true,
-          source: "rules",
-          warning: "Documento grande",
+          source: 'rules',
+          warning: 'Documento grande',
           sizeBytes: 9_000_000,
           pageCount: 14,
         }
       : {
           suggestion: {
-            vendor: "Agencia",
+            vendor: 'Agencia',
             description: null,
-            expense_date: "2026-08-27",
+            expense_date: '2026-08-27',
             due_date: null,
             subtotal: 100,
             tax_rate: 21,
-            vendor_nif: "B12345678",
-            invoice_reference: "F-1",
+            vendor_nif: 'B12345678',
+            invoice_reference: 'F-1',
             confidence: 0.9,
           },
-          source: "ai",
+          source: 'ai',
           warning: null,
         },
   ),
-}));
+}))
 
-import { NextRequest } from "next/server";
+import { NextRequest } from 'next/server'
 
-import { POST } from "./route";
+import { POST } from './route'
 
 const request = (body: unknown) =>
-  new NextRequest("http://localhost/api/expenses/extract-invoice", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
+  new NextRequest('http://localhost/api/expenses/extract-invoice', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
-  });
+  })
 
-describe("POST /api/expenses/extract-invoice", () => {
+describe('POST /api/expenses/extract-invoice', () => {
   beforeEach(() => {
-    state.authThrows = false;
-    state.role = "admin";
+    state.authThrows = false
+    state.role = 'admin'
     state.attachment = {
       id: ID,
-      expense_id: "expense-1",
-      mime_type: "application/pdf",
-      storage_path: "expense/a.pdf",
-      uploaded_by: "user-1",
-    };
-    state.downloadError = null;
-    state.requiresConfirmation = false;
-  });
+      expense_id: 'expense-1',
+      mime_type: 'application/pdf',
+      storage_path: 'expense/a.pdf',
+      uploaded_by: 'user-1',
+    }
+    state.downloadError = null
+    state.requiresConfirmation = false
+  })
 
-  it("requires an authenticated administrator", async () => {
-    state.role = "member";
-    expect((await POST(request({ attachment_id: ID }))).status).toBe(403);
-  });
+  it('requires an authenticated administrator', async () => {
+    state.role = 'member'
+    expect((await POST(request({ attachment_id: ID }))).status).toBe(403)
+  })
 
-  it("accepts a stored invoice image for OCR", async () => {
+  it('accepts a stored invoice image for OCR', async () => {
     state.attachment = {
       id: ID,
-      expense_id: "expense-1",
-      mime_type: "image/jpeg",
-      storage_path: "expense/a.jpg",
-    };
-    expect((await POST(request({ attachment_id: ID }))).status).toBe(200);
-  });
+      expense_id: 'expense-1',
+      mime_type: 'image/jpeg',
+      storage_path: 'expense/a.jpg',
+    }
+    expect((await POST(request({ attachment_id: ID }))).status).toBe(200)
+  })
 
-  it("returns a reviewable suggestion without saving the expense", async () => {
-    const response = await POST(request({ attachment_id: ID }));
-    expect(response.status).toBe(200);
+  it('returns a reviewable suggestion without saving the expense', async () => {
+    const response = await POST(request({ attachment_id: ID }))
+    expect(response.status).toBe(200)
     expect(await response.json()).toMatchObject({
-      source: "ai",
-      suggestion: { vendor: "Agencia", subtotal: 100 },
-    });
-  });
+      source: 'ai',
+      suggestion: { vendor: 'Agencia', subtotal: 100 },
+    })
+  })
 
-  it("extracts from an orphan attachment (new-expense form) for its uploader", async () => {
+  it('extracts from an orphan attachment (new-expense form) for its uploader', async () => {
     state.attachment = {
       id: ID,
       expense_id: null,
-      mime_type: "application/pdf",
-      storage_path: "misc/a.pdf",
-      uploaded_by: "user-1",
-    };
-    expect((await POST(request({ attachment_id: ID }))).status).toBe(200);
-  });
+      mime_type: 'application/pdf',
+      storage_path: 'misc/a.pdf',
+      uploaded_by: 'user-1',
+    }
+    expect((await POST(request({ attachment_id: ID }))).status).toBe(200)
+  })
 
-  it("returns a confirmation response before an expensive extraction", async () => {
-    state.requiresConfirmation = true;
+  it('returns a confirmation response before an expensive extraction', async () => {
+    state.requiresConfirmation = true
 
-    const response = await POST(request({ attachment_id: ID }));
+    const response = await POST(request({ attachment_id: ID }))
 
-    expect(response.status).toBe(409);
+    expect(response.status).toBe(409)
     expect(await response.json()).toMatchObject({
       requires_confirmation: true,
       page_count: 14,
-    });
-  });
+    })
+  })
 
-  it("hides an orphan attachment uploaded by another member", async () => {
+  it('hides an orphan attachment uploaded by another member', async () => {
     state.attachment = {
       id: ID,
       expense_id: null,
-      mime_type: "application/pdf",
-      storage_path: "misc/a.pdf",
-      uploaded_by: "user-2",
-    };
-    expect((await POST(request({ attachment_id: ID }))).status).toBe(404);
-  });
-});
+      mime_type: 'application/pdf',
+      storage_path: 'misc/a.pdf',
+      uploaded_by: 'user-2',
+    }
+    expect((await POST(request({ attachment_id: ID }))).status).toBe(404)
+  })
+})

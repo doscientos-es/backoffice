@@ -1,101 +1,101 @@
-"use client";
+'use client'
 
-import { GitBranch as Github, Link as Link2, RefreshCw } from "lucide-react";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { GitBranch as Github, Link as Link2, RefreshCw } from 'lucide-react'
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 
 interface OrgRepo {
-  id: number;
-  name: string;
-  html_url: string;
+  id: number
+  name: string
+  html_url: string
 }
 
-type RepoLoadState = "idle" | "loading" | "ok" | "error";
+type RepoLoadState = 'idle' | 'loading' | 'ok' | 'error'
 
-export type GitHubSyncMode = "none" | "link_only" | "bidirectional";
+export type GitHubSyncMode = 'none' | 'link_only' | 'bidirectional'
 
 export interface GitHubSyncSectionProps {
-  idPrefix: string;
-  defaultMode?: GitHubSyncMode;
-  defaultRepoUrl?: string | null;
-  defaultInstallationId?: number | null;
-  defaultAutoSync?: boolean;
+  idPrefix: string
+  defaultMode?: GitHubSyncMode
+  defaultRepoUrl?: string | null
+  defaultInstallationId?: number | null
+  defaultAutoSync?: boolean
 }
 
 const OPTIONS: Array<{
-  value: GitHubSyncMode;
-  title: string;
-  description: string;
-  icon: ReactNode;
+  value: GitHubSyncMode
+  title: string
+  description: string
+  icon: ReactNode
 }> = [
   {
-    value: "none",
-    title: "Sin GitHub",
-    description: "El proyecto vive sólo en el backoffice.",
+    value: 'none',
+    title: 'Sin GitHub',
+    description: 'El proyecto vive sólo en el backoffice.',
     icon: <Github className="size-4" />,
   },
   {
-    value: "link_only",
-    title: "Solo enlace",
-    description: "Repo externo: enlazamos pero nunca escribimos en GitHub.",
+    value: 'link_only',
+    title: 'Solo enlace',
+    description: 'Repo externo: enlazamos pero nunca escribimos en GitHub.',
     icon: <Link2 className="size-4" />,
   },
   {
-    value: "bidirectional",
-    title: "Sincronización completa",
-    description: "Las tareas crean y reciben issues automáticamente.",
+    value: 'bidirectional',
+    title: 'Sincronización completa',
+    description: 'Las tareas crean y reciben issues automáticamente.',
     icon: <RefreshCw className="size-4" />,
   },
-];
+]
 
 export function GitHubSyncSection({
   idPrefix,
-  defaultMode = "none",
+  defaultMode = 'none',
   defaultRepoUrl,
   defaultInstallationId,
   defaultAutoSync = true,
 }: GitHubSyncSectionProps) {
-  const [mode, setMode] = useState<GitHubSyncMode>(defaultMode);
-  const groupId = useId();
-  const showRepo = mode !== "none";
-  const showSync = mode === "bidirectional";
+  const [mode, setMode] = useState<GitHubSyncMode>(defaultMode)
+  const groupId = useId()
+  const showRepo = mode !== 'none'
+  const showSync = mode === 'bidirectional'
 
   // Org repos selector state
-  const [orgRepos, setOrgRepos] = useState<OrgRepo[]>([]);
-  const [repoLoadState, setRepoLoadState] = useState<RepoLoadState>("idle");
-  const [selectedRepoUrl, setSelectedRepoUrl] = useState(defaultRepoUrl ?? "");
-  const [isManualEntry, setIsManualEntry] = useState(false);
-  const fetchedRef = useRef(false);
+  const [orgRepos, setOrgRepos] = useState<OrgRepo[]>([])
+  const [repoLoadState, setRepoLoadState] = useState<RepoLoadState>('idle')
+  const [selectedRepoUrl, setSelectedRepoUrl] = useState(defaultRepoUrl ?? '')
+  const [isManualEntry, setIsManualEntry] = useState(false)
+  const fetchedRef = useRef(false)
 
   useEffect(() => {
-    if (!showRepo || fetchedRef.current) return;
-    fetchedRef.current = true;
-    setRepoLoadState("loading");
-    fetch("/api/github/repos")
+    if (!showRepo || fetchedRef.current) return
+    fetchedRef.current = true
+    setRepoLoadState('loading')
+    fetch('/api/github/repos')
       .then((r) => r.json() as Promise<{ repos: OrgRepo[] }>)
       .then(({ repos }) => {
-        setOrgRepos(repos);
-        setRepoLoadState("ok");
+        setOrgRepos(repos)
+        setRepoLoadState('ok')
         if (repos.length === 0) {
-          setIsManualEntry(true);
-          return;
+          setIsManualEntry(true)
+          return
         }
         if (defaultRepoUrl) {
           if (repos.some((r) => r.html_url === defaultRepoUrl)) {
-            setSelectedRepoUrl(defaultRepoUrl);
+            setSelectedRepoUrl(defaultRepoUrl)
           } else {
-            setIsManualEntry(true); // existing URL is outside the org
+            setIsManualEntry(true) // existing URL is outside the org
           }
         }
       })
       .catch(() => {
-        setRepoLoadState("error");
-        setIsManualEntry(true);
-      });
-  }, [showRepo, defaultRepoUrl]);
+        setRepoLoadState('error')
+        setIsManualEntry(true)
+      })
+  }, [showRepo, defaultRepoUrl])
 
   return (
     <fieldset className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-4">
@@ -105,17 +105,17 @@ export function GitHubSyncSection({
 
       <div role="radiogroup" aria-labelledby={groupId} className="grid gap-2 sm:grid-cols-3">
         {OPTIONS.map((opt) => {
-          const id = `${idPrefix}-mode-${opt.value}`;
-          const checked = mode === opt.value;
+          const id = `${idPrefix}-mode-${opt.value}`
+          const checked = mode === opt.value
           return (
             <label
               key={opt.value}
               htmlFor={id}
               className={cn(
-                "flex cursor-pointer flex-col gap-1 rounded-md border p-3 text-xs transition-colors",
+                'flex cursor-pointer flex-col gap-1 rounded-md border p-3 text-xs transition-colors',
                 checked
-                  ? "border-primary bg-primary/5 ring-1 ring-primary/40"
-                  : "border-border bg-background hover:border-primary/40 hover:bg-muted/30",
+                  ? 'border-primary bg-primary/5 ring-1 ring-primary/40'
+                  : 'border-border bg-background hover:border-primary/40 hover:bg-muted/30',
               )}
             >
               <input
@@ -135,7 +135,7 @@ export function GitHubSyncSection({
                 {opt.description}
               </span>
             </label>
-          );
+          )
         })}
       </div>
 
@@ -143,14 +143,14 @@ export function GitHubSyncSection({
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Repositorio" htmlFor={`${idPrefix}-repo`} required>
             {/* ── Loading state ── */}
-            {(repoLoadState === "idle" || repoLoadState === "loading") && (
+            {(repoLoadState === 'idle' || repoLoadState === 'loading') && (
               <Select id={`${idPrefix}-repo`} disabled value="">
                 <option value="">Cargando repositorios de la org…</option>
               </Select>
             )}
 
             {/* ── Org selector ── */}
-            {repoLoadState === "ok" && !isManualEntry && (
+            {repoLoadState === 'ok' && !isManualEntry && (
               <>
                 <input type="hidden" name="github_repo" value={selectedRepoUrl} />
                 <Select
@@ -172,8 +172,8 @@ export function GitHubSyncSection({
                   type="button"
                   className="self-start text-[11px] text-muted-foreground hover:text-foreground"
                   onClick={() => {
-                    setIsManualEntry(true);
-                    setSelectedRepoUrl("");
+                    setIsManualEntry(true)
+                    setSelectedRepoUrl('')
                   }}
                 >
                   Introducir URL manualmente…
@@ -182,7 +182,7 @@ export function GitHubSyncSection({
             )}
 
             {/* ── Manual URL entry (error fallback or user chose manual) ── */}
-            {(repoLoadState === "error" || isManualEntry) && (
+            {(repoLoadState === 'error' || isManualEntry) && (
               <div className="flex flex-col gap-1.5">
                 <Input
                   id={`${idPrefix}-repo`}
@@ -193,17 +193,17 @@ export function GitHubSyncSection({
                   value={selectedRepoUrl}
                   onChange={(e) => setSelectedRepoUrl(e.target.value)}
                   placeholder="https://github.com/owner/repo"
-                  autoFocus={isManualEntry && repoLoadState === "ok"}
+                  autoFocus={isManualEntry && repoLoadState === 'ok'}
                 />
-                {repoLoadState === "ok" && orgRepos.length > 0 && (
+                {repoLoadState === 'ok' && orgRepos.length > 0 && (
                   <button
                     type="button"
                     className="self-start text-[11px] text-muted-foreground hover:text-foreground"
                     onClick={() => {
-                      setIsManualEntry(false);
+                      setIsManualEntry(false)
                       setSelectedRepoUrl(
-                        orgRepos.find((r) => r.html_url === defaultRepoUrl)?.html_url ?? "",
-                      );
+                        orgRepos.find((r) => r.html_url === defaultRepoUrl)?.html_url ?? '',
+                      )
                     }}
                   >
                     ← Seleccionar de la org
@@ -225,7 +225,7 @@ export function GitHubSyncSection({
                 name="github_installation_id"
                 inputMode="numeric"
                 required
-                defaultValue={defaultInstallationId ?? ""}
+                defaultValue={defaultInstallationId ?? ''}
                 placeholder="123456"
               />
             </Field>
@@ -278,23 +278,23 @@ export function GitHubSyncSection({
         </div>
       </details>
     </fieldset>
-  );
+  )
 }
 
 const HELP_ROWS: Array<{ action: string; none: string; link: string; full: string }> = [
   {
-    action: "Crear tarea",
-    none: "—",
-    link: "Botón para abrir issue prellenado en GitHub.com",
-    full: "Crea issue automáticamente",
+    action: 'Crear tarea',
+    none: '—',
+    link: 'Botón para abrir issue prellenado en GitHub.com',
+    full: 'Crea issue automáticamente',
   },
   {
-    action: "Recibir webhook",
-    none: "Ignorado",
-    link: "Ignorado",
-    full: "Actualiza tarea local",
+    action: 'Recibir webhook',
+    none: 'Ignorado',
+    link: 'Ignorado',
+    full: 'Actualiza tarea local',
   },
-];
+]
 
 function Field({
   label,
@@ -303,11 +303,11 @@ function Field({
   hint,
   children,
 }: {
-  label: string;
-  htmlFor: string;
-  required?: boolean;
-  hint?: string;
-  children: ReactNode;
+  label: string
+  htmlFor: string
+  required?: boolean
+  hint?: string
+  children: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -321,5 +321,5 @@ function Field({
       {children}
       {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
-  );
+  )
 }

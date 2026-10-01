@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import { Lock } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Lock } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
 
-type UnlockAction = (input: unknown) => Promise<{ ok: true } | { ok: false; error: string }>;
+type UnlockAction = (input: unknown) => Promise<{ ok: true } | { ok: false; error: string }>
 
 /**
  * Public password prompt rendered in place of a protected proposal/invoice
@@ -20,58 +20,58 @@ type UnlockAction = (input: unknown) => Promise<{ ok: true } | { ok: false; erro
 export function PortalPasswordGate({
   token,
   action,
-  language = "es",
+  language = 'es',
 }: {
-  token: string;
-  action: UnlockAction;
-  language?: "es" | "ca" | "en";
+  token: string
+  action: UnlockAction
+  language?: 'es' | 'ca' | 'en'
 }) {
-  const router = useRouter();
-  const feedback = useFormFeedback();
-  const [password, setPassword] = useState("");
+  const router = useRouter()
+  const feedback = useFormFeedback()
+  const [password, setPassword] = useState('')
   const copy =
-    language === "ca"
+    language === 'ca'
       ? {
-          empty: "Introdueix la contrasenya",
-          granted: "Accés concedit",
-          title: "Document protegit",
-          intro: "Introdueix la contrasenya per accedir a aquest document.",
-          password: "Contrasenya",
-          checking: "Comprovant…",
-          access: "Accedir",
+          empty: 'Introdueix la contrasenya',
+          granted: 'Accés concedit',
+          title: 'Document protegit',
+          intro: 'Introdueix la contrasenya per accedir a aquest document.',
+          password: 'Contrasenya',
+          checking: 'Comprovant…',
+          access: 'Accedir',
         }
-      : language === "en"
+      : language === 'en'
         ? {
-            empty: "Enter the password",
-            granted: "Access granted",
-            title: "Protected document",
-            intro: "Enter the password to access this document.",
-            password: "Password",
-            checking: "Checking…",
-            access: "Access",
+            empty: 'Enter the password',
+            granted: 'Access granted',
+            title: 'Protected document',
+            intro: 'Enter the password to access this document.',
+            password: 'Password',
+            checking: 'Checking…',
+            access: 'Access',
           }
         : {
-            empty: "Introduce la contraseña",
-            granted: "Acceso concedido",
-            title: "Documento protegido",
-            intro: "Introduce la contraseña para acceder a este documento.",
-            password: "Contraseña",
-            checking: "Comprobando…",
-            access: "Acceder",
-          };
+            empty: 'Introduce la contraseña',
+            granted: 'Acceso concedido',
+            title: 'Documento protegido',
+            intro: 'Introduce la contraseña para acceder a este documento.',
+            password: 'Contraseña',
+            checking: 'Comprobando…',
+            access: 'Acceder',
+          }
 
   async function handleSubmit() {
     if (!password.trim()) {
-      feedback.setError(copy.empty);
-      return;
+      feedback.setError(copy.empty)
+      return
     }
-    feedback.setPending();
-    const res = await action({ token, password });
+    feedback.setPending()
+    const res = await action({ token, password })
     if (res.ok) {
-      feedback.setSuccess(copy.granted);
-      router.refresh();
+      feedback.setSuccess(copy.granted)
+      router.refresh()
     } else {
-      feedback.setError(res.error);
+      feedback.setError(res.error)
     }
   }
 
@@ -89,8 +89,8 @@ export function PortalPasswordGate({
         </div>
         <form
           onSubmit={(e) => {
-            e.preventDefault();
-            void handleSubmit();
+            e.preventDefault()
+            void handleSubmit()
           }}
           className="flex w-full max-w-xs flex-col gap-3"
         >
@@ -111,5 +111,5 @@ export function PortalPasswordGate({
         </form>
       </div>
     </article>
-  );
+  )
 }

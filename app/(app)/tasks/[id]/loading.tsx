@@ -1,7 +1,7 @@
-import { DetailCardSkeleton } from "@/components/layout/detail-grid-skeleton";
-import { PageHeaderSkeleton } from "@/components/layout/page-header-skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailCardSkeleton } from '@/components/layout/detail-grid-skeleton'
+import { PageHeaderSkeleton } from '@/components/layout/page-header-skeleton'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function TaskDetailLoading() {
   return (
@@ -28,5 +28,5 @@ export default function TaskDetailLoading() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

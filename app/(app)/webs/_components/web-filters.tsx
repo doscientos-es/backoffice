@@ -1,58 +1,58 @@
-"use client";
+'use client'
 
-import { Search } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Search } from 'lucide-react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils'
 
 const TYPES = [
-  { value: "all", label: "Todas" },
-  { value: "own", label: "Propias" },
-  { value: "clients", label: "Clientes" },
-] as const;
+  { value: 'all', label: 'Todas' },
+  { value: 'own', label: 'Propias' },
+  { value: 'clients', label: 'Clientes' },
+] as const
 
-type TypeValue = (typeof TYPES)[number]["value"];
+type TypeValue = (typeof TYPES)[number]['value']
 
 export function WebFilters({
   q: initialQ,
   type: initialType,
   total,
 }: {
-  q: string;
-  type: string;
-  total: number;
+  q: string
+  type: string
+  total: number
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
+  const router = useRouter()
+  const pathname = usePathname()
+  const params = useSearchParams()
 
-  const [q, setQ] = useState(initialQ);
-  const commitRef = useRef<(q: string, type: string) => void>(() => {});
+  const [q, setQ] = useState(initialQ)
+  const commitRef = useRef<(q: string, type: string) => void>(() => {})
 
   commitRef.current = (search: string, type: string) => {
-    const next = new URLSearchParams(params.toString());
-    if (search) next.set("q", search);
-    else next.delete("q");
-    if (type !== "all") next.set("type", type);
-    else next.delete("type");
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-  };
+    const next = new URLSearchParams(params.toString())
+    if (search) next.set('q', search)
+    else next.delete('q')
+    if (type !== 'all') next.set('type', type)
+    else next.delete('type')
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false })
+  }
 
   // Debounce search → URL
   useEffect(() => {
-    if (q === initialQ) return;
-    const id = setTimeout(() => commitRef.current(q, initialType), 200);
-    return () => clearTimeout(id);
-  }, [q, initialQ, initialType]);
+    if (q === initialQ) return
+    const id = setTimeout(() => commitRef.current(q, initialType), 200)
+    return () => clearTimeout(id)
+  }, [q, initialQ, initialType])
 
   const setType = useCallback(
     (type: TypeValue) => commitRef.current(q, type),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [q],
-  );
+  )
 
-  const currentType = (TYPES.find((t) => t.value === initialType)?.value ?? "all") as TypeValue;
+  const currentType = (TYPES.find((t) => t.value === initialType)?.value ?? 'all') as TypeValue
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -65,8 +65,8 @@ export function WebFilters({
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar por nombre, URL o tech…"
           className={cn(
-            "h-8 w-full rounded-md border border-border bg-background pr-3 pl-8 text-sm",
-            "placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:outline-none",
+            'h-8 w-full rounded-md border border-border bg-background pr-3 pl-8 text-sm',
+            'placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:outline-none',
           )}
         />
       </div>
@@ -79,10 +79,10 @@ export function WebFilters({
             type="button"
             onClick={() => setType(t.value)}
             className={cn(
-              "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+              'rounded-md px-3 py-1 text-xs font-medium transition-colors',
               currentType === t.value
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground",
+                ? 'bg-background text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground',
             )}
           >
             {t.label}
@@ -92,8 +92,8 @@ export function WebFilters({
 
       {/* Count */}
       <span className="ml-auto text-xs text-muted-foreground tabular-nums">
-        {total} {total === 1 ? "sitio" : "sitios"}
+        {total} {total === 1 ? 'sitio' : 'sitios'}
       </span>
     </div>
-  );
+  )
 }

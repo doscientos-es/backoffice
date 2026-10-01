@@ -1,41 +1,41 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
-import { BackLink } from "@/components/layout/back-link";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { requireUser } from "@/lib/auth";
-import { githubDefaultInstallationId } from "@/lib/env";
-import { createServerClient } from "@/lib/supabase/server";
-import { addDaysIsoLocal, todayIsoLocal } from "@/lib/utils/date";
+import { BackLink } from '@/components/layout/back-link'
+import { PageHeader } from '@/components/layout/page-header'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { requireUser } from '@/lib/auth'
+import { githubDefaultInstallationId } from '@/lib/env'
+import { createServerClient } from '@/lib/supabase/server'
+import { addDaysIsoLocal, todayIsoLocal } from '@/lib/utils/date'
 
-import { createProject } from "../actions";
-import { ProjectFormFields } from "../project-form-fields";
+import { createProject } from '../actions'
+import { ProjectFormFields } from '../project-form-fields'
 
-export const metadata: Metadata = { title: "Nuevo proyecto · doscientos" };
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: 'Nuevo proyecto · doscientos' }
+export const dynamic = 'force-dynamic'
 
 export default async function NewProjectPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client_id?: string }>;
+  searchParams: Promise<{ client_id?: string }>
 }) {
-  await requireUser();
-  const { client_id } = await searchParams;
-  const supabase = await createServerClient();
+  await requireUser()
+  const { client_id } = await searchParams
+  const supabase = await createServerClient()
 
   const [{ data: clients }, { data: templates }] = await Promise.all([
-    supabase.from("clients").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
     supabase
-      .from("onboarding_templates")
-      .select("id, name, description")
-      .is("deleted_at", null)
-      .order("position"),
-  ]);
+      .from('onboarding_templates')
+      .select('id, name, description')
+      .is('deleted_at', null)
+      .order('position'),
+  ])
 
-  type Template = { id: string; name: string; description: string | null };
+  type Template = { id: string; name: string; description: string | null }
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,7 +52,7 @@ export default async function NewProjectPage({
               autoFocusName
               orgDefaultInstallationId={githubDefaultInstallationId()}
               defaults={{
-                client_id: client_id ?? "",
+                client_id: client_id ?? '',
                 starts_at: todayIsoLocal(),
                 ends_at: addDaysIsoLocal(42),
               }}
@@ -117,5 +117,5 @@ export default async function NewProjectPage({
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

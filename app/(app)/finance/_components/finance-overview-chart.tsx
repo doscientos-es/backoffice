@@ -1,12 +1,12 @@
-import Link from "next/link";
+import Link from 'next/link'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getFinanceMonthlySeries } from "@/lib/finance/queries";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getFinanceMonthlySeries } from '@/lib/finance/queries'
 
-import { FinanceChart } from "../finance-chart";
+import { FinanceChart } from '../finance-chart'
 
 export async function FinanceOverviewChart() {
-  const series = await getFinanceMonthlySeries();
+  const series = await getFinanceMonthlySeries()
 
   return (
     <Card>
@@ -22,5 +22,5 @@ export async function FinanceOverviewChart() {
         <FinanceChart data={series} />
       </CardContent>
     </Card>
-  );
+  )
 }

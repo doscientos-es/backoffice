@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   ChevronDown,
@@ -7,44 +7,44 @@ import {
   Plus,
   Trash as Trash2,
   X,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import {
   createEmptyScopeModule,
   SCOPE_MODULE_DURATION_WEEKS,
   SCOPE_MODULE_LIMITS,
   type ScopeModule,
   scopeModuleDurationLabel,
-} from "@/lib/proposals/scope";
+} from '@/lib/proposals/scope'
 
 type Props = {
-  modules: ScopeModule[];
-  onChange: (modules: ScopeModule[]) => void;
-  locked?: boolean;
-};
+  modules: ScopeModule[]
+  onChange: (modules: ScopeModule[]) => void
+  locked?: boolean
+}
 
-type BulletDraft = { id: string; value: string };
+type BulletDraft = { id: string; value: string }
 
 function makeDraft(value: string): BulletDraft {
-  return { id: crypto.randomUUID(), value };
+  return { id: crypto.randomUUID(), value }
 }
 
 function makeDrafts(items: string[]): BulletDraft[] {
-  return items.length > 0 ? items.map(makeDraft) : [makeDraft("")];
+  return items.length > 0 ? items.map(makeDraft) : [makeDraft('')]
 }
 
 function compactBullets(values: string[]): string[] {
   return values
-    .map((line) => line.replace(/^\s*(?:[-*•]|[0-9]+[.)])\s*/, "").trim())
-    .filter(Boolean);
+    .map((line) => line.replace(/^\s*(?:[-*•]|[0-9]+[.)])\s*/, '').trim())
+    .filter(Boolean)
 }
 
 function sameBullets(left: string[], right: string[]): boolean {
-  return left.length === right.length && left.every((bullet, index) => bullet === right[index]);
+  return left.length === right.length && left.every((bullet, index) => bullet === right[index])
 }
 
 function ScopeBulletEditor({
@@ -55,98 +55,98 @@ function ScopeBulletEditor({
   moduleIndex,
   tone,
 }: {
-  label: string;
-  items: string[];
-  onChange: (items: string[]) => void;
-  disabled: boolean;
-  moduleIndex: number;
-  tone: "included" | "excluded";
+  label: string
+  items: string[]
+  onChange: (items: string[]) => void
+  disabled: boolean
+  moduleIndex: number
+  tone: 'included' | 'excluded'
 }) {
-  const [drafts, setDrafts] = useState<BulletDraft[]>(() => makeDrafts(items));
-  const [pasteOpen, setPasteOpen] = useState(false);
-  const [pasteText, setPasteText] = useState("");
-  const [pasteFeedback, setPasteFeedback] = useState<string | null>(null);
-  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const focusIndex = useRef<number | null>(null);
-  const hintId = `scope-${tone}-${moduleIndex}-hint`;
-  const draftValues = drafts.map((draft) => draft.value);
-  const filledCount = compactBullets(draftValues).length;
-  const hasBlankDraft = drafts.some((draft) => !draft.value.trim());
-  const atLimit = drafts.length >= SCOPE_MODULE_LIMITS.maxBulletCount;
+  const [drafts, setDrafts] = useState<BulletDraft[]>(() => makeDrafts(items))
+  const [pasteOpen, setPasteOpen] = useState(false)
+  const [pasteText, setPasteText] = useState('')
+  const [pasteFeedback, setPasteFeedback] = useState<string | null>(null)
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([])
+  const focusIndex = useRef<number | null>(null)
+  const hintId = `scope-${tone}-${moduleIndex}-hint`
+  const draftValues = drafts.map((draft) => draft.value)
+  const filledCount = compactBullets(draftValues).length
+  const hasBlankDraft = drafts.some((draft) => !draft.value.trim())
+  const atLimit = drafts.length >= SCOPE_MODULE_LIMITS.maxBulletCount
 
   useEffect(() => {
     if (!sameBullets(compactBullets(drafts.map((draft) => draft.value)), items)) {
-      setDrafts(makeDrafts(items));
+      setDrafts(makeDrafts(items))
     }
-  }, [drafts, items]);
+  }, [drafts, items])
 
   useEffect(() => {
-    if (focusIndex.current === null) return;
-    inputRefs.current[focusIndex.current]?.focus();
-    focusIndex.current = null;
-  });
+    if (focusIndex.current === null) return
+    inputRefs.current[focusIndex.current]?.focus()
+    focusIndex.current = null
+  })
 
   const updateDraft = (index: number, value: string) => {
-    const next = drafts.map((draft, current) => (current === index ? { ...draft, value } : draft));
-    setDrafts(next);
-    onChange(compactBullets(next.map((draft) => draft.value)));
-  };
+    const next = drafts.map((draft, current) => (current === index ? { ...draft, value } : draft))
+    setDrafts(next)
+    onChange(compactBullets(next.map((draft) => draft.value)))
+  }
 
   const removeDraft = (index: number, nextFocusIndex = Math.max(0, index - 1)) => {
-    const next = drafts.filter((_, current) => current !== index);
-    const nextDrafts = next.length > 0 ? next : [makeDraft("")];
-    focusIndex.current = Math.min(nextFocusIndex, nextDrafts.length - 1);
-    setDrafts(nextDrafts);
-    onChange(compactBullets(nextDrafts.map((draft) => draft.value)));
-  };
+    const next = drafts.filter((_, current) => current !== index)
+    const nextDrafts = next.length > 0 ? next : [makeDraft('')]
+    focusIndex.current = Math.min(nextFocusIndex, nextDrafts.length - 1)
+    setDrafts(nextDrafts)
+    onChange(compactBullets(nextDrafts.map((draft) => draft.value)))
+  }
 
   const addDraft = (afterIndex = drafts.length - 1) => {
-    const blankIndex = drafts.findIndex((draft) => !draft.value.trim());
+    const blankIndex = drafts.findIndex((draft) => !draft.value.trim())
     if (blankIndex >= 0) {
-      inputRefs.current[blankIndex]?.focus();
-      return;
+      inputRefs.current[blankIndex]?.focus()
+      return
     }
-    if (atLimit) return;
+    if (atLimit) return
     const next = [
       ...drafts.slice(0, afterIndex + 1),
-      makeDraft(""),
+      makeDraft(''),
       ...drafts.slice(afterIndex + 1),
-    ];
-    focusIndex.current = afterIndex + 1;
-    setDrafts(next);
-  };
+    ]
+    focusIndex.current = afterIndex + 1
+    setDrafts(next)
+  }
 
   const addPastedBullets = () => {
-    const pasted = compactBullets(pasteText.split(/\r?\n/));
-    const current = compactBullets(drafts.map((draft) => draft.value));
-    const available = SCOPE_MODULE_LIMITS.maxBulletCount - current.length;
-    const added = pasted.slice(0, available);
+    const pasted = compactBullets(pasteText.split(/\r?\n/))
+    const current = compactBullets(drafts.map((draft) => draft.value))
+    const available = SCOPE_MODULE_LIMITS.maxBulletCount - current.length
+    const added = pasted.slice(0, available)
 
     if (added.length === 0) {
       setPasteFeedback(
         available === 0
-          ? "Ya has alcanzado el límite de puntos."
-          : "No hemos detectado ningún punto.",
-      );
-      return;
+          ? 'Ya has alcanzado el límite de puntos.'
+          : 'No hemos detectado ningún punto.',
+      )
+      return
     }
 
-    const next = [...current, ...added];
-    setDrafts(makeDrafts(next));
-    onChange(next);
-    setPasteText("");
-    setPasteOpen(false);
+    const next = [...current, ...added]
+    setDrafts(makeDrafts(next))
+    onChange(next)
+    setPasteText('')
+    setPasteOpen(false)
     setPasteFeedback(
       added.length === pasted.length
-        ? `${added.length} ${added.length === 1 ? "punto añadido" : "puntos añadidos"}.`
+        ? `${added.length} ${added.length === 1 ? 'punto añadido' : 'puntos añadidos'}.`
         : `Se han añadido ${added.length} de ${pasted.length} puntos por el límite.`,
-    );
-  };
+    )
+  }
 
   const accentClass =
-    tone === "included"
-      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-      : "bg-muted text-muted-foreground";
+    tone === 'included'
+      ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+      : 'bg-muted text-muted-foreground'
 
   return (
     <section
@@ -177,24 +177,24 @@ function ScopeBulletEditor({
             </span>
             <Input
               ref={(element) => {
-                inputRefs.current[bulletIndex] = element;
+                inputRefs.current[bulletIndex] = element
               }}
               value={draft.value}
               onChange={(event) => updateDraft(bulletIndex, event.target.value)}
               onKeyDown={(event) => {
-                if (event.nativeEvent.isComposing) return;
-                if (event.key === "Enter" && draft.value.trim()) {
-                  event.preventDefault();
-                  addDraft(bulletIndex);
+                if (event.nativeEvent.isComposing) return
+                if (event.key === 'Enter' && draft.value.trim()) {
+                  event.preventDefault()
+                  addDraft(bulletIndex)
                 }
-                if (event.key === "Backspace" && !draft.value && bulletIndex > 0) {
-                  event.preventDefault();
-                  removeDraft(bulletIndex);
+                if (event.key === 'Backspace' && !draft.value && bulletIndex > 0) {
+                  event.preventDefault()
+                  removeDraft(bulletIndex)
                 }
               }}
               disabled={disabled}
               maxLength={SCOPE_MODULE_LIMITS.maxBulletLength}
-              placeholder={bulletIndex === 0 ? "Escribe un punto" : "Siguiente punto"}
+              placeholder={bulletIndex === 0 ? 'Escribe un punto' : 'Siguiente punto'}
               aria-label={`${label}, punto ${bulletIndex + 1}`}
               aria-describedby={hintId}
               className="h-9 bg-background"
@@ -223,8 +223,8 @@ function ScopeBulletEditor({
         <button
           type="button"
           onClick={() => {
-            setPasteOpen((open) => !open);
-            setPasteFeedback(null);
+            setPasteOpen((open) => !open)
+            setPasteFeedback(null)
           }}
           disabled={disabled || atLimit}
           aria-expanded={pasteOpen}
@@ -248,8 +248,8 @@ function ScopeBulletEditor({
             <button
               type="button"
               onClick={() => {
-                setPasteOpen(false);
-                setPasteText("");
+                setPasteOpen(false)
+                setPasteText('')
               }}
               className="text-xs font-medium text-muted-foreground hover:text-foreground"
             >
@@ -273,28 +273,28 @@ function ScopeBulletEditor({
         </p>
       ) : null}
     </section>
-  );
+  )
 }
 
 /** Structured editor so scope can drive both client documents and later delivery prompts. */
 export function ScopeModulesEditor({ modules, onChange, locked = false }: Props) {
-  const disabled = locked;
+  const disabled = locked
   const update = (index: number, patch: Partial<ScopeModule>) =>
     onChange(
       modules.map((module, current) => (current === index ? { ...module, ...patch } : module)),
-    );
-  const remove = (index: number) => onChange(modules.filter((_, current) => current !== index));
+    )
+  const remove = (index: number) => onChange(modules.filter((_, current) => current !== index))
   const move = (index: number, direction: -1 | 1) => {
-    const destination = index + direction;
-    if (destination < 0 || destination >= modules.length) return;
-    const next = modules.slice();
-    const current = next[index];
-    const target = next[destination];
-    if (!current || !target) return;
-    next[index] = target;
-    next[destination] = current;
-    onChange(next);
-  };
+    const destination = index + direction
+    if (destination < 0 || destination >= modules.length) return
+    const next = modules.slice()
+    const current = next[index]
+    const target = next[destination]
+    if (!current || !target) return
+    next[index] = target
+    next[destination] = current
+    onChange(next)
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -308,7 +308,7 @@ export function ScopeModulesEditor({ modules, onChange, locked = false }: Props)
           <li key={module.id} className="rounded-md border border-border bg-background p-3">
             <div className="mb-3 flex items-center gap-1.5">
               <span className="w-6 shrink-0 text-center text-[11px] font-semibold text-muted-foreground tabular-nums">
-                {String(index + 1).padStart(2, "0")}
+                {String(index + 1).padStart(2, '0')}
               </span>
               <span className="flex-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                 Módulo
@@ -362,24 +362,24 @@ export function ScopeModulesEditor({ modules, onChange, locked = false }: Props)
                   <Select
                     id={`scope-module-duration-${module.id}`}
                     value={
-                      module.duration_mode === "custom"
-                        ? "custom"
+                      module.duration_mode === 'custom'
+                        ? 'custom'
                         : String(module.duration_weeks ?? 1)
                     }
                     onChange={(event) => {
-                      if (event.target.value === "custom") {
+                      if (event.target.value === 'custom') {
                         update(index, {
-                          duration_mode: "custom",
+                          duration_mode: 'custom',
                           duration_weeks: undefined,
-                          duration_custom: module.duration_custom ?? "",
-                        });
-                        return;
+                          duration_custom: module.duration_custom ?? '',
+                        })
+                        return
                       }
                       update(index, {
-                        duration_mode: "weeks",
+                        duration_mode: 'weeks',
                         duration_weeks: Number(event.target.value),
                         duration_custom: undefined,
-                      });
+                      })
                     }}
                     disabled={disabled}
                     aria-label={`Plazo estimado del módulo ${index + 1}`}
@@ -392,9 +392,9 @@ export function ScopeModulesEditor({ modules, onChange, locked = false }: Props)
                     ))}
                     <option value="custom">Personalizado</option>
                   </Select>
-                  {module.duration_mode === "custom" ? (
+                  {module.duration_mode === 'custom' ? (
                     <Input
-                      value={module.duration_custom ?? ""}
+                      value={module.duration_custom ?? ''}
                       onChange={(event) => update(index, { duration_custom: event.target.value })}
                       disabled={disabled}
                       maxLength={32}
@@ -403,14 +403,14 @@ export function ScopeModulesEditor({ modules, onChange, locked = false }: Props)
                       className="h-8 text-sm"
                     />
                   ) : null}
-                  {module.duration_mode === "custom" ? (
+                  {module.duration_mode === 'custom' ? (
                     <p className="text-xs text-muted-foreground">
                       Formato: 10 días, 2 semanas o 3 meses.
                     </p>
                   ) : null}
                 </div>
                 <Textarea
-                  value={module.description ?? ""}
+                  value={module.description ?? ''}
                   onChange={(event) => update(index, { description: event.target.value })}
                   disabled={disabled}
                   maxLength={SCOPE_MODULE_LIMITS.maxDescriptionLength}
@@ -420,7 +420,7 @@ export function ScopeModulesEditor({ modules, onChange, locked = false }: Props)
                   className="resize-y text-sm"
                 />
                 <Textarea
-                  value={module.notes ?? ""}
+                  value={module.notes ?? ''}
                   onChange={(event) => update(index, { notes: event.target.value })}
                   disabled={disabled}
                   maxLength={SCOPE_MODULE_LIMITS.maxNotesLength}
@@ -461,5 +461,5 @@ export function ScopeModulesEditor({ modules, onChange, locked = false }: Props)
         <Plus className="size-3.5" aria-hidden /> Añadir módulo
       </button>
     </div>
-  );
+  )
 }

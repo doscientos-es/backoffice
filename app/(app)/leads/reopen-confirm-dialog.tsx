@@ -1,45 +1,39 @@
-"use client";
+'use client'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@doscientos/ui";
-import type { ReactNode } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@doscientos/ui'
+import type { ReactNode } from 'react'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 
 const DEFAULT_DESCRIPTION = (name: string): ReactNode => (
   <>
     <strong>{name}</strong> ya estaba ganado. ¿Quieres reabrir esta oportunidad como un nuevo ciclo
     de ventas?
   </>
-);
+)
 
 export function ReopenConfirmDialog({
   lead,
   onCancel,
   onConfirm,
-  title = "Reabrir oportunidad",
+  title = 'Reabrir oportunidad',
   description = DEFAULT_DESCRIPTION,
-  confirmLabel = "Sí, reabrir",
+  confirmLabel = 'Sí, reabrir',
 }: {
-  lead: { id: string; name: string } | null;
-  onCancel: () => void;
-  onConfirm: () => void;
+  lead: { id: string; name: string } | null
+  onCancel: () => void
+  onConfirm: () => void
   /** Dialog heading. Defaults to the won-lead reopen copy. */
-  title?: string;
+  title?: string
   /** Body copy, receives the lead name. Defaults to the won-lead reopen copy. */
-  description?: (name: string) => ReactNode;
-  confirmLabel?: string;
+  description?: (name: string) => ReactNode
+  confirmLabel?: string
 }) {
   return (
     <Dialog
       open={!!lead}
       onOpenChange={(v) => {
-        if (!v) onCancel();
+        if (!v) onCancel()
       }}
     >
       <DialogContent className="sm:max-w-sm">
@@ -57,5 +51,5 @@ export function ReopenConfirmDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

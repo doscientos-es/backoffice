@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -9,31 +9,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@doscientos/ui";
-import { TriangleAlert as AlertTriangle, ExternalLink } from "lucide-react";
+} from '@doscientos/ui'
+import { TriangleAlert as AlertTriangle, ExternalLink } from 'lucide-react'
 
-import { Button } from "@/components/ui/button";
-import {
-  AEAT_VERIFACTU_ERROR_CATALOG_URL,
-  getAeatErrorMetadata,
-} from "@/lib/verifactu/aeat-errors";
+import { Button } from '@/components/ui/button'
+import { AEAT_VERIFACTU_ERROR_CATALOG_URL, getAeatErrorMetadata } from '@/lib/verifactu/aeat-errors'
 
-type VerifactuIssueStatus = "error" | "rejected";
+type VerifactuIssueStatus = 'error' | 'rejected'
 
 const issueCopy = {
   error: {
-    title: "Error técnico de VERI*FACTU",
-    trigger: "Ver detalle",
+    title: 'Error técnico de VERI*FACTU',
+    trigger: 'Ver detalle',
     guidance:
-      "Los fallos temporales se reintentan automáticamente. Si el detalle indica un error definitivo, corrige la causa y usa «Regularizar y enviar».",
+      'Los fallos temporales se reintentan automáticamente. Si el detalle indica un error definitivo, corrige la causa y usa «Regularizar y enviar».',
   },
   rejected: {
-    title: "Factura rechazada por AEAT",
-    trigger: "Ver detalle",
+    title: 'Factura rechazada por AEAT',
+    trigger: 'Ver detalle',
     guidance:
-      "Revisa el motivo fiscal antes de volver a enviar el registro o aplicar el procedimiento correspondiente.",
+      'Revisa el motivo fiscal antes de volver a enviar el registro o aplicar el procedimiento correspondiente.',
   },
-} as const;
+} as const
 
 export function VerifactuIssueDialog({
   status,
@@ -42,17 +39,17 @@ export function VerifactuIssueDialog({
   open,
   onOpenChange,
 }: {
-  status: VerifactuIssueStatus;
-  error: string | null;
-  aeatCode?: string | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  status: VerifactuIssueStatus
+  error: string | null
+  aeatCode?: string | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <VerifactuIssueDialogContent status={status} error={error} aeatCode={aeatCode} />
     </Dialog>
-  );
+  )
 }
 
 export function VerifactuIssueDetailsButton({
@@ -60,11 +57,11 @@ export function VerifactuIssueDetailsButton({
   error,
   aeatCode,
 }: {
-  status: VerifactuIssueStatus;
-  error: string | null;
-  aeatCode?: string | null;
+  status: VerifactuIssueStatus
+  error: string | null
+  aeatCode?: string | null
 }) {
-  const copy = issueCopy[status];
+  const copy = issueCopy[status]
 
   return (
     <Dialog>
@@ -82,7 +79,7 @@ export function VerifactuIssueDetailsButton({
       </DialogTrigger>
       <VerifactuIssueDialogContent status={status} error={error} aeatCode={aeatCode} />
     </Dialog>
-  );
+  )
 }
 
 function VerifactuIssueDialogContent({
@@ -90,12 +87,12 @@ function VerifactuIssueDialogContent({
   error,
   aeatCode,
 }: {
-  status: VerifactuIssueStatus;
-  error: string | null;
-  aeatCode?: string | null;
+  status: VerifactuIssueStatus
+  error: string | null
+  aeatCode?: string | null
 }) {
-  const copy = issueCopy[status];
-  const officialMetadata = getAeatErrorMetadata(aeatCode, error);
+  const copy = issueCopy[status]
+  const officialMetadata = getAeatErrorMetadata(aeatCode, error)
 
   return (
     <DialogContent className="min-w-0 sm:max-w-lg">
@@ -140,5 +137,5 @@ function VerifactuIssueDialogContent({
         </DialogClose>
       </DialogFooter>
     </DialogContent>
-  );
+  )
 }

@@ -1,21 +1,21 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient } from '@/lib/supabase/server'
 
 export default async function ClientPortalPage() {
-  const supabase = await createServerClient();
+  const supabase = await createServerClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/portal/login");
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/portal/login')
 
   const { data: access } = await supabase
-    .from("client_portal_access")
-    .select("client_id")
-    .eq("user_id", user.id)
-    .eq("enabled", true)
-    .maybeSingle();
+    .from('client_portal_access')
+    .select('client_id')
+    .eq('user_id', user.id)
+    .eq('enabled', true)
+    .maybeSingle()
   if (!access)
     return (
       <main className="mx-auto max-w-2xl px-6 py-20">
@@ -24,28 +24,28 @@ export default async function ClientPortalPage() {
           Este email todavía no tiene un portal de cliente habilitado.
         </p>
       </main>
-    );
+    )
 
   const [{ data: proposals }, { data: invoices }, { data: projects }] = await Promise.all([
     supabase
-      .from("proposals")
-      .select("id, number, title, status, portal_token, total, sent_at")
-      .eq("client_id", access.client_id)
-      .neq("status", "draft")
-      .order("sent_at", { ascending: false }),
+      .from('proposals')
+      .select('id, number, title, status, portal_token, total, sent_at')
+      .eq('client_id', access.client_id)
+      .neq('status', 'draft')
+      .order('sent_at', { ascending: false }),
     supabase
-      .from("invoices")
-      .select("id, full_number, status, portal_token, total, issue_date")
-      .eq("client_id", access.client_id)
-      .neq("status", "draft")
-      .order("issue_date", { ascending: false }),
+      .from('invoices')
+      .select('id, full_number, status, portal_token, total, issue_date')
+      .eq('client_id', access.client_id)
+      .neq('status', 'draft')
+      .order('issue_date', { ascending: false }),
     supabase
-      .from("projects")
-      .select("id, name, status, portal_token")
-      .eq("client_id", access.client_id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
-  ]);
+      .from('projects')
+      .select('id, name, status, portal_token')
+      .eq('client_id', access.client_id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false }),
+  ])
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
@@ -57,19 +57,19 @@ export default async function ClientPortalPage() {
       <div className="mt-10 grid gap-6 md:grid-cols-3">
         {[
           [
-            "Propuestas",
+            'Propuestas',
             proposals ?? [],
             (item: any) => `/p/proposal/${item.portal_token}`,
             (item: any) => `${item.number} · ${item.title}`,
           ],
           [
-            "Facturas",
+            'Facturas',
             invoices ?? [],
             (item: any) => `/p/invoice/${item.portal_token}`,
             (item: any) => item.full_number,
           ],
           [
-            "Proyectos",
+            'Proyectos',
             (projects ?? []).filter((item: any) => item.portal_token),
             (item: any) => `/p/project/${item.portal_token}`,
             (item: any) => item.name,
@@ -97,5 +97,5 @@ export default async function ClientPortalPage() {
         ))}
       </div>
     </main>
-  );
+  )
 }

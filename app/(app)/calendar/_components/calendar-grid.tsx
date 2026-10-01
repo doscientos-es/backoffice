@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import {
   addDays,
   eachDayOfInterval,
@@ -11,9 +11,9 @@ import {
   isToday,
   parseISO,
   startOfWeek,
-} from "date-fns";
-import { es } from "date-fns/locale";
-import { ChevronDown, ChevronUp, Moon } from "lucide-react";
+} from 'date-fns'
+import { es } from 'date-fns/locale'
+import { ChevronDown, ChevronUp, Moon } from 'lucide-react'
 import {
   createContext,
   useContext,
@@ -22,100 +22,100 @@ import {
   useRef,
   useState,
   useTransition,
-} from "react";
+} from 'react'
 
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { rescheduleEvent } from "@/lib/calendar/actions";
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { rescheduleEvent } from '@/lib/calendar/actions'
 import {
   ALL_LAYERS,
   CALENDAR_LAYER_COLORS,
   type CalendarEvent,
   type CalendarEventKind,
   type CalendarView,
-} from "@/lib/calendar/types";
-import { cn } from "@/lib/utils";
+} from '@/lib/calendar/types'
+import { cn } from '@/lib/utils'
 
-import { CalendarCreateDialog } from "./calendar-create-dialog";
-import { CalendarEventDialog } from "./calendar-event-dialog";
-import { CalendarHeader } from "./calendar-header";
-import { DayCell } from "./day-cell";
+import { CalendarCreateDialog } from './calendar-create-dialog'
+import { CalendarEventDialog } from './calendar-event-dialog'
+import { CalendarHeader } from './calendar-header'
+import { DayCell } from './day-cell'
 
 // Context so EventChip/DayCell can open the detail dialog without prop drilling
-const CalendarDialogContext = createContext<(e: CalendarEvent) => void>(() => undefined);
+const CalendarDialogContext = createContext<(e: CalendarEvent) => void>(() => undefined)
 export function useCalendarDialog() {
-  return useContext(CalendarDialogContext);
+  return useContext(CalendarDialogContext)
 }
 
 // Context so DayCell day-number can open the create dialog with a pre-selected date
-const CalendarCreateContext = createContext<(date?: string) => void>(() => undefined);
+const CalendarCreateContext = createContext<(date?: string) => void>(() => undefined)
 export function useCalendarCreate() {
-  return useContext(CalendarCreateContext);
+  return useContext(CalendarCreateContext)
 }
 
 export type TeamMember = {
-  id: string;
-  name: string;
-  email: string | null;
-  avatar_url: string | null;
-  github_handle: string | null;
-};
+  id: string
+  name: string
+  email: string | null
+  avatar_url: string | null
+  github_handle: string | null
+}
 
 export type LeadOption = {
-  id: string;
-  name: string;
-  email: string | null;
-  company: string | null;
+  id: string
+  name: string
+  email: string | null
+  company: string | null
   /** Distinguishes between a pipeline lead and a converted client */
-  contactKind: "lead" | "client";
+  contactKind: 'lead' | 'client'
   /** For leads: same as id. For clients: client.lead_id (may be null) */
-  leadId: string | null;
-};
+  leadId: string | null
+}
 
 export type ProjectOption = {
-  id: string;
-  name: string;
-};
+  id: string
+  name: string
+}
 
 type Props = {
-  events: CalendarEvent[];
-  view: CalendarView;
-  anchor: string;
-  teamMembers: TeamMember[];
-  leads: LeadOption[];
-  projects: ProjectOption[];
-  prevMonth: string;
-  nextMonth: string;
-  calendarToken: string | null;
-};
+  events: CalendarEvent[]
+  view: CalendarView
+  anchor: string
+  teamMembers: TeamMember[]
+  leads: LeadOption[]
+  projects: ProjectOption[]
+  prevMonth: string
+  nextMonth: string
+  calendarToken: string | null
+}
 
-const WEEK_DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const WEEK_DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
 function buildMonthGrid(anchor: Date): Date[][] {
   const start = startOfWeek(new Date(anchor.getFullYear(), anchor.getMonth(), 1), {
     weekStartsOn: 1,
-  });
+  })
   const end = endOfWeek(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0), {
     weekStartsOn: 1,
-  });
-  const days = eachDayOfInterval({ start, end });
-  const weeks: Date[][] = [];
-  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
-  return weeks;
+  })
+  const days = eachDayOfInterval({ start, end })
+  const weeks: Date[][] = []
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7))
+  return weeks
 }
 
 function buildWeekGrid(anchor: Date): Date[] {
-  const start = startOfWeek(anchor, { weekStartsOn: 1 });
-  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const start = startOfWeek(anchor, { weekStartsOn: 1 })
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i))
 }
 
 function groupByDate(events: CalendarEvent[]): Record<string, CalendarEvent[]> {
-  const groups: Record<string, CalendarEvent[]> = {};
+  const groups: Record<string, CalendarEvent[]> = {}
   for (const e of events) {
-    const key = e.start.slice(0, 10);
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(e);
+    const key = e.start.slice(0, 10)
+    if (!groups[key]) groups[key] = []
+    groups[key].push(e)
   }
-  return groups;
+  return groups
 }
 
 export function CalendarGrid({
@@ -129,89 +129,89 @@ export function CalendarGrid({
   nextMonth,
   calendarToken,
 }: Props) {
-  const anchorDate = parseISO(anchor);
-  const [, startTransition] = useTransition();
+  const anchorDate = parseISO(anchor)
+  const [, startTransition] = useTransition()
   const [events, applyOptimistic] = useOptimistic(
     initial,
     (state, { id, newStart }: { id: string; newStart: string }) =>
       state.map((e) => (e.id === id ? { ...e, start: newStart, end: newStart } : e)),
-  );
+  )
 
   // ── Detail dialog ─────────────────────────────────────────────────────────
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
 
   // ── Create dialog ─────────────────────────────────────────────────────────
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createDate, setCreateDate] = useState<string | undefined>(undefined);
-  const [createdEvents, setCreatedEvents] = useState<CalendarEvent[]>([]);
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createDate, setCreateDate] = useState<string | undefined>(undefined)
+  const [createdEvents, setCreatedEvents] = useState<CalendarEvent[]>([])
 
   function openCreate(date?: string) {
-    setCreateDate(date);
-    setCreateOpen(true);
+    setCreateDate(date)
+    setCreateOpen(true)
   }
 
   // ── Client-side filters ───────────────────────────────────────────────────
-  const [activeLayers, setActiveLayers] = useState<Set<CalendarEventKind>>(new Set(ALL_LAYERS));
+  const [activeLayers, setActiveLayers] = useState<Set<CalendarEventKind>>(new Set(ALL_LAYERS))
   const [activeMembers, setActiveMembers] = useState<Set<string>>(
     new Set(teamMembers.map((m) => m.id)),
-  );
+  )
 
   function toggleLayer(layer: CalendarEventKind) {
     setActiveLayers((prev) => {
-      const next = new Set(prev);
-      if (next.has(layer)) next.delete(layer);
-      else next.add(layer);
-      return next;
-    });
+      const next = new Set(prev)
+      if (next.has(layer)) next.delete(layer)
+      else next.add(layer)
+      return next
+    })
   }
 
   function toggleMember(id: string) {
     setActiveMembers((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   // Optimistically removed event ids (deleted google_meetings)
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
 
   // Merge server events + locally-created optimistic events.
   // Deduplicate: once the server re-renders (after revalidatePath) the new
   // event will already be in `events`, so drop any createdEvents whose id is
   // already present to avoid duplicate React keys.
-  const serverIds = new Set(events.map((e) => e.id));
+  const serverIds = new Set(events.map((e) => e.id))
   const allEvents = [...events, ...createdEvents.filter((e) => !serverIds.has(e.id))].filter(
     (e) => !deletedIds.has(e.id),
-  );
+  )
 
   // Filter: by active layer AND member scope. Single-owner events use memberId;
   // shared events (charlas/eventos) use memberIds — visible if any attendee is active.
   const filtered = allEvents.filter((e) => {
-    if (!activeLayers.has(e.kind)) return false;
+    if (!activeLayers.has(e.kind)) return false
     if (e.memberIds && e.memberIds.length > 0) {
-      return e.memberIds.some((id) => activeMembers.has(id));
+      return e.memberIds.some((id) => activeMembers.has(id))
     }
-    return e.memberId === null || activeMembers.has(e.memberId);
-  });
+    return e.memberId === null || activeMembers.has(e.memberId)
+  })
 
   // ── Drag & drop ──────────────────────────────────────────────────────────
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   function handleDragEnd(ev: DragEndEvent) {
-    const { active, over } = ev;
-    if (!over || active.id === over.id) return;
-    const event = events.find((e) => e.id === active.id);
-    if (!event?.editable) return;
-    const newStart = over.id as string;
-    const parts = (event.id as string).split(":");
-    const kind = parts[0] as CalendarEventKind;
-    const sourceId = parts.slice(1).join(":");
+    const { active, over } = ev
+    if (!over || active.id === over.id) return
+    const event = events.find((e) => e.id === active.id)
+    if (!event?.editable) return
+    const newStart = over.id as string
+    const parts = (event.id as string).split(':')
+    const kind = parts[0] as CalendarEventKind
+    const sourceId = parts.slice(1).join(':')
     startTransition(async () => {
-      applyOptimistic({ id: event.id, newStart });
-      await rescheduleEvent({ kind, sourceId, newStart });
-    });
+      applyOptimistic({ id: event.id, newStart })
+      await rescheduleEvent({ kind, sourceId, newStart })
+    })
   }
 
   const headerProps = {
@@ -225,7 +225,7 @@ export function CalendarGrid({
     activeMembers,
     onToggleMember: toggleMember,
     calendarToken,
-  };
+  }
 
   // Shared dialogs + create button rendered once, shared across all views
   const sharedDialogs = (
@@ -248,8 +248,8 @@ export function CalendarGrid({
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
         onDeleted={(id: string) => {
-          setDeletedIds((prev) => new Set(prev).add(id));
-          setSelectedEvent(null);
+          setDeletedIds((prev) => new Set(prev).add(id))
+          setSelectedEvent(null)
         }}
       />
       <CalendarCreateDialog
@@ -262,9 +262,9 @@ export function CalendarGrid({
         onCreated={(ev) => setCreatedEvents((prev) => [...prev, ev])}
       />
     </ErrorBoundary>
-  );
+  )
 
-  if (view === "agenda") {
+  if (view === 'agenda') {
     return (
       <CalendarDialogContext.Provider value={setSelectedEvent}>
         <CalendarCreateContext.Provider value={openCreate}>
@@ -275,11 +275,11 @@ export function CalendarGrid({
           </div>
         </CalendarCreateContext.Provider>
       </CalendarDialogContext.Provider>
-    );
+    )
   }
 
-  if (view === "week") {
-    const days = buildWeekGrid(anchorDate);
+  if (view === 'week') {
+    const days = buildWeekGrid(anchorDate)
     return (
       <CalendarDialogContext.Provider value={setSelectedEvent}>
         <CalendarCreateContext.Provider value={openCreate}>
@@ -290,11 +290,11 @@ export function CalendarGrid({
           </div>
         </CalendarCreateContext.Provider>
       </CalendarDialogContext.Provider>
-    );
+    )
   }
 
   // Month view (default)
-  const weeks = buildMonthGrid(anchorDate);
+  const weeks = buildMonthGrid(anchorDate)
   return (
     <CalendarDialogContext.Provider value={setSelectedEvent}>
       <CalendarCreateContext.Provider value={openCreate}>
@@ -329,17 +329,17 @@ export function CalendarGrid({
         </DndContext>
       </CalendarCreateContext.Provider>
     </CalendarDialogContext.Provider>
-  );
+  )
 }
 
 // ─── WeekTimeGrid ─────────────────────────────────────────────────────────────
 
-const HOUR_HEIGHT = 60; // px per hour (60 px = 1 min per px)
-const TIME_COL_W = 48; // px, left column for hour labels
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const NIGHT_MORNING_END = 8; // hours 0–7 hidden by default
-const NIGHT_EVENING_START = 20; // hours 20–23 hidden by default
-const NIGHT_BAND_H = 28; // px, height of the collapsed toggle bar
+const HOUR_HEIGHT = 60 // px per hour (60 px = 1 min per px)
+const TIME_COL_W = 48 // px, left column for hour labels
+const HOURS = Array.from({ length: 24 }, (_, i) => i)
+const NIGHT_MORNING_END = 8 // hours 0–7 hidden by default
+const NIGHT_EVENING_START = 20 // hours 20–23 hidden by default
+const NIGHT_BAND_H = 28 // px, height of the collapsed toggle bar
 
 // ─── NightBand ────────────────────────────────────────────────────────────────
 
@@ -349,13 +349,13 @@ function NightBand({
   label,
   position,
 }: {
-  expanded: boolean;
-  onToggle: () => void;
-  label: string;
-  position: "top" | "bottom";
+  expanded: boolean
+  onToggle: () => void
+  label: string
+  position: 'top' | 'bottom'
 }) {
   // Collapsed → ChevronDown ("show more"), expanded → ChevronUp ("hide")
-  const Chevron = expanded ? ChevronUp : ChevronDown;
+  const Chevron = expanded ? ChevronUp : ChevronDown
 
   return (
     <button
@@ -363,29 +363,29 @@ function NightBand({
       onClick={onToggle}
       style={{ height: NIGHT_BAND_H }}
       className={cn(
-        "flex w-full items-center justify-center gap-1.5 select-none",
-        "text-[10px] text-muted-foreground transition-colors hover:bg-secondary/60",
-        "border-border",
-        position === "top" ? "border-b" : "border-t",
+        'flex w-full items-center justify-center gap-1.5 select-none',
+        'text-[10px] text-muted-foreground transition-colors hover:bg-secondary/60',
+        'border-border',
+        position === 'top' ? 'border-b' : 'border-t',
       )}
     >
       <Moon className="h-3 w-3 opacity-60" />
       <span>{label}</span>
       <Chevron className="h-3 w-3 opacity-60" />
     </button>
-  );
+  )
 }
 
 // ─── WeekTimeGrid ─────────────────────────────────────────────────────────────
 
 function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] }) {
-  const openDialog = useCalendarDialog();
-  const openCreate = useCalendarCreate();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [now, setNow] = useState(() => new Date());
-  const [showMorningNight, setShowMorningNight] = useState(false);
-  const [showEveningNight, setShowEveningNight] = useState(false);
-  const [hoveredSlot, setHoveredSlot] = useState<{ dayStr: string; hour: number } | null>(null);
+  const openDialog = useCalendarDialog()
+  const openCreate = useCalendarCreate()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [now, setNow] = useState(() => new Date())
+  const [showMorningNight, setShowMorningNight] = useState(false)
+  const [showEveningNight, setShowEveningNight] = useState(false)
+  const [hoveredSlot, setHoveredSlot] = useState<{ dayStr: string; hour: number } | null>(null)
 
   // Scroll to 1 h before current time on mount; update clock every minute.
   // When morning is collapsed the visible grid starts at NIGHT_MORNING_END,
@@ -393,20 +393,20 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally runs once on mount only; re-running on every `now` tick would reset scroll position every minute
   useEffect(() => {
     if (scrollRef.current) {
-      const morningOffset = NIGHT_MORNING_END * HOUR_HEIGHT; // collapsed by default
-      scrollRef.current.scrollTop = Math.max(0, (now.getHours() - 1) * HOUR_HEIGHT - morningOffset);
+      const morningOffset = NIGHT_MORNING_END * HOUR_HEIGHT // collapsed by default
+      scrollRef.current.scrollTop = Math.max(0, (now.getHours() - 1) * HOUR_HEIGHT - morningOffset)
     }
-    const timer = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(timer);
-  }, []);
+    const timer = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(timer)
+  }, [])
 
-  const todayStr = format(now, "yyyy-MM-dd");
-  const nowTop = ((now.getHours() * 60 + now.getMinutes()) / 60) * HOUR_HEIGHT;
+  const todayStr = format(now, 'yyyy-MM-dd')
+  const nowTop = ((now.getHours() * 60 + now.getMinutes()) / 60) * HOUR_HEIGHT
 
   const allDayByDay = days.map((d) =>
     events.filter((e) => e.allDay && isSameDay(parseISO(e.start), d)),
-  );
-  const hasAnyAllDay = allDayByDay.some((g) => g.length > 0);
+  )
+  const hasAnyAllDay = allDayByDay.some((g) => g.length > 0)
 
   return (
     <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
@@ -414,36 +414,36 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
       <div className="sticky top-0 z-30 flex border-b border-border bg-background">
         <div style={{ width: TIME_COL_W }} className="shrink-0 border-r border-border" />
         {days.map((d) => {
-          const isCurrentDay = format(d, "yyyy-MM-dd") === todayStr;
+          const isCurrentDay = format(d, 'yyyy-MM-dd') === todayStr
           return (
             <div
               key={d.toISOString()}
               className={cn(
-                "flex-1 border-r border-border py-1.5 text-center select-none",
-                isCurrentDay ? "text-primary" : "text-muted-foreground",
+                'flex-1 border-r border-border py-1.5 text-center select-none',
+                isCurrentDay ? 'text-primary' : 'text-muted-foreground',
               )}
             >
               <div className="text-[10px] font-medium tracking-wide uppercase">
-                {format(d, "EEE", { locale: es })}
+                {format(d, 'EEE', { locale: es })}
               </div>
               <div
                 className={cn(
-                  "mx-auto mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold",
-                  isCurrentDay && "bg-primary text-primary-foreground",
+                  'mx-auto mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold',
+                  isCurrentDay && 'bg-primary text-primary-foreground',
                 )}
               >
-                {format(d, "d")}
+                {format(d, 'd')}
               </div>
             </div>
-          );
+          )
         })}
       </div>
 
       {/* ── All-day strip (sticky below day headers, h-12 = 48 px) ────────── */}
       <div
         className={cn(
-          "sticky top-[84px] z-20 flex border-b border-border bg-background",
-          !hasAnyAllDay && "hidden",
+          'sticky top-[84px] z-20 flex border-b border-border bg-background',
+          !hasAnyAllDay && 'hidden',
         )}
       >
         <div
@@ -483,7 +483,7 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
             24 * HOUR_HEIGHT -
             (!showMorningNight ? NIGHT_MORNING_END * HOUR_HEIGHT : 0) -
             (!showEveningNight ? (24 - NIGHT_EVENING_START) * HOUR_HEIGHT : 0),
-          overflow: "hidden",
+          overflow: 'hidden',
         }}
       >
         <div
@@ -506,7 +506,7 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
               >
                 {h > 0 && (
                   <span className="-translate-y-2 text-[10px] text-muted-foreground tabular-nums">
-                    {String(h).padStart(2, "0")}:00
+                    {String(h).padStart(2, '0')}:00
                   </span>
                 )}
               </div>
@@ -515,28 +515,28 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
 
           {/* Day columns */}
           {days.map((d) => {
-            const dayStr = format(d, "yyyy-MM-dd");
-            const isCurrentDay = dayStr === todayStr;
+            const dayStr = format(d, 'yyyy-MM-dd')
+            const isCurrentDay = dayStr === todayStr
             const timedEvs = events.filter(
               (e) => !e.allDay && e.start.length > 10 && isSameDay(parseISO(e.start), d),
-            );
+            )
 
             return (
               // biome-ignore lint/a11y/noStaticElementInteractions: mouse-only shortcut to create an event by clicking a time slot; the "Nuevo" button in the header provides a fully keyboard-accessible equivalent
               <div
                 key={d.toISOString()}
                 className={cn(
-                  "relative flex-1 border-r border-border",
-                  isCurrentDay && "bg-primary/[0.02]",
+                  'relative flex-1 border-r border-border',
+                  isCurrentDay && 'bg-primary/[0.02]',
                 )}
                 onClick={() => openCreate(dayStr)}
                 role="presentation"
                 onMouseMove={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
+                  const rect = e.currentTarget.getBoundingClientRect()
                   // rect.top is in viewport coords and already reflects the negative
                   // marginTop of the inner grid, so this gives the absolute hour (0–23).
-                  const absHour = Math.floor((e.clientY - rect.top) / HOUR_HEIGHT);
-                  setHoveredSlot({ dayStr, hour: Math.max(0, Math.min(23, absHour)) });
+                  const absHour = Math.floor((e.clientY - rect.top) / HOUR_HEIGHT)
+                  setHoveredSlot({ dayStr, hour: Math.max(0, Math.min(23, absHour)) })
                 }}
                 onMouseLeave={() => setHoveredSlot(null)}
               >
@@ -578,43 +578,43 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
 
                 {/* Timed events */}
                 {timedEvs.map((e) => {
-                  const startDt = parseISO(e.start);
-                  const endDt = parseISO(e.end);
-                  const startMin = startDt.getHours() * 60 + startDt.getMinutes();
-                  const endMin = endDt.getHours() * 60 + endDt.getMinutes();
-                  const top = (startMin / 60) * HOUR_HEIGHT;
-                  const height = Math.max((Math.max(endMin - startMin, 15) / 60) * HOUR_HEIGHT, 20);
-                  const colors = CALENDAR_LAYER_COLORS[e.kind];
+                  const startDt = parseISO(e.start)
+                  const endDt = parseISO(e.end)
+                  const startMin = startDt.getHours() * 60 + startDt.getMinutes()
+                  const endMin = endDt.getHours() * 60 + endDt.getMinutes()
+                  const top = (startMin / 60) * HOUR_HEIGHT
+                  const height = Math.max((Math.max(endMin - startMin, 15) / 60) * HOUR_HEIGHT, 20)
+                  const colors = CALENDAR_LAYER_COLORS[e.kind]
                   return (
                     <button
                       key={e.id}
                       type="button"
-                      style={{ top, height, position: "absolute", left: 2, right: 2 }}
+                      style={{ top, height, position: 'absolute', left: 2, right: 2 }}
                       onClick={(ev) => {
-                        ev.stopPropagation();
-                        openDialog(e);
+                        ev.stopPropagation()
+                        openDialog(e)
                       }}
                       className={cn(
-                        "z-10 overflow-hidden rounded border px-1.5 py-0.5 text-left text-xs font-medium",
-                        "hover:brightness-95 focus-visible:ring-1 focus-visible:outline-none",
+                        'z-10 overflow-hidden rounded border px-1.5 py-0.5 text-left text-xs font-medium',
+                        'hover:brightness-95 focus-visible:ring-1 focus-visible:outline-none',
                         colors.bg,
                         colors.text,
-                        e.done && "opacity-50",
+                        e.done && 'opacity-50',
                       )}
                     >
-                      <div className={cn("truncate leading-tight", e.done && "line-through")}>
+                      <div className={cn('truncate leading-tight', e.done && 'line-through')}>
                         {e.title}
                       </div>
                       {height >= 36 && (
                         <div className="truncate text-[10px] opacity-70">
-                          {format(startDt, "HH:mm")} – {format(endDt, "HH:mm")}
+                          {format(startDt, 'HH:mm')} – {format(endDt, 'HH:mm')}
                         </div>
                       )}
                     </button>
-                  );
+                  )
                 })}
               </div>
-            );
+            )
           })}
         </div>
       </div>
@@ -627,27 +627,27 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
         position="bottom"
       />
     </div>
-  );
+  )
 }
 
 // ─── Agenda view ─────────────────────────────────────────────────────────────
 
 function AgendaView({ events }: { events: CalendarEvent[] }) {
-  const groups = groupByDate(events);
-  const dates = Object.keys(groups).sort();
+  const groups = groupByDate(events)
+  const dates = Object.keys(groups).sort()
   if (!dates.length) {
     return (
       <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
         Sin eventos en este período
       </div>
-    );
+    )
   }
   return (
     <div className="flex-1 divide-y divide-border overflow-y-auto">
       {dates.map((date) => (
         <div key={date} className="flex gap-4 px-4 py-3">
           <div className="w-24 shrink-0 pt-0.5 text-sm font-medium text-muted-foreground">
-            {format(parseISO(date), "EEE d MMM", { locale: es })}
+            {format(parseISO(date), 'EEE d MMM', { locale: es })}
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             {(groups[date] ?? []).map((e) => (
@@ -657,31 +657,31 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 // ─── EventChip ───────────────────────────────────────────────────────────────
 
 export function EventChip({ event }: { event: CalendarEvent }) {
-  const openDialog = useCalendarDialog();
-  const colors = CALENDAR_LAYER_COLORS[event.kind];
+  const openDialog = useCalendarDialog()
+  const colors = CALENDAR_LAYER_COLORS[event.kind]
   return (
     <button
       type="button"
       onClick={(e) => {
-        e.stopPropagation();
-        openDialog(event);
+        e.stopPropagation()
+        openDialog(event)
       }}
       className={cn(
-        "flex w-full items-center gap-1.5 truncate rounded-md border px-2 py-1 text-left text-xs font-medium transition-opacity",
-        "hover:brightness-95 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
+        'flex w-full items-center gap-1.5 truncate rounded-md border px-2 py-1 text-left text-xs font-medium transition-opacity',
+        'hover:brightness-95 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none',
         colors.bg,
         colors.text,
-        event.done && "opacity-50",
+        event.done && 'opacity-50',
       )}
     >
-      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", colors.dot)} />
-      <span className={cn("truncate", event.done && "line-through")}>{event.title}</span>
+      <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', colors.dot)} />
+      <span className={cn('truncate', event.done && 'line-through')}>{event.title}</span>
       {event.meta.projectName && !event.done && (
         <span className="shrink-0 opacity-60">· {event.meta.projectName}</span>
       )}
@@ -689,5 +689,5 @@ export function EventChip({ event }: { event: CalendarEvent }) {
         <span className="shrink-0 opacity-60">· {event.meta.clientName}</span>
       )}
     </button>
-  );
+  )
 }

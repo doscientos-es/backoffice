@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
-import { Logo } from "@/components/branding";
+import { Logo } from '@/components/branding'
 
 export const metadata: Metadata = {
-  title: "Bienvenido · doscientos",
+  title: 'Bienvenido · doscientos',
   robots: { index: false, follow: false },
-};
+}
 
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,5 +23,5 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
         <div className="mx-auto w-full max-w-2xl">{children}</div>
       </main>
     </div>
-  );
+  )
 }

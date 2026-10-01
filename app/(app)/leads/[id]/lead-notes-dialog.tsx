@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,11 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@doscientos/ui";
-import { FileText, Maximize2 } from "lucide-react";
+} from '@doscientos/ui'
+import { FileText, Maximize2 } from 'lucide-react'
 
-import { Button } from "@/components/ui/button";
-import { CopyButton } from "@/components/ui/copy-button";
+import { Button } from '@/components/ui/button'
+import { CopyButton } from '@/components/ui/copy-button'
 
 export function LeadNotesDialog({ notes }: { notes: string }) {
   return (
@@ -44,5 +44,5 @@ export function LeadNotesDialog({ notes }: { notes: string }) {
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

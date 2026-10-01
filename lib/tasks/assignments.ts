@@ -6,7 +6,7 @@ export function mergeTaskMemberIds(
   primaryId: string | null | undefined,
   memberIds: readonly (string | null | undefined)[],
 ): string[] {
-  return [...new Set([primaryId, ...memberIds].filter((id): id is string => Boolean(id)))];
+  return [...new Set([primaryId, ...memberIds].filter((id): id is string => Boolean(id)))]
 }
 
 /**
@@ -15,5 +15,5 @@ export function mergeTaskMemberIds(
  * order so the first member remains the primary assignee.
  */
 export function normalizeTaskMemberIds(creatorId: string, memberIds: readonly string[]): string[] {
-  return [...new Set(memberIds.length > 0 ? memberIds : [creatorId])];
+  return [...new Set(memberIds.length > 0 ? memberIds : [creatorId])]
 }

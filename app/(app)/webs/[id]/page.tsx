@@ -1,41 +1,41 @@
-import { CheckCircle, Pencil as Edit, ExternalLink, Globe, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { CheckCircle, Pencil as Edit, ExternalLink, Globe, XCircle } from 'lucide-react'
+import type { Metadata } from 'next'
+import Image from 'next/image'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
-import { BackLink } from "@/components/layout/back-link";
-import { DetailGrid, DetailRow } from "@/components/layout/detail-grid";
-import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { requireUser } from "@/lib/auth";
-import { serverEnv } from "@/lib/env";
-import { isFileBrowserConfigured } from "@/lib/filebrowser";
-import { HOSTING_PROVIDER_LABELS } from "@/lib/schemas/web-project";
-import { checkSiteStatus, fetchOgMetadata } from "@/lib/webs/og";
-import { getWebProject } from "@/lib/webs/queries";
-import type { OgMetadata, SiteStatus, WebProjectDetail } from "@/lib/webs/types";
+import { BackLink } from '@/components/layout/back-link'
+import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
+import { PageHeader } from '@/components/layout/page-header'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { requireUser } from '@/lib/auth'
+import { serverEnv } from '@/lib/env'
+import { isFileBrowserConfigured } from '@/lib/filebrowser'
+import { HOSTING_PROVIDER_LABELS } from '@/lib/schemas/web-project'
+import { checkSiteStatus, fetchOgMetadata } from '@/lib/webs/og'
+import { getWebProject } from '@/lib/webs/queries'
+import type { OgMetadata, SiteStatus, WebProjectDetail } from '@/lib/webs/types'
 
-import { BackupsCard } from "../_components/backups-card";
+import { BackupsCard } from '../_components/backups-card'
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>
 }): Promise<Metadata> {
-  const { id } = await params;
-  const site = await getWebProject(id);
-  return { title: site ? `${site.name} · Webs · doscientos` : "Web · doscientos" };
+  const { id } = await params
+  const site = await getWebProject(id)
+  return { title: site ? `${site.name} · Webs · doscientos` : 'Web · doscientos' }
 }
 
 async function StatusCard({ url }: { url: string }) {
-  const s: SiteStatus = await checkSiteStatus(url);
+  const s: SiteStatus = await checkSiteStatus(url)
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -48,8 +48,8 @@ async function StatusCard({ url }: { url: string }) {
           ) : (
             <XCircle className="size-5 text-destructive" />
           )}
-          <span className={`text-sm font-semibold ${s.ok ? "text-green-600" : "text-destructive"}`}>
-            {s.ok ? `OK · ${s.status}` : (s.error ?? `Error ${s.status ?? ""}`)}
+          <span className={`text-sm font-semibold ${s.ok ? 'text-green-600' : 'text-destructive'}`}>
+            {s.ok ? `OK · ${s.status}` : (s.error ?? `Error ${s.status ?? ''}`)}
           </span>
           {s.latencyMs !== null && (
             <span className="ml-auto text-xs text-muted-foreground">{s.latencyMs} ms</span>
@@ -57,13 +57,13 @@ async function StatusCard({ url }: { url: string }) {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 async function OgCard({ site }: { site: WebProjectDetail }) {
-  const og: OgMetadata = await fetchOgMetadata(site.url);
-  const image = og.image ?? og.twitterImage;
-  const title = og.title ?? og.twitterTitle ?? site.name;
+  const og: OgMetadata = await fetchOgMetadata(site.url)
+  const image = og.image ?? og.twitterImage
+  const title = og.title ?? og.twitterTitle ?? site.name
 
   return (
     <Card>
@@ -81,11 +81,11 @@ async function OgCard({ site }: { site: WebProjectDetail }) {
           </div>
         )}
         <DetailGrid>
-          <DetailRow label="Título">{title ?? "—"}</DetailRow>
-          <DetailRow label="Descripción">{og.description ?? "—"}</DetailRow>
-          <DetailRow label="Site name">{og.siteName ?? "—"}</DetailRow>
-          <DetailRow label="Tipo">{og.type ?? "—"}</DetailRow>
-          <DetailRow label="Twitter card">{og.twitterCard ?? "—"}</DetailRow>
+          <DetailRow label="Título">{title ?? '—'}</DetailRow>
+          <DetailRow label="Descripción">{og.description ?? '—'}</DetailRow>
+          <DetailRow label="Site name">{og.siteName ?? '—'}</DetailRow>
+          <DetailRow label="Tipo">{og.type ?? '—'}</DetailRow>
+          <DetailRow label="Twitter card">{og.twitterCard ?? '—'}</DetailRow>
           <DetailRow label="Canonical">
             {og.canonical ? (
               <a
@@ -97,13 +97,13 @@ async function OgCard({ site }: { site: WebProjectDetail }) {
                 {og.canonical}
               </a>
             ) : (
-              "—"
+              '—'
             )}
           </DetailRow>
         </DetailGrid>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function OgSkeleton() {
@@ -119,28 +119,28 @@ function OgSkeleton() {
         <Skeleton className="h-4 w-1/2" />
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export default async function WebDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
-  const { id } = await params;
-  const site = await getWebProject(id);
-  if (!site) notFound();
+  const user = await requireUser()
+  const { id } = await params
+  const site = await getWebProject(id)
+  if (!site) notFound()
 
   // Deleting backups is irreversible (no soft-delete), so it's gated to owner/admin.
-  const canDeleteBackups = user.role === "owner" || user.role === "admin";
+  const canDeleteBackups = user.role === 'owner' || user.role === 'admin'
 
   const hostingLabel = site.hosting_provider
     ? (HOSTING_PROVIDER_LABELS[site.hosting_provider as keyof typeof HOSTING_PROVIDER_LABELS] ??
       site.hosting_provider)
-    : null;
+    : null
 
   // Only offer the "force backup" button when there are stored DB credentials
   // and the bridge that actually runs the script is configured.
-  const env = serverEnv();
+  const env = serverEnv()
   const canForceBackup =
-    site.has_db_password && Boolean(env.BACKUP_RUNNER_URL && env.BACKUP_RUNNER_TOKEN);
+    site.has_db_password && Boolean(env.BACKUP_RUNNER_URL && env.BACKUP_RUNNER_TOKEN)
 
   return (
     <div className="flex flex-col gap-6">
@@ -192,16 +192,16 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
                 <DetailRow label="Proyecto">
                   {site.project_id ? (
                     <Link href={`/projects/${site.project_id}`} className="hover:underline">
-                      {site.project_name ?? "Ver proyecto"}
+                      {site.project_name ?? 'Ver proyecto'}
                     </Link>
                   ) : (
-                    "—"
+                    '—'
                   )}
                 </DetailRow>
                 {site.project_id ? (
                   <DetailRow label="Portal del proyecto">
-                    <Badge variant={site.is_client_visible ? "success" : "neutral"}>
-                      {site.is_client_visible ? "Visible" : "Oculta"}
+                    <Badge variant={site.is_client_visible ? 'success' : 'neutral'}>
+                      {site.is_client_visible ? 'Visible' : 'Oculta'}
                     </Badge>
                   </DetailRow>
                 ) : null}
@@ -213,21 +213,21 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
                       rel="noopener noreferrer"
                       className="text-primary underline-offset-2 hover:underline"
                     >
-                      {hostingLabel ?? "—"}
+                      {hostingLabel ?? '—'}
                     </a>
                   ) : (
-                    (hostingLabel ?? "—")
+                    (hostingLabel ?? '—')
                   )}
                 </DetailRow>
-                <DetailRow label="Registrador">{site.domain_registrar ?? "—"}</DetailRow>
+                <DetailRow label="Registrador">{site.domain_registrar ?? '—'}</DetailRow>
                 <DetailRow label="Vence dominio">
                   {site.domain_expires_at
-                    ? new Date(site.domain_expires_at).toLocaleDateString("es-ES", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
+                    ? new Date(site.domain_expires_at).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
                       })
-                    : "—"}
+                    : '—'}
                 </DetailRow>
                 <DetailRow label="Tech stack">
                   {site.tech_stack.length > 0 ? (
@@ -239,10 +239,10 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
                       ))}
                     </div>
                   ) : (
-                    "—"
+                    '—'
                   )}
                 </DetailRow>
-                <DetailRow label="Notas">{site.notes ?? "—"}</DetailRow>
+                <DetailRow label="Notas">{site.notes ?? '—'}</DetailRow>
               </DetailGrid>
             </CardContent>
           </Card>
@@ -275,5 +275,5 @@ export default async function WebDetailPage({ params }: { params: Promise<{ id: 
         </div>
       </div>
     </div>
-  );
+  )
 }

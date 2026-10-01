@@ -1,24 +1,24 @@
-"use client";
+'use client'
 
-import { Settings } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Settings } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
-import { Logo } from "@/components/branding";
-import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
-import { NavigationTree } from "@/components/layout/navigation-tree";
-import { NotificationsBell } from "@/components/layout/notifications-bell";
-import { UserMenu } from "@/components/layout/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { IconButton } from "@/components/ui/icon-button";
-import type { CurrentUser } from "@/lib/auth";
-import { visibleNavigationGroups } from "@/lib/navigation/navigation";
+import { Logo } from '@/components/branding'
+import { CommandPaletteTrigger } from '@/components/layout/command-palette-trigger'
+import { NavigationTree } from '@/components/layout/navigation-tree'
+import { NotificationsBell } from '@/components/layout/notifications-bell'
+import { UserMenu } from '@/components/layout/user-menu'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { IconButton } from '@/components/ui/icon-button'
+import type { CurrentUser } from '@/lib/auth'
+import { visibleNavigationGroups } from '@/lib/navigation/navigation'
 
 export function Sidebar({ user }: { user: CurrentUser }) {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
-  const visibleGroups = visibleNavigationGroups(user.role);
+  const visibleGroups = visibleNavigationGroups(user.role)
 
   return (
     <aside className="app-sidebar h-full w-56 shrink-0 flex-col border-r border-border bg-card">
@@ -52,7 +52,7 @@ export function Sidebar({ user }: { user: CurrentUser }) {
                 variant="ghost"
                 className="border-0"
                 label="Ajustes"
-                aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+                aria-current={pathname.startsWith('/settings') ? 'page' : undefined}
               >
                 <Link href="/settings">
                   <Settings className="size-4" aria-hidden />
@@ -64,5 +64,5 @@ export function Sidebar({ user }: { user: CurrentUser }) {
         </ErrorBoundary>
       </footer>
     </aside>
-  );
+  )
 }

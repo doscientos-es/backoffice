@@ -1,12 +1,12 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const updateLeadMomTestSignal = vi.hoisted(() => vi.fn());
+const updateLeadMomTestSignal = vi.hoisted(() => vi.fn())
 
-vi.mock("../actions", () => ({ updateLeadMomTestSignal }));
-vi.mock("sileo", () => ({ sileo: { error: vi.fn() } }));
+vi.mock('../actions', () => ({ updateLeadMomTestSignal }))
+vi.mock('sileo', () => ({ sileo: { error: vi.fn() } }))
 
-import { MomTestQuickDialog } from "./mom-test-quick-dialog";
+import { MomTestQuickDialog } from './mom-test-quick-dialog'
 
 const initialValues = {
   real_problem: true,
@@ -15,21 +15,21 @@ const initialValues = {
   decision_power_or_budget: true,
   accessible: false,
   comparing_other_companies: null,
-};
-
-function buttonsFor(label: string) {
-  const row = screen.getByText(label).closest("li");
-  if (!row) throw new Error(`No se encontró la fila ${label}`);
-  return within(row);
 }
 
-describe("MomTestQuickDialog", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    updateLeadMomTestSignal.mockImplementation(() => new Promise<never>(() => undefined));
-  });
+function buttonsFor(label: string) {
+  const row = screen.getByText(label).closest('li')
+  if (!row) throw new Error(`No se encontró la fila ${label}`)
+  return within(row)
+}
 
-  it("shows the answers that were already saved", () => {
+describe('MomTestQuickDialog', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    updateLeadMomTestSignal.mockImplementation(() => new Promise<never>(() => undefined))
+  })
+
+  it('shows the answers that were already saved', () => {
     render(
       <MomTestQuickDialog
         leadId="lead-1"
@@ -37,20 +37,20 @@ describe("MomTestQuickDialog", () => {
         onOpenChange={vi.fn()}
         initialValues={initialValues}
       />,
-    );
+    )
 
     expect(
-      buttonsFor("Problema real").getByRole("button", { name: "Sí" }).getAttribute("aria-pressed"),
-    ).toBe("true");
+      buttonsFor('Problema real').getByRole('button', { name: 'Sí' }).getAttribute('aria-pressed'),
+    ).toBe('true')
     expect(
-      buttonsFor("Es consciente").getByRole("button", { name: "No" }).getAttribute("aria-pressed"),
-    ).toBe("true");
+      buttonsFor('Es consciente').getByRole('button', { name: 'No' }).getAttribute('aria-pressed'),
+    ).toBe('true')
     expect(
-      buttonsFor("Comparando con otras empresas").getByRole("button", { name: "Sí" }),
-    ).toBeTruthy();
-  });
+      buttonsFor('Comparando con otras empresas').getByRole('button', { name: 'Sí' }),
+    ).toBeTruthy()
+  })
 
-  it("keeps the other rows interactive while one answer is saving", () => {
+  it('keeps the other rows interactive while one answer is saving', () => {
     render(
       <MomTestQuickDialog
         leadId="lead-1"
@@ -58,33 +58,33 @@ describe("MomTestQuickDialog", () => {
         onOpenChange={vi.fn()}
         initialValues={{ ...initialValues, real_problem: null, aware_problem: null }}
       />,
-    );
+    )
 
-    fireEvent.click(buttonsFor("Problema real").getByRole("button", { name: "Sí" }));
+    fireEvent.click(buttonsFor('Problema real').getByRole('button', { name: 'Sí' }))
 
     expect(
-      (buttonsFor("Problema real").getByRole("button", { name: "Sí" }) as HTMLButtonElement)
+      (buttonsFor('Problema real').getByRole('button', { name: 'Sí' }) as HTMLButtonElement)
         .disabled,
-    ).toBe(true);
+    ).toBe(true)
     expect(
-      (buttonsFor("Es consciente").getByRole("button", { name: "Sí" }) as HTMLButtonElement)
+      (buttonsFor('Es consciente').getByRole('button', { name: 'Sí' }) as HTMLButtonElement)
         .disabled,
-    ).toBe(false);
-    fireEvent.click(buttonsFor("Es consciente").getByRole("button", { name: "Sí" }));
+    ).toBe(false)
+    fireEvent.click(buttonsFor('Es consciente').getByRole('button', { name: 'Sí' }))
 
     expect(updateLeadMomTestSignal).toHaveBeenNthCalledWith(1, {
-      leadId: "lead-1",
-      signal: "real_problem",
+      leadId: 'lead-1',
+      signal: 'real_problem',
       value: true,
-    });
+    })
     expect(updateLeadMomTestSignal).toHaveBeenNthCalledWith(2, {
-      leadId: "lead-1",
-      signal: "aware_problem",
+      leadId: 'lead-1',
+      signal: 'aware_problem',
       value: true,
-    });
-  });
+    })
+  })
 
-  it("saves the answer about comparing other companies", () => {
+  it('saves the answer about comparing other companies', () => {
     render(
       <MomTestQuickDialog
         leadId="lead-1"
@@ -92,16 +92,14 @@ describe("MomTestQuickDialog", () => {
         onOpenChange={vi.fn()}
         initialValues={initialValues}
       />,
-    );
+    )
 
-    fireEvent.click(
-      buttonsFor("Comparando con otras empresas").getByRole("button", { name: "Sí" }),
-    );
+    fireEvent.click(buttonsFor('Comparando con otras empresas').getByRole('button', { name: 'Sí' }))
 
     expect(updateLeadMomTestSignal).toHaveBeenCalledWith({
-      leadId: "lead-1",
-      signal: "comparing_other_companies",
+      leadId: 'lead-1',
+      signal: 'comparing_other_companies',
       value: true,
-    });
-  });
-});
+    })
+  })
+})

@@ -1,8 +1,8 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink } from 'lucide-react'
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -10,13 +10,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { getMarketingOverview } from "@/lib/marketing/queries";
-import type { MarketingSort, MarketingView } from "@/lib/marketing/range";
-import type { ActiveAdRow, CampaignRow } from "@/lib/marketing/types";
-import { formatEUR, relativeTime } from "@/lib/utils";
+} from '@/components/ui/table'
+import { getMarketingOverview } from '@/lib/marketing/queries'
+import type { MarketingSort, MarketingView } from '@/lib/marketing/range'
+import type { ActiveAdRow, CampaignRow } from '@/lib/marketing/types'
+import { formatEUR, relativeTime } from '@/lib/utils'
 
-import { AdPreviewDialog } from "../ad-preview-dialog";
+import { AdPreviewDialog } from '../ad-preview-dialog'
 import {
   buildAdsManagerUrl,
   buildCampaignManagerUrl,
@@ -25,16 +25,16 @@ import {
   ctrClass,
   numberFmt,
   percentFmt,
-} from "./marketing-format";
+} from './marketing-format'
 
 type MarketingTableProps = {
-  view: MarketingView;
-  since: string;
-  until: string;
-  sort: MarketingSort;
-  showPaused: boolean;
-  accountId: string | null;
-};
+  view: MarketingView
+  since: string
+  until: string
+  sort: MarketingSort
+  showPaused: boolean
+  accountId: string | null
+}
 
 export async function MarketingTable({
   view,
@@ -44,29 +44,29 @@ export async function MarketingTable({
   showPaused,
   accountId,
 }: MarketingTableProps) {
-  const overview = await getMarketingOverview(view, since, until, sort, showPaused);
+  const overview = await getMarketingOverview(view, since, until, sort, showPaused)
   const { avgCpc, totalImpressions, totalOutboundClicks, totalLandingPageViews, lastSyncAt } =
-    overview;
+    overview
 
   return (
     <>
-      {overview.view === "campaigns" ? (
+      {overview.view === 'campaigns' ? (
         <CampaignsTable campaigns={overview.campaigns} accountId={accountId} />
       ) : (
         <AdsTable ads={overview.ads} showPaused={showPaused} accountId={accountId} />
       )}
 
       <p className="text-xs text-muted-foreground">
-        Datos atribuidos por Meta (acciones <code>lead</code> y{" "}
-        <code>onsite_conversion.lead_grouped</code>). Clics salientes:{" "}
-        {numberFmt.format(totalOutboundClicks)} · Vistas de landing:{" "}
-        {numberFmt.format(totalLandingPageViews)} · CPC medio: {formatEUR(avgCpc)} · Impresiones:{" "}
+        Datos atribuidos por Meta (acciones <code>lead</code> y{' '}
+        <code>onsite_conversion.lead_grouped</code>). Clics salientes:{' '}
+        {numberFmt.format(totalOutboundClicks)} · Vistas de landing:{' '}
+        {numberFmt.format(totalLandingPageViews)} · CPC medio: {formatEUR(avgCpc)} · Impresiones:{' '}
         {numberFmt.format(totalImpressions)}. Las columnas CRM cruzan los leads captados en el
         período con clientes y facturas no anuladas.
-        {lastSyncAt ? ` Sincronizado ${relativeTime(lastSyncAt)}.` : ""}
+        {lastSyncAt ? ` Sincronizado ${relativeTime(lastSyncAt)}.` : ''}
       </p>
     </>
-  );
+  )
 }
 
 function AdsTable({
@@ -74,14 +74,14 @@ function AdsTable({
   showPaused,
   accountId,
 }: {
-  ads: ActiveAdRow[];
-  showPaused: boolean;
-  accountId: string | null;
+  ads: ActiveAdRow[]
+  showPaused: boolean
+  accountId: string | null
 }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Anuncios {showPaused ? "(activos + pausados)" : "activos"}</CardTitle>
+        <CardTitle>Anuncios {showPaused ? '(activos + pausados)' : 'activos'}</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
@@ -117,10 +117,10 @@ function AdsTable({
               </TableRow>
             ) : (
               ads.map((ad) => {
-                const adsManagerUrl = buildAdsManagerUrl(ad.id, accountId);
-                const isPaused = ad.status !== "ACTIVE";
+                const adsManagerUrl = buildAdsManagerUrl(ad.id, accountId)
+                const isPaused = ad.status !== 'ACTIVE'
                 return (
-                  <TableRow key={ad.id} className={cn(isPaused && "opacity-60")}>
+                  <TableRow key={ad.id} className={cn(isPaused && 'opacity-60')}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {ad.preview_url && (
@@ -143,7 +143,7 @@ function AdsTable({
                               className="block truncate text-xs text-primary hover:underline"
                               title={ad.destinationUrl}
                             >
-                              {ad.callToActionType ?? "Destino"}: {ad.destinationUrl}
+                              {ad.callToActionType ?? 'Destino'}: {ad.destinationUrl}
                             </a>
                           ) : ad.leadFormId ? (
                             <span className="block truncate text-xs text-muted-foreground">
@@ -155,7 +155,7 @@ function AdsTable({
                     </TableCell>
                     <TableCell className="text-muted-foreground">{ad.campaignName}</TableCell>
                     <TableCell>
-                      <Badge variant={isPaused ? "outline" : "success"}>{ad.status}</Badge>
+                      <Badge variant={isPaused ? 'outline' : 'success'}>{ad.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {numberFmt.format(ad.impressions)}
@@ -169,21 +169,21 @@ function AdsTable({
                     <TableCell className="text-right tabular-nums">
                       {numberFmt.format(ad.landingPageViews)}
                     </TableCell>
-                    <TableCell className={cn("text-right tabular-nums", ctrClass(ad.ctr))}>
+                    <TableCell className={cn('text-right tabular-nums', ctrClass(ad.ctr))}>
                       {percentFmt.format(ad.ctr)}%
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {ad.clicks > 0 ? formatEUR(ad.cpc) : "—"}
+                      {ad.clicks > 0 ? formatEUR(ad.cpc) : '—'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{formatEUR(ad.spend)}</TableCell>
                     <TableCell className="text-right tabular-nums">{ad.leads}</TableCell>
                     <TableCell
                       className={cn(
-                        "text-right font-semibold tabular-nums",
+                        'text-right font-semibold tabular-nums',
                         cplClass(ad.cpl, ad.leads),
                       )}
                     >
-                      {ad.leads > 0 ? formatEUR(ad.cpl) : "—"}
+                      {ad.leads > 0 ? formatEUR(ad.cpl) : '—'}
                     </TableCell>
                     <TableCell
                       className="text-right tabular-nums"
@@ -198,7 +198,7 @@ function AdsTable({
                     <TableCell className="text-right tabular-nums">{ad.lostLeads}</TableCell>
                     <TableCell className="text-right tabular-nums">{ad.customers}</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {ad.invoicedRevenue > 0 ? formatEUR(ad.invoicedRevenue) : "—"}
+                      {ad.invoicedRevenue > 0 ? formatEUR(ad.invoicedRevenue) : '—'}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-0.5">
@@ -223,22 +223,22 @@ function AdsTable({
                       </div>
                     </TableCell>
                   </TableRow>
-                );
+                )
               })
             )}
           </TableBody>
         </Table>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function CampaignsTable({
   campaigns,
   accountId,
 }: {
-  campaigns: CampaignRow[];
-  accountId: string | null;
+  campaigns: CampaignRow[]
+  accountId: string | null
 }) {
   return (
     <Card>
@@ -279,10 +279,10 @@ function CampaignsTable({
               </TableRow>
             ) : (
               campaigns.map((c) => {
-                const url = buildCampaignManagerUrl(c.id, accountId);
-                const isPaused = c.status !== "ACTIVE";
+                const url = buildCampaignManagerUrl(c.id, accountId)
+                const isPaused = c.status !== 'ACTIVE'
                 return (
-                  <TableRow key={c.id} className={cn(isPaused && "opacity-60")}>
+                  <TableRow key={c.id} className={cn(isPaused && 'opacity-60')}>
                     <TableCell className="font-medium">
                       <div className="flex flex-col">
                         <span className="truncate">{c.name}</span>
@@ -292,7 +292,7 @@ function CampaignsTable({
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {c.objective ?? "—"}
+                      {c.objective ?? '—'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{c.adCount}</TableCell>
                     <TableCell className="text-right tabular-nums">
@@ -307,21 +307,21 @@ function CampaignsTable({
                     <TableCell className="text-right tabular-nums">
                       {numberFmt.format(c.landingPageViews)}
                     </TableCell>
-                    <TableCell className={cn("text-right tabular-nums", ctrClass(c.ctr))}>
+                    <TableCell className={cn('text-right tabular-nums', ctrClass(c.ctr))}>
                       {percentFmt.format(c.ctr)}%
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {c.clicks > 0 ? formatEUR(c.cpc) : "—"}
+                      {c.clicks > 0 ? formatEUR(c.cpc) : '—'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{formatEUR(c.spend)}</TableCell>
                     <TableCell className="text-right tabular-nums">{c.leads}</TableCell>
                     <TableCell
                       className={cn(
-                        "text-right font-semibold tabular-nums",
+                        'text-right font-semibold tabular-nums',
                         cplClass(c.cpl, c.leads),
                       )}
                     >
-                      {c.leads > 0 ? formatEUR(c.cpl) : "—"}
+                      {c.leads > 0 ? formatEUR(c.cpl) : '—'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{c.crmLeads}</TableCell>
                     <TableCell className="text-right tabular-nums">{c.qualifiedLeads}</TableCell>
@@ -331,7 +331,7 @@ function CampaignsTable({
                     <TableCell className="text-right tabular-nums">{c.lostLeads}</TableCell>
                     <TableCell className="text-right tabular-nums">{c.customers}</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {c.invoicedRevenue > 0 ? formatEUR(c.invoicedRevenue) : "—"}
+                      {c.invoicedRevenue > 0 ? formatEUR(c.invoicedRevenue) : '—'}
                     </TableCell>
                     <TableCell className="text-right">
                       {url ? (
@@ -348,12 +348,12 @@ function CampaignsTable({
                       ) : null}
                     </TableCell>
                   </TableRow>
-                );
+                )
               })
             )}
           </TableBody>
         </Table>
       </CardContent>
     </Card>
-  );
+  )
 }

@@ -1,45 +1,45 @@
-"use client";
+'use client'
 
-import { CheckCircle2, Phone, PhoneOff } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, Phone, PhoneOff } from 'lucide-react'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import type { CallSessionStatus } from "@/lib/leads/call-session";
-import { formatEUR } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import type { CallSessionStatus } from '@/lib/leads/call-session'
+import { formatEUR } from '@/lib/utils'
 
-type Completion = { durationMinutes: number; defaultOutcome: "connected" | "no_answer" };
-type Action = "dial" | "finish";
-type ActionResponse = { error?: string } & Partial<Completion>;
+type Completion = { durationMinutes: number; defaultOutcome: 'connected' | 'no_answer' }
+type Action = 'dial' | 'finish'
+type ActionResponse = { error?: string } & Partial<Completion>
 type CallBriefing = {
-  name: string;
-  company: string | null;
-  leadStatus: string | null;
-  estimatedValue: number | null;
-  questions: Array<{ question: string; status: string }>;
-  proposals: Array<{ title: string; status: string; total: number }>;
-  invoiceCount: number;
-  paidTotal: number;
-  outstandingTotal: number;
-};
+  name: string
+  company: string | null
+  leadStatus: string | null
+  estimatedValue: number | null
+  questions: Array<{ question: string; status: string }>
+  proposals: Array<{ title: string; status: string; total: number }>
+  invoiceCount: number
+  paidTotal: number
+  outstandingTotal: number
+}
 
 function normalizePhone(phone: string): string {
-  const cleaned = phone.replace(/[^\d+]/g, "");
-  const plusIndex = cleaned.indexOf("+");
-  return plusIndex > 0 ? cleaned.slice(plusIndex) : cleaned;
+  const cleaned = phone.replace(/[^\d+]/g, '')
+  const plusIndex = cleaned.indexOf('+')
+  return plusIndex > 0 ? cleaned.slice(plusIndex) : cleaned
 }
 
 function actionErrorMessage(error?: string): string {
   switch (error) {
-    case "session_changed":
-      return "La llamada se actualizó desde otro dispositivo. Recarga la página para ver el estado actual.";
-    case "session_closed":
-      return "La llamada ya está cerrada. Recarga la página para ver el estado actual.";
-    case "not_found":
-      return "La sesión no existe o ha caducado.";
-    case "rate_limited":
-      return "Hay demasiados intentos. Espera un momento e inténtalo de nuevo.";
+    case 'session_changed':
+      return 'La llamada se actualizó desde otro dispositivo. Recarga la página para ver el estado actual.'
+    case 'session_closed':
+      return 'La llamada ya está cerrada. Recarga la página para ver el estado actual.'
+    case 'not_found':
+      return 'La sesión no existe o ha caducado.'
+    case 'rate_limited':
+      return 'Hay demasiados intentos. Espera un momento e inténtalo de nuevo.'
     default:
-      return "No se pudo actualizar la llamada.";
+      return 'No se pudo actualizar la llamada.'
   }
 }
 
@@ -49,55 +49,55 @@ export function MobileCallSession({
   status: initialStatus,
   briefing,
 }: {
-  token: string;
-  phone: string;
-  status: CallSessionStatus;
-  briefing: CallBriefing;
+  token: string
+  phone: string
+  status: CallSessionStatus
+  briefing: CallBriefing
 }) {
-  const [status, setStatus] = useState(initialStatus);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [completion, setCompletion] = useState<Completion | null>(null);
+  const [status, setStatus] = useState(initialStatus)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [completion, setCompletion] = useState<Completion | null>(null)
 
   async function update(action: Action): Promise<boolean> {
-    setPending(true);
-    setError(null);
+    setPending(true)
+    setError(null)
     try {
       const response = await fetch(`/api/public/call-sessions/${token}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
-      });
-      const result = (await response.json().catch(() => ({}))) as ActionResponse;
-      if (!response.ok) throw new Error(actionErrorMessage(result.error));
-      if (action === "dial") setStatus("dialing");
-      if (action === "finish" && result.durationMinutes !== undefined && result.defaultOutcome) {
+      })
+      const result = (await response.json().catch(() => ({}))) as ActionResponse
+      if (!response.ok) throw new Error(actionErrorMessage(result.error))
+      if (action === 'dial') setStatus('dialing')
+      if (action === 'finish' && result.durationMinutes !== undefined && result.defaultOutcome) {
         const next = {
           durationMinutes: result.durationMinutes,
           defaultOutcome: result.defaultOutcome,
-        };
-        setCompletion(next);
-        setStatus("awaiting_log");
+        }
+        setCompletion(next)
+        setStatus('awaiting_log')
       }
-      return true;
+      return true
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : actionErrorMessage());
-      return false;
+      setError(cause instanceof Error ? cause.message : actionErrorMessage())
+      return false
     } finally {
-      setPending(false);
+      setPending(false)
     }
   }
 
   async function startCall() {
-    if (await update("dial")) window.location.assign(`tel:${normalizePhone(phone)}`);
+    if (await update('dial')) window.location.assign(`tel:${normalizePhone(phone)}`)
   }
 
   async function finishCall() {
-    await update("finish");
+    await update('finish')
   }
 
-  const canCall = status === "started" || status === "dialing";
-  const closed = status === "logged";
+  const canCall = status === 'started' || status === 'dialing'
+  const closed = status === 'logged'
   return (
     <section className="mx-auto flex max-w-md flex-col gap-6 px-5 py-10 sm:py-16">
       <div className="space-y-2">
@@ -125,7 +125,7 @@ export function MobileCallSession({
                   `Valor estimado: ${formatEUR(briefing.estimatedValue)}`,
               ]
                 .filter(Boolean)
-                .join(" · ") || "Sin resumen comercial registrado"}
+                .join(' · ') || 'Sin resumen comercial registrado'}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/50 p-3 text-xs">
@@ -136,7 +136,7 @@ export function MobileCallSession({
               Pagado: <span className="font-semibold">{formatEUR(briefing.paidTotal)}</span>
             </p>
             <p className="col-span-2">
-              Pendiente de cobro:{" "}
+              Pendiente de cobro:{' '}
               <span className="font-semibold">{formatEUR(briefing.outstandingTotal)}</span>
             </p>
           </div>
@@ -181,13 +181,13 @@ export function MobileCallSession({
           {error}
         </p>
       )}
-      {completion || status === "logged" ? (
+      {completion || status === 'logged' ? (
         <div className="rounded-xl border border-emerald-500/25 bg-emerald-50/70 p-4 text-sm text-emerald-950 dark:bg-emerald-500/10 dark:text-emerald-100">
           <div className="flex items-center gap-2 font-medium">
             <CheckCircle2 className="size-4" /> Llamada finalizada
           </div>
           <p className="mt-2">
-            {completion ? `Duración estimada: ${completion.durationMinutes} min. ` : ""}Completa el
+            {completion ? `Duración estimada: ${completion.durationMinutes} min. ` : ''}Completa el
             resultado y las notas en el ordenador.
           </p>
         </div>
@@ -210,11 +210,11 @@ export function MobileCallSession({
             disabled={pending || closed}
             className="gap-2"
           >
-            <PhoneOff className="size-4" />{" "}
-            {status === "awaiting_log" ? "Ver cierre" : "He terminado"}
+            <PhoneOff className="size-4" />{' '}
+            {status === 'awaiting_log' ? 'Ver cierre' : 'He terminado'}
           </Button>
         </div>
       )}
     </section>
-  );
+  )
 }

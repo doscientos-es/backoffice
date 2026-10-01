@@ -1,32 +1,32 @@
-import "server-only";
-import { writeAuditEvent } from "@/lib/audit/events";
-import { createAdminClient } from "@/lib/supabase/admin";
+import 'server-only'
+import { writeAuditEvent } from '@/lib/audit/events'
+import { createAdminClient } from '@/lib/supabase/admin'
 
-export const PRIVACY_SUBJECT_TYPES = ["lead", "client", "team_member"] as const;
-export type PrivacySubjectType = (typeof PRIVACY_SUBJECT_TYPES)[number];
-export type PrivacyRequestType = "access" | "erasure";
+export const PRIVACY_SUBJECT_TYPES = ['lead', 'client', 'team_member'] as const
+export type PrivacySubjectType = (typeof PRIVACY_SUBJECT_TYPES)[number]
+export type PrivacyRequestType = 'access' | 'erasure'
 
-type PrivacyActor = { id: string | null; role: string };
+type PrivacyActor = { id: string | null; role: string }
 type PrivacyRequestRecord = {
-  id: string;
-  subject_type: PrivacySubjectType;
-  subject_id: string;
-  request_type: PrivacyRequestType;
-  status: string;
-};
+  id: string
+  subject_type: PrivacySubjectType
+  subject_id: string
+  request_type: PrivacyRequestType
+  status: string
+}
 
 const SUBJECT_TABLE: Record<PrivacySubjectType, string> = {
-  lead: "leads",
-  client: "clients",
-  team_member: "team_members",
-};
+  lead: 'leads',
+  client: 'clients',
+  team_member: 'team_members',
+}
 
 export function anonymizationPatch(
   subjectType: PrivacySubjectType,
 ): Record<string, unknown> | null {
-  if (subjectType === "lead") {
+  if (subjectType === 'lead') {
     return {
-      name: "Contacto anonimizado",
+      name: 'Contacto anonimizado',
       email: null,
       phone: null,
       company: null,
@@ -39,44 +39,44 @@ export function anonymizationPatch(
       marketing_consent: false,
       marketing_consent_withdrawn_at: new Date().toISOString(),
       privacy_anonymized_at: new Date().toISOString(),
-    };
+    }
   }
-  if (subjectType === "client") {
+  if (subjectType === 'client') {
     return {
-      name: "Cliente anonimizado",
+      name: 'Cliente anonimizado',
       email: null,
       phone: null,
       billing_address: null,
       contact_person: null,
       notes: null,
-    };
+    }
   }
-  return null;
+  return null
 }
 
 export async function createPrivacyRequest(
   input: {
-    subjectType: PrivacySubjectType;
-    subjectId: string;
-    requesterEmail?: string | null;
-    requestType: PrivacyRequestType;
-    identityVerified: boolean;
-    scheduledFor?: string | null;
-    internalNotes?: string | null;
+    subjectType: PrivacySubjectType
+    subjectId: string
+    requesterEmail?: string | null
+    requestType: PrivacyRequestType
+    identityVerified: boolean
+    scheduledFor?: string | null
+    internalNotes?: string | null
   },
   actor: PrivacyActor,
 ): Promise<{ id: string; status: string }> {
-  const admin = createAdminClient();
+  const admin = createAdminClient()
   const { data: subject, error: subjectError } = await admin
     .from(SUBJECT_TABLE[input.subjectType])
-    .select("id")
-    .eq("id", input.subjectId)
-    .maybeSingle();
-  if (subjectError || !subject) throw new Error("El sujeto de privacidad no existe");
+    .select('id')
+    .eq('id', input.subjectId)
+    .maybeSingle()
+  if (subjectError || !subject) throw new Error('El sujeto de privacidad no existe')
 
-  const status = input.identityVerified ? "verified" : "received";
+  const status = input.identityVerified ? 'verified' : 'received'
   const { data, error } = await admin
-    .from("privacy_requests")
+    .from('privacy_requests')
     .insert({
       subject_type: input.subjectType,
       subject_id: input.subjectId,
@@ -88,9 +88,9 @@ export async function createPrivacyRequest(
       requested_by: actor.id,
       internal_notes: input.internalNotes?.trim() || null,
     })
-    .select("id, status")
-    .single();
-  if (error || !data) throw new Error(error?.message ?? "No se pudo crear la solicitud");
+    .select('id, status')
+    .single()
+  if (error || !data) throw new Error(error?.message ?? 'No se pudo crear la solicitud')
 
   await writeAuditEvent({
     actorId: actor.id,
@@ -99,167 +99,167 @@ export async function createPrivacyRequest(
     entityId: input.subjectId,
     action: `privacy_${input.requestType}_requested`,
     metadata: { privacyRequestId: data.id, identityVerified: input.identityVerified },
-  });
-  return data as { id: string; status: string };
+  })
+  return data as { id: string; status: string }
 }
 
 async function loadSubjectSnapshot(subjectType: PrivacySubjectType, subjectId: string) {
   const fields: Record<PrivacySubjectType, string> = {
-    lead: "id, name, email, phone, company, source, created_at, marketing_consent, marketing_consent_at",
-    client: "id, name, email, phone, billing_address, contact_person, created_at",
-    team_member: "id, name, email, phone, contact_email, job_title, created_at",
-  };
+    lead: 'id, name, email, phone, company, source, created_at, marketing_consent, marketing_consent_at',
+    client: 'id, name, email, phone, billing_address, contact_person, created_at',
+    team_member: 'id, name, email, phone, contact_email, job_title, created_at',
+  }
   const { data, error } = await createAdminClient()
     .from(SUBJECT_TABLE[subjectType])
     .select(fields[subjectType])
-    .eq("id", subjectId)
-    .maybeSingle();
-  if (error || !data) throw new Error("No se pudo recuperar los datos del sujeto");
-  return data;
+    .eq('id', subjectId)
+    .maybeSingle()
+  if (error || !data) throw new Error('No se pudo recuperar los datos del sujeto')
+  return data
 }
 
 async function blockRequest(id: string, actor: PrivacyActor, reason: string): Promise<void> {
   const { error } = await createAdminClient()
-    .from("privacy_requests")
+    .from('privacy_requests')
     .update({
-      status: "blocked",
+      status: 'blocked',
       processed_at: new Date().toISOString(),
       processed_by: actor.id,
       result_summary: reason,
     })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+    .eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 export async function processPrivacyRequest(
   requestId: string,
   actor: PrivacyActor,
-): Promise<{ status: "completed" | "blocked"; data?: Record<string, unknown> }> {
-  const admin = createAdminClient();
+): Promise<{ status: 'completed' | 'blocked'; data?: Record<string, unknown> }> {
+  const admin = createAdminClient()
   const { data, error } = await admin
-    .from("privacy_requests")
-    .select("id, subject_type, subject_id, request_type, status")
-    .eq("id", requestId)
-    .maybeSingle();
-  const request = data as PrivacyRequestRecord | null;
-  if (error || !request) throw new Error("Solicitud de privacidad no encontrada");
-  if (request.status !== "verified")
-    throw new Error("La solicitud debe estar verificada antes de procesarla");
+    .from('privacy_requests')
+    .select('id, subject_type, subject_id, request_type, status')
+    .eq('id', requestId)
+    .maybeSingle()
+  const request = data as PrivacyRequestRecord | null
+  if (error || !request) throw new Error('Solicitud de privacidad no encontrada')
+  if (request.status !== 'verified')
+    throw new Error('La solicitud debe estar verificada antes de procesarla')
 
   const { data: holds, error: holdsError } = await admin
-    .from("privacy_legal_holds")
-    .select("id")
-    .eq("entity_type", request.subject_type)
-    .eq("entity_id", request.subject_id)
-    .is("released_at", null)
-    .limit(1);
-  if (holdsError) throw new Error(holdsError.message);
+    .from('privacy_legal_holds')
+    .select('id')
+    .eq('entity_type', request.subject_type)
+    .eq('entity_id', request.subject_id)
+    .is('released_at', null)
+    .limit(1)
+  if (holdsError) throw new Error(holdsError.message)
   if (holds && holds.length > 0) {
-    const reason = "Solicitud bloqueada por una retención legal activa";
-    await blockRequest(request.id, actor, reason);
+    const reason = 'Solicitud bloqueada por una retención legal activa'
+    await blockRequest(request.id, actor, reason)
     await writeAuditEvent({
       actorId: actor.id,
       actorRole: actor.role,
       entityType: request.subject_type,
       entityId: request.subject_id,
       action: `privacy_${request.request_type}_blocked`,
-      metadata: { privacyRequestId: request.id, reason: "legal_hold" },
-      outcome: "failure",
-    });
-    return { status: "blocked" };
+      metadata: { privacyRequestId: request.id, reason: 'legal_hold' },
+      outcome: 'failure',
+    })
+    return { status: 'blocked' }
   }
 
-  if (request.request_type === "access") {
+  if (request.request_type === 'access') {
     const snapshot = (await loadSubjectSnapshot(
       request.subject_type,
       request.subject_id,
-    )) as unknown as Record<string, unknown>;
+    )) as unknown as Record<string, unknown>
     const { error: updateError } = await admin
-      .from("privacy_requests")
+      .from('privacy_requests')
       .update({
-        status: "completed",
+        status: 'completed',
         processed_at: new Date().toISOString(),
         processed_by: actor.id,
-        result_summary: "Exportación de acceso preparada para entrega segura",
+        result_summary: 'Exportación de acceso preparada para entrega segura',
       })
-      .eq("id", request.id);
-    if (updateError) throw new Error(updateError.message);
+      .eq('id', request.id)
+    if (updateError) throw new Error(updateError.message)
     await writeAuditEvent({
       actorId: actor.id,
       actorRole: actor.role,
       entityType: request.subject_type,
       entityId: request.subject_id,
-      action: "privacy_access_completed",
+      action: 'privacy_access_completed',
       metadata: { privacyRequestId: request.id },
-    });
-    return { status: "completed", data: snapshot };
+    })
+    return { status: 'completed', data: snapshot }
   }
 
-  if (request.subject_type === "client") {
+  if (request.subject_type === 'client') {
     const { data: invoices, error: invoicesError } = await admin
-      .from("invoices")
-      .select("id")
-      .eq("client_id", request.subject_id)
-      .limit(1);
-    if (invoicesError) throw new Error(invoicesError.message);
+      .from('invoices')
+      .select('id')
+      .eq('client_id', request.subject_id)
+      .limit(1)
+    if (invoicesError) throw new Error(invoicesError.message)
     if (invoices && invoices.length > 0) {
       const reason =
-        "Solicitud bloqueada: el cliente tiene documentos fiscales sujetos a conservación legal";
-      await blockRequest(request.id, actor, reason);
+        'Solicitud bloqueada: el cliente tiene documentos fiscales sujetos a conservación legal'
+      await blockRequest(request.id, actor, reason)
       await writeAuditEvent({
         actorId: actor.id,
         actorRole: actor.role,
         entityType: request.subject_type,
         entityId: request.subject_id,
-        action: "privacy_erasure_blocked",
-        metadata: { privacyRequestId: request.id, reason: "fiscal_retention" },
-        outcome: "failure",
-      });
-      return { status: "blocked" };
+        action: 'privacy_erasure_blocked',
+        metadata: { privacyRequestId: request.id, reason: 'fiscal_retention' },
+        outcome: 'failure',
+      })
+      return { status: 'blocked' }
     }
   }
 
-  const patch = anonymizationPatch(request.subject_type);
+  const patch = anonymizationPatch(request.subject_type)
   if (!patch) {
-    const reason = "La anonimización de personal requiere revisión legal manual";
-    await blockRequest(request.id, actor, reason);
+    const reason = 'La anonimización de personal requiere revisión legal manual'
+    await blockRequest(request.id, actor, reason)
     await writeAuditEvent({
       actorId: actor.id,
       actorRole: actor.role,
       entityType: request.subject_type,
       entityId: request.subject_id,
-      action: "privacy_erasure_blocked",
-      metadata: { privacyRequestId: request.id, reason: "legal_review_required" },
-      outcome: "failure",
-    });
-    return { status: "blocked" };
+      action: 'privacy_erasure_blocked',
+      metadata: { privacyRequestId: request.id, reason: 'legal_review_required' },
+      outcome: 'failure',
+    })
+    return { status: 'blocked' }
   }
   const { error: anonymizeError } = await admin
     .from(SUBJECT_TABLE[request.subject_type])
     .update(patch)
-    .eq("id", request.subject_id);
-  if (anonymizeError) throw new Error(anonymizeError.message);
+    .eq('id', request.subject_id)
+  if (anonymizeError) throw new Error(anonymizeError.message)
 
   const { error: completionError } = await admin
-    .from("privacy_requests")
+    .from('privacy_requests')
     .update({
-      status: "completed",
+      status: 'completed',
       processed_at: new Date().toISOString(),
       processed_by: actor.id,
-      result_summary: "Datos personales anonimizados",
+      result_summary: 'Datos personales anonimizados',
     })
-    .eq("id", request.id);
-  if (completionError) throw new Error(completionError.message);
+    .eq('id', request.id)
+  if (completionError) throw new Error(completionError.message)
 
   await writeAuditEvent({
     actorId: actor.id,
     actorRole: actor.role,
     entityType: request.subject_type,
     entityId: request.subject_id,
-    action: "privacy_erasure_completed",
+    action: 'privacy_erasure_completed',
     metadata: { privacyRequestId: request.id },
-  });
-  return { status: "completed" };
+  })
+  return { status: 'completed' }
 }
 
 export async function withdrawMarketingConsent(
@@ -267,113 +267,113 @@ export async function withdrawMarketingConsent(
   actor: PrivacyActor,
   source: string,
 ): Promise<void> {
-  const admin = createAdminClient();
-  const now = new Date().toISOString();
-  const { error } = await admin.from("data_processing_consents").insert({
-    subject_type: "lead",
+  const admin = createAdminClient()
+  const now = new Date().toISOString()
+  const { error } = await admin.from('data_processing_consents').insert({
+    subject_type: 'lead',
     subject_id: subjectId,
-    purpose: "marketing",
+    purpose: 'marketing',
     granted: false,
     withdrawn_at: now,
     source,
     recorded_by: actor.id,
-  });
-  if (error) throw new Error(error.message);
+  })
+  if (error) throw new Error(error.message)
 
   const { error: leadError } = await admin
-    .from("leads")
+    .from('leads')
     .update({ marketing_consent: false, marketing_consent_withdrawn_at: now })
-    .eq("id", subjectId);
-  if (leadError) throw new Error(leadError.message);
+    .eq('id', subjectId)
+  if (leadError) throw new Error(leadError.message)
 
   await writeAuditEvent({
     actorId: actor.id,
     actorRole: actor.role,
-    entityType: "lead",
+    entityType: 'lead',
     entityId: subjectId,
-    action: "marketing_consent_withdrawn",
+    action: 'marketing_consent_withdrawn',
     metadata: { source },
-  });
+  })
 }
 
 /** Processes only a bounded due batch; blocked requests retain their reason for review. */
 export async function processDuePrivacyErasures(limit = 25): Promise<{
-  completed: number;
-  blocked: number;
-  failed: number;
+  completed: number
+  blocked: number
+  failed: number
 }> {
-  const safeLimit = Math.min(Math.max(limit, 1), 50);
+  const safeLimit = Math.min(Math.max(limit, 1), 50)
   const { data, error } = await createAdminClient()
-    .from("privacy_requests")
-    .select("id")
-    .eq("request_type", "erasure")
-    .eq("status", "verified")
-    .lte("scheduled_for", new Date().toISOString())
-    .order("scheduled_for", { ascending: true })
-    .limit(safeLimit);
-  if (error) throw new Error(error.message);
+    .from('privacy_requests')
+    .select('id')
+    .eq('request_type', 'erasure')
+    .eq('status', 'verified')
+    .lte('scheduled_for', new Date().toISOString())
+    .order('scheduled_for', { ascending: true })
+    .limit(safeLimit)
+  if (error) throw new Error(error.message)
 
-  const summary = { completed: 0, blocked: 0, failed: 0 };
+  const summary = { completed: 0, blocked: 0, failed: 0 }
   for (const row of data ?? []) {
     try {
       const result = await processPrivacyRequest((row as { id: string }).id, {
         id: null,
-        role: "system",
-      });
-      summary[result.status] += 1;
+        role: 'system',
+      })
+      summary[result.status] += 1
     } catch {
-      summary.failed += 1;
+      summary.failed += 1
     }
   }
-  return summary;
+  return summary
 }
 
 /** Applies the documented retention policy only to aged, soft-deleted leads. */
 export async function anonymizeExpiredLeadPii(
   limit = 50,
 ): Promise<{ anonymized: number; blocked: number }> {
-  const admin = createAdminClient();
-  const cutoff = new Date(Date.now() - 730 * 24 * 60 * 60 * 1_000).toISOString();
+  const admin = createAdminClient()
+  const cutoff = new Date(Date.now() - 730 * 24 * 60 * 60 * 1_000).toISOString()
   const { data, error } = await admin
-    .from("leads")
-    .select("id")
-    .not("deleted_at", "is", null)
-    .is("privacy_anonymized_at", null)
-    .lte("deleted_at", cutoff)
-    .order("deleted_at", { ascending: true })
-    .limit(Math.min(Math.max(limit, 1), 100));
-  if (error) throw new Error(error.message);
+    .from('leads')
+    .select('id')
+    .not('deleted_at', 'is', null)
+    .is('privacy_anonymized_at', null)
+    .lte('deleted_at', cutoff)
+    .order('deleted_at', { ascending: true })
+    .limit(Math.min(Math.max(limit, 1), 100))
+  if (error) throw new Error(error.message)
 
-  const summary = { anonymized: 0, blocked: 0 };
+  const summary = { anonymized: 0, blocked: 0 }
   for (const row of data ?? []) {
-    const leadId = (row as { id: string }).id;
+    const leadId = (row as { id: string }).id
     const { data: holds, error: holdsError } = await admin
-      .from("privacy_legal_holds")
-      .select("id")
-      .eq("entity_type", "lead")
-      .eq("entity_id", leadId)
-      .is("released_at", null)
-      .limit(1);
-    if (holdsError) throw new Error(holdsError.message);
+      .from('privacy_legal_holds')
+      .select('id')
+      .eq('entity_type', 'lead')
+      .eq('entity_id', leadId)
+      .is('released_at', null)
+      .limit(1)
+    if (holdsError) throw new Error(holdsError.message)
     if (holds && holds.length > 0) {
-      summary.blocked += 1;
-      continue;
+      summary.blocked += 1
+      continue
     }
 
     const { error: updateError } = await admin
-      .from("leads")
-      .update(anonymizationPatch("lead")!)
-      .eq("id", leadId)
-      .is("privacy_anonymized_at", null);
-    if (updateError) throw new Error(updateError.message);
+      .from('leads')
+      .update(anonymizationPatch('lead')!)
+      .eq('id', leadId)
+      .is('privacy_anonymized_at', null)
+    if (updateError) throw new Error(updateError.message)
     await writeAuditEvent({
-      entityType: "lead",
+      entityType: 'lead',
       entityId: leadId,
-      action: "privacy_retention_anonymized",
-      origin: "retention_cron",
+      action: 'privacy_retention_anonymized',
+      origin: 'retention_cron',
       metadata: { retentionDays: 730 },
-    });
-    summary.anonymized += 1;
+    })
+    summary.anonymized += 1
   }
-  return summary;
+  return summary
 }

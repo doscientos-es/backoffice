@@ -1,24 +1,24 @@
-"use client";
+'use client'
 
-import { Pencil, Plus, Trash as Trash2 } from "lucide-react";
-import { useState, useTransition } from "react";
+import { Pencil, Plus, Trash as Trash2 } from 'lucide-react'
+import { useState, useTransition } from 'react'
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
-import { deleteToken } from "../actions";
-import { type BrandToken, TokenEditDialog } from "./token-edit-dialog";
+import { deleteToken } from '../actions'
+import { type BrandToken, TokenEditDialog } from './token-edit-dialog'
 
-const GROUP_LABELS: Record<BrandToken["token_group"], string> = {
-  color: "Colores",
-  typography: "Tipografía",
-  spacing: "Espaciado",
-  radius: "Radios",
-  shadow: "Sombras",
-};
+const GROUP_LABELS: Record<BrandToken['token_group'], string> = {
+  color: 'Colores',
+  typography: 'Tipografía',
+  spacing: 'Espaciado',
+  radius: 'Radios',
+  shadow: 'Sombras',
+}
 
 function isColor(value: string) {
-  return /^(#|oklch|rgb|hsl|color-)/.test(value.trim());
+  return /^(#|oklch|rgb|hsl|color-)/.test(value.trim())
 }
 
 function ColorSwatch({ value }: { value: string }) {
@@ -28,7 +28,7 @@ function ColorSwatch({ value }: { value: string }) {
       style={{ background: value }}
       title={value}
     />
-  );
+  )
 }
 
 function TokenRow({
@@ -36,12 +36,12 @@ function TokenRow({
   isAdmin,
   onEdit,
 }: {
-  token: BrandToken;
-  isAdmin: boolean;
-  onEdit: (t: BrandToken) => void;
+  token: BrandToken
+  isAdmin: boolean
+  onEdit: (t: BrandToken) => void
 }) {
-  const [pending, startTransition] = useTransition();
-  const showSwatch = token.token_group === "color" && isColor(token.value);
+  const [pending, startTransition] = useTransition()
+  const showSwatch = token.token_group === 'color' && isColor(token.value)
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5">
@@ -72,10 +72,10 @@ function TokenRow({
             disabled={pending}
             title="Eliminar"
             onClick={() => {
-              if (!confirm(`¿Eliminar el token --${token.key}?`)) return;
+              if (!confirm(`¿Eliminar el token --${token.key}?`)) return
               startTransition(async () => {
-                await deleteToken({ id: token.id });
-              });
+                await deleteToken({ id: token.id })
+              })
             }}
           >
             <Trash2 className="size-3.5" />
@@ -83,22 +83,22 @@ function TokenRow({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 export function TokensPanel({ tokens, isAdmin }: { tokens: BrandToken[]; isAdmin: boolean }) {
-  const [editTarget, setEditTarget] = useState<BrandToken | null | undefined>(undefined);
-  const grouped = tokens.reduce<Partial<Record<BrandToken["token_group"], BrandToken[]>>>(
+  const [editTarget, setEditTarget] = useState<BrandToken | null | undefined>(undefined)
+  const grouped = tokens.reduce<Partial<Record<BrandToken['token_group'], BrandToken[]>>>(
     (acc, t) => {
-      if (!acc[t.token_group]) acc[t.token_group] = [];
-      acc[t.token_group]!.push(t);
-      return acc;
+      if (!acc[t.token_group]) acc[t.token_group] = []
+      acc[t.token_group]!.push(t)
+      return acc
     },
     {},
-  );
+  )
   const orderedGroups = (
-    ["color", "typography", "spacing", "radius", "shadow"] as BrandToken["token_group"][]
-  ).filter((g) => grouped[g]?.length);
+    ['color', 'typography', 'spacing', 'radius', 'shadow'] as BrandToken['token_group'][]
+  ).filter((g) => grouped[g]?.length)
 
   return (
     <>
@@ -137,10 +137,10 @@ export function TokensPanel({ tokens, isAdmin }: { tokens: BrandToken[]; isAdmin
           open
           token={editTarget}
           onOpenChange={(v) => {
-            if (!v) setEditTarget(undefined);
+            if (!v) setEditTarget(undefined)
           }}
         />
       )}
     </>
-  );
+  )
 }

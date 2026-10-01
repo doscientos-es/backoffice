@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,50 +7,50 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@doscientos/ui";
-import { useState } from "react";
+} from '@doscientos/ui'
+import { useState } from 'react'
 
-import { beginVaultPasskeyRegistration } from "@/app/(app)/vault/actions";
-import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { registerPasskey } from "@/lib/security/webauthn-client";
+import { beginVaultPasskeyRegistration } from '@/app/(app)/vault/actions'
+import { Button } from '@/components/ui/button'
+import { Field, FieldLabel } from '@/components/ui/field'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { registerPasskey } from '@/lib/security/webauthn-client'
 
 /** Enrolls a passkey after re-authenticating with the vault master password. */
 export function PasskeyEnrollmentForm({ onClose }: { onClose: () => void }) {
-  const feedback = useFormFeedback();
-  const [password, setPassword] = useState("");
-  const [preparing, setPreparing] = useState(false);
-  const [registrationOptions, setRegistrationOptions] = useState<unknown>(null);
+  const feedback = useFormFeedback()
+  const [password, setPassword] = useState('')
+  const [preparing, setPreparing] = useState(false)
+  const [registrationOptions, setRegistrationOptions] = useState<unknown>(null)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setPreparing(true);
-    const started = await beginVaultPasskeyRegistration({ password });
-    setPreparing(false);
+    event.preventDefault()
+    setPreparing(true)
+    const started = await beginVaultPasskeyRegistration({ password })
+    setPreparing(false)
     if (!started.ok) {
-      feedback.setError(started.error);
-      return;
+      feedback.setError(started.error)
+      return
     }
-    setRegistrationOptions(started.options);
+    setRegistrationOptions(started.options)
   }
 
   async function confirmRegistration() {
-    if (!registrationOptions) return;
+    if (!registrationOptions) return
 
-    feedback.setPending();
-    const result = await registerPasskey(registrationOptions);
+    feedback.setPending()
+    const result = await registerPasskey(registrationOptions)
     if (!result.ok) {
-      feedback.setError(result.error);
-      return;
+      feedback.setError(result.error)
+      return
     }
-    feedback.setSuccess("Biometría activada");
+    feedback.setSuccess('Biometría activada')
     setTimeout(() => {
-      onClose();
-      window.location.reload();
-    }, 500);
+      onClose()
+      window.location.reload()
+    }, 500)
   }
 
   return (
@@ -104,5 +104,5 @@ export function PasskeyEnrollmentForm({ onClose }: { onClose: () => void }) {
         </DialogContent>
       </Dialog>
     </form>
-  );
+  )
 }

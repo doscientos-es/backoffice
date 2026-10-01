@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function VaultLoading() {
   return (
@@ -14,5 +14,5 @@ export default function VaultLoading() {
         ))}
       </div>
     </div>
-  );
+  )
 }

@@ -1,45 +1,45 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
-import { BackLink } from "@/components/layout/back-link";
-import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { SectionBoundary } from "@/components/ui/error-boundary";
-import { requirePageRole } from "@/lib/auth";
-import { getProjectPortfolio } from "@/lib/finance/portfolio";
-import { cn, formatEUR } from "@/lib/utils";
+import { BackLink } from '@/components/layout/back-link'
+import { PageHeader } from '@/components/layout/page-header'
+import { Badge } from '@/components/ui/badge'
+import { SectionBoundary } from '@/components/ui/error-boundary'
+import { requirePageRole } from '@/lib/auth'
+import { getProjectPortfolio } from '@/lib/finance/portfolio'
+import { cn, formatEUR } from '@/lib/utils'
 
-export const metadata: Metadata = { title: "Portfolio · doscientos" };
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: 'Portfolio · doscientos' }
+export const dynamic = 'force-dynamic'
 
 function MarginBadge({ pct }: { pct: number | null }) {
-  if (pct === null) return <span className="text-muted-foreground">—</span>;
-  const positive = pct >= 0;
+  if (pct === null) return <span className="text-muted-foreground">—</span>
+  const positive = pct >= 0
   return (
-    <Badge variant={pct >= 30 ? "success" : pct >= 0 ? "warning" : "destructive"}>
-      {positive ? "+" : ""}
+    <Badge variant={pct >= 30 ? 'success' : pct >= 0 ? 'warning' : 'destructive'}>
+      {positive ? '+' : ''}
       {pct.toFixed(1)}%
     </Badge>
-  );
+  )
 }
 
 async function PortfolioTable() {
-  const rows = await getProjectPortfolio();
+  const rows = await getProjectPortfolio()
 
   // Sort: by margin descending (negative margins last)
-  const sorted = [...rows].sort((a, b) => b.margin - a.margin);
+  const sorted = [...rows].sort((a, b) => b.margin - a.margin)
 
-  const totalRevenue = sorted.reduce((s, r) => s + r.revenue, 0);
-  const totalCost = sorted.reduce((s, r) => s + r.totalCost, 0);
-  const totalMargin = sorted.reduce((s, r) => s + r.margin, 0);
-  const totalHours = sorted.reduce((s, r) => s + r.hours, 0);
+  const totalRevenue = sorted.reduce((s, r) => s + r.revenue, 0)
+  const totalCost = sorted.reduce((s, r) => s + r.totalCost, 0)
+  const totalMargin = sorted.reduce((s, r) => s + r.margin, 0)
+  const totalHours = sorted.reduce((s, r) => s + r.hours, 0)
 
   if (sorted.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
         Aún no hay proyectos con datos económicos.
       </p>
-    );
+    )
   }
 
   return (
@@ -67,21 +67,21 @@ async function PortfolioTable() {
               <td className="px-4 py-3 text-muted-foreground">
                 {row.clientId ? (
                   <Link href={`/clients/${row.clientId}`} className="hover:underline">
-                    {row.clientName ?? "—"}
+                    {row.clientName ?? '—'}
                   </Link>
                 ) : (
-                  (row.clientName ?? "—")
+                  (row.clientName ?? '—')
                 )}
               </td>
               <td className="px-4 py-3 text-right tabular-nums">{formatEUR(row.revenue)}</td>
               <td className="px-4 py-3 text-right text-muted-foreground tabular-nums">
-                {row.hours > 0 ? `${row.hours.toFixed(1)} h` : "—"}
+                {row.hours > 0 ? `${row.hours.toFixed(1)} h` : '—'}
               </td>
               <td className="px-4 py-3 text-right tabular-nums">{formatEUR(row.totalCost)}</td>
               <td
                 className={cn(
-                  "px-4 py-3 text-right font-medium tabular-nums",
-                  row.margin >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
+                  'px-4 py-3 text-right font-medium tabular-nums',
+                  row.margin >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive',
                 )}
               >
                 {formatEUR(row.margin)}
@@ -99,13 +99,13 @@ async function PortfolioTable() {
             </td>
             <td className="px-4 py-3 text-right tabular-nums">{formatEUR(totalRevenue)}</td>
             <td className="px-4 py-3 text-right text-muted-foreground tabular-nums">
-              {totalHours > 0 ? `${totalHours.toFixed(1)} h` : "—"}
+              {totalHours > 0 ? `${totalHours.toFixed(1)} h` : '—'}
             </td>
             <td className="px-4 py-3 text-right tabular-nums">{formatEUR(totalCost)}</td>
             <td
               className={cn(
-                "px-4 py-3 text-right tabular-nums",
-                totalMargin >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
+                'px-4 py-3 text-right tabular-nums',
+                totalMargin >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive',
               )}
             >
               {formatEUR(totalMargin)}
@@ -121,7 +121,7 @@ async function PortfolioTable() {
         </tfoot>
       </table>
     </div>
-  );
+  )
 }
 
 function TableSkeleton() {
@@ -138,11 +138,11 @@ function TableSkeleton() {
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 export default async function PortfolioPage() {
-  await requirePageRole(["owner", "admin"]);
+  await requirePageRole(['owner', 'admin'])
 
   return (
     <div className="flex flex-col gap-6">
@@ -155,5 +155,5 @@ export default async function PortfolioPage() {
         <PortfolioTable />
       </SectionBoundary>
     </div>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -12,7 +12,7 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-} from "@doscientos/ui";
+} from '@doscientos/ui'
 import {
   ArrowUpRight,
   Building2,
@@ -30,48 +30,48 @@ import {
   Wallet,
   Wrench,
   X,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { type ReactNode, useState, useTransition } from "react";
+} from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { type ReactNode, useState, useTransition } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { MemberLabel } from "@/components/ui/member-avatar";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { requiresCyaProspectSoftwareCommission } from "@/lib/leads/attribution";
-import { nextActionState } from "@/lib/leads/pipeline";
-import { leadDisplayName } from "@/lib/leads/utils";
-import type { MemberOption } from "@/lib/members/queries";
-import { LEAD_STATUS } from "@/lib/status";
-import { formatEUR, relativeTime } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { MemberLabel } from '@/components/ui/member-avatar'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
+import { nextActionState } from '@/lib/leads/pipeline'
+import { leadDisplayName } from '@/lib/leads/utils'
+import type { MemberOption } from '@/lib/members/queries'
+import { LEAD_STATUS } from '@/lib/status'
+import { formatEUR, relativeTime } from '@/lib/utils'
 
-import { ScheduleReminderDialog } from "../reminders/schedule-reminder-dialog";
-import { createTask } from "../tasks/actions";
-import { LeadEditDialog } from "./[id]/lead-edit-dialog";
-import { LeadCallLink } from "./[id]/phone-actions";
-import { assignLeadOwner, claimLead } from "./actions";
-import { LeadQuickActionGroups } from "./lead-quick-action-groups";
-import type { KanbanLead } from "./leads-kanban";
+import { ScheduleReminderDialog } from '../reminders/schedule-reminder-dialog'
+import { createTask } from '../tasks/actions'
+import { LeadEditDialog } from './[id]/lead-edit-dialog'
+import { LeadCallLink } from './[id]/phone-actions'
+import { assignLeadOwner, claimLead } from './actions'
+import { LeadQuickActionGroups } from './lead-quick-action-groups'
+import type { KanbanLead } from './leads-kanban'
 
 const INTERACTION_LABEL: Record<string, string> = {
-  email_sent: "Email enviado",
-  email_received: "Email recibido",
-  email_delivered: "Email entregado",
-  email_opened: "Email abierto",
-  email_clicked: "Email con clic",
-  email_bounced: "Email rebotado",
-  email_complained: "Email marcado como spam",
-  email_scheduled: "Email programado",
-  email_delivery_delayed: "Entrega de email retrasada",
-  email_failed: "Error al enviar el email",
-  email_suppressed: "Email suprimido",
-  call: "Llamada",
-  meeting: "Reunión",
-  note: "Nota",
-  owner_change: "Responsable cambiado",
-  status_change: "Cambio de estado",
-};
+  email_sent: 'Email enviado',
+  email_received: 'Email recibido',
+  email_delivered: 'Email entregado',
+  email_opened: 'Email abierto',
+  email_clicked: 'Email con clic',
+  email_bounced: 'Email rebotado',
+  email_complained: 'Email marcado como spam',
+  email_scheduled: 'Email programado',
+  email_delivery_delayed: 'Entrega de email retrasada',
+  email_failed: 'Error al enviar el email',
+  email_suppressed: 'Email suprimido',
+  call: 'Llamada',
+  meeting: 'Reunión',
+  note: 'Nota',
+  owner_change: 'Responsable cambiado',
+  status_change: 'Cambio de estado',
+}
 
 export function LeadQuickView({
   lead,
@@ -79,19 +79,19 @@ export function LeadQuickView({
   aiEnabled = false,
   googleEnabled = false,
   members = [],
-  senderName = "",
+  senderName = '',
   onDeleteAction,
   onCloseAction,
 }: {
-  lead: KanbanLead | null;
-  canEdit?: boolean;
-  aiEnabled?: boolean;
-  googleEnabled?: boolean;
-  members?: MemberOption[];
-  senderName?: string;
+  lead: KanbanLead | null
+  canEdit?: boolean
+  aiEnabled?: boolean
+  googleEnabled?: boolean
+  members?: MemberOption[]
+  senderName?: string
   /** Optimistically removes the lead from the board and runs the delete. Optional — falls back to router.refresh(). */
-  onDeleteAction?: (id: string) => void;
-  onCloseAction: () => void;
+  onDeleteAction?: (id: string) => void
+  onCloseAction: () => void
 }) {
   return (
     <DrawerContent
@@ -115,7 +115,7 @@ export function LeadQuickView({
         </ErrorBoundary>
       ) : null}
     </DrawerContent>
-  );
+  )
 }
 
 function Body({
@@ -127,19 +127,19 @@ function Body({
   senderName,
   onDeleteAction,
 }: {
-  lead: KanbanLead;
-  canEdit: boolean;
-  aiEnabled: boolean;
-  googleEnabled: boolean;
-  members: MemberOption[];
-  senderName: string;
-  onDeleteAction?: (id: string) => void;
+  lead: KanbanLead
+  canEdit: boolean
+  aiEnabled: boolean
+  googleEnabled: boolean
+  members: MemberOption[]
+  senderName: string
+  onDeleteAction?: (id: string) => void
 }) {
-  const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0;
-  const displayName = leadDisplayName(lead);
-  const alias = lead.alias?.trim();
-  const campaignName = lead.marketing_campaign_name;
-  const needsNextAction = nextActionState(lead.status, lead.next_action) === "missing";
+  const hasEstimated = lead.estimated_value != null && lead.estimated_value > 0
+  const displayName = leadDisplayName(lead)
+  const alias = lead.alias?.trim()
+  const campaignName = lead.marketing_campaign_name
+  const needsNextAction = nextActionState(lead.status, lead.next_action) === 'missing'
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto_auto]">
       <DrawerHeader className="flex flex-row items-start justify-between gap-2 border-b border-border">
@@ -181,12 +181,12 @@ function Body({
             </div>
           </section>
         ) : null}
-        {(lead.status === "lost" || lead.status === "not_interested") && lead.lost_reason && (
+        {(lead.status === 'lost' || lead.status === 'not_interested') && lead.lost_reason && (
           <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/8 px-3 py-2.5 text-xs">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-destructive" />
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="font-semibold text-destructive">
-                {lead.status === "lost" ? "Motivo de pérdida" : "Motivo de no interés"}
+                {lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo de no interés'}
               </span>
               <span className="text-foreground">{lead.lost_reason}</span>
             </div>
@@ -358,7 +358,7 @@ function Body({
         </Button>
       </footer>
     </div>
-  );
+  )
 }
 
 function DeleteLeadButton({
@@ -366,16 +366,16 @@ function DeleteLeadButton({
   leadName,
   onConfirmAction,
 }: {
-  leadId: string;
-  leadName: string;
+  leadId: string
+  leadName: string
   /** Triggers the optimistic removal + delete in the parent board. */
-  onConfirmAction: (id: string) => void;
+  onConfirmAction: (id: string) => void
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   function onConfirm() {
-    setOpen(false);
-    onConfirmAction(leadId);
+    setOpen(false)
+    onConfirmAction(leadId)
   }
 
   return (
@@ -407,7 +407,7 @@ function DeleteLeadButton({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 function Heading({ children }: { children: ReactNode }) {
@@ -415,7 +415,7 @@ function Heading({ children }: { children: ReactNode }) {
     <p className="text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
       {children}
     </p>
-  );
+  )
 }
 
 function Row({ icon, href, children }: { icon: ReactNode; href?: string; children: ReactNode }) {
@@ -424,17 +424,17 @@ function Row({ icon, href, children }: { icon: ReactNode; href?: string; childre
       <span className="text-muted-foreground">{icon}</span>
       <span className="truncate">{children}</span>
     </>
-  );
+  )
   return href ? (
     <a href={href} className="flex items-center gap-2 hover:text-primary">
       {inner}
     </a>
   ) : (
     <div className="flex items-center gap-2">{inner}</div>
-  );
+  )
 }
 
-function Interactions({ interactions }: { interactions: KanbanLead["recent_interactions"] }) {
+function Interactions({ interactions }: { interactions: KanbanLead['recent_interactions'] }) {
   return (
     <section className="flex flex-col gap-1.5">
       <Heading>Últimas interacciones</Heading>
@@ -467,36 +467,36 @@ function Interactions({ interactions }: { interactions: KanbanLead["recent_inter
         </ul>
       )}
     </section>
-  );
+  )
 }
 
 // ─── Assign Widget ───────────────────────────────────────────────────────────
 
 function AssignWidget({ leadId, members }: { leadId: string; members: MemberOption[] }) {
-  const router = useRouter();
-  const [claimPending, startClaim] = useTransition();
-  const [assignPending, startAssign] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const isPending = claimPending || assignPending;
+  const router = useRouter()
+  const [claimPending, startClaim] = useTransition()
+  const [assignPending, startAssign] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const isPending = claimPending || assignPending
 
   const handleClaim = () => {
-    setError(null);
+    setError(null)
     startClaim(async () => {
-      const res = await claimLead({ leadId });
-      if (res.ok) router.refresh();
-      else setError(res.error);
-    });
-  };
+      const res = await claimLead({ leadId })
+      if (res.ok) router.refresh()
+      else setError(res.error)
+    })
+  }
 
   const handleAssign = (assigneeId: string) => {
-    if (!assigneeId) return;
-    setError(null);
+    if (!assigneeId) return
+    setError(null)
     startAssign(async () => {
-      const res = await assignLeadOwner({ leadId, assigneeId });
-      if (res.ok) router.refresh();
-      else setError(res.error);
-    });
-  };
+      const res = await assignLeadOwner({ leadId, assigneeId })
+      if (res.ok) router.refresh()
+      else setError(res.error)
+    })
+  }
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-1.5">
@@ -528,7 +528,7 @@ function AssignWidget({ leadId, members }: { leadId: string; members: MemberOpti
       </select>
       {error && <p className="text-[11px] text-destructive">{error}</p>}
     </div>
-  );
+  )
 }
 
 // ─── Quick Actions (inline in drawer) ────────────────────────────────────────
@@ -543,14 +543,14 @@ export function DrawerQuickActions({
   aiEnabled,
   googleEnabled,
 }: {
-  leadId: string;
-  leadName: string;
-  leadPhone: string | null;
-  leadEmail: string | null;
-  leadLanguage?: string | null;
-  senderName: string;
-  aiEnabled: boolean;
-  googleEnabled: boolean;
+  leadId: string
+  leadName: string
+  leadPhone: string | null
+  leadEmail: string | null
+  leadLanguage?: string | null
+  senderName: string
+  aiEnabled: boolean
+  googleEnabled: boolean
 }) {
   return (
     <LeadQuickActionGroups
@@ -564,5 +564,5 @@ export function DrawerQuickActions({
       googleEnabled={googleEnabled}
       createTaskAction={createTask}
     />
-  );
+  )
 }

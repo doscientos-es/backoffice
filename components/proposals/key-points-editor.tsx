@@ -1,25 +1,25 @@
-"use client";
+'use client'
 
-import { ChevronDown, ChevronUp, Plus, Trash as Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash as Trash2 } from 'lucide-react'
 
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   createEmptyKeyPoint,
   type EditableKeyPoint,
   KEY_POINTS_LIMITS,
-} from "@/lib/proposals/key-points";
+} from '@/lib/proposals/key-points'
 
 export type KeyPointsEditorProps = {
-  items: EditableKeyPoint[];
-  onChange: (items: EditableKeyPoint[]) => void;
+  items: EditableKeyPoint[]
+  onChange: (items: EditableKeyPoint[]) => void
   /** When true, every input is disabled. Mirrors `LineItemsTable.locked`. */
-  locked?: boolean;
-  titlePlaceholder?: string;
-  descriptionPlaceholder?: string;
-  addLabel?: string;
-  ariaLabel?: string;
-};
+  locked?: boolean
+  titlePlaceholder?: string
+  descriptionPlaceholder?: string
+  addLabel?: string
+  ariaLabel?: string
+}
 
 /**
  * Reusable ordered-list editor for proposal narrative blocks (problems and
@@ -30,34 +30,34 @@ export function KeyPointsEditor({
   items,
   onChange,
   locked = false,
-  titlePlaceholder = "Título",
-  descriptionPlaceholder = "Descripción (opcional)",
-  addLabel = "Añadir",
+  titlePlaceholder = 'Título',
+  descriptionPlaceholder = 'Descripción (opcional)',
+  addLabel = 'Añadir',
   ariaLabel,
 }: KeyPointsEditorProps) {
-  const max = KEY_POINTS_LIMITS.maxCount;
+  const max = KEY_POINTS_LIMITS.maxCount
 
   const update = (i: number, patch: Partial<EditableKeyPoint>) =>
-    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)))
 
   const add = () => {
-    if (items.length >= max) return;
-    onChange([...items, createEmptyKeyPoint()]);
-  };
+    if (items.length >= max) return
+    onChange([...items, createEmptyKeyPoint()])
+  }
 
-  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i))
 
   const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= items.length) return;
-    const copy = items.slice();
-    const a = copy[i];
-    const b = copy[j];
-    if (!a || !b) return;
-    copy[i] = b;
-    copy[j] = a;
-    onChange(copy);
-  };
+    const j = i + dir
+    if (j < 0 || j >= items.length) return
+    const copy = items.slice()
+    const a = copy[i]
+    const b = copy[j]
+    if (!a || !b) return
+    copy[i] = b
+    copy[j] = a
+    onChange(copy)
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -74,7 +74,7 @@ export function KeyPointsEditor({
             >
               <div className="flex items-center gap-1.5">
                 <span className="w-6 shrink-0 text-center text-[11px] font-semibold text-muted-foreground tabular-nums">
-                  {String(i + 1).padStart(2, "0")}
+                  {String(i + 1).padStart(2, '0')}
                 </span>
                 <Input
                   value={it.title}
@@ -141,5 +141,5 @@ export function KeyPointsEditor({
         <p className="text-[11px] text-muted-foreground">Máximo {max} puntos por bloque.</p>
       ) : null}
     </div>
-  );
+  )
 }

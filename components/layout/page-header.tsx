@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { Fragment, type ReactNode } from "react";
+import Link from 'next/link'
+import { Fragment, type ReactNode } from 'react'
 
 import {
   Breadcrumb,
@@ -8,29 +8,29 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/breadcrumb'
+import { cn } from '@/lib/utils'
 
 export type BreadcrumbEntry = {
-  label: string;
-  href?: string;
-};
+  label: string
+  href?: string
+}
 
 export type PageHeaderProps = {
-  title: string;
+  title: string
   /** Small contextual label rendered above the page title. */
-  eyebrow?: ReactNode;
-  description?: string;
+  eyebrow?: ReactNode
+  description?: string
   /** Optional secondary metadata rendered below the description. */
-  meta?: ReactNode;
+  meta?: ReactNode
   /** Optional icon/avatar rendered to the left of the title. */
-  icon?: ReactNode;
-  back?: ReactNode;
-  breadcrumbs?: BreadcrumbEntry[];
-  actions?: ReactNode;
-  titleClassName?: string;
-  className?: string;
-};
+  icon?: ReactNode
+  back?: ReactNode
+  breadcrumbs?: BreadcrumbEntry[]
+  actions?: ReactNode
+  titleClassName?: string
+  className?: string
+}
 
 export function PageHeader({
   title,
@@ -44,14 +44,14 @@ export function PageHeader({
   titleClassName,
   className,
 }: PageHeaderProps) {
-  const hasCrumbs = breadcrumbs && breadcrumbs.length > 0;
+  const hasCrumbs = breadcrumbs && breadcrumbs.length > 0
   return (
-    <header className={cn("flex flex-col gap-2", className)}>
+    <header className={cn('flex flex-col gap-2', className)}>
       {hasCrumbs ? (
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((entry, i) => {
-              const isLast = i === breadcrumbs.length - 1;
+              const isLast = i === breadcrumbs.length - 1
               return (
                 // biome-ignore lint/suspicious/noArrayIndexKey: breadcrumbs are a static, ordered trail
                 <Fragment key={`${entry.label}:${i}`}>
@@ -70,7 +70,7 @@ export function PageHeader({
                   </BreadcrumbItem>
                   {isLast ? null : <BreadcrumbSeparator />}
                 </Fragment>
-              );
+              )
             })}
           </BreadcrumbList>
         </Breadcrumb>
@@ -86,7 +86,7 @@ export function PageHeader({
             ) : null}
             <h1
               className={cn(
-                "text-2xl font-semibold tracking-tight wrap-break-word text-foreground",
+                'text-2xl font-semibold tracking-tight wrap-break-word text-foreground',
                 titleClassName,
               )}
             >
@@ -105,5 +105,5 @@ export function PageHeader({
         ) : null}
       </div>
     </header>
-  );
+  )
 }

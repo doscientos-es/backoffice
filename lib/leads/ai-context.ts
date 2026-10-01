@@ -1,27 +1,27 @@
-import { formatInteractionForAI, type LeadInteractionForAI } from "./interaction-utils";
-import type { LeadDiscoveryQuestion } from "./types";
+import { formatInteractionForAI, type LeadInteractionForAI } from './interaction-utils'
+import type { LeadDiscoveryQuestion } from './types'
 
-type LeadContextRow = Record<string, unknown>;
+type LeadContextRow = Record<string, unknown>
 
 function display(value: unknown): string {
-  if (value == null || (typeof value === "string" && value.trim() === "")) return "—";
-  return String(value);
+  if (value == null || (typeof value === 'string' && value.trim() === '')) return '—'
+  return String(value)
 }
 
 function yesNoUnknown(value: unknown): string {
-  return value === true ? "sí" : value === false ? "no" : "sin marcar";
+  return value === true ? 'sí' : value === false ? 'no' : 'sin marcar'
 }
 
 function compact(values: unknown[]): string {
-  return values.filter((value) => value != null && String(value).trim() !== "").join(" · ") || "—";
+  return values.filter((value) => value != null && String(value).trim() !== '').join(' · ') || '—'
 }
 
 function companyResearchSummary(value: unknown): string {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return "—";
-  const research = value as Record<string, unknown>;
-  const services = Array.isArray(research.services) ? research.services.join(", ") : null;
-  const reasons = Array.isArray(research.reasons) ? research.reasons.join(" | ") : null;
-  const cautions = Array.isArray(research.cautions) ? research.cautions.join(" | ") : null;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return '—'
+  const research = value as Record<string, unknown>
+  const services = Array.isArray(research.services) ? research.services.join(', ') : null
+  const reasons = Array.isArray(research.reasons) ? research.reasons.join(' | ') : null
+  const cautions = Array.isArray(research.cautions) ? research.cautions.join(' | ') : null
   return compact([
     research.description && `descripción: ${research.description}`,
     research.sector && `sector: ${research.sector}`,
@@ -30,7 +30,7 @@ function companyResearchSummary(value: unknown): string {
     research.priority && `prioridad: ${research.priority}`,
     reasons && `señales: ${reasons}`,
     cautions && `cautelas: ${cautions}`,
-  ]);
+  ])
 }
 
 /** Serializes the CRM fields that influence qualification and sales prioritization. */
@@ -58,56 +58,56 @@ export function formatLeadContextForAI(lead: LeadContextRow): string {
     `Resumen IA anterior: ${display(lead.ai_summary)}`,
     `Siguiente paso IA anterior: ${display(lead.ai_suggested_next_step)} · fecha: ${display(lead.ai_suggested_next_step_at)}`,
     `Investigación pública de empresa (información inferida, revisar antes de usar): ${companyResearchSummary(lead.company_research)}`,
-  ].join("\n");
+  ].join('\n')
 }
 
 export type ScheduledLeadTaskForAI = {
-  title: string | null;
-  description: string | null;
-  start_at: string | null;
-  status: string | null;
-  priority: string | number | null;
-};
+  title: string | null
+  description: string | null
+  start_at: string | null
+  status: string | null
+  priority: string | number | null
+}
 
 export function formatScheduledLeadTasksForAI(tasks: ScheduledLeadTaskForAI[]): string {
   return tasks
     .map(
       (task) =>
-        `- ${display(task.start_at)} | ${display(task.title)} | estado: ${display(task.status)} | prioridad: ${display(task.priority)}${task.description ? ` | ${task.description.slice(0, 400)}` : ""}`,
+        `- ${display(task.start_at)} | ${display(task.title)} | estado: ${display(task.status)} | prioridad: ${display(task.priority)}${task.description ? ` | ${task.description.slice(0, 400)}` : ''}`,
     )
-    .join("\n");
+    .join('\n')
 }
 
 export type LeadProposalForAI = {
-  number: string | null;
-  title: string | null;
-  status: string | null;
-  total: number | null;
-  valid_until: string | null;
-  sent_at: string | null;
-  viewed_at: string | null;
-  responded_at: string | null;
-  notes: string | null;
-};
+  number: string | null
+  title: string | null
+  status: string | null
+  total: number | null
+  valid_until: string | null
+  sent_at: string | null
+  viewed_at: string | null
+  responded_at: string | null
+  notes: string | null
+}
 
 export function formatLeadProposalsForAI(proposals: LeadProposalForAI[]): string {
   return proposals
     .map(
       (proposal) =>
-        `- ${display(proposal.number)} | ${display(proposal.title)} | estado: ${display(proposal.status)} | total: ${display(proposal.total)} | válida hasta: ${display(proposal.valid_until)} | enviada: ${display(proposal.sent_at)} | vista: ${display(proposal.viewed_at)} | respondida: ${display(proposal.responded_at)}${proposal.notes ? ` | ${proposal.notes.slice(0, 500)}` : ""}`,
+        `- ${display(proposal.number)} | ${display(proposal.title)} | estado: ${display(proposal.status)} | total: ${display(proposal.total)} | válida hasta: ${display(proposal.valid_until)} | enviada: ${display(proposal.sent_at)} | vista: ${display(proposal.viewed_at)} | respondida: ${display(proposal.responded_at)}${proposal.notes ? ` | ${proposal.notes.slice(0, 500)}` : ''}`,
     )
-    .join("\n");
+    .join('\n')
 }
 
 export type LeadConversionEventForAI = {
-  event_name: string;
-  conversion_step: string | null;
-  landing_path: string | null;
-  referrer: string | null;
-  utm_source: string | null;
-  utm_campaign: string | null;
-  created_at: string;
-};
+  event_name: string
+  conversion_step: string | null
+  landing_path: string | null
+  referrer: string | null
+  utm_source: string | null
+  utm_campaign: string | null
+  created_at: string
+}
 
 export function formatLeadConversionEventsForAI(events: LeadConversionEventForAI[]): string {
   return events
@@ -115,74 +115,74 @@ export function formatLeadConversionEventsForAI(events: LeadConversionEventForAI
       (event) =>
         `- ${display(event.created_at)} | ${display(event.event_name)} | paso: ${display(event.conversion_step)} | landing: ${display(event.landing_path)} | ref: ${display(event.referrer)} | UTM: ${compact([event.utm_source, event.utm_campaign])}`,
     )
-    .join("\n");
+    .join('\n')
 }
 
 type LeadBriefingProject = {
-  name: string;
-  status: string | null;
-  description: string | null;
-};
+  name: string
+  status: string | null
+  description: string | null
+}
 
 type LeadBriefingInvoice = {
-  full_number: string | null;
-  status: string | null;
-  total: number | null;
-  issue_date: string | null;
-};
+  full_number: string | null
+  status: string | null
+  total: number | null
+  issue_date: string | null
+}
 
 type LeadBriefingTask = {
-  title: string;
-  status: string;
-  due_date: string | null;
-  description: string | null;
-  priority: string | null;
-};
+  title: string
+  status: string
+  due_date: string | null
+  description: string | null
+  priority: string | null
+}
 
 type LeadBriefingReminder = {
-  title: string;
-  remind_at: string;
-};
+  title: string
+  remind_at: string
+}
 
 type LeadBriefingAttachment = {
-  name: string;
-  mime_type: string | null;
-};
+  name: string
+  mime_type: string | null
+}
 
 export type LeadBriefingForAI = {
-  lead: LeadContextRow;
-  clientName: string | null;
-  interactions: LeadInteractionForAI[];
-  proposals: LeadProposalForAI[];
-  projects: LeadBriefingProject[];
-  invoices: LeadBriefingInvoice[];
-  tasks: LeadBriefingTask[];
-  reminders: LeadBriefingReminder[];
-  attachments: LeadBriefingAttachment[];
-  discoveryQuestions?: LeadDiscoveryQuestion[];
-};
+  lead: LeadContextRow
+  clientName: string | null
+  interactions: LeadInteractionForAI[]
+  proposals: LeadProposalForAI[]
+  projects: LeadBriefingProject[]
+  invoices: LeadBriefingInvoice[]
+  tasks: LeadBriefingTask[]
+  reminders: LeadBriefingReminder[]
+  attachments: LeadBriefingAttachment[]
+  discoveryQuestions?: LeadDiscoveryQuestion[]
+}
 
 export function formatLeadDiscoveryQuestionsForAI(questions: LeadDiscoveryQuestion[]): string {
   const confirmed = questions
-    .filter((question) => question.status === "answered" && question.answer?.trim())
+    .filter((question) => question.status === 'answered' && question.answer?.trim())
     .map((question) => `- ${question.question}: ${question.answer}`)
-    .join("\n");
+    .join('\n')
   const open = questions
-    .filter((question) => !["answered", "archived", "not_applicable"].includes(question.status))
+    .filter((question) => !['answered', 'archived', 'not_applicable'].includes(question.status))
     .map((question) => {
       const suggestion = question.suggested_answer
         ? ` | propuesta IA pendiente de confirmar: ${question.suggested_answer}`
-        : "";
-      return `- ${question.question}${suggestion}`;
+        : ''
+      return `- ${question.question}${suggestion}`
     })
-    .join("\n");
+    .join('\n')
 
   return [
-    "Confirmadas (fuente CRM):",
-    confirmed || "(sin respuestas confirmadas)",
-    "Pendientes (no asumir como hechos):",
-    open || "(sin preguntas pendientes)",
-  ].join("\n");
+    'Confirmadas (fuente CRM):',
+    confirmed || '(sin respuestas confirmadas)',
+    'Pendientes (no asumir como hechos):',
+    open || '(sin preguntas pendientes)',
+  ].join('\n')
 }
 
 /**
@@ -190,60 +190,56 @@ export function formatLeadDiscoveryQuestionsForAI(questions: LeadDiscoveryQuesti
  * deterministic: copying it does not send CRM data anywhere.
  */
 export function formatLeadBriefingForAI(context: LeadBriefingForAI): string {
-  const interactions = context.interactions
-    .slice()
-    .reverse()
-    .map(formatInteractionForAI)
-    .join("\n");
+  const interactions = context.interactions.slice().reverse().map(formatInteractionForAI).join('\n')
   const projects = context.projects
     .map(
       (project) =>
-        `- ${display(project.name)} | estado: ${display(project.status)}${project.description ? ` | ${project.description.slice(0, 1000)}` : ""}`,
+        `- ${display(project.name)} | estado: ${display(project.status)}${project.description ? ` | ${project.description.slice(0, 1000)}` : ''}`,
     )
-    .join("\n");
+    .join('\n')
   const invoices = context.invoices
     .map(
       (invoice) =>
         `- ${display(invoice.full_number)} | estado: ${display(invoice.status)} | total: ${display(invoice.total)} | emitida: ${display(invoice.issue_date)}`,
     )
-    .join("\n");
+    .join('\n')
   const tasks = context.tasks
     .map(
       (task) =>
-        `- ${display(task.due_date)} | ${display(task.title)} | estado: ${display(task.status)} | prioridad: ${display(task.priority)}${task.description ? ` | ${task.description.slice(0, 700)}` : ""}`,
+        `- ${display(task.due_date)} | ${display(task.title)} | estado: ${display(task.status)} | prioridad: ${display(task.priority)}${task.description ? ` | ${task.description.slice(0, 700)}` : ''}`,
     )
-    .join("\n");
+    .join('\n')
   const reminders = context.reminders
     .map((reminder) => `- ${display(reminder.remind_at)} | ${display(reminder.title)}`)
-    .join("\n");
+    .join('\n')
   const attachments = context.attachments
     .map((attachment) => `- ${display(attachment.name)} | ${display(attachment.mime_type)}`)
-    .join("\n");
+    .join('\n')
 
   return [
-    "# Briefing CRM para IA",
-    "Usa únicamente estos datos como fuente de verdad. Si falta información, indícalo y no la inventes.",
-    "\n## Ficha y cualificación del lead",
+    '# Briefing CRM para IA',
+    'Usa únicamente estos datos como fuente de verdad. Si falta información, indícalo y no la inventes.',
+    '\n## Ficha y cualificación del lead',
     formatLeadContextForAI(context.lead),
-    "\n## Descubrimiento funcional",
+    '\n## Descubrimiento funcional',
     formatLeadDiscoveryQuestionsForAI(context.discoveryQuestions ?? []),
     `Cliente vinculado: ${display(context.clientName)}`,
-    "\n## Historial de interacciones (cronológico)",
-    interactions || "(sin interacciones registradas)",
-    "\n## Actividad pendiente",
-    `Tareas:\n${tasks || "(sin tareas registradas)"}\n\nRecordatorios:\n${reminders || "(sin recordatorios pendientes)"}`,
-    "\n## Propuestas relacionadas",
-    formatLeadProposalsForAI(context.proposals) || "(sin propuestas relacionadas)",
-    "\n## Proyectos vinculados",
-    projects || "(sin proyectos vinculados)",
-    "\n## Facturación vinculada",
-    invoices || "(sin facturas vinculadas)",
-    "\n## Adjuntos registrados",
-    `${attachments || "(sin adjuntos)"}\nNota: solo se incluyen los nombres y tipos de los archivos; su contenido no se ha extraído.`,
-  ].join("\n");
+    '\n## Historial de interacciones (cronológico)',
+    interactions || '(sin interacciones registradas)',
+    '\n## Actividad pendiente',
+    `Tareas:\n${tasks || '(sin tareas registradas)'}\n\nRecordatorios:\n${reminders || '(sin recordatorios pendientes)'}`,
+    '\n## Propuestas relacionadas',
+    formatLeadProposalsForAI(context.proposals) || '(sin propuestas relacionadas)',
+    '\n## Proyectos vinculados',
+    projects || '(sin proyectos vinculados)',
+    '\n## Facturación vinculada',
+    invoices || '(sin facturas vinculadas)',
+    '\n## Adjuntos registrados',
+    `${attachments || '(sin adjuntos)'}\nNota: solo se incluyen los nombres y tipos de los archivos; su contenido no se ha extraído.`,
+  ].join('\n')
 }
 
-const CALL_COPILOT_CONTEXT_CHARS = 12_000;
+const CALL_COPILOT_CONTEXT_CHARS = 12_000
 
 /**
  * Briefing for the post-call copilot. Keeps the latest call intact and only a
@@ -253,48 +249,48 @@ const CALL_COPILOT_CONTEXT_CHARS = 12_000;
 export function formatLeadCallCopilotBriefing(
   context: Pick<
     LeadBriefingForAI,
-    "lead" | "clientName" | "interactions" | "proposals" | "tasks"
+    'lead' | 'clientName' | 'interactions' | 'proposals' | 'tasks'
   > & { discoveryQuestions?: LeadDiscoveryQuestion[] },
 ): string {
-  const chronological = context.interactions.slice().reverse();
-  let latestCallIndex = -1;
+  const chronological = context.interactions.slice().reverse()
+  let latestCallIndex = -1
   for (let index = chronological.length - 1; index >= 0; index--) {
-    if (chronological[index]?.type === "call") {
-      latestCallIndex = index;
-      break;
+    if (chronological[index]?.type === 'call') {
+      latestCallIndex = index
+      break
     }
   }
-  const latestCall = latestCallIndex >= 0 ? chronological[latestCallIndex] : null;
+  const latestCall = latestCallIndex >= 0 ? chronological[latestCallIndex] : null
   const nearby = chronological
     .filter((_, index) => index !== latestCallIndex)
     .slice(-4)
     .map(formatInteractionForAI)
-    .join("\n")
-    .slice(-2_000);
+    .join('\n')
+    .slice(-2_000)
   const openTasks = context.tasks
-    .filter((task) => task.status !== "done" && task.status !== "cancelled")
+    .filter((task) => task.status !== 'done' && task.status !== 'cancelled')
     .slice(0, 5)
     .map((task) => `- ${display(task.title)} | ${display(task.status)}`)
-    .join("\n");
+    .join('\n')
   const proposals = context.proposals
     .slice(0, 3)
     .map(
       (proposal) =>
         `- ${display(proposal.number)} | ${display(proposal.title)} | ${display(proposal.status)}`,
     )
-    .join("\n");
+    .join('\n')
 
   return [
-    "# Copiloto de la última llamada",
-    "Fuente principal: la llamada más reciente. El contexto cercano solo sirve para no contradecirla.",
+    '# Copiloto de la última llamada',
+    'Fuente principal: la llamada más reciente. El contexto cercano solo sirve para no contradecirla.',
     `\nLead: ${display(context.lead.name)} · ${display(context.lead.company)} · estado: ${display(context.lead.status)}`,
     `Cliente vinculado: ${display(context.clientName)}`,
     `\n## Guion de descubrimiento\n${formatLeadDiscoveryQuestionsForAI(context.discoveryQuestions ?? [])}`,
-    `\n## Llamada más reciente\n${latestCall ? formatInteractionForAI(latestCall) : "(sin llamada registrada)"}`,
-    `\n## Contexto cercano\n${nearby || "(sin contexto adicional)"}`,
-    `\n## Tareas abiertas\n${openTasks || "(sin tareas abiertas)"}`,
-    `\n## Propuestas\n${proposals || "(sin propuestas)"}`,
+    `\n## Llamada más reciente\n${latestCall ? formatInteractionForAI(latestCall) : '(sin llamada registrada)'}`,
+    `\n## Contexto cercano\n${nearby || '(sin contexto adicional)'}`,
+    `\n## Tareas abiertas\n${openTasks || '(sin tareas abiertas)'}`,
+    `\n## Propuestas\n${proposals || '(sin propuestas)'}`,
   ]
-    .join("\n")
-    .slice(0, CALL_COPILOT_CONTEXT_CHARS);
+    .join('\n')
+    .slice(0, CALL_COPILOT_CONTEXT_CHARS)
 }

@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,75 +7,75 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@doscientos/ui";
-import { Pencil } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { sileo } from "sileo";
+} from '@doscientos/ui'
+import { Pencil } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { sileo } from 'sileo'
 
-import { Button } from "@/components/ui/button";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { VersionConflictDialog } from "@/components/ui/version-conflict-dialog";
-import { useFormDirty } from "@/lib/hooks/use-form-dirty";
-import type { MemberOption } from "@/lib/members/queries";
+import { Button } from '@/components/ui/button'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { VersionConflictDialog } from '@/components/ui/version-conflict-dialog'
+import { useFormDirty } from '@/lib/hooks/use-form-dirty'
+import type { MemberOption } from '@/lib/members/queries'
 
-import { updateLead } from "../actions";
-import { LeadFormFields } from "../lead-form-fields";
+import { updateLead } from '../actions'
+import { LeadFormFields } from '../lead-form-fields'
 
 type Lead = {
-  id: string;
-  name: string;
-  alias: string | null;
-  company: string | null;
-  email: string | null;
-  phone: string | null;
-  source: string | null;
-  language: "es" | "ca" | "en" | null;
-  notes: string | null;
-  estimated_value: number | null;
-  company_size: string | null;
-  solution_type: string | null;
-  urgency: string | null;
-  assigned_to: string | null;
-  version: number;
-};
+  id: string
+  name: string
+  alias: string | null
+  company: string | null
+  email: string | null
+  phone: string | null
+  source: string | null
+  language: 'es' | 'ca' | 'en' | null
+  notes: string | null
+  estimated_value: number | null
+  company_size: string | null
+  solution_type: string | null
+  urgency: string | null
+  assigned_to: string | null
+  version: number
+}
 
 export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: MemberOption[] }) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [conflictOpen, setConflictOpen] = useState(false);
-  const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>();
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [conflictOpen, setConflictOpen] = useState(false)
+  const { formRef, isDirty, reset } = useFormDirty<HTMLFormElement>()
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const estimatedRaw = fd.get("estimated_value")?.toString() ?? "";
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    const estimatedRaw = fd.get('estimated_value')?.toString() ?? ''
     const payload = {
       id: lead.id,
       expected_version: lead.version,
-      name: fd.get("name")?.toString() ?? "",
-      alias: fd.get("alias")?.toString() ?? "",
-      email: fd.get("email")?.toString() ?? "",
-      phone: fd.get("phone")?.toString() ?? "",
-      company: fd.get("company")?.toString() ?? "",
-      source: fd.get("source")?.toString() ?? "",
-      language: (fd.get("language")?.toString() ?? "es") as "es" | "ca" | "en",
-      notes: fd.get("notes")?.toString() ?? "",
-      estimated_value: estimatedRaw === "" ? null : Number(estimatedRaw),
-      company_size: fd.get("company_size")?.toString() ?? "",
-      solution_type: fd.get("solution_type")?.toString() ?? "",
-      urgency: fd.get("urgency")?.toString() ?? "",
-      assigned_to: fd.get("assigned_to")?.toString() ?? "",
-    };
-    const res = await updateLead(payload);
-    if (!res.ok) {
-      if (res.code === "conflict") setConflictOpen(true);
-      else sileo.error({ title: res.error ?? "No se pudo guardar el lead" });
-      return;
+      name: fd.get('name')?.toString() ?? '',
+      alias: fd.get('alias')?.toString() ?? '',
+      email: fd.get('email')?.toString() ?? '',
+      phone: fd.get('phone')?.toString() ?? '',
+      company: fd.get('company')?.toString() ?? '',
+      source: fd.get('source')?.toString() ?? '',
+      language: (fd.get('language')?.toString() ?? 'es') as 'es' | 'ca' | 'en',
+      notes: fd.get('notes')?.toString() ?? '',
+      estimated_value: estimatedRaw === '' ? null : Number(estimatedRaw),
+      company_size: fd.get('company_size')?.toString() ?? '',
+      solution_type: fd.get('solution_type')?.toString() ?? '',
+      urgency: fd.get('urgency')?.toString() ?? '',
+      assigned_to: fd.get('assigned_to')?.toString() ?? '',
     }
-    reset();
-    setOpen(false);
-    router.refresh();
+    const res = await updateLead(payload)
+    if (!res.ok) {
+      if (res.code === 'conflict') setConflictOpen(true)
+      else sileo.error({ title: res.error ?? 'No se pudo guardar el lead' })
+      return
+    }
+    reset()
+    setOpen(false)
+    router.refresh()
   }
 
   return (
@@ -129,11 +129,11 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
         entityName="lead"
         onKeepEditing={() => setConflictOpen(false)}
         onReload={() => {
-          setConflictOpen(false);
-          setOpen(false);
-          router.refresh();
+          setConflictOpen(false)
+          setOpen(false)
+          router.refresh()
         }}
       />
     </Dialog>
-  );
+  )
 }

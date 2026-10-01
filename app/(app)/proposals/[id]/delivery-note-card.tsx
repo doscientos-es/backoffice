@@ -1,37 +1,37 @@
-"use client";
+'use client'
 
-import { CircleCheck as CheckCircle2, Copy, ExternalLink } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { sileo } from "sileo";
+import { CircleCheck as CheckCircle2, Copy, ExternalLink } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
+import { sileo } from 'sileo'
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-import { cancelDeliveryNote, createDeliveryNote } from "../delivery-actions";
+import { cancelDeliveryNote, createDeliveryNote } from '../delivery-actions'
 
 export type DeliveryNote = {
-  id: string;
-  version: number;
-  status: string;
-  portal_token: string;
-  sent_at: string | null;
-  first_viewed_at: string | null;
-  accepted_at: string | null;
-  accepted_by_name: string | null;
-  accepted_by_role: string | null;
-  document_hash: string | null;
-};
+  id: string
+  version: number
+  status: string
+  portal_token: string
+  sent_at: string | null
+  first_viewed_at: string | null
+  accepted_at: string | null
+  accepted_by_name: string | null
+  accepted_by_role: string | null
+  document_hash: string | null
+}
 
 function formatDateTime(value: string): string {
-  return new Date(value).toLocaleString("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return new Date(value).toLocaleString('es-ES', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 /**
@@ -44,40 +44,40 @@ export function DeliveryNoteCard({
   hasMaintenance,
   canEdit,
 }: {
-  proposalId: string;
-  note: DeliveryNote | null;
-  hasMaintenance: boolean;
-  canEdit: boolean;
+  proposalId: string
+  note: DeliveryNote | null
+  hasMaintenance: boolean
+  canEdit: boolean
 }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const path = note ? `/p/delivery/${note.portal_token}` : null;
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const path = note ? `/p/delivery/${note.portal_token}` : null
 
   function run(action: () => Promise<{ ok: true } | { ok: false; error: string }>) {
-    setError(null);
+    setError(null)
     startTransition(async () => {
-      const result = await action();
+      const result = await action()
       if (!result.ok) {
-        setError(result.error);
-        return;
+        setError(result.error)
+        return
       }
-      router.refresh();
-    });
+      router.refresh()
+    })
   }
 
   async function handleCopy() {
-    if (!path) return;
+    if (!path) return
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}${path}`);
-      sileo.success({ title: "Enlace copiado" });
+      await navigator.clipboard.writeText(`${window.location.origin}${path}`)
+      sileo.success({ title: 'Enlace copiado' })
     } catch {
-      sileo.error({ title: "No se pudo copiar el enlace" });
+      sileo.error({ title: 'No se pudo copiar el enlace' })
     }
   }
 
-  const signed = note?.status === "accepted";
-  const pendingSignature = note?.status === "sent" || note?.status === "viewed";
+  const signed = note?.status === 'accepted'
+  const pendingSignature = note?.status === 'sent' || note?.status === 'viewed'
 
   return (
     <Card>
@@ -91,7 +91,7 @@ export function DeliveryNoteCard({
             <div className="flex min-w-0 flex-col gap-1">
               <p className="font-medium">
                 Firmado por {note.accepted_by_name}
-                {note.accepted_by_role ? ` · ${note.accepted_by_role}` : ""}
+                {note.accepted_by_role ? ` · ${note.accepted_by_role}` : ''}
               </p>
               {note.accepted_at ? (
                 <p className="text-xs">{formatDateTime(note.accepted_at)}. Propuesta terminada.</p>
@@ -107,7 +107,7 @@ export function DeliveryNoteCard({
               Pendiente de firma del cliente
               {note.first_viewed_at
                 ? ` · visto el ${formatDateTime(note.first_viewed_at)}`
-                : " · sin abrir"}
+                : ' · sin abrir'}
               .
             </p>
             <div className="flex items-center gap-2 rounded-lg border border-border/60 px-2.5 py-2">
@@ -128,7 +128,7 @@ export function DeliveryNoteCard({
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                onClick={() => window.open(path, "_blank", "noopener,noreferrer")}
+                onClick={() => window.open(path, '_blank', 'noopener,noreferrer')}
                 aria-label="Abrir en pestaña nueva"
                 title="Abrir en pestaña nueva"
               >
@@ -163,7 +163,7 @@ export function DeliveryNoteCard({
             <p className="text-muted-foreground">
               Cuando entregues el proyecto, genera el albarán para que el cliente firme la
               conformidad con lo acordado. Al firmarlo, la propuesta queda terminada
-              {hasMaintenance ? " y se activa la suscripción de mantenimiento" : ""}. El proyecto
+              {hasMaintenance ? ' y se activa la suscripción de mantenimiento' : ''}. El proyecto
               sigue abierto.
             </p>
             {canEdit ? (
@@ -174,7 +174,7 @@ export function DeliveryNoteCard({
                 disabled={pending}
                 onClick={() => run(() => createDeliveryNote({ id: proposalId }))}
               >
-                {pending ? "Generando…" : "Generar albarán"}
+                {pending ? 'Generando…' : 'Generar albarán'}
               </Button>
             ) : null}
           </>
@@ -186,5 +186,5 @@ export function DeliveryNoteCard({
         ) : null}
       </CardContent>
     </Card>
-  );
+  )
 }

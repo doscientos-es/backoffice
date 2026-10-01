@@ -1,20 +1,20 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { FormRow } from "@/components/ui/form-row";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import type { MediaItem } from "@/lib/social/core";
-import { datetimeLocalToIso, toDatetimeLocalValue } from "@/lib/utils/date-time";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { FormRow } from '@/components/ui/form-row'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
+import type { MediaItem } from '@/lib/social/core'
+import { datetimeLocalToIso, toDatetimeLocalValue } from '@/lib/utils/date-time'
 
-import { updateScheduledPost } from "../../actions";
-import { MediaPicker } from "../../compose/_components/media-picker";
+import { updateScheduledPost } from '../../actions'
+import { MediaPicker } from '../../compose/_components/media-picker'
 
 export function ScheduledPostForm({
   postId,
@@ -22,38 +22,38 @@ export function ScheduledPostForm({
   initialMedia,
   initialScheduledAt,
 }: {
-  postId: string;
-  initialCaption: string;
-  initialMedia: MediaItem[];
-  initialScheduledAt: string;
+  postId: string
+  initialCaption: string
+  initialMedia: MediaItem[]
+  initialScheduledAt: string
 }) {
-  const router = useRouter();
-  const feedback = useFormFeedback();
-  const [pending, startTransition] = useTransition();
-  const [caption, setCaption] = useState(initialCaption);
-  const [media, setMedia] = useState(initialMedia);
+  const router = useRouter()
+  const feedback = useFormFeedback()
+  const [pending, startTransition] = useTransition()
+  const [caption, setCaption] = useState(initialCaption)
+  const [media, setMedia] = useState(initialMedia)
   const [scheduledLocal, setScheduledLocal] = useState(() =>
     toDatetimeLocalValue(new Date(initialScheduledAt)),
-  );
+  )
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+    event.preventDefault()
     if (!scheduledLocal) {
-      feedback.setError("Indica la fecha y hora de publicación");
-      return;
+      feedback.setError('Indica la fecha y hora de publicación')
+      return
     }
-    feedback.setPending();
+    feedback.setPending()
     startTransition(async () => {
       const result = await updateScheduledPost({
         postId,
         caption,
         media,
         scheduledAt: datetimeLocalToIso(scheduledLocal),
-      });
-      if (!result.ok) return feedback.setError(result.error);
-      router.push(`/social/${postId}`);
-      router.refresh();
-    });
+      })
+      if (!result.ok) return feedback.setError(result.error)
+      router.push(`/social/${postId}`)
+      router.refresh()
+    })
   }
 
   return (
@@ -108,5 +108,5 @@ export function ScheduledPostForm({
         </SubmitButton>
       </div>
     </form>
-  );
+  )
 }

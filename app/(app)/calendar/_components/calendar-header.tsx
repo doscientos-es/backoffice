@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
-import { Check, ChevronLeft, ChevronRight, Copy, Plus, SlidersHorizontal } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { format, parseISO } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { Check, ChevronLeft, ChevronRight, Copy, Plus, SlidersHorizontal } from 'lucide-react'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -15,46 +15,46 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { CalendarEventKind, CalendarView } from "@/lib/calendar/types";
-import { ALL_LAYERS, CALENDAR_LAYER_COLORS, CALENDAR_LAYER_LABELS } from "@/lib/calendar/types";
-import { cn, memberAvatarUrl } from "@/lib/utils";
+} from '@/components/ui/dropdown-menu'
+import type { CalendarEventKind, CalendarView } from '@/lib/calendar/types'
+import { ALL_LAYERS, CALENDAR_LAYER_COLORS, CALENDAR_LAYER_LABELS } from '@/lib/calendar/types'
+import { cn, memberAvatarUrl } from '@/lib/utils'
 
-import type { TeamMember } from "./calendar-grid";
-import { useCalendarCreate } from "./calendar-grid";
+import type { TeamMember } from './calendar-grid'
+import { useCalendarCreate } from './calendar-grid'
 
 type Props = {
-  anchor: string;
-  view: CalendarView;
-  prevMonth: string;
-  nextMonth: string;
-  teamMembers: TeamMember[];
-  activeLayers: Set<CalendarEventKind>;
-  onToggleLayer: (l: CalendarEventKind) => void;
-  activeMembers: Set<string>;
-  onToggleMember: (id: string) => void;
-  calendarToken: string | null;
-};
+  anchor: string
+  view: CalendarView
+  prevMonth: string
+  nextMonth: string
+  teamMembers: TeamMember[]
+  activeLayers: Set<CalendarEventKind>
+  onToggleLayer: (l: CalendarEventKind) => void
+  activeMembers: Set<string>
+  onToggleMember: (id: string) => void
+  calendarToken: string | null
+}
 
 const VIEWS: { value: CalendarView; label: string }[] = [
-  { value: "month", label: "Mes" },
-  { value: "week", label: "Semana" },
-  { value: "agenda", label: "Agenda" },
-];
+  { value: 'month', label: 'Mes' },
+  { value: 'week', label: 'Semana' },
+  { value: 'agenda', label: 'Agenda' },
+]
 
 function navHref(params: URLSearchParams, overrides: Record<string, string>): string {
-  const next = new URLSearchParams(params);
-  for (const [k, v] of Object.entries(overrides)) next.set(k, v);
-  return `/calendar?${next.toString()}`;
+  const next = new URLSearchParams(params)
+  for (const [k, v] of Object.entries(overrides)) next.set(k, v)
+  return `/calendar?${next.toString()}`
 }
 
 function memberInitials(name: string) {
   return name
-    .split(" ")
+    .split(' ')
     .slice(0, 2)
     .map((s) => s[0])
-    .join("")
-    .toUpperCase();
+    .join('')
+    .toUpperCase()
 }
 
 export function CalendarHeader({
@@ -69,27 +69,27 @@ export function CalendarHeader({
   onToggleMember,
   calendarToken,
 }: Props) {
-  const openCreate = useCalendarCreate();
-  const anchorDate = parseISO(anchor);
-  const sp = useSearchParams();
-  const [copied, setCopied] = useState(false);
+  const openCreate = useCalendarCreate()
+  const anchorDate = parseISO(anchor)
+  const sp = useSearchParams()
+  const [copied, setCopied] = useState(false)
 
   function handleCopyIcal() {
-    if (!calendarToken) return;
-    const url = `${window.location.origin}/api/calendar/${calendarToken}`;
+    if (!calendarToken) return
+    const url = `${window.location.origin}/api/calendar/${calendarToken}`
     void navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
   }
 
   const title =
-    view === "week"
-      ? `Semana del ${format(anchorDate, "d MMM yyyy", { locale: es })}`
-      : format(anchorDate, "MMMM yyyy", { locale: es });
+    view === 'week'
+      ? `Semana del ${format(anchorDate, 'd MMM yyyy', { locale: es })}`
+      : format(anchorDate, 'MMMM yyyy', { locale: es })
 
-  const prevAnchor = parseISO(prevMonth).toISOString().slice(0, 10);
-  const nextAnchor = parseISO(nextMonth).toISOString().slice(0, 10);
+  const prevAnchor = parseISO(prevMonth).toISOString().slice(0, 10)
+  const nextAnchor = parseISO(nextMonth).toISOString().slice(0, 10)
 
   return (
     <div className="flex flex-col border-b border-border">
@@ -136,7 +136,7 @@ export function CalendarHeader({
               ) : (
                 <Copy className="h-3.5 w-3.5" />
               )}
-              {copied ? "¡Copiado!" : "Suscribirse"}
+              {copied ? '¡Copiado!' : 'Suscribirse'}
             </button>
           )}
           <Link
@@ -151,10 +151,10 @@ export function CalendarHeader({
                 key={value}
                 href={navHref(sp, { view: value })}
                 className={cn(
-                  "px-2.5 py-1 transition-colors",
+                  'px-2.5 py-1 transition-colors',
                   view === value
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-secondary",
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-secondary',
                 )}
               >
                 {label}
@@ -172,11 +172,11 @@ export function CalendarHeader({
           <>
             <span className="mx-1 h-3.5 w-px bg-border" />
             {teamMembers.map((m) => {
-              const active = activeMembers.has(m.id);
+              const active = activeMembers.has(m.id)
               const avatarSrc = memberAvatarUrl({
                 avatarUrl: m.avatar_url,
                 githubHandle: m.github_handle,
-              });
+              })
               return (
                 <button
                   key={m.id}
@@ -184,10 +184,10 @@ export function CalendarHeader({
                   onClick={() => onToggleMember(m.id)}
                   title={m.name}
                   className={cn(
-                    "shrink-0 rounded-full transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    'shrink-0 rounded-full transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                     active
-                      ? "opacity-100 ring-2 ring-primary ring-offset-1 ring-offset-background"
-                      : "opacity-35 hover:opacity-60",
+                      ? 'opacity-100 ring-2 ring-primary ring-offset-1 ring-offset-background'
+                      : 'opacity-35 hover:opacity-60',
                   )}
                 >
                   <Avatar className="h-6 w-6">
@@ -197,13 +197,13 @@ export function CalendarHeader({
                     </AvatarFallback>
                   </Avatar>
                 </button>
-              );
+              )
             })}
           </>
         )}
       </div>
     </div>
-  );
+  )
 }
 
 // ─── LayersDropdown ───────────────────────────────────────────────────────────
@@ -212,10 +212,10 @@ function LayersDropdown({
   activeLayers,
   onToggleLayer,
 }: {
-  activeLayers: Set<CalendarEventKind>;
-  onToggleLayer: (l: CalendarEventKind) => void;
+  activeLayers: Set<CalendarEventKind>
+  onToggleLayer: (l: CalendarEventKind) => void
 }) {
-  const hiddenCount = ALL_LAYERS.length - activeLayers.size;
+  const hiddenCount = ALL_LAYERS.length - activeLayers.size
 
   return (
     <DropdownMenu modal={false}>
@@ -237,19 +237,19 @@ function LayersDropdown({
         <DropdownMenuLabel>Tipos de evento</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {ALL_LAYERS.map((layer) => {
-          const c = CALENDAR_LAYER_COLORS[layer];
+          const c = CALENDAR_LAYER_COLORS[layer]
           return (
             <DropdownMenuCheckboxItem
               key={layer}
               checked={activeLayers.has(layer)}
               onCheckedChange={() => onToggleLayer(layer)}
             >
-              <span className={cn("h-2 w-2 shrink-0 rounded-full", c.dot)} />
+              <span className={cn('h-2 w-2 shrink-0 rounded-full', c.dot)} />
               {CALENDAR_LAYER_LABELS[layer]}
             </DropdownMenuCheckboxItem>
-          );
+          )
         })}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

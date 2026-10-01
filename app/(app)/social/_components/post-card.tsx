@@ -4,18 +4,18 @@ import {
   MessageCircle,
   MessageSquareText,
   MousePointerClick,
-} from "lucide-react";
-import Link from "next/link";
+} from 'lucide-react'
+import Link from 'next/link'
 
-import { StatusBadge } from "@/components/ui/status-badge";
-import type { PostListItem } from "@/lib/social/types";
-import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from "@/lib/status";
-import { cn, relativeTime } from "@/lib/utils";
+import { StatusBadge } from '@/components/ui/status-badge'
+import type { PostListItem } from '@/lib/social/types'
+import { SOCIAL_POST_STATUS, SOCIAL_TARGET_STATUS } from '@/lib/status'
+import { cn, relativeTime } from '@/lib/utils'
 
-import { DeletePostButton } from "./delete-post-button";
-import { MediaPreview } from "./media-thumb";
-import { PlatformIcon } from "./platform";
-import { PublishButton } from "./publish-button";
+import { DeletePostButton } from './delete-post-button'
+import { MediaPreview } from './media-thumb'
+import { PlatformIcon } from './platform'
+import { PublishButton } from './publish-button'
 
 /**
  * One post in the dashboard list. Presentational (server) — shows the media
@@ -24,13 +24,13 @@ import { PublishButton } from "./publish-button";
  */
 export function PostCard({ post }: { post: PostListItem }) {
   const canPublish =
-    post.status === "draft" ||
-    post.status === "scheduled" ||
-    post.status === "failed" ||
-    post.status === "partially_failed";
-  const isRetry = post.status === "failed" || post.status === "partially_failed";
-  const caption = post.caption.trim() || "Sin texto";
-  const showMetrics = post.status === "published" || post.status === "partially_failed";
+    post.status === 'draft' ||
+    post.status === 'scheduled' ||
+    post.status === 'failed' ||
+    post.status === 'partially_failed'
+  const isRetry = post.status === 'failed' || post.status === 'partially_failed'
+  const caption = post.caption.trim() || 'Sin texto'
+  const showMetrics = post.status === 'published' || post.status === 'partially_failed'
 
   return (
     <div className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-md">
@@ -59,8 +59,8 @@ export function PostCard({ post }: { post: PostListItem }) {
               <span
                 key={t.id}
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-full border border-border/70 px-1.5 py-0.5 text-[10px]",
-                  t.status === "failed" && "border-destructive/40 text-destructive",
+                  'inline-flex items-center gap-1 rounded-full border border-border/70 px-1.5 py-0.5 text-[10px]',
+                  t.status === 'failed' && 'border-destructive/40 text-destructive',
                 )}
                 title={t.error ?? undefined}
               >
@@ -118,10 +118,10 @@ export function PostCard({ post }: { post: PostListItem }) {
           <PublishButton
             postId={post.id}
             retry={isRetry}
-            label={isRetry ? undefined : "Publicar"}
+            label={isRetry ? undefined : 'Publicar'}
           />
         )}
       </div>
     </div>
-  );
+  )
 }

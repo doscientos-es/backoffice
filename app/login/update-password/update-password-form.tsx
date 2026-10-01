@@ -1,71 +1,71 @@
-"use client";
+'use client'
 
-import { Eye, EyeOff, LoaderCircle as Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Eye, EyeOff, LoaderCircle as Loader2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { PasswordStrength } from "@/components/ui/password-strength";
-import { PASSWORD_MIN_LENGTH, validatePassword } from "@/lib/schemas/password";
-import { getBrowserClient } from "@/lib/supabase/browser";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { PasswordStrength } from '@/components/ui/password-strength'
+import { PASSWORD_MIN_LENGTH, validatePassword } from '@/lib/schemas/password'
+import { getBrowserClient } from '@/lib/supabase/browser'
 
-const MIN_LENGTH = PASSWORD_MIN_LENGTH;
+const MIN_LENGTH = PASSWORD_MIN_LENGTH
 
 export function UpdatePasswordForm() {
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [show, setShow] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasSession, setHasSession] = useState<boolean | null>(null);
-  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [show, setShow] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [hasSession, setHasSession] = useState<boolean | null>(null)
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null)
 
   useEffect(() => {
-    const supabase = getBrowserClient();
+    const supabase = getBrowserClient()
     // getUser() verifies the token against the Supabase Auth server — unlike
     // getSession() / onAuthStateChange session objects which come from storage
     // and may not be authentic.
     supabase.auth.getUser().then(({ data }) => {
-      setHasSession(!!data.user);
-      setSessionEmail(data.user?.email ?? null);
-    });
+      setHasSession(!!data.user)
+      setSessionEmail(data.user?.email ?? null)
+    })
     const { data: sub } = supabase.auth.onAuthStateChange(() => {
       // Re-fetch the authenticated user on every auth event instead of
       // trusting the session payload from storage.
       supabase.auth.getUser().then(({ data }) => {
-        setHasSession(!!data.user);
-        setSessionEmail(data.user?.email ?? null);
-      });
-    });
-    return () => sub.subscription.unsubscribe();
-  }, []);
+        setHasSession(!!data.user)
+        setSessionEmail(data.user?.email ?? null)
+      })
+    })
+    return () => sub.subscription.unsubscribe()
+  }, [])
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    const policyError = validatePassword(password);
+    e.preventDefault()
+    setError(null)
+    const policyError = validatePassword(password)
     if (policyError) {
-      setError(policyError);
-      return;
+      setError(policyError)
+      return
     }
     if (password !== confirm) {
-      setError("Las contraseñas no coinciden.");
-      return;
+      setError('Las contraseñas no coinciden.')
+      return
     }
-    setLoading(true);
-    const supabase = getBrowserClient();
-    const { error: authError } = await supabase.auth.updateUser({ password });
+    setLoading(true)
+    const supabase = getBrowserClient()
+    const { error: authError } = await supabase.auth.updateUser({ password })
     if (authError) {
-      setLoading(false);
-      setError(authError.message);
-      return;
+      setLoading(false)
+      setError(authError.message)
+      return
     }
     // Hard navigation (not router.replace + refresh): forces the browser to
     // re-send the updated auth cookies on a real request and bypasses the
     // client Router Cache. Keep loading=true so the button stays in "Guardando…".
-    window.location.assign("/inicio");
+    window.location.assign('/inicio')
   }
 
   if (hasSession === false) {
@@ -73,7 +73,7 @@ export function UpdatePasswordForm() {
       <Card>
         <CardContent className="pt-5">
           <p className="text-sm text-muted">
-            El enlace ha caducado o no es válido.{" "}
+            El enlace ha caducado o no es válido.{' '}
             <a
               href="/login/forgot-password"
               className="font-medium text-primary underline-offset-2 hover:underline"
@@ -84,7 +84,7 @@ export function UpdatePasswordForm() {
           </p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -92,7 +92,7 @@ export function UpdatePasswordForm() {
       <CardContent className="pt-5">
         {sessionEmail ? (
           <p className="mb-4 text-xs text-muted">
-            Vas a cambiar la contraseña de{" "}
+            Vas a cambiar la contraseña de{' '}
             <span className="font-medium text-primary">{sessionEmail}</span>. Si no es tu cuenta,
             cierra esta pestaña y solicita un nuevo enlace.
           </p>
@@ -106,7 +106,7 @@ export function UpdatePasswordForm() {
               <div className="relative">
                 <Input
                   id="password"
-                  type={show ? "text" : "password"}
+                  type={show ? 'text' : 'password'}
                   autoComplete="new-password"
                   autoFocus
                   required
@@ -123,7 +123,7 @@ export function UpdatePasswordForm() {
                   type="button"
                   onClick={() => setShow((v) => !v)}
                   tabIndex={-1}
-                  aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   aria-pressed={show}
                   className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted hover:text-primary"
                   disabled={loading}
@@ -142,7 +142,7 @@ export function UpdatePasswordForm() {
               </FieldLabel>
               <Input
                 id="confirm"
-                type={show ? "text" : "password"}
+                type={show ? 'text' : 'password'}
                 autoComplete="new-password"
                 required
                 minLength={MIN_LENGTH}
@@ -173,11 +173,11 @@ export function UpdatePasswordForm() {
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Guardando…
               </>
             ) : (
-              "Actualizar contraseña"
+              'Actualizar contraseña'
             )}
           </Button>
         </form>
       </CardContent>
     </Card>
-  );
+  )
 }

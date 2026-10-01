@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,31 +7,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@doscientos/ui";
-import { CloudUpload, ExternalLink, LoaderCircle as Loader2, Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useState, useTransition } from "react";
+} from '@doscientos/ui'
+import { CloudUpload, ExternalLink, LoaderCircle as Loader2, Mail } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { type FormEvent, useState, useTransition } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
-import {
-  backupInternalDocToDrive,
-  previewInternalDocEmail,
-  sendInternalDocEmail,
-} from "../actions";
+import { backupInternalDocToDrive, previewInternalDocEmail, sendInternalDocEmail } from '../actions'
 
 type Props = {
-  id: string;
-  name: string;
-  version: number;
-  driveBackupVersion: number | null;
-  driveBackupUrl: string | null;
-  driveConfigured: boolean;
-};
+  id: string
+  name: string
+  version: number
+  driveBackupVersion: number | null
+  driveBackupUrl: string | null
+  driveConfigured: boolean
+}
 
 /** Backup and email delivery controls for a document's current file version. */
 export function InternalDocActions({
@@ -42,60 +38,60 @@ export function InternalDocActions({
   driveBackupUrl,
   driveConfigured,
 }: Props) {
-  const router = useRouter();
-  const [emailOpen, setEmailOpen] = useState(false);
-  const [to, setTo] = useState("");
-  const [recipientName, setRecipientName] = useState("");
-  const [subject, setSubject] = useState(`Documento · ${name}`);
-  const [message, setMessage] = useState("");
-  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
-  const [previewKey, setPreviewKey] = useState("");
-  const [loadingPreview, setLoadingPreview] = useState(false);
-  const feedback = useFormFeedback({ successResetMs: 4000 });
-  const backupFeedback = useFormFeedback({ successResetMs: 4000 });
-  const [backupPending, startBackup] = useTransition();
-  const backupIsStale = driveBackupVersion !== null && driveBackupVersion !== version;
-  const previewState = JSON.stringify({ recipientName, subject, message });
+  const router = useRouter()
+  const [emailOpen, setEmailOpen] = useState(false)
+  const [to, setTo] = useState('')
+  const [recipientName, setRecipientName] = useState('')
+  const [subject, setSubject] = useState(`Documento · ${name}`)
+  const [message, setMessage] = useState('')
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
+  const [previewKey, setPreviewKey] = useState('')
+  const [loadingPreview, setLoadingPreview] = useState(false)
+  const feedback = useFormFeedback({ successResetMs: 4000 })
+  const backupFeedback = useFormFeedback({ successResetMs: 4000 })
+  const [backupPending, startBackup] = useTransition()
+  const backupIsStale = driveBackupVersion !== null && driveBackupVersion !== version
+  const previewState = JSON.stringify({ recipientName, subject, message })
 
   async function loadPreview() {
-    setLoadingPreview(true);
+    setLoadingPreview(true)
     const result = await previewInternalDocEmail({
       id,
       recipientName: recipientName.trim() || undefined,
       subject: subject.trim(),
       message: message.trim() || undefined,
-    });
+    })
     if (result.ok) {
-      setPreview({ subject: result.subject, html: result.html });
-      setPreviewKey(previewState);
+      setPreview({ subject: result.subject, html: result.html })
+      setPreviewKey(previewState)
     } else {
-      feedback.setError(result.error);
+      feedback.setError(result.error)
     }
-    setLoadingPreview(false);
+    setLoadingPreview(false)
   }
 
   function onEmailOpenChange(open: boolean) {
-    setEmailOpen(open);
-    if (open) void loadPreview();
+    setEmailOpen(open)
+    if (open) void loadPreview()
   }
 
   function backup() {
-    backupFeedback.setPending();
+    backupFeedback.setPending()
     startBackup(async () => {
-      const result = await backupInternalDocToDrive({ id });
-      if (!result.ok) return backupFeedback.setError(result.error);
-      backupFeedback.setSuccess(`Copia v${result.version} guardada en Drive`);
-      router.refresh();
-    });
+      const result = await backupInternalDocToDrive({ id })
+      if (!result.ok) return backupFeedback.setError(result.error)
+      backupFeedback.setSuccess(`Copia v${result.version} guardada en Drive`)
+      router.refresh()
+    })
   }
 
   function send(e: FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
     if (!preview || previewKey !== previewState) {
-      feedback.setError("Actualiza la vista previa antes de enviar el email.");
-      return;
+      feedback.setError('Actualiza la vista previa antes de enviar el email.')
+      return
     }
-    feedback.setPending();
+    feedback.setPending()
     void sendInternalDocEmail({
       id,
       to: to.trim(),
@@ -103,18 +99,18 @@ export function InternalDocActions({
       subject: subject.trim(),
       message: message.trim() || undefined,
     }).then((result) => {
-      if (!result.ok) return feedback.setError(result.error);
-      feedback.setSuccess(result.mocked ? "Email simulado (modo dev)" : "Email enviado");
-      onEmailOpenChange(false);
-    });
+      if (!result.ok) return feedback.setError(result.error)
+      feedback.setSuccess(result.mocked ? 'Email simulado (modo dev)' : 'Email enviado')
+      onEmailOpenChange(false)
+    })
   }
 
   const backupLabel =
     driveBackupVersion === null
-      ? "Guardar en Drive"
+      ? 'Guardar en Drive'
       : backupIsStale
-        ? "Actualizar copia en Drive"
-        : "Guardar de nuevo en Drive";
+        ? 'Actualizar copia en Drive'
+        : 'Guardar de nuevo en Drive'
 
   return (
     <>
@@ -246,14 +242,14 @@ export function InternalDocActions({
                 }
               >
                 <Mail aria-hidden />
-                {feedback.pending ? "Enviando…" : "Enviar email"}
+                {feedback.pending ? 'Enviando…' : 'Enviar email'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }
 
 function Field({
@@ -261,24 +257,24 @@ function Field({
   label,
   htmlFor,
 }: {
-  children: React.ReactNode;
-  label: string;
-  htmlFor: string;
+  children: React.ReactNode
+  label: string
+  htmlFor: string
 }) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
     </div>
-  );
+  )
 }
 
 function EmailPreview({
   preview,
   loading,
 }: {
-  preview: { subject: string; html: string } | null;
-  loading: boolean;
+  preview: { subject: string; html: string } | null
+  loading: boolean
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
@@ -286,7 +282,7 @@ function EmailPreview({
         <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
           Asunto
         </p>
-        <p className="mt-1 text-sm font-medium">{preview?.subject ?? "Cargando email…"}</p>
+        <p className="mt-1 text-sm font-medium">{preview?.subject ?? 'Cargando email…'}</p>
       </div>
       <div className="h-105 bg-white">
         {loading ? (
@@ -305,5 +301,5 @@ function EmailPreview({
         )}
       </div>
     </div>
-  );
+  )
 }

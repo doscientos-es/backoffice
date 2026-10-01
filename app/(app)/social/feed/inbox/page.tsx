@@ -1,28 +1,28 @@
-import { MessageSquare } from "lucide-react";
-import type { Metadata } from "next";
+import { MessageSquare } from 'lucide-react'
+import type { Metadata } from 'next'
 
-import { BackLink } from "@/components/layout/back-link";
-import { PageHeader } from "@/components/layout/page-header";
+import { BackLink } from '@/components/layout/back-link'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty-state";
-import { SectionBoundary } from "@/components/ui/error-boundary";
-import { Skeleton } from "@/components/ui/skeleton";
-import { requireUser } from "@/lib/auth";
-import { listComments } from "@/lib/social/repo";
+} from '@/components/ui/empty-state'
+import { SectionBoundary } from '@/components/ui/error-boundary'
+import { Skeleton } from '@/components/ui/skeleton'
+import { requireUser } from '@/lib/auth'
+import { listComments } from '@/lib/social/repo'
 
-import { CommentCard } from "../../_components/comment-card";
-import { SyncButton } from "../../_components/sync-button";
+import { CommentCard } from '../../_components/comment-card'
+import { SyncButton } from '../../_components/sync-button'
 
-export const metadata: Metadata = { title: "Bandeja de entrada · Social · doscientos" };
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: 'Bandeja de entrada · Social · doscientos' }
+export const dynamic = 'force-dynamic'
 
 async function CommentsList() {
-  const comments = await listComments();
+  const comments = await listComments()
   if (comments.length === 0) {
     return (
       <Empty className="mt-12">
@@ -36,7 +36,7 @@ async function CommentsList() {
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
-    );
+    )
   }
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
@@ -44,7 +44,7 @@ async function CommentsList() {
         <CommentCard key={comment.id} comment={comment} />
       ))}
     </div>
-  );
+  )
 }
 
 function InboxSkeleton() {
@@ -65,11 +65,11 @@ function InboxSkeleton() {
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 export default async function InboxPage() {
-  await requireUser();
+  await requireUser()
   return (
     <div className="flex flex-col gap-6">
       <BackLink href="/social" label="Social" />
@@ -82,5 +82,5 @@ export default async function InboxPage() {
         <CommentsList />
       </SectionBoundary>
     </div>
-  );
+  )
 }

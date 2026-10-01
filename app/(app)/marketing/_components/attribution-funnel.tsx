@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -6,17 +6,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { getLeadFunnelBySource } from "@/lib/marketing/queries";
-import { formatEUR } from "@/lib/utils";
+} from '@/components/ui/table'
+import { getLeadFunnelBySource } from '@/lib/marketing/queries'
+import { formatEUR } from '@/lib/utils'
 
 function pct(value: number | null): string {
-  if (value === null) return "—";
-  return `${Math.round(value * 100)} %`;
+  if (value === null) return '—'
+  return `${Math.round(value * 100)} %`
 }
 
 export async function AttributionFunnel({ since, until }: { since: string; until: string }) {
-  const rows = await getLeadFunnelBySource(since, until);
+  const rows = await getLeadFunnelBySource(since, until)
 
   if (!rows.length) {
     return (
@@ -30,7 +30,7 @@ export async function AttributionFunnel({ since, until }: { since: string; until
           </p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -67,5 +67,5 @@ export async function AttributionFunnel({ since, until }: { since: string; until
         </Table>
       </CardContent>
     </Card>
-  );
+  )
 }

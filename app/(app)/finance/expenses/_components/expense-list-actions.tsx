@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -8,26 +8,26 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@doscientos/ui";
-import { Copy, Pencil, Trash as Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+} from '@doscientos/ui'
+import { Copy, Pencil, Trash as Trash2 } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 
-import { Button } from "@/components/ui/button";
-import type { ExpenseListItem, VendorSuggestion } from "@/lib/finance/types";
+import { Button } from '@/components/ui/button'
+import type { ExpenseListItem, VendorSuggestion } from '@/lib/finance/types'
 
-import { ExpenseEditDialog } from "../[id]/expense-edit-dialog";
-import { removeExpense } from "../actions";
+import { ExpenseEditDialog } from '../[id]/expense-edit-dialog'
+import { removeExpense } from '../actions'
 
 interface Props {
-  expense: ExpenseListItem;
-  projects: Array<{ id: string; name: string; clientName?: string | null }>;
-  teamMembers: Array<{ id: string; name: string }>;
+  expense: ExpenseListItem
+  projects: Array<{ id: string; name: string; clientName?: string | null }>
+  teamMembers: Array<{ id: string; name: string }>
   /** Previously used vendors to power the vendor/NIF autocomplete on edit. */
-  vendorSuggestions: VendorSuggestion[];
+  vendorSuggestions: VendorSuggestion[]
   /** Only owner/admin can soft-delete from the list. */
-  canDelete: boolean;
+  canDelete: boolean
 }
 
 export function ExpenseListActions({
@@ -37,23 +37,23 @@ export function ExpenseListActions({
   vendorSuggestions,
   canDelete,
 }: Props) {
-  const router = useRouter();
-  const [editOpen, setEditOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter()
+  const [editOpen, setEditOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   function handleDelete() {
-    setError(null);
+    setError(null)
     startTransition(async () => {
-      const res = await removeExpense({ id: expense.id });
+      const res = await removeExpense({ id: expense.id })
       if (res.ok) {
-        setConfirmOpen(false);
-        router.refresh();
+        setConfirmOpen(false)
+        router.refresh()
       } else {
-        setError(res.error);
+        setError(res.error)
       }
-    });
+    })
   }
 
   return (
@@ -124,12 +124,12 @@ export function ExpenseListActions({
                 </Button>
               </DialogClose>
               <Button variant="destructive" size="sm" disabled={isPending} onClick={handleDelete}>
-                {isPending ? "Eliminando…" : "Eliminar"}
+                {isPending ? 'Eliminando…' : 'Eliminar'}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       ) : null}
     </div>
-  );
+  )
 }

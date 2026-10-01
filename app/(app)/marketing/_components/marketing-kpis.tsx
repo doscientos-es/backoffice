@@ -1,20 +1,20 @@
-import { MousePointerClick, TrendingUp, Users, Wallet } from "lucide-react";
+import { MousePointerClick, TrendingUp, Users, Wallet } from 'lucide-react'
 
-import { StatCard } from "@/components/layout/stat-card";
-import { getMarketingOverview } from "@/lib/marketing/queries";
-import type { MarketingSort, MarketingView } from "@/lib/marketing/range";
-import { formatEUR } from "@/lib/utils";
+import { StatCard } from '@/components/layout/stat-card'
+import { getMarketingOverview } from '@/lib/marketing/queries'
+import type { MarketingSort, MarketingView } from '@/lib/marketing/range'
+import { formatEUR } from '@/lib/utils'
 
-import { cplTone, numberFmt } from "./marketing-format";
+import { cplTone, numberFmt } from './marketing-format'
 
 type MarketingKpisProps = {
-  view: MarketingView;
-  since: string;
-  until: string;
-  sort: MarketingSort;
-  showPaused: boolean;
-  rangeLabel: string;
-};
+  view: MarketingView
+  since: string
+  until: string
+  sort: MarketingSort
+  showPaused: boolean
+  rangeLabel: string
+}
 
 export async function MarketingKpis({
   view,
@@ -25,7 +25,7 @@ export async function MarketingKpis({
   rangeLabel,
 }: MarketingKpisProps) {
   const { totalSpent, totalLeads, totalOutboundClicks, totalLandingPageViews, avgCpl } =
-    await getMarketingOverview(view, since, until, sort, showPaused);
+    await getMarketingOverview(view, since, until, sort, showPaused)
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -39,7 +39,7 @@ export async function MarketingKpis({
       <StatCard label="Leads (Meta)" value={totalLeads} tone="info" icon={Users} />
       <StatCard
         label="CPL promedio"
-        value={totalLeads > 0 ? `${formatEUR(avgCpl)} / lead` : "—"}
+        value={totalLeads > 0 ? `${formatEUR(avgCpl)} / lead` : '—'}
         tone={cplTone(avgCpl, totalLeads)}
         icon={TrendingUp}
       />
@@ -56,5 +56,5 @@ export async function MarketingKpis({
         icon={MousePointerClick}
       />
     </div>
-  );
+  )
 }

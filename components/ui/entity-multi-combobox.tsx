@@ -1,1 +1,1 @@
-﻿export * from "@/primitives/ui/entity-multi-combobox";
+﻿export * from '@/primitives/ui/entity-multi-combobox'

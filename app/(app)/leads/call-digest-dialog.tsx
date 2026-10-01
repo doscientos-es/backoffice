@@ -1,12 +1,6 @@
-"use client";
+'use client'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@doscientos/ui";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@doscientos/ui'
 import {
   Check,
   Clipboard as ClipboardList,
@@ -14,30 +8,30 @@ import {
   Mail,
   MessageCircle,
   Sparkle as Sparkles,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { cn } from '@/lib/utils'
 
-import { createTask } from "../tasks/actions";
-import { EmailComposer } from "./[id]/email-composer";
-import { WhatsAppComposer } from "./whatsapp-composer";
+import { createTask } from '../tasks/actions'
+import { EmailComposer } from './[id]/email-composer'
+import { WhatsAppComposer } from './whatsapp-composer'
 
 type Props = {
-  leadId: string;
-  leadName: string;
-  leadEmail: string | null;
-  leadPhone: string | null;
-  leadLanguage?: string | null;
-  senderName: string;
-  aiEnabled?: boolean;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  draftKey: number;
-};
+  leadId: string
+  leadName: string
+  leadEmail: string | null
+  leadPhone: string | null
+  leadLanguage?: string | null
+  senderName: string
+  aiEnabled?: boolean
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  draftKey: number
+}
 
 /**
  * Follow-up composer shown after a call is logged. Nothing is sent until the
@@ -55,25 +49,25 @@ export function CallDigestDialog({
   onOpenChange,
   draftKey,
 }: Props) {
-  const [channel, setChannel] = useState<"email" | "whatsapp" | "both">(
-    leadPhone ? "whatsapp" : "email",
-  );
-  const [emailSent, setEmailSent] = useState(false);
+  const [channel, setChannel] = useState<'email' | 'whatsapp' | 'both'>(
+    leadPhone ? 'whatsapp' : 'email',
+  )
+  const [emailSent, setEmailSent] = useState(false)
 
   useEffect(() => {
-    if (!open) return;
-    setChannel(leadPhone ? "whatsapp" : "email");
-    setEmailSent(false);
-  }, [leadPhone, open]);
+    if (!open) return
+    setChannel(leadPhone ? 'whatsapp' : 'email')
+    setEmailSent(false)
+  }, [leadPhone, open])
 
   const whatsappDefault =
-    leadLanguage === "ca"
-      ? `Hola, ${leadName.split(" ")[0] || leadName}. Gràcies per la trucada. Et faig arribar per aquí un breu seguiment del que hem comentat.`
-      : leadLanguage === "en"
-        ? `Hi ${leadName.split(" ")[0] || leadName}. Thanks for the call. I’m sending a brief follow-up on what we discussed.`
-        : `Hola, ${leadName.split(" ")[0] || leadName}. Gracias por la llamada. Te envío por aquí un breve seguimiento de lo que hemos comentado.`;
-  const showEmail = channel === "email" || (channel === "both" && !emailSent);
-  const showWhatsApp = channel === "whatsapp" || (channel === "both" && emailSent);
+    leadLanguage === 'ca'
+      ? `Hola, ${leadName.split(' ')[0] || leadName}. Gràcies per la trucada. Et faig arribar per aquí un breu seguiment del que hem comentat.`
+      : leadLanguage === 'en'
+        ? `Hi ${leadName.split(' ')[0] || leadName}. Thanks for the call. I’m sending a brief follow-up on what we discussed.`
+        : `Hola, ${leadName.split(' ')[0] || leadName}. Gracias por la llamada. Te envío por aquí un breve seguimiento de lo que hemos comentado.`
+  const showEmail = channel === 'email' || (channel === 'both' && !emailSent)
+  const showWhatsApp = channel === 'whatsapp' || (channel === 'both' && emailSent)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,42 +81,42 @@ export function CallDigestDialog({
         {aiEnabled ? <CallCopilot key={draftKey} leadId={leadId} open={open} /> : null}
         <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
           <ChannelButton
-            active={channel === "email"}
+            active={channel === 'email'}
             disabled={!leadEmail}
-            onClick={() => setChannel("email")}
+            onClick={() => setChannel('email')}
             icon={<Mail className="size-3.5" />}
             label="Email"
           />
           <ChannelButton
-            active={channel === "whatsapp"}
+            active={channel === 'whatsapp'}
             disabled={!leadPhone}
-            onClick={() => setChannel("whatsapp")}
+            onClick={() => setChannel('whatsapp')}
             icon={<MessageCircle className="size-3.5" />}
             label="WhatsApp"
           />
           <ChannelButton
-            active={channel === "both"}
+            active={channel === 'both'}
             disabled={!leadEmail || !leadPhone}
             onClick={() => {
-              setChannel("both");
-              setEmailSent(false);
+              setChannel('both')
+              setEmailSent(false)
             }}
             icon={<Check className="size-3.5" />}
             label="Ambos"
           />
         </div>
-        {channel === "both" ? (
+        {channel === 'both' ? (
           <p className="text-xs text-muted-foreground">
             {emailSent
-              ? "Email enviado · ahora completa WhatsApp."
-              : "Paso 1 de 2 · envía el email."}
+              ? 'Email enviado · ahora completa WhatsApp.'
+              : 'Paso 1 de 2 · envía el email.'}
           </p>
         ) : null}
         {showEmail ? (
           <EmailComposer
             key={`email-${draftKey}`}
             leadId={leadId}
-            defaultTo={leadEmail ?? ""}
+            defaultTo={leadEmail ?? ''}
             defaultLanguage={leadLanguage ?? undefined}
             defaultSubject="Resumen de nuestra llamada · {{nombre}}"
             disabled={!leadEmail}
@@ -132,8 +126,8 @@ export function CallDigestDialog({
             draftInstructions="Redacta un resumen posterior a la llamada. Incluye los temas tratados, acuerdos y próximos pasos que aparezcan en las notas o transcripción. No menciones notas internas, IA ni la transcripción como tal y no inventes información. Tono profesional, cercano y accionable."
             ccAdmins
             onSuccess={() => {
-              if (channel === "both") setEmailSent(true);
-              else onOpenChange(false);
+              if (channel === 'both') setEmailSent(true)
+              else onOpenChange(false)
             }}
           />
         ) : null}
@@ -155,7 +149,7 @@ export function CallDigestDialog({
         ) : null}
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 function ChannelButton({
@@ -165,11 +159,11 @@ function ChannelButton({
   icon,
   label,
 }: {
-  active: boolean;
-  disabled: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
+  active: boolean
+  disabled: boolean
+  onClick: () => void
+  icon: React.ReactNode
+  label: string
 }) {
   return (
     <button
@@ -177,105 +171,105 @@ function ChannelButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium transition-colors",
-        active ? "bg-background shadow-sm" : "text-muted-foreground",
-        disabled && "cursor-not-allowed opacity-40",
+        'flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium transition-colors',
+        active ? 'bg-background shadow-sm' : 'text-muted-foreground',
+        disabled && 'cursor-not-allowed opacity-40',
       )}
     >
       {icon}
       {label}
     </button>
-  );
+  )
 }
 
 type SuggestedTask = {
-  title: string;
-  description: string;
-  priority: "low" | "medium" | "high" | "urgent";
-};
+  title: string
+  description: string
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+}
 
 type CopilotResult = {
-  summary: string;
-  decisions: string[];
-  open_questions: string[];
-  tasks: SuggestedTask[];
-  follow_up_focus: string;
-  discovery_updates_saved?: number;
-  new_questions_added?: number;
-};
+  summary: string
+  decisions: string[]
+  open_questions: string[]
+  tasks: SuggestedTask[]
+  follow_up_focus: string
+  discovery_updates_saved?: number
+  new_questions_added?: number
+}
 
 function copilotErrorMessage(code: string | undefined, status: number): string {
-  if (code === "ai_disabled") return "La IA no está configurada.";
-  if (code === "rate_limited")
-    return "Has alcanzado el límite temporal del copiloto. Espera un minuto.";
-  if (code === "call_not_found") return "Esta ficha todavía no tiene una llamada registrada.";
-  if (code === "ai_unavailable") return "La IA no pudo resumir la llamada. Inténtalo de nuevo.";
+  if (code === 'ai_disabled') return 'La IA no está configurada.'
+  if (code === 'rate_limited')
+    return 'Has alcanzado el límite temporal del copiloto. Espera un minuto.'
+  if (code === 'call_not_found') return 'Esta ficha todavía no tiene una llamada registrada.'
+  if (code === 'ai_unavailable') return 'La IA no pudo resumir la llamada. Inténtalo de nuevo.'
   if (status === 504 || status === 502)
-    return "La IA tardó demasiado en responder. Inténtalo de nuevo.";
-  return "No se pudo analizar la llamada.";
+    return 'La IA tardó demasiado en responder. Inténtalo de nuevo.'
+  return 'No se pudo analizar la llamada.'
 }
 
 function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
-  const router = useRouter();
-  const [data, setData] = useState<CopilotResult | null>(null);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [applied, setApplied] = useState(false);
+  const router = useRouter()
+  const [data, setData] = useState<CopilotResult | null>(null)
+  const [selected, setSelected] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [applying, setApplying] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [applied, setApplied] = useState(false)
 
   useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
+    if (!open) return
+    let cancelled = false
     async function generate() {
-      setLoading(true);
-      setError(null);
-      setData(null);
-      setApplied(false);
+      setLoading(true)
+      setError(null)
+      setData(null)
+      setApplied(false)
       try {
-        const response = await fetch("/api/crm/ai/call-copilot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/crm/ai/call-copilot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ lead_id: leadId }),
-        });
-        const raw = await response.text();
-        let json: Partial<CopilotResult> & { error?: string };
+        })
+        const raw = await response.text()
+        let json: Partial<CopilotResult> & { error?: string }
         try {
-          json = JSON.parse(raw) as Partial<CopilotResult> & { error?: string };
+          json = JSON.parse(raw) as Partial<CopilotResult> & { error?: string }
         } catch {
           throw new Error(
             response.ok
-              ? "El copiloto devolvió una respuesta no válida."
-              : "No se pudo generar el copiloto de la llamada. Inténtalo de nuevo.",
-          );
+              ? 'El copiloto devolvió una respuesta no válida.'
+              : 'No se pudo generar el copiloto de la llamada. Inténtalo de nuevo.',
+          )
         }
-        if (!response.ok) throw new Error(copilotErrorMessage(json.error, response.status));
-        if (cancelled) return;
+        if (!response.ok) throw new Error(copilotErrorMessage(json.error, response.status))
+        if (cancelled) return
         if (!json.summary || !Array.isArray(json.tasks)) {
-          throw new Error("El copiloto devolvió un resultado incompleto.");
+          throw new Error('El copiloto devolvió un resultado incompleto.')
         }
-        const result = json as CopilotResult;
-        setData(result);
-        setSelected(result.tasks.map((task) => task.title));
+        const result = json as CopilotResult
+        setData(result)
+        setSelected(result.tasks.map((task) => task.title))
         if ((result.discovery_updates_saved ?? 0) + (result.new_questions_added ?? 0) > 0) {
-          router.refresh();
+          router.refresh()
         }
       } catch (reason) {
-        if (!cancelled) setError(reason instanceof Error ? reason.message : "Error desconocido.");
+        if (!cancelled) setError(reason instanceof Error ? reason.message : 'Error desconocido.')
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoading(false)
       }
     }
-    void generate();
+    void generate()
     return () => {
-      cancelled = true;
-    };
-  }, [leadId, open, router]);
+      cancelled = true
+    }
+  }, [leadId, open, router])
 
   async function applyTasks() {
-    if (!data || selected.length === 0) return;
-    setApplying(true);
-    setError(null);
+    if (!data || selected.length === 0) return
+    setApplying(true)
+    setError(null)
     try {
       await Promise.all(
         data.tasks
@@ -285,21 +279,21 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
               title: task.title,
               description: task.description,
               priority: task.priority,
-              status: "todo",
+              status: 'todo',
               lead_id: leadId,
-              project_id: "",
-              client_id: "",
+              project_id: '',
+              client_id: '',
               member_ids: [],
-              due_date: "",
+              due_date: '',
             }),
           ),
-      );
-      setApplied(true);
-      setSelected([]);
+      )
+      setApplied(true)
+      setSelected([])
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No se pudieron crear las tareas.");
+      setError(reason instanceof Error ? reason.message : 'No se pudieron crear las tareas.')
     } finally {
-      setApplying(false);
+      setApplying(false)
     }
   }
 
@@ -349,7 +343,7 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
               </div>
               <div className="flex flex-col gap-1">
                 {data.tasks.map((task, index) => {
-                  const checked = selected.includes(task.title);
+                  const checked = selected.includes(task.title)
                   return (
                     <label
                       key={task.title}
@@ -376,7 +370,7 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
                         ) : null}
                       </span>
                     </label>
-                  );
+                  )
                 })}
               </div>
               <div className="mt-2 flex justify-end">
@@ -387,7 +381,7 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
                   onClick={applyTasks}
                 >
                   {applied ? <Check className="size-3.5 text-emerald-600" /> : null}
-                  {applying ? "Creando…" : applied ? "Tareas creadas" : "Crear seleccionadas"}
+                  {applying ? 'Creando…' : applied ? 'Tareas creadas' : 'Crear seleccionadas'}
                 </Button>
               </div>
             </div>
@@ -400,10 +394,10 @@ function CallCopilot({ leadId, open }: { leadId: string; open: boolean }) {
         </div>
       ) : null}
       {error ? (
-        <p className={cn("mt-2 text-xs text-destructive", loading && "hidden")}>{error}</p>
+        <p className={cn('mt-2 text-xs text-destructive', loading && 'hidden')}>{error}</p>
       ) : null}
     </section>
-  );
+  )
 }
 
 function InsightList({
@@ -411,14 +405,14 @@ function InsightList({
   items,
   muted = false,
 }: {
-  title: string;
-  items: string[];
-  muted?: boolean;
+  title: string
+  items: string[]
+  muted?: boolean
 }) {
   return (
     <div>
       <p className="mb-1 text-xs font-medium text-muted-foreground">{title}</p>
-      <ul className={cn("space-y-1 pl-4 text-xs", muted && "text-muted-foreground")}>
+      <ul className={cn('space-y-1 pl-4 text-xs', muted && 'text-muted-foreground')}>
         {items.map((item) => (
           <li key={item} className="list-disc">
             {item}
@@ -426,5 +420,5 @@ function InsightList({
         ))}
       </ul>
     </div>
-  );
+  )
 }

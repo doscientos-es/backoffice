@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,10 +7,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@doscientos/ui";
-import { TriangleAlert as AlertTriangle } from "lucide-react";
+} from '@doscientos/ui'
+import { TriangleAlert as AlertTriangle } from 'lucide-react'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 
 /**
  * Resolves a stale editor without ever offering a silent overwrite. Closing
@@ -22,10 +22,10 @@ export function VersionConflictDialog({
   onKeepEditing,
   onReload,
 }: {
-  open: boolean;
-  entityName: string;
-  onKeepEditing: () => void;
-  onReload: () => void;
+  open: boolean
+  entityName: string
+  onKeepEditing: () => void
+  onReload: () => void
 }) {
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onKeepEditing()}>
@@ -58,5 +58,5 @@ export function VersionConflictDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

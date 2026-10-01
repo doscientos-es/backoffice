@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { Printer } from "lucide-react";
-import { useEffect } from "react";
+import { Printer } from 'lucide-react'
+import { useEffect } from 'react'
 
 /**
  * Print control for the public payment receipt. Lives in a Client Component
@@ -11,10 +11,10 @@ import { useEffect } from "react";
  */
 export function ReceiptPrintButton() {
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).has("print")) {
-      window.print();
+    if (new URLSearchParams(window.location.search).has('print')) {
+      window.print()
     }
-  }, []);
+  }, [])
 
   return (
     <button
@@ -25,5 +25,5 @@ export function ReceiptPrintButton() {
       <Printer className="h-3.5 w-3.5" />
       Imprimir justificante
     </button>
-  );
+  )
 }

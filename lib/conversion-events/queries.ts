@@ -1,38 +1,38 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export type ConversionEventRow = {
-  id: number;
-  event_id: string | null;
-  visitor_id: string | null;
-  lead_id: string | null;
-  event_name: string;
-  conversion_step: string | null;
-  landing_path: string | null;
-  landing_ref: string | null;
-  referrer: string | null;
-  utm_source: string | null;
-  utm_medium: string | null;
-  utm_campaign: string | null;
-  utm_term: string | null;
-  utm_content: string | null;
-  ip: string | null;
-  user_agent: string | null;
-  payload: Record<string, unknown> | null;
-  created_at: string;
+  id: number
+  event_id: string | null
+  visitor_id: string | null
+  lead_id: string | null
+  event_name: string
+  conversion_step: string | null
+  landing_path: string | null
+  landing_ref: string | null
+  referrer: string | null
+  utm_source: string | null
+  utm_medium: string | null
+  utm_campaign: string | null
+  utm_term: string | null
+  utm_content: string | null
+  ip: string | null
+  user_agent: string | null
+  payload: Record<string, unknown> | null
+  created_at: string
   lead: {
-    id: string;
-    name: string;
-    company: string | null;
-    email: string | null;
-  } | null;
-};
+    id: string
+    name: string
+    company: string | null
+    email: string | null
+  } | null
+}
 
 export type ConversionEventsFilters = {
-  eventName?: string | null;
-  leadId?: string | null;
-  visitorId?: string | null;
-  limit?: number;
-};
+  eventName?: string | null
+  leadId?: string | null
+  visitorId?: string | null
+  limit?: number
+}
 
 const EVENT_COLUMNS = `
   id,
@@ -54,19 +54,19 @@ const EVENT_COLUMNS = `
   payload,
   created_at,
   lead:lead_id(id, name, company, email)
-`;
+`
 
-function mapLead(value: unknown): ConversionEventRow["lead"] {
-  const row = Array.isArray(value) ? value[0] : value;
-  if (!row || typeof row !== "object") return null;
-  const lead = row as Record<string, unknown>;
-  if (typeof lead.id !== "string") return null;
+function mapLead(value: unknown): ConversionEventRow['lead'] {
+  const row = Array.isArray(value) ? value[0] : value
+  if (!row || typeof row !== 'object') return null
+  const lead = row as Record<string, unknown>
+  if (typeof lead.id !== 'string') return null
   return {
     id: lead.id,
-    name: (lead.name as string | null) ?? "",
+    name: (lead.name as string | null) ?? '',
     company: (lead.company as string | null) ?? null,
     email: (lead.email as string | null) ?? null,
-  };
+  }
 }
 
 function mapEvent(row: Record<string, unknown>): ConversionEventRow {
@@ -90,44 +90,44 @@ function mapEvent(row: Record<string, unknown>): ConversionEventRow {
     payload: (row.payload as Record<string, unknown> | null) ?? null,
     created_at: row.created_at as string,
     lead: mapLead(row.lead),
-  };
+  }
 }
 
 export async function listConversionEvents(
   filters: ConversionEventsFilters = {},
 ): Promise<ConversionEventRow[]> {
-  const supabase = createAdminClient();
+  const supabase = createAdminClient()
   let query = supabase
-    .from("conversion_events")
+    .from('conversion_events')
     .select(EVENT_COLUMNS)
-    .order("created_at", { ascending: false })
-    .limit(Math.min(Math.max(filters.limit ?? 100, 1), 500));
+    .order('created_at', { ascending: false })
+    .limit(Math.min(Math.max(filters.limit ?? 100, 1), 500))
 
-  if (filters.eventName) query = query.eq("event_name", filters.eventName);
-  if (filters.leadId) query = query.eq("lead_id", filters.leadId);
-  if (filters.visitorId) query = query.eq("visitor_id", filters.visitorId);
+  if (filters.eventName) query = query.eq('event_name', filters.eventName)
+  if (filters.leadId) query = query.eq('lead_id', filters.leadId)
+  if (filters.visitorId) query = query.eq('visitor_id', filters.visitorId)
 
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as Record<string, unknown>[]).map(mapEvent);
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return ((data ?? []) as Record<string, unknown>[]).map(mapEvent)
 }
 
 export async function listLeadConversionEvents(lead: {
-  id: string;
-  event_id?: string | null;
+  id: string
+  event_id?: string | null
 }): Promise<ConversionEventRow[]> {
-  const supabase = createAdminClient();
+  const supabase = createAdminClient()
   let query = supabase
-    .from("conversion_events")
+    .from('conversion_events')
     .select(EVENT_COLUMNS)
-    .order("created_at", { ascending: false })
-    .limit(100);
+    .order('created_at', { ascending: false })
+    .limit(100)
 
   query = lead.event_id
     ? query.or(`lead_id.eq.${lead.id},event_id.eq.${lead.event_id}`)
-    : query.eq("lead_id", lead.id);
+    : query.eq('lead_id', lead.id)
 
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as Record<string, unknown>[]).map(mapEvent);
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return ((data ?? []) as Record<string, unknown>[]).map(mapEvent)
 }

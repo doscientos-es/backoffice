@@ -1,17 +1,17 @@
-"use client";
+'use client'
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState } from 'react'
 
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 
-export type ProjectBillingType = "fixed" | "hourly";
+export type ProjectBillingType = 'fixed' | 'hourly'
 
 export interface BillingSectionProps {
-  idPrefix: string;
-  defaultBillingType?: ProjectBillingType;
-  defaultHourlyRate?: number | null;
-  defaultHourlyVatRate?: number | null;
+  idPrefix: string
+  defaultBillingType?: ProjectBillingType
+  defaultHourlyRate?: number | null
+  defaultHourlyVatRate?: number | null
 }
 
 /**
@@ -22,12 +22,12 @@ export interface BillingSectionProps {
  */
 export function BillingSection({
   idPrefix,
-  defaultBillingType = "fixed",
+  defaultBillingType = 'fixed',
   defaultHourlyRate,
   defaultHourlyVatRate,
 }: BillingSectionProps) {
-  const [billingType, setBillingType] = useState<ProjectBillingType>(defaultBillingType);
-  const isHourly = billingType === "hourly";
+  const [billingType, setBillingType] = useState<ProjectBillingType>(defaultBillingType)
+  const isHourly = billingType === 'hourly'
 
   return (
     <fieldset className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-4">
@@ -63,7 +63,7 @@ export function BillingSection({
               step="0.01"
               min="0"
               required
-              defaultValue={defaultHourlyRate ?? ""}
+              defaultValue={defaultHourlyRate ?? ''}
               placeholder="40"
               className="text-right tabular-nums"
             />
@@ -95,7 +95,7 @@ export function BillingSection({
         </>
       )}
     </fieldset>
-  );
+  )
 }
 
 function Field({
@@ -105,11 +105,11 @@ function Field({
   hint,
   children,
 }: {
-  label: string;
-  htmlFor: string;
-  required?: boolean;
-  hint?: string;
-  children: ReactNode;
+  label: string
+  htmlFor: string
+  required?: boolean
+  hint?: string
+  children: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -123,5 +123,5 @@ function Field({
       {children}
       {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
-  );
+  )
 }

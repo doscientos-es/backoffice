@@ -1,38 +1,38 @@
-"use client";
+'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
 
-import { TabList, TabTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { TabList, TabTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
 
-import { AssetsGrid, type BrandAsset } from "./assets-grid";
-import { BrandExport } from "./brand-export";
-import { type BrandGuide, GuidesPanel } from "./guides-panel";
-import type { BrandToken } from "./token-edit-dialog";
-import { TokensPanel } from "./tokens-panel";
+import { AssetsGrid, type BrandAsset } from './assets-grid'
+import { BrandExport } from './brand-export'
+import { type BrandGuide, GuidesPanel } from './guides-panel'
+import type { BrandToken } from './token-edit-dialog'
+import { TokensPanel } from './tokens-panel'
 
-type Tab = "assets" | "tokens" | "guides" | "export";
+type Tab = 'assets' | 'tokens' | 'guides' | 'export'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "assets", label: "Assets" },
-  { id: "tokens", label: "Tokens" },
-  { id: "guides", label: "Guías" },
-  { id: "export", label: "Exportar" },
-];
+  { id: 'assets', label: 'Assets' },
+  { id: 'tokens', label: 'Tokens' },
+  { id: 'guides', label: 'Guías' },
+  { id: 'export', label: 'Exportar' },
+]
 
 interface Props {
-  assets: BrandAsset[];
-  tokens: BrandToken[];
-  guides: BrandGuide[];
-  isAdmin: boolean;
-  className?: string;
+  assets: BrandAsset[]
+  tokens: BrandToken[]
+  guides: BrandGuide[]
+  isAdmin: boolean
+  className?: string
 }
 
 export function BrandHub({ assets, tokens, guides, isAdmin, className }: Props) {
-  const [active, setActive] = useState<Tab>("assets");
+  const [active, setActive] = useState<Tab>('assets')
 
   return (
-    <div className={cn("flex flex-col", className)}>
+    <div className={cn('flex flex-col', className)}>
       {/* Tab bar */}
       <TabList aria-label="Secciones de marca" className="shrink-0 gap-0.5 border-b">
         {TABS.map((t) => (
@@ -49,7 +49,7 @@ export function BrandHub({ assets, tokens, guides, isAdmin, className }: Props) 
 
       {/* Content — scrollable */}
       <div className="min-h-0 flex-1 overflow-y-auto pt-4">
-        {active === "assets" &&
+        {active === 'assets' &&
           (assets.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
               Aún no hay assets. Sube el primer logo o recurso visual.
@@ -57,10 +57,10 @@ export function BrandHub({ assets, tokens, guides, isAdmin, className }: Props) 
           ) : (
             <AssetsGrid assets={assets} isAdmin={isAdmin} />
           ))}
-        {active === "tokens" && <TokensPanel tokens={tokens} isAdmin={isAdmin} />}
-        {active === "guides" && <GuidesPanel guides={guides} isAdmin={isAdmin} />}
-        {active === "export" && <BrandExport tokens={tokens} assets={assets} />}
+        {active === 'tokens' && <TokensPanel tokens={tokens} isAdmin={isAdmin} />}
+        {active === 'guides' && <GuidesPanel guides={guides} isAdmin={isAdmin} />}
+        {active === 'export' && <BrandExport tokens={tokens} assets={assets} />}
       </div>
     </div>
-  );
+  )
 }

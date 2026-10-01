@@ -1,57 +1,57 @@
-import { buildBookingUrl } from "@/lib/recovery/utils";
+import { buildBookingUrl } from '@/lib/recovery/utils'
 
-export type WhatsAppLead = { id: string; name: string; email: string | null };
+export type WhatsAppLead = { id: string; name: string; email: string | null }
 
 function firstName(name: string | null | undefined): string {
-  const trimmed = name?.trim();
-  return trimmed ? (trimmed.split(/\s+/)[0] ?? trimmed) : "cliente";
+  const trimmed = name?.trim()
+  return trimmed ? (trimmed.split(/\s+/)[0] ?? trimmed) : 'cliente'
 }
 
 export function buildLeadWhatsAppMessage(
   lead: WhatsAppLead,
   senderName: string,
   calendarLink: string | undefined,
-  language: "es" | "ca" | "en" = "es",
+  language: 'es' | 'ca' | 'en' = 'es',
 ): string {
-  const bookingUrl = buildBookingUrl(calendarLink, lead);
-  const name = lead.name.split(" ")[0] || lead.name;
-  if (language === "ca") {
+  const bookingUrl = buildBookingUrl(calendarLink, lead)
+  const name = lead.name.split(' ')[0] || lead.name
+  if (language === 'ca') {
     return [
-      `Hola, ${name}. Soc ${senderName || "l’equip"}, de Doscientos.`,
-      "He intentat trucar-te perquè vas omplir un formulari en un dels nostres anuncis de Meta.",
-      "M’agradaria entendre què necessites i veure si et podem ajudar.",
+      `Hola, ${name}. Soc ${senderName || 'l’equip'}, de Doscientos.`,
+      'He intentat trucar-te perquè vas omplir un formulari en un dels nostres anuncis de Meta.',
+      'M’agradaria entendre què necessites i veure si et podem ajudar.',
       bookingUrl
         ? `Em pots explicar breument per aquí què necessites o, si ho prefereixes, reservar una reunió: ${bookingUrl}`
-        : "Em pots explicar breument per aquí què necessites i et respondré tan aviat com pugui.",
-      "Què et va millor?",
-    ].join("\n\n");
+        : 'Em pots explicar breument per aquí què necessites i et respondré tan aviat com pugui.',
+      'Què et va millor?',
+    ].join('\n\n')
   }
-  if (language === "en") {
+  if (language === 'en') {
     return [
-      `Hi ${name}, I’m ${senderName || "the team"} from Doscientos.`,
-      "I tried to call because you filled in a form on one of our Meta ads.",
-      "I’d like to understand what you need and see how we can help.",
+      `Hi ${name}, I’m ${senderName || 'the team'} from Doscientos.`,
+      'I tried to call because you filled in a form on one of our Meta ads.',
+      'I’d like to understand what you need and see how we can help.',
       bookingUrl
         ? `You can tell me briefly here or, if you prefer, book a meeting: ${bookingUrl}`
-        : "You can tell me briefly here and I’ll get back to you as soon as I can.",
-      "What works best for you?",
-    ].join("\n\n");
+        : 'You can tell me briefly here and I’ll get back to you as soon as I can.',
+      'What works best for you?',
+    ].join('\n\n')
   }
   return [
-    `Hola, ${name}. Soy ${senderName || "el equipo"}, de Doscientos.`,
-    "He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.",
-    "Me gustaría entender qué necesitas y ver si podemos ayudarte.",
+    `Hola, ${name}. Soy ${senderName || 'el equipo'}, de Doscientos.`,
+    'He intentado llamarte porque rellenaste un formulario en uno de nuestros anuncios de Meta.',
+    'Me gustaría entender qué necesitas y ver si podemos ayudarte.',
     bookingUrl
       ? `Puedes contarme brevemente por aquí o, si lo prefieres, agendar una reunión: ${bookingUrl}`
-      : "Puedes contarme brevemente por aquí y te respondo en cuanto pueda.",
-    "¿Qué te resulta más cómodo?",
-  ].join("\n\n");
+      : 'Puedes contarme brevemente por aquí y te respondo en cuanto pueda.',
+    '¿Qué te resulta más cómodo?',
+  ].join('\n\n')
 }
 
 export function buildWhatsAppUrl(phone: string, message: string): string {
-  const digits = phone.replace(/\D/g, "");
-  const internationalPhone = digits.length === 9 ? `34${digits}` : digits;
-  return `https://wa.me/${internationalPhone}?text=${encodeURIComponent(message)}`;
+  const digits = phone.replace(/\D/g, '')
+  const internationalPhone = digits.length === 9 ? `34${digits}` : digits
+  return `https://wa.me/${internationalPhone}?text=${encodeURIComponent(message)}`
 }
 
 export function buildInvoiceWhatsAppMessage(
@@ -62,8 +62,8 @@ export function buildInvoiceWhatsAppMessage(
   return [
     `Hola ${firstName(clientName)}, te comparto la factura ${invoiceNumber}.`,
     `Puedes consultarla y descargarla desde aquí:\n${portalUrl}`,
-    "Si tienes cualquier duda, escríbeme.",
-  ].join("\n\n");
+    'Si tienes cualquier duda, escríbeme.',
+  ].join('\n\n')
 }
 
 export function buildProposalWhatsAppMessage(
@@ -74,8 +74,8 @@ export function buildProposalWhatsAppMessage(
   return [
     `Hola ${firstName(recipientName)}, te comparto la propuesta ${proposalNumber}.`,
     `Puedes revisarla con calma desde este enlace:\n${portalUrl}`,
-    "Si te parece, comentamos cualquier duda.",
-  ].join("\n\n");
+    'Si te parece, comentamos cualquier duda.',
+  ].join('\n\n')
 }
 
 export function buildProjectWhatsAppMessage(
@@ -86,6 +86,6 @@ export function buildProjectWhatsAppMessage(
   return [
     `Hola ${firstName(clientName)}, ya hemos empezado con ${projectName}.`,
     `Puedes seguir el proyecto desde el portal del cliente:\n${portalUrl}`,
-    "Si necesitas cualquier cosa, escríbeme por aquí.",
-  ].join("\n\n");
+    'Si necesitas cualquier cosa, escríbeme por aquí.',
+  ].join('\n\n')
 }

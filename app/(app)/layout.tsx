@@ -1,29 +1,29 @@
-import Link from "next/link";
+import Link from 'next/link'
 
-import { Logo } from "@/components/branding";
-import { CallReminderWatcher } from "@/components/layout/call-reminder-watcher";
-import { CommandPalette } from "@/components/layout/command-palette";
-import { CommandPaletteTrigger } from "@/components/layout/command-palette-trigger";
-import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
-import { MobileNav } from "@/components/layout/mobile-nav";
-import { NavProgress } from "@/components/layout/nav-progress";
-import { QuickCreateButton } from "@/components/layout/quick-create-button";
-import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
-import { Sidebar } from "@/components/layout/sidebar";
-import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
-import { MfaSessionGate } from "@/components/security/mfa-session-gate";
-import { hasMfaAccess, requireUser } from "@/lib/auth";
+import { Logo } from '@/components/branding'
+import { CallReminderWatcher } from '@/components/layout/call-reminder-watcher'
+import { CommandPalette } from '@/components/layout/command-palette'
+import { CommandPaletteTrigger } from '@/components/layout/command-palette-trigger'
+import { KeyboardShortcuts } from '@/components/layout/keyboard-shortcuts'
+import { MobileNav } from '@/components/layout/mobile-nav'
+import { NavProgress } from '@/components/layout/nav-progress'
+import { QuickCreateButton } from '@/components/layout/quick-create-button'
+import { ShortcutsDialog } from '@/components/layout/shortcuts-dialog'
+import { Sidebar } from '@/components/layout/sidebar'
+import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
+import { MfaSessionGate } from '@/components/security/mfa-session-gate'
+import { hasMfaAccess, requireUser } from '@/lib/auth'
 
 export default async function AppLayout({
   children,
   modal,
 }: {
-  children: React.ReactNode;
-  modal: React.ReactNode;
+  children: React.ReactNode
+  modal: React.ReactNode
 }) {
-  const user = await requireUser();
+  const user = await requireUser()
   const mfaVerified =
-    user.role === "owner" || user.role === "admin" ? await hasMfaAccess(user.id) : true;
+    user.role === 'owner' || user.role === 'admin' ? await hasMfaAccess(user.id) : true
 
   return (
     <div className="app-shell flex h-dvh overflow-hidden bg-background">
@@ -52,5 +52,5 @@ export default async function AppLayout({
       <MfaSessionGate memberRole={user.role} mfaVerified={mfaVerified} />
       <PwaInstallPrompt />
     </div>
-  );
+  )
 }

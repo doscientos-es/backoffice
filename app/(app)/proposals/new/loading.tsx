@@ -1,5 +1,5 @@
-import { FormCardSkeleton } from "@/components/layout/form-card-skeleton";
-import { PageHeaderSkeleton } from "@/components/layout/page-header-skeleton";
+import { FormCardSkeleton } from '@/components/layout/form-card-skeleton'
+import { PageHeaderSkeleton } from '@/components/layout/page-header-skeleton'
 
 export default function NewProposalLoading() {
   return (
@@ -7,5 +7,5 @@ export default function NewProposalLoading() {
       <PageHeaderSkeleton breadcrumbs={[80, 110]} titleWidth={200} actions={[]} />
       <FormCardSkeleton rows={4} columns={2} withTextarea />
     </div>
-  );
+  )
 }

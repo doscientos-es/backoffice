@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   DropdownMenuContent,
@@ -6,25 +6,25 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@doscientos/ui";
-import { Briefcase, FileText, ListChecks, Plus, User, Users } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+} from '@doscientos/ui'
+import { Briefcase, FileText, ListChecks, Plus, User, Users } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { CREATE_SHORTCUTS } from "@/lib/navigation/shortcuts";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { CREATE_SHORTCUTS } from '@/lib/navigation/shortcuts'
+import { cn } from '@/lib/utils'
 
 const ICON_BY_HREF: Record<string, React.ComponentType<{ className?: string }>> = {
-  "/leads/new": User,
-  "/clients/new": Users,
-  "/projects/new": Briefcase,
-  "/tasks/new": ListChecks,
-  "/proposals/new": FileText,
-};
+  '/leads/new': User,
+  '/clients/new': Users,
+  '/projects/new': Briefcase,
+  '/tasks/new': ListChecks,
+  '/proposals/new': FileText,
+}
 
 export function QuickCreateButton() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-end px-4 md:px-6">
@@ -35,7 +35,7 @@ export function QuickCreateButton() {
             className="h-12 gap-2 rounded-full px-4 shadow-lg sm:w-12 sm:px-0"
             aria-label="Acciones rápidas (C + tecla)"
           >
-            <Plus className={cn("h-5 w-5 transition-transform", isOpen && "rotate-45")} />
+            <Plus className={cn('h-5 w-5 transition-transform', isOpen && 'rotate-45')} />
             <span className="sm:hidden">Crear</span>
           </Button>
           <DropdownMenuContent placement="top end" offset={8} className="min-w-56">
@@ -47,7 +47,7 @@ export function QuickCreateButton() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {CREATE_SHORTCUTS.map((action) => {
-              const Icon = ICON_BY_HREF[action.href] ?? Plus;
+              const Icon = ICON_BY_HREF[action.href] ?? Plus
               return (
                 <DropdownMenuItem
                   key={action.href}
@@ -62,11 +62,11 @@ export function QuickCreateButton() {
                     C {action.key}
                   </span>
                 </DropdownMenuItem>
-              );
+              )
             })}
           </DropdownMenuContent>
         </DropdownMenuTrigger>
       </div>
     </div>
-  );
+  )
 }

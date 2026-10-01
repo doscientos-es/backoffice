@@ -1,195 +1,195 @@
-import { buildQrDataUrl, buildQrUrl } from "@doscientos/verifactu";
-import { CircleCheck as CheckCircle2, Download, XCircle } from "lucide-react";
-import type { Metadata } from "next";
-import Image from "next/image";
-import { notFound } from "next/navigation";
+import { buildQrDataUrl, buildQrUrl } from '@doscientos/verifactu'
+import { CircleCheck as CheckCircle2, Download, XCircle } from 'lucide-react'
+import type { Metadata } from 'next'
+import Image from 'next/image'
+import { notFound } from 'next/navigation'
 
-import { InvoiceItemsSummary } from "@/components/finance/invoice-items-summary";
-import { InvoicePaymentOptions } from "@/components/portal/invoice-payment-options";
-import { PortalPasswordGate } from "@/components/portal/password-gate";
-import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { getCurrentUser } from "@/lib/auth";
-import { buildVatBreakdown } from "@/lib/finance";
-import { isPortalUnlocked } from "@/lib/portal/access";
-import { formatPortalDate, formatPortalEUR, resolvePortalLanguage } from "@/lib/portal/language";
-import { INVOICE_STATUS } from "@/lib/status";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { verifactuInvoiceConfigFromEnv } from "@/lib/verifactu/config";
+import { InvoiceItemsSummary } from '@/components/finance/invoice-items-summary'
+import { InvoicePaymentOptions } from '@/components/portal/invoice-payment-options'
+import { PortalPasswordGate } from '@/components/portal/password-gate'
+import { Button } from '@/components/ui/button'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { getCurrentUser } from '@/lib/auth'
+import { buildVatBreakdown } from '@/lib/finance'
+import { isPortalUnlocked } from '@/lib/portal/access'
+import { formatPortalDate, formatPortalEUR, resolvePortalLanguage } from '@/lib/portal/language'
+import { INVOICE_STATUS } from '@/lib/status'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { verifactuInvoiceConfigFromEnv } from '@/lib/verifactu/config'
 
-import { unlockInvoicePortal } from "./actions";
+import { unlockInvoicePortal } from './actions'
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
-  title: "Factura · doscientos",
+  title: 'Factura · doscientos',
   robots: { index: false, follow: false },
-};
+}
 
 type InvoiceItem = {
-  id: string;
-  description: string;
-  quantity: number;
-  unit_price: number;
-  vat_rate: number;
-  subtotal: number;
-};
+  id: string
+  description: string
+  quantity: number
+  unit_price: number
+  vat_rate: number
+  subtotal: number
+}
 
 export default async function PortalInvoicePage({
   params,
   searchParams,
 }: {
-  params: Promise<{ token: string }>;
-  searchParams: Promise<{ success?: string; error?: string; lang?: string }>;
+  params: Promise<{ token: string }>
+  searchParams: Promise<{ success?: string; error?: string; lang?: string }>
 }) {
-  const { token } = await params;
-  const { success, error: paymentError, lang } = await searchParams;
-  const admin = createAdminClient();
+  const { token } = await params
+  const { success, error: paymentError, lang } = await searchParams
+  const admin = createAdminClient()
 
   // Resolve auth first so team members can preview drafts.
-  const auth = await getCurrentUser();
-  const isTeam = auth.ok;
+  const auth = await getCurrentUser()
+  const isTeam = auth.ok
 
   const { data: invoice } = await admin
-    .from("invoices")
-    .select("*, clients(name, logo_url, lead_id, leads(language))")
-    .eq("portal_token", token)
-    .is("deleted_at", null)
-    .maybeSingle();
+    .from('invoices')
+    .select('*, clients(name, logo_url, lead_id, leads(language))')
+    .eq('portal_token', token)
+    .is('deleted_at', null)
+    .maybeSingle()
 
   // Drafts are only accessible to authenticated team members.
-  if (!invoice || (invoice.status === "draft" && !isTeam)) notFound();
+  if (!invoice || (invoice.status === 'draft' && !isTeam)) notFound()
   const clientLeadLanguage = (
     invoice.clients as { leads?: { language?: string | null } | null } | null
-  )?.leads?.language;
-  const portalLanguage = resolvePortalLanguage(clientLeadLanguage, lang);
+  )?.leads?.language
+  const portalLanguage = resolvePortalLanguage(clientLeadLanguage, lang)
   const copy =
-    portalLanguage === "ca"
+    portalLanguage === 'ca'
       ? {
-          invoice: "Factura",
-          issued: "Emesa",
-          due: "Venciment",
-          total: "Total de la factura",
-          download: "Descarregar PDF",
-          issuer: "Emesa per",
-          billedTo: "Facturada a",
-          concepts: "Conceptes",
-          concept: "concepte",
-          conceptsPlural: "conceptes",
-          verify: "Verificar a l’AEAT",
-          paid: "El pagament s’ha completat correctament. La factura es marcarà com a pagada aviat.",
+          invoice: 'Factura',
+          issued: 'Emesa',
+          due: 'Venciment',
+          total: 'Total de la factura',
+          download: 'Descarregar PDF',
+          issuer: 'Emesa per',
+          billedTo: 'Facturada a',
+          concepts: 'Conceptes',
+          concept: 'concepte',
+          conceptsPlural: 'conceptes',
+          verify: 'Verificar a l’AEAT',
+          paid: 'El pagament s’ha completat correctament. La factura es marcarà com a pagada aviat.',
           paymentError:
-            "No s’ha pogut completar el pagament. Torna-ho a provar o contacta amb suport.",
-          payments: "Pagaments rebuts",
-          receipt: "Justificant",
-          confirmed: "Confirmat",
-          fiscal: "Dades fiscals",
-          activity: "Desglossament d’activitat",
-          date: "Data",
-          schedule: "Horari",
-          hours: "Hores",
-          description: "Descripció",
+            'No s’ha pogut completar el pagament. Torna-ho a provar o contacta amb suport.',
+          payments: 'Pagaments rebuts',
+          receipt: 'Justificant',
+          confirmed: 'Confirmat',
+          fiscal: 'Dades fiscals',
+          activity: 'Desglossament d’activitat',
+          date: 'Data',
+          schedule: 'Horari',
+          hours: 'Hores',
+          description: 'Descripció',
         }
-      : portalLanguage === "en"
+      : portalLanguage === 'en'
         ? {
-            invoice: "Invoice",
-            issued: "Issued",
-            due: "Due date",
-            total: "Invoice total",
-            download: "Download PDF",
-            issuer: "Issued by",
-            billedTo: "Billed to",
-            concepts: "Items",
-            concept: "item",
-            conceptsPlural: "items",
-            verify: "Verify with AEAT",
-            paid: "Payment successful. The invoice will be marked as paid shortly.",
-            paymentError: "Payment could not be completed. Please try again or contact support.",
-            payments: "Payments received",
-            receipt: "Receipt",
-            confirmed: "Confirmed",
-            fiscal: "Tax details",
-            activity: "Activity breakdown",
-            date: "Date",
-            schedule: "Time",
-            hours: "Hours",
-            description: "Description",
+            invoice: 'Invoice',
+            issued: 'Issued',
+            due: 'Due date',
+            total: 'Invoice total',
+            download: 'Download PDF',
+            issuer: 'Issued by',
+            billedTo: 'Billed to',
+            concepts: 'Items',
+            concept: 'item',
+            conceptsPlural: 'items',
+            verify: 'Verify with AEAT',
+            paid: 'Payment successful. The invoice will be marked as paid shortly.',
+            paymentError: 'Payment could not be completed. Please try again or contact support.',
+            payments: 'Payments received',
+            receipt: 'Receipt',
+            confirmed: 'Confirmed',
+            fiscal: 'Tax details',
+            activity: 'Activity breakdown',
+            date: 'Date',
+            schedule: 'Time',
+            hours: 'Hours',
+            description: 'Description',
           }
         : {
-            invoice: "Factura",
-            issued: "Emitida",
-            due: "Vencimiento",
-            total: "Total factura",
-            download: "Descargar PDF",
-            issuer: "Emitida por",
-            billedTo: "Facturado a",
-            concepts: "Conceptos",
-            concept: "concepto",
-            conceptsPlural: "conceptos",
-            verify: "Verificar en AEAT",
-            paid: "¡Pago realizado con éxito! La factura se marcará como pagada en breve.",
+            invoice: 'Factura',
+            issued: 'Emitida',
+            due: 'Vencimiento',
+            total: 'Total factura',
+            download: 'Descargar PDF',
+            issuer: 'Emitida por',
+            billedTo: 'Facturado a',
+            concepts: 'Conceptos',
+            concept: 'concepto',
+            conceptsPlural: 'conceptos',
+            verify: 'Verificar en AEAT',
+            paid: '¡Pago realizado con éxito! La factura se marcará como pagada en breve.',
             paymentError:
-              "El pago no se pudo completar. Por favor, inténtelo de nuevo o contacte con soporte.",
-            payments: "Pagos recibidos",
-            receipt: "Justificante",
-            confirmed: "Confirmado",
-            fiscal: "Datos fiscales",
-            activity: "Desglose de actividad",
-            date: "Fecha",
-            schedule: "Horario",
-            hours: "Horas",
-            description: "Descripción",
-          };
+              'El pago no se pudo completar. Por favor, inténtelo de nuevo o contacte con soporte.',
+            payments: 'Pagos recibidos',
+            receipt: 'Justificante',
+            confirmed: 'Confirmado',
+            fiscal: 'Datos fiscales',
+            activity: 'Desglose de actividad',
+            date: 'Fecha',
+            schedule: 'Horario',
+            hours: 'Horas',
+            description: 'Descripción',
+          }
 
   // Client-facing access gate: hidden invoices 404 and password-protected ones
   // show the unlock form until the visitor presents a valid cookie. Team
   // members always bypass so they can preview the link.
   if (!isTeam) {
-    if ((invoice.is_client_visible as boolean | null) === false) notFound();
+    if ((invoice.is_client_visible as boolean | null) === false) notFound()
     const unlocked = await isPortalUnlocked(
       token,
       (invoice.portal_password_hash as string | null) ?? null,
-    );
+    )
     if (!unlocked) {
       return (
         <PortalPasswordGate token={token} action={unlockInvoicePortal} language={portalLanguage} />
-      );
+      )
     }
   }
 
   const { data: items } = await admin
-    .from("invoice_items")
-    .select("id, position, description, quantity, unit_price, vat_rate, subtotal")
-    .eq("invoice_id", invoice.id as string)
-    .order("position");
+    .from('invoice_items')
+    .select('id, position, description, quantity, unit_price, vat_rate, subtotal')
+    .eq('invoice_id', invoice.id as string)
+    .order('position')
 
   const { data: workLogs } = await admin
-    .from("work_logs")
-    .select("id, work_date, hours, start_time, end_time, note")
-    .eq("invoice_id", invoice.id as string)
-    .is("deleted_at", null)
-    .order("work_date", { ascending: true });
+    .from('work_logs')
+    .select('id, work_date, hours, start_time, end_time, note')
+    .eq('invoice_id', invoice.id as string)
+    .is('deleted_at', null)
+    .order('work_date', { ascending: true })
 
-  const { data: settings } = await admin.from("settings").select("*").eq("id", 1).maybeSingle();
+  const { data: settings } = await admin.from('settings').select('*').eq('id', 1).maybeSingle()
 
   const client = (
     invoice as unknown as { clients: { name: string; logo_url: string | null } | null }
-  ).clients;
-  const safeItems = (items ?? []) as unknown as InvoiceItem[];
+  ).clients
+  const safeItems = (items ?? []) as unknown as InvoiceItem[]
 
   // Group line items by VAT rate so we can show a proper desglose por tipo.
-  const vatBreakdown = buildVatBreakdown(safeItems);
+  const vatBreakdown = buildVatBreakdown(safeItems)
 
-  let qrDataUrl: string | null = null;
-  if (invoice.verifactu_status === "accepted") {
+  let qrDataUrl: string | null = null
+  if (invoice.verifactu_status === 'accepted') {
     try {
-      const persistedQrUrl = typeof invoice.qr_url === "string" ? invoice.qr_url.trim() : "";
+      const persistedQrUrl = typeof invoice.qr_url === 'string' ? invoice.qr_url.trim() : ''
       if (persistedQrUrl) {
-        qrDataUrl = await buildQrDataUrl(persistedQrUrl);
+        qrDataUrl = await buildQrDataUrl(persistedQrUrl)
       } else {
-        const emisorNif = (settings?.company_nif as string | null) ?? null;
+        const emisorNif = (settings?.company_nif as string | null) ?? null
         if (
           emisorNif &&
-          invoice.status !== "draft" &&
+          invoice.status !== 'draft' &&
           invoice.full_number &&
           invoice.issue_date &&
           invoice.total != null
@@ -202,8 +202,8 @@ export default async function PortalInvoicePage({
               total: invoice.total as number,
             },
             verifactuInvoiceConfigFromEnv(),
-          );
-          qrDataUrl = await buildQrDataUrl(qrUrl);
+          )
+          qrDataUrl = await buildQrDataUrl(qrUrl)
         }
       }
     } catch {
@@ -213,40 +213,40 @@ export default async function PortalInvoicePage({
 
   // Redsys: determine if payment is available and how much has been paid
   const canPay =
-    (invoice.status === "issued" || invoice.status === "overdue") && (invoice.total as number) > 0;
+    (invoice.status === 'issued' || invoice.status === 'overdue') && (invoice.total as number) > 0
 
-  let amountPaid = 0;
+  let amountPaid = 0
   if (canPay) {
     const { data: confirmedPayments } = await admin
-      .from("invoice_payments")
-      .select("id, amount, ds_authorisation_code, confirmed_at")
-      .eq("invoice_id", invoice.id as string)
-      .eq("status", "confirmed")
-      .order("confirmed_at", { ascending: false });
-    amountPaid = confirmedPayments?.reduce((s, p) => s + Number(p.amount), 0) ?? 0;
+      .from('invoice_payments')
+      .select('id, amount, ds_authorisation_code, confirmed_at')
+      .eq('invoice_id', invoice.id as string)
+      .eq('status', 'confirmed')
+      .order('confirmed_at', { ascending: false })
+    amountPaid = confirmedPayments?.reduce((s, p) => s + Number(p.amount), 0) ?? 0
   }
-  const amountDue = Math.round(((invoice.total as number) - amountPaid) * 100) / 100;
+  const amountDue = Math.round(((invoice.total as number) - amountPaid) * 100) / 100
 
   const payments = canPay
     ? ((
         await admin
-          .from("invoice_payments")
-          .select("id, amount, ds_authorisation_code, confirmed_at")
-          .eq("invoice_id", invoice.id as string)
-          .eq("status", "confirmed")
-          .order("confirmed_at", { ascending: false })
+          .from('invoice_payments')
+          .select('id, amount, ds_authorisation_code, confirmed_at')
+          .eq('invoice_id', invoice.id as string)
+          .eq('status', 'confirmed')
+          .order('confirmed_at', { ascending: false })
       ).data ?? [])
-    : [];
+    : []
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8">
-      {success === "1" && (
+      {success === '1' && (
         <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
           <p className="text-sm font-medium">{copy.paid}</p>
         </div>
       )}
-      {paymentError === "1" && (
+      {paymentError === '1' && (
         <div className="flex items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300">
           <XCircle className="h-5 w-5 shrink-0" />
           <p className="text-sm font-medium">{copy.paymentError}</p>
@@ -271,8 +271,8 @@ export default async function PortalInvoicePage({
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                     {p.confirmed_at
                       ? formatPortalDate(p.confirmed_at as string, portalLanguage)
-                      : copy.confirmed}{" "}
-                    · Aut: {p.ds_authorisation_code ?? "—"}
+                      : copy.confirmed}{' '}
+                    · Aut: {p.ds_authorisation_code ?? '—'}
                   </p>
                 </div>
                 <Button variant="outline" size="sm" asChild>
@@ -320,7 +320,7 @@ export default async function PortalInvoicePage({
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
               {invoice.issue_date ? (
                 <span>
-                  {copy.issued}:{" "}
+                  {copy.issued}:{' '}
                   <strong className="text-zinc-700 dark:text-zinc-300">
                     {formatPortalDate(invoice.issue_date as string, portalLanguage)}
                   </strong>
@@ -328,7 +328,7 @@ export default async function PortalInvoicePage({
               ) : null}
               {invoice.due_date ? (
                 <span>
-                  {copy.due}:{" "}
+                  {copy.due}:{' '}
                   <strong className="text-zinc-700 dark:text-zinc-300">
                     {formatPortalDate(invoice.due_date as string, portalLanguage)}
                   </strong>
@@ -360,7 +360,7 @@ export default async function PortalInvoicePage({
                 {copy.issuer}
               </p>
               <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                {(settings.company_name as string | null) ?? "—"}
+                {(settings.company_name as string | null) ?? '—'}
               </p>
               {(settings.company_nif as string | null) ? (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -374,7 +374,7 @@ export default async function PortalInvoicePage({
               ) : null}
               {(settings.iban as string | null) ? (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  IBAN:{" "}
+                  IBAN:{' '}
                   <span className="font-mono text-zinc-700 dark:text-zinc-300">
                     {settings.iban as string}
                   </span>
@@ -396,7 +396,7 @@ export default async function PortalInvoicePage({
                 />
               ) : null}
               <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                {client?.name ?? "—"}
+                {client?.name ?? '—'}
               </p>
             </div>
             {(invoice.client_nif as string | null) ? (
@@ -411,14 +411,14 @@ export default async function PortalInvoicePage({
                   invoice.client_address_street,
                   [invoice.client_address_zip, invoice.client_address_city]
                     .filter(Boolean)
-                    .join(" "),
+                    .join(' '),
                   invoice.client_address_province,
-                  (invoice.client_address_country as string | null)?.toUpperCase() !== "ES"
+                  (invoice.client_address_country as string | null)?.toUpperCase() !== 'ES'
                     ? invoice.client_address_country
                     : null,
                 ]
                   .filter(Boolean)
-                  .join("\n")}
+                  .join('\n')}
               </p>
             ) : null}
           </div>
@@ -442,7 +442,7 @@ export default async function PortalInvoicePage({
         />
 
         {/* Fiscal info + QR */}
-        {invoice.verifactu_status === "accepted" &&
+        {invoice.verifactu_status === 'accepted' &&
         ((invoice.idfact as string | null) ||
           (invoice.verifactu_csv as string | null) ||
           qrDataUrl) ? (
@@ -453,7 +453,7 @@ export default async function PortalInvoicePage({
               </p>
               {(invoice.idfact as string | null) ? (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  IDFACT:{" "}
+                  IDFACT:{' '}
                   <span className="font-mono break-all text-zinc-700 dark:text-zinc-300">
                     {invoice.idfact as string}
                   </span>
@@ -461,7 +461,7 @@ export default async function PortalInvoicePage({
               ) : null}
               {(invoice.verifactu_csv as string | null) ? (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  CSV AEAT:{" "}
+                  CSV AEAT:{' '}
                   <span className="font-mono break-all text-zinc-700 dark:text-zinc-300">
                     {invoice.verifactu_csv as string}
                   </span>
@@ -514,7 +514,7 @@ export default async function PortalInvoicePage({
                   {workLogs.map((log, i) => (
                     <tr
                       key={log.id as string}
-                      className={i > 0 ? "border-t border-zinc-100 dark:border-zinc-800/60" : ""}
+                      className={i > 0 ? 'border-t border-zinc-100 dark:border-zinc-800/60' : ''}
                     >
                       <td className="px-8 py-3 whitespace-nowrap text-zinc-700 tabular-nums dark:text-zinc-300">
                         {formatPortalDate(log.work_date as string, portalLanguage)}
@@ -522,13 +522,13 @@ export default async function PortalInvoicePage({
                       <td className="px-4 py-3 whitespace-nowrap text-zinc-500 tabular-nums dark:text-zinc-400">
                         {log.start_time && log.end_time
                           ? `${(log.start_time as string).slice(0, 5)} – ${(log.end_time as string).slice(0, 5)}`
-                          : "—"}
+                          : '—'}
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap text-zinc-600 tabular-nums dark:text-zinc-400">
                         {Number(log.hours).toFixed(2)} h
                       </td>
                       <td className="px-8 py-3 text-zinc-600 dark:text-zinc-400">
-                        {(log.note as string | null) ?? "—"}
+                        {(log.note as string | null) ?? '—'}
                       </td>
                     </tr>
                   ))}
@@ -549,5 +549,5 @@ export default async function PortalInvoicePage({
         ) : null}
       </article>
     </div>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,26 +7,26 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@doscientos/ui";
-import { Building2, FileText, MapPin, User } from "lucide-react";
-import type * as React from "react";
-import { useEffect, useState } from "react";
+} from '@doscientos/ui'
+import { Building2, FileText, MapPin, User } from 'lucide-react'
+import type * as React from 'react'
+import { useEffect, useState } from 'react'
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 
-import type { AutofillData } from "./nif-input";
+import type { AutofillData } from './nif-input'
 
 export type ApplySelection = {
-  name?: string;
-  province?: string;
-  city?: string;
-  address?: string;
-  contactPerson?: string;
-};
+  name?: string
+  province?: string
+  city?: string
+  address?: string
+  contactPerson?: string
+}
 
-type Fields = { name: boolean; province: boolean; city: boolean; address: boolean };
+type Fields = { name: boolean; province: boolean; city: boolean; address: boolean }
 
 function FieldRow({
   icon,
@@ -35,13 +35,13 @@ function FieldRow({
   checked,
   onCheckedChange,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  checked: boolean;
-  onCheckedChange: () => void;
+  icon: React.ReactNode
+  label: string
+  value: string
+  checked: boolean
+  onCheckedChange: () => void
 }) {
-  const id = `field-${label}-${value}`;
+  const id = `field-${label}-${value}`
   return (
     <label
       htmlFor={id}
@@ -54,7 +54,7 @@ function FieldRow({
         <span className="truncate">{value}</span>
       </span>
     </label>
-  );
+  )
 }
 
 export function EnrichmentDialog({
@@ -63,18 +63,18 @@ export function EnrichmentDialog({
   onApplyAction,
   onCloseAction,
 }: {
-  open: boolean;
-  data: AutofillData;
-  onApplyAction: (s: ApplySelection) => void;
-  onCloseAction: () => void;
+  open: boolean
+  data: AutofillData
+  onApplyAction: (s: ApplySelection) => void
+  onCloseAction: () => void
 }) {
   const [fields, setFields] = useState<Fields>({
     name: !!data.name,
     province: !!data.province,
     city: !!data.city,
     address: !!data.address,
-  });
-  const [officer, setOfficer] = useState<string | null>(null);
+  })
+  const [officer, setOfficer] = useState<string | null>(null)
 
   // Reset selections whenever a new company is loaded
   useEffect(() => {
@@ -83,31 +83,31 @@ export function EnrichmentDialog({
       province: !!data.province,
       city: !!data.city,
       address: !!data.address,
-    });
-    setOfficer(null);
-  }, [data]);
+    })
+    setOfficer(null)
+  }, [data])
 
-  const toggle = (k: keyof Fields) => setFields((f) => ({ ...f, [k]: !f[k] }));
-  const anySelected = Object.values(fields).some(Boolean) || officer !== null;
+  const toggle = (k: keyof Fields) => setFields((f) => ({ ...f, [k]: !f[k] }))
+  const anySelected = Object.values(fields).some(Boolean) || officer !== null
 
   const handleApply = () => {
-    const s: ApplySelection = {};
-    if (fields.name && data.name) s.name = data.name;
-    if (fields.province && data.province) s.province = data.province;
-    if (fields.city && data.city) s.city = data.city;
-    if (fields.address && data.address) s.address = data.address;
-    if (officer) s.contactPerson = officer;
-    onApplyAction(s);
-    onCloseAction();
-  };
+    const s: ApplySelection = {}
+    if (fields.name && data.name) s.name = data.name
+    if (fields.province && data.province) s.province = data.province
+    if (fields.city && data.city) s.city = data.city
+    if (fields.address && data.address) s.address = data.address
+    if (officer) s.contactPerson = officer
+    onApplyAction(s)
+    onCloseAction()
+  }
 
-  const statusVariant = data.companyStatus?.toUpperCase() === "ACTIVA" ? "success" : "warning";
+  const statusVariant = data.companyStatus?.toUpperCase() === 'ACTIVA' ? 'success' : 'warning'
 
   return (
     <Dialog
       open={open}
       onOpenChange={(v) => {
-        if (!v) onCloseAction();
+        if (!v) onCloseAction()
       }}
     >
       <DialogContent className="sm:max-w-md">
@@ -147,7 +147,7 @@ export function EnrichmentDialog({
               label="Nombre"
               value={data.name}
               checked={fields.name}
-              onCheckedChange={() => toggle("name")}
+              onCheckedChange={() => toggle('name')}
             />
           )}
           {data.province && (
@@ -156,7 +156,7 @@ export function EnrichmentDialog({
               label="Provincia"
               value={data.province}
               checked={fields.province}
-              onCheckedChange={() => toggle("province")}
+              onCheckedChange={() => toggle('province')}
             />
           )}
           {data.city && (
@@ -165,7 +165,7 @@ export function EnrichmentDialog({
               label="Ciudad"
               value={data.city}
               checked={fields.city}
-              onCheckedChange={() => toggle("city")}
+              onCheckedChange={() => toggle('city')}
             />
           )}
           {data.address && (
@@ -174,7 +174,7 @@ export function EnrichmentDialog({
               label="Dirección"
               value={data.address}
               checked={fields.address}
-              onCheckedChange={() => toggle("address")}
+              onCheckedChange={() => toggle('address')}
             />
           )}
         </div>
@@ -229,5 +229,5 @@ export function EnrichmentDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

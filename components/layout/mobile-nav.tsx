@@ -1,26 +1,26 @@
-"use client";
+'use client'
 
-import { Drawer } from "@doscientos/ui";
-import { List as Menu, Settings, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { Drawer } from '@doscientos/ui'
+import { List as Menu, Settings, X } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 
-import { Logo } from "@/components/branding";
-import { NavigationTree } from "@/components/layout/navigation-tree";
-import { NotificationsBell } from "@/components/layout/notifications-bell";
-import { UserMenu } from "@/components/layout/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { IconButton } from "@/components/ui/icon-button";
-import type { CurrentUser } from "@/lib/auth";
-import { visibleNavigationGroups } from "@/lib/navigation/navigation";
+import { Logo } from '@/components/branding'
+import { NavigationTree } from '@/components/layout/navigation-tree'
+import { NotificationsBell } from '@/components/layout/notifications-bell'
+import { UserMenu } from '@/components/layout/user-menu'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { IconButton } from '@/components/ui/icon-button'
+import type { CurrentUser } from '@/lib/auth'
+import { visibleNavigationGroups } from '@/lib/navigation/navigation'
 
 export function MobileNav({ user }: { user: CurrentUser }) {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname()
+  const [open, setOpen] = useState(false)
 
-  const visibleGroups = visibleNavigationGroups(user.role);
+  const visibleGroups = visibleNavigationGroups(user.role)
 
   return (
     <div className="app-mobile-nav items-center gap-2">
@@ -82,7 +82,7 @@ export function MobileNav({ user }: { user: CurrentUser }) {
                   variant="ghost"
                   className="border-0"
                   label="Ajustes"
-                  aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+                  aria-current={pathname.startsWith('/settings') ? 'page' : undefined}
                 >
                   <Link href="/settings" onClick={() => setOpen(false)}>
                     <Settings className="size-4" aria-hidden />
@@ -97,5 +97,5 @@ export function MobileNav({ user }: { user: CurrentUser }) {
         </div>
       </Drawer>
     </div>
-  );
+  )
 }

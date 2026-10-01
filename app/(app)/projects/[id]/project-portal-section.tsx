@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,42 +7,42 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@doscientos/ui";
-import { LoaderCircle as Loader2, Mail, Rocket } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+} from '@doscientos/ui'
+import { LoaderCircle as Loader2, Mail, Rocket } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { type FormEvent, useState } from 'react'
 
-import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
-import { CopyPortalLink } from "@/components/portal/copy-portal-link";
-import { PortalAccessControls } from "@/components/portal/portal-access-controls";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { buildProjectWhatsAppMessage, buildWhatsAppUrl } from "@/lib/leads/whatsapp";
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
+import { CopyPortalLink } from '@/components/portal/copy-portal-link'
+import { PortalAccessControls } from '@/components/portal/portal-access-controls'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { buildProjectWhatsAppMessage, buildWhatsAppUrl } from '@/lib/leads/whatsapp'
 
 import {
   previewProjectPortalEmail,
   publishProjectPortal,
   sendProjectPortalEmail,
   updateProjectPortalAccess,
-} from "../actions";
+} from '../actions'
 
 type Props = {
-  projectId: string;
-  projectName: string;
-  portalToken: string;
-  visible: boolean;
-  hasPassword: boolean;
-  inviteSentAt: string | null;
-  clientEmail: string | null;
-  clientPhone: string | null;
-  canEdit: boolean;
-  canPublish: boolean;
-};
+  projectId: string
+  projectName: string
+  portalToken: string
+  visible: boolean
+  hasPassword: boolean
+  inviteSentAt: string | null
+  clientEmail: string | null
+  clientPhone: string | null
+  canEdit: boolean
+  canPublish: boolean
+}
 
 export function ProjectPortalSection({
   projectId,
@@ -56,25 +56,25 @@ export function ProjectPortalSection({
   canEdit,
   canPublish,
 }: Props) {
-  const router = useRouter();
-  const feedback = useFormFeedback({ successResetMs: 5000 });
-  const [publishing, setPublishing] = useState(false);
+  const router = useRouter()
+  const feedback = useFormFeedback({ successResetMs: 5000 })
+  const [publishing, setPublishing] = useState(false)
 
   const activate = async () => {
-    feedback.setPending();
-    setPublishing(true);
-    const result = await publishProjectPortal({ id: projectId });
-    setPublishing(false);
+    feedback.setPending()
+    setPublishing(true)
+    const result = await publishProjectPortal({ id: projectId })
+    setPublishing(false)
     if (!result.ok) {
-      feedback.setError(result.error);
-      return;
+      feedback.setError(result.error)
+      return
     }
-    feedback.setSuccess("Portal activado y email enviado");
-    router.refresh();
-  };
+    feedback.setSuccess('Portal activado y email enviado')
+    router.refresh()
+  }
 
   return (
-    <Card className={!visible ? "border-primary/30 shadow-sm" : undefined}>
+    <Card className={!visible ? 'border-primary/30 shadow-sm' : undefined}>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle>Portal del cliente</CardTitle>
@@ -115,7 +115,7 @@ export function ProjectPortalSection({
                 ) : (
                   <Rocket aria-hidden />
                 )}
-                {publishing ? "Activando…" : "Activar y avisar al cliente"}
+                {publishing ? 'Activando…' : 'Activar y avisar al cliente'}
               </Button>
             ) : (
               <p className="shrink-0 text-xs text-muted-foreground">
@@ -157,7 +157,7 @@ export function ProjectPortalSection({
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function SendProjectPortalButton({
@@ -167,81 +167,81 @@ function SendProjectPortalButton({
   defaultPhone,
   lastSentAt,
 }: {
-  projectId: string;
-  projectName: string;
-  defaultEmail: string | null;
-  defaultPhone: string | null;
-  lastSentAt: string | null;
+  projectId: string
+  projectName: string
+  defaultEmail: string | null
+  defaultPhone: string | null
+  lastSentAt: string | null
 }) {
-  const router = useRouter();
-  const feedback = useFormFeedback();
-  const [open, setOpen] = useState(false);
-  const [to, setTo] = useState(defaultEmail ?? "");
-  const [phone, setPhone] = useState(defaultPhone ?? "");
-  const [clientName, setClientName] = useState("cliente");
-  const [message, setMessage] = useState("");
-  const [previewMessage, setPreviewMessage] = useState("");
-  const [portalUrl, setPortalUrl] = useState<string | null>(null);
-  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
-  const [loadingPreview, setLoadingPreview] = useState(false);
+  const router = useRouter()
+  const feedback = useFormFeedback()
+  const [open, setOpen] = useState(false)
+  const [to, setTo] = useState(defaultEmail ?? '')
+  const [phone, setPhone] = useState(defaultPhone ?? '')
+  const [clientName, setClientName] = useState('cliente')
+  const [message, setMessage] = useState('')
+  const [previewMessage, setPreviewMessage] = useState('')
+  const [portalUrl, setPortalUrl] = useState<string | null>(null)
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
 
   const loadPreview = async () => {
-    setLoadingPreview(true);
+    setLoadingPreview(true)
     const result = await previewProjectPortalEmail({
       id: projectId,
       message: message.trim() || undefined,
-    });
+    })
     if (result.ok) {
-      setPreview({ subject: result.subject, html: result.html });
-      setPreviewMessage(message);
-      setClientName(result.clientName);
-      setPortalUrl(result.portalUrl);
-      if (!to.trim() && result.clientEmail) setTo(result.clientEmail);
-      if (!phone.trim() && result.clientPhone) setPhone(result.clientPhone);
+      setPreview({ subject: result.subject, html: result.html })
+      setPreviewMessage(message)
+      setClientName(result.clientName)
+      setPortalUrl(result.portalUrl)
+      if (!to.trim() && result.clientEmail) setTo(result.clientEmail)
+      if (!phone.trim() && result.clientPhone) setPhone(result.clientPhone)
     } else {
-      feedback.setError(result.error);
+      feedback.setError(result.error)
     }
-    setLoadingPreview(false);
-  };
+    setLoadingPreview(false)
+  }
 
   const onOpenChange = (next: boolean) => {
-    setOpen(next);
-    if (next) void loadPreview();
-  };
+    setOpen(next)
+    if (next) void loadPreview()
+  }
 
   const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+    event.preventDefault()
     if (!preview || previewMessage !== message) {
-      feedback.setError("Actualiza la vista previa antes de enviar el email.");
-      return;
+      feedback.setError('Actualiza la vista previa antes de enviar el email.')
+      return
     }
-    feedback.setPending();
+    feedback.setPending()
     const result = await sendProjectPortalEmail({
       id: projectId,
       to: to.trim() || undefined,
       message: message.trim() || undefined,
-    });
+    })
     if (!result.ok) {
-      feedback.setError(result.error);
-      return;
+      feedback.setError(result.error)
+      return
     }
-    feedback.setSuccess(result.mocked ? "Email simulado (modo dev)" : "Email enviado");
-    setOpen(false);
-    router.refresh();
-  };
+    feedback.setSuccess(result.mocked ? 'Email simulado (modo dev)' : 'Email enviado')
+    setOpen(false)
+    router.refresh()
+  }
 
   const handleWhatsapp = () => {
-    if (!phone.trim() || !portalUrl) return;
+    if (!phone.trim() || !portalUrl) return
     const text = message.trim()
       ? `${message.trim()}\n\n${portalUrl}`
-      : buildProjectWhatsAppMessage(clientName, projectName, portalUrl);
-    window.open(buildWhatsAppUrl(phone, text), "_blank", "noopener,noreferrer");
-  };
+      : buildProjectWhatsAppMessage(clientName, projectName, portalUrl)
+    window.open(buildWhatsAppUrl(phone, text), '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <>
       <Button type="button" size="sm" variant="outline" onClick={() => onOpenChange(true)}>
-        <Mail aria-hidden /> {lastSentAt ? "Reenviar acceso" : "Enviar acceso"}
+        <Mail aria-hidden /> {lastSentAt ? 'Reenviar acceso' : 'Enviar acceso'}
       </Button>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-4xl">
@@ -324,7 +324,7 @@ function SendProjectPortalButton({
                 <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
                   Asunto
                 </p>
-                <p className="mt-1 text-sm font-medium">{preview?.subject ?? "Cargando email…"}</p>
+                <p className="mt-1 text-sm font-medium">{preview?.subject ?? 'Cargando email…'}</p>
               </div>
               <div className="h-105 bg-white">
                 {loadingPreview ? (
@@ -363,12 +363,12 @@ function SendProjectPortalButton({
                   feedback.pending || loadingPreview || !preview || previewMessage !== message
                 }
               >
-                <Mail aria-hidden /> {feedback.pending ? "Enviando…" : "Enviar email"}
+                <Mail aria-hidden /> {feedback.pending ? 'Enviando…' : 'Enviar email'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

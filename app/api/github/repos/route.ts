@@ -1,6 +1,6 @@
-import { requireUser } from "@/lib/auth";
-import { githubDefaultInstallationId } from "@/lib/env";
-import { listInstallationRepos } from "@/lib/integrations/github";
+import { requireUser } from '@/lib/auth'
+import { githubDefaultInstallationId } from '@/lib/env'
+import { listInstallationRepos } from '@/lib/integrations/github'
 
 /**
  * GET /api/github/repos
@@ -8,18 +8,18 @@ import { listInstallationRepos } from "@/lib/integrations/github";
  * Used by the project form to let the user pick a repo from the org.
  */
 export async function GET() {
-  await requireUser();
+  await requireUser()
 
-  const installationId = githubDefaultInstallationId();
+  const installationId = githubDefaultInstallationId()
   if (!installationId) {
-    return Response.json({ repos: [] });
+    return Response.json({ repos: [] })
   }
 
   try {
-    const repos = await listInstallationRepos(installationId);
-    return Response.json({ repos });
+    const repos = await listInstallationRepos(installationId)
+    return Response.json({ repos })
   } catch (err) {
-    console.error("[github/repos] Failed to list installation repos:", err);
-    return Response.json({ repos: [] }, { status: 500 });
+    console.error('[github/repos] Failed to list installation repos:', err)
+    return Response.json({ repos: [] }, { status: 500 })
   }
 }

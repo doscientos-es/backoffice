@@ -1,102 +1,102 @@
-"use client";
+'use client'
 
-import { Check } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Check } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { formatPortalEUR } from "@/lib/portal/language";
-import { type MaintenanceOffer, recommendedMaintenancePlanId } from "@/lib/proposals/maintenance";
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { formatPortalEUR } from '@/lib/portal/language'
+import { type MaintenanceOffer, recommendedMaintenancePlanId } from '@/lib/proposals/maintenance'
 
-import { selectProposalMaintenance } from "./actions";
+import { selectProposalMaintenance } from './actions'
 
 export function ProposalMaintenanceOptions({
   token,
   offer,
   selectedPlanId,
   disabled,
-  language = "es",
+  language = 'es',
 }: {
-  token: string;
-  offer: MaintenanceOffer;
-  selectedPlanId: string | null;
-  disabled: boolean;
-  language?: "es" | "ca" | "en";
+  token: string
+  offer: MaintenanceOffer
+  selectedPlanId: string | null
+  disabled: boolean
+  language?: 'es' | 'ca' | 'en'
 }) {
-  const router = useRouter();
-  const feedback = useFormFeedback({ successResetMs: 0 });
-  const [selected, setSelected] = useState(selectedPlanId);
-  const selectedPlan = offer.plans.find((plan) => plan.id === selected) ?? null;
-  const recommendedPlanId = recommendedMaintenancePlanId(offer);
+  const router = useRouter()
+  const feedback = useFormFeedback({ successResetMs: 0 })
+  const [selected, setSelected] = useState(selectedPlanId)
+  const selectedPlan = offer.plans.find((plan) => plan.id === selected) ?? null
+  const recommendedPlanId = recommendedMaintenancePlanId(offer)
   const copy =
-    language === "ca"
+    language === 'ca'
       ? {
-          choose: "Tria la cobertura que prefereixis",
+          choose: 'Tria la cobertura que prefereixis',
           intro:
-            "Compara què cobreix cada pla i selecciona’n com a màxim un abans de confirmar la proposta.",
-          month: "/ mes + IVA",
-          recommended: "Recomanat",
-          selected: "Seleccionat",
-          includes: "Inclou",
-          excludes: "No inclou",
-          remove: "Pla seleccionat · Treure",
-          choosePlan: "Tria aquest pla",
-          chosen: "Has triat",
-          before: "Pots canviar-lo o treure’l abans de confirmar.",
-          without: "Pots confirmar la proposta sense afegir manteniment.",
-          updating: "Actualitzant la proposta…",
-          added: "Manteniment seleccionat",
-          removed: "Manteniment no afegit",
+            'Compara què cobreix cada pla i selecciona’n com a màxim un abans de confirmar la proposta.',
+          month: '/ mes + IVA',
+          recommended: 'Recomanat',
+          selected: 'Seleccionat',
+          includes: 'Inclou',
+          excludes: 'No inclou',
+          remove: 'Pla seleccionat · Treure',
+          choosePlan: 'Tria aquest pla',
+          chosen: 'Has triat',
+          before: 'Pots canviar-lo o treure’l abans de confirmar.',
+          without: 'Pots confirmar la proposta sense afegir manteniment.',
+          updating: 'Actualitzant la proposta…',
+          added: 'Manteniment seleccionat',
+          removed: 'Manteniment no afegit',
         }
-      : language === "en"
+      : language === 'en'
         ? {
-            choose: "Choose your preferred coverage",
+            choose: 'Choose your preferred coverage',
             intro:
-              "Compare what each plan covers and select at most one before confirming the proposal.",
-            month: "/ month + VAT",
-            recommended: "Recommended",
-            selected: "Selected",
-            includes: "Includes",
-            excludes: "Does not include",
-            remove: "Plan selected · Remove",
-            choosePlan: "Choose this plan",
-            chosen: "You chose",
-            before: "You can change or remove it before confirming.",
-            without: "You can confirm the proposal without adding maintenance.",
-            updating: "Updating proposal…",
-            added: "Maintenance selected",
-            removed: "Maintenance not added",
+              'Compare what each plan covers and select at most one before confirming the proposal.',
+            month: '/ month + VAT',
+            recommended: 'Recommended',
+            selected: 'Selected',
+            includes: 'Includes',
+            excludes: 'Does not include',
+            remove: 'Plan selected · Remove',
+            choosePlan: 'Choose this plan',
+            chosen: 'You chose',
+            before: 'You can change or remove it before confirming.',
+            without: 'You can confirm the proposal without adding maintenance.',
+            updating: 'Updating proposal…',
+            added: 'Maintenance selected',
+            removed: 'Maintenance not added',
           }
         : {
-            choose: "Elige la cobertura que prefieras",
+            choose: 'Elige la cobertura que prefieras',
             intro:
-              "Compara qué cubre cada plan y selecciona como máximo uno antes de confirmar la propuesta.",
-            month: "/ mes + IVA",
-            recommended: "Recomendado",
-            selected: "Seleccionado",
-            includes: "Incluye",
-            excludes: "No incluye",
-            remove: "Plan seleccionado · Quitar",
-            choosePlan: "Elegir este plan",
-            chosen: "Has elegido",
-            before: "Puedes cambiarlo o quitarlo antes de confirmar.",
-            without: "Puedes confirmar la propuesta sin añadir mantenimiento.",
-            updating: "Actualizando propuesta…",
-            added: "Mantenimiento seleccionado",
-            removed: "Mantenimiento no añadido",
-          };
-  const money = (amount: number) => formatPortalEUR(amount, language);
+              'Compara qué cubre cada plan y selecciona como máximo uno antes de confirmar la propuesta.',
+            month: '/ mes + IVA',
+            recommended: 'Recomendado',
+            selected: 'Seleccionado',
+            includes: 'Incluye',
+            excludes: 'No incluye',
+            remove: 'Plan seleccionado · Quitar',
+            choosePlan: 'Elegir este plan',
+            chosen: 'Has elegido',
+            before: 'Puedes cambiarlo o quitarlo antes de confirmar.',
+            without: 'Puedes confirmar la propuesta sin añadir mantenimiento.',
+            updating: 'Actualizando propuesta…',
+            added: 'Mantenimiento seleccionado',
+            removed: 'Mantenimiento no añadido',
+          }
+  const money = (amount: number) => formatPortalEUR(amount, language)
 
   const choose = async (planId: string | null) => {
-    if (disabled) return;
-    feedback.setPending();
-    const result = await selectProposalMaintenance(token, planId);
-    if (!result.ok) return feedback.setError(result.error);
-    setSelected(planId);
-    feedback.setSuccess(planId ? copy.added : copy.removed);
-    router.refresh();
-  };
+    if (disabled) return
+    feedback.setPending()
+    const result = await selectProposalMaintenance(token, planId)
+    if (!result.ok) return feedback.setError(result.error)
+    setSelected(planId)
+    feedback.setSuccess(planId ? copy.added : copy.removed)
+    router.refresh()
+  }
 
   return (
     <section className="border-t border-zinc-100 bg-[#2A4227]/3 px-6 py-7 sm:px-8 dark:border-zinc-800/60 dark:bg-[#9CC196]/4">
@@ -114,18 +114,18 @@ export function ProposalMaintenanceOptions({
       </header>
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
         {offer.plans.map((plan) => {
-          const active = selected === plan.id;
-          const recommended = recommendedPlanId === plan.id;
+          const active = selected === plan.id
+          const recommended = recommendedPlanId === plan.id
           return (
             <article
               key={plan.id}
-              className={`rounded-lg border p-4 ${active ? "border-[#2A4227] bg-[#2A4227]/5 dark:border-[#9CC196]" : recommended ? "border-[#2A4227]/50 bg-[#2A4227]/3 dark:border-[#9CC196]/60 dark:bg-[#9CC196]/5" : "border-zinc-200 dark:border-zinc-800"}`}
+              className={`rounded-lg border p-4 ${active ? 'border-[#2A4227] bg-[#2A4227]/5 dark:border-[#9CC196]' : recommended ? 'border-[#2A4227]/50 bg-[#2A4227]/3 dark:border-[#9CC196]/60 dark:bg-[#9CC196]/5' : 'border-zinc-200 dark:border-zinc-800'}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{plan.name}</h2>
                   <p className="mt-1 text-lg font-bold text-[#2A4227] dark:text-[#9CC196]">
-                    {money(plan.monthly_price)}{" "}
+                    {money(plan.monthly_price)}{' '}
                     <span className="text-xs font-medium">{copy.month}</span>
                   </p>
                 </div>
@@ -173,7 +173,7 @@ export function ProposalMaintenanceOptions({
                 <Button
                   type="button"
                   size="sm"
-                  variant={active ? "secondary" : "outline"}
+                  variant={active ? 'secondary' : 'outline'}
                   className="mt-4 w-full"
                   disabled={feedback.pending}
                   onClick={() => choose(active ? null : plan.id)}
@@ -182,7 +182,7 @@ export function ProposalMaintenanceOptions({
                 </Button>
               ) : null}
             </article>
-          );
+          )
         })}
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -196,5 +196,5 @@ export function ProposalMaintenanceOptions({
         {!disabled ? <FormFeedback state={feedback.state} pendingLabel={copy.updating} /> : null}
       </div>
     </section>
-  );
+  )
 }

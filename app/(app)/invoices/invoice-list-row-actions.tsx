@@ -1,29 +1,29 @@
-"use client";
+'use client'
 
-import { Ellipsis as MoreHorizontal, Mail, SquareArrowOutUpRight } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Ellipsis as MoreHorizontal, Mail, SquareArrowOutUpRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu'
 
-import { SendInvoiceButton } from "./[id]/send-invoice-button";
+import { SendInvoiceButton } from './[id]/send-invoice-button'
 
 type Props = {
-  invoiceId: string;
-  canSendToClient: boolean;
-};
+  invoiceId: string
+  canSendToClient: boolean
+}
 
 /** Keeps client delivery available from the list without crowding its columns. */
 export function InvoiceListRowActions({ invoiceId, canSendToClient }: Props) {
-  const router = useRouter();
-  const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const router = useRouter()
+  const [sendDialogOpen, setSendDialogOpen] = useState(false)
 
   return (
     <div className="flex items-center justify-end opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
@@ -62,5 +62,5 @@ export function InvoiceListRowActions({ invoiceId, canSendToClient }: Props) {
         />
       ) : null}
     </div>
-  );
+  )
 }

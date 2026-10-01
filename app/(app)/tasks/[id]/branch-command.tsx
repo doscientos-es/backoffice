@@ -1,25 +1,25 @@
-"use client";
+'use client'
 
-import { Check, Copy, GitBranch } from "lucide-react";
-import { useState } from "react";
+import { Check, Copy, GitBranch } from 'lucide-react'
+import { useState } from 'react'
 
 /**
  * Displays the git command to checkout the task's feature branch with a
  * one-click copy button. Rendered client-side so the clipboard API is available.
  */
 export function BranchCommand({ branch }: { branch: string }) {
-  const [copied, setCopied] = useState(false);
-  const cmd = `git fetch origin && git checkout ${branch}`;
+  const [copied, setCopied] = useState(false)
+  const cmd = `git fetch origin && git checkout ${branch}`
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(cmd);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(cmd)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch {
       // ignore
     }
-  };
+  }
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -43,5 +43,5 @@ export function BranchCommand({ branch }: { branch: string }) {
         Copia el comando para hacer checkout de esta branch.
       </p>
     </div>
-  );
+  )
 }

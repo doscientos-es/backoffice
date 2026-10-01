@@ -1,1 +1,1 @@
-export * from "@/primitives/ui/detail-grid-skeleton";
+export * from '@/primitives/ui/detail-grid-skeleton'

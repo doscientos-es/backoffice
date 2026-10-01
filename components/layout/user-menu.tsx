@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   DropdownMenuContent,
@@ -6,7 +6,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@doscientos/ui";
+} from '@doscientos/ui'
 import {
   CircleAlert as AlertCircle,
   ChevronRight,
@@ -15,17 +15,17 @@ import {
   ShieldCheck,
   UserRound,
   Users,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import type { CurrentUser, MemberRole } from "@/lib/auth";
-import { clearTrustedMfaDevice } from "@/lib/security/mfa-actions";
-import { getBrowserClient } from "@/lib/supabase/browser";
-import { memberAvatarUrl } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import type { CurrentUser, MemberRole } from '@/lib/auth'
+import { clearTrustedMfaDevice } from '@/lib/security/mfa-actions'
+import { getBrowserClient } from '@/lib/supabase/browser'
+import { memberAvatarUrl } from '@/lib/utils'
 
 function initials(name: string): string {
   return (
@@ -33,48 +33,48 @@ function initials(name: string): string {
       .split(/\s+/)
       .filter(Boolean)
       .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase() ?? "")
-      .join("") || "?"
-  );
+      .map((p) => p[0]?.toUpperCase() ?? '')
+      .join('') || '?'
+  )
 }
 
 const ROLE_LABELS: Record<MemberRole, string> = {
-  owner: "Propietario",
-  admin: "Administrador",
-  member: "Miembro",
-  viewer: "Solo lectura",
-};
+  owner: 'Propietario',
+  admin: 'Administrador',
+  member: 'Miembro',
+  viewer: 'Solo lectura',
+}
 
-const ROLE_VARIANT: Record<MemberRole, "default" | "info" | "neutral"> = {
-  owner: "default",
-  admin: "info",
-  member: "neutral",
-  viewer: "neutral",
-};
+const ROLE_VARIANT: Record<MemberRole, 'default' | 'info' | 'neutral'> = {
+  owner: 'default',
+  admin: 'info',
+  member: 'neutral',
+  viewer: 'neutral',
+}
 
 export function UserMenu({ user }: { user: CurrentUser }) {
-  const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  const [signOutError, setSignOutError] = useState<string | null>(null);
-  const canManageTeam = user.role === "owner" || user.role === "admin";
-  const avatarSrc = memberAvatarUrl(user, 64);
+  const router = useRouter()
+  const [isOpen, setIsOpen] = useState(false)
+  const [signOutError, setSignOutError] = useState<string | null>(null)
+  const canManageTeam = user.role === 'owner' || user.role === 'admin'
+  const avatarSrc = memberAvatarUrl(user, 64)
 
   async function signOut() {
-    setSignOutError(null);
+    setSignOutError(null)
     try {
-      await clearTrustedMfaDevice();
+      await clearTrustedMfaDevice()
     } catch {
-      setSignOutError("No se pudo cerrar la sesión de forma segura. Inténtalo de nuevo.");
-      return;
+      setSignOutError('No se pudo cerrar la sesión de forma segura. Inténtalo de nuevo.')
+      return
     }
-    const supabase = getBrowserClient();
-    const { error } = await supabase.auth.signOut();
+    const supabase = getBrowserClient()
+    const { error } = await supabase.auth.signOut()
     if (error) {
-      setSignOutError(error.message);
-      return;
+      setSignOutError(error.message)
+      return
     }
-    router.replace("/login");
-    router.refresh();
+    router.replace('/login')
+    router.refresh()
   }
 
   return (
@@ -176,5 +176,5 @@ export function UserMenu({ user }: { user: CurrentUser }) {
         ) : null}
       </DropdownMenuContent>
     </DropdownMenuTrigger>
-  );
+  )
 }

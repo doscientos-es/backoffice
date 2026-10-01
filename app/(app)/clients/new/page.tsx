@@ -1,20 +1,20 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
-import { BackLink } from "@/components/layout/back-link";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { requireUser } from "@/lib/auth";
+import { BackLink } from '@/components/layout/back-link'
+import { PageHeader } from '@/components/layout/page-header'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { requireUser } from '@/lib/auth'
 
-import { createClient } from "../actions";
-import { ClientFormFields } from "../client-form-fields";
+import { createClient } from '../actions'
+import { ClientFormFields } from '../client-form-fields'
 
-export const metadata: Metadata = { title: "Nuevo cliente · doscientos" };
+export const metadata: Metadata = { title: 'Nuevo cliente · doscientos' }
 
 export default async function NewClientPage() {
-  await requireUser();
+  await requireUser()
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -38,5 +38,5 @@ export default async function NewClientPage() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

@@ -1,24 +1,24 @@
-import { ExternalLink, Shield } from "lucide-react";
-import type { Metadata } from "next";
+import { ExternalLink, Shield } from 'lucide-react'
+import type { Metadata } from 'next'
 
-import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { serverEnv } from "@/lib/env";
+import { PageHeader } from '@/components/layout/page-header'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { serverEnv } from '@/lib/env'
 
-export const metadata: Metadata = { title: "Legal / Verifactu · doscientos" };
+export const metadata: Metadata = { title: 'Legal / Verifactu · doscientos' }
 
 export default async function LegalPage() {
-  const env = serverEnv();
-  const softwareName = env.VERIFACTU_SOFTWARE_NAME;
-  const softwareId = env.VERIFACTU_SOFTWARE_ID;
-  const softwareVersion = env.VERIFACTU_SOFTWARE_VERSION;
+  const env = serverEnv()
+  const softwareName = env.VERIFACTU_SOFTWARE_NAME
+  const softwareId = env.VERIFACTU_SOFTWARE_ID
+  const softwareVersion = env.VERIFACTU_SOFTWARE_VERSION
 
-  const today = new Date().toLocaleDateString("es-ES", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  const today = new Date().toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
 
   return (
     <div className="flex flex-col gap-6">
@@ -81,7 +81,7 @@ export default async function LegalPage() {
               Desarrollo Tecnológico, S.L.
             </li>
             <li>
-              <span className="text-muted-foreground">Sitio web:</span>{" "}
+              <span className="text-muted-foreground">Sitio web:</span>{' '}
               <a
                 href="https://doscientos.es"
                 target="_blank"
@@ -102,7 +102,7 @@ export default async function LegalPage() {
               <span className="text-muted-foreground">Nombre:</span> {softwareName}
             </li>
             <li>
-              <span className="text-muted-foreground">IdSistemaInformatico:</span>{" "}
+              <span className="text-muted-foreground">IdSistemaInformatico:</span>{' '}
               <code className="font-mono">{softwareId}</code>
             </li>
             <li>
@@ -125,11 +125,11 @@ export default async function LegalPage() {
             <li>Orden HAC/1177/2024, de 17 de octubre</li>
           </ul>
           <p className="mb-4">
-            En concreto, el sistema garantiza la{" "}
+            En concreto, el sistema garantiza la{' '}
             <strong>
               integridad, inalterabilidad, conservación, accesibilidad, legibilidad, trazabilidad e
               inalterabilidad
-            </strong>{" "}
+            </strong>{' '}
             de los registros de facturación, mediante encadenamiento criptográfico (hash SHA-256) y
             envío en tiempo real a la AEAT en modalidad VERI*FACTU.
           </p>
@@ -160,5 +160,5 @@ export default async function LegalPage() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

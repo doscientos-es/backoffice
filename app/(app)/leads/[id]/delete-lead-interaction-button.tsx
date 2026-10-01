@@ -1,36 +1,36 @@
-"use client";
+'use client'
 
-import { Trash as Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { sileo } from "sileo";
+import { Trash as Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { sileo } from 'sileo'
 
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { IconButton } from "@/components/ui/icon-button";
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { IconButton } from '@/components/ui/icon-button'
 
-import { deleteLeadInteraction } from "../actions";
+import { deleteLeadInteraction } from '../actions'
 
 export function DeleteLeadInteractionButton({
   leadId,
   interactionId,
   label,
 }: {
-  leadId: string;
-  interactionId: string;
-  label: "llamada" | "nota";
+  leadId: string
+  interactionId: string
+  label: 'llamada' | 'nota'
 }) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState(false);
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [pending, setPending] = useState(false)
 
   const onConfirm = async () => {
-    setPending(true);
-    const result = await deleteLeadInteraction({ leadId, interactionId });
-    setPending(false);
-    if (!result.ok) return sileo.error({ title: result.error });
-    setOpen(false);
-    router.refresh();
-  };
+    setPending(true)
+    const result = await deleteLeadInteraction({ leadId, interactionId })
+    setPending(false)
+    if (!result.ok) return sileo.error({ title: result.error })
+    setOpen(false)
+    router.refresh()
+  }
 
   return (
     <>
@@ -56,5 +56,5 @@ export function DeleteLeadInteractionButton({
         onConfirm={() => void onConfirm()}
       />
     </>
-  );
+  )
 }

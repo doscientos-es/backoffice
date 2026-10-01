@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Dialog,
@@ -7,38 +7,38 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@doscientos/ui";
-import { Eye, FileText, Pencil } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+} from '@doscientos/ui'
+import { Eye, FileText, Pencil } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { type FormEvent, useState } from 'react'
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { FormFeedback, useFormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { MemberLabel } from "@/components/ui/member-avatar";
-import { Select } from "@/components/ui/select";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import { getCallInteractionDetails } from "@/lib/leads/interaction-utils";
-import type { LeadDetailInteraction } from "@/lib/leads/types";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { MemberLabel } from '@/components/ui/member-avatar'
+import { Select } from '@/components/ui/select'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { Textarea } from '@/components/ui/textarea'
+import { getCallInteractionDetails } from '@/lib/leads/interaction-utils'
+import type { LeadDetailInteraction } from '@/lib/leads/types'
 
-import { updateLeadCall } from "../actions";
-import { CallDateField } from "../call-date-field";
-import { DeleteLeadInteractionButton } from "./delete-lead-interaction-button";
+import { updateLeadCall } from '../actions'
+import { CallDateField } from '../call-date-field'
+import { DeleteLeadInteractionButton } from './delete-lead-interaction-button'
 
 const CALL_OUTCOME_LABEL = {
-  connected: "Contactado",
-  voicemail: "Buzón de voz",
-  no_answer: "Sin respuesta",
-  busy: "Comunicando",
-  wrong_number: "Número erróneo",
-};
-type CallOutcome = keyof typeof CALL_OUTCOME_LABEL;
+  connected: 'Contactado',
+  voicemail: 'Buzón de voz',
+  no_answer: 'Sin respuesta',
+  busy: 'Comunicando',
+  wrong_number: 'Número erróneo',
+}
+type CallOutcome = keyof typeof CALL_OUTCOME_LABEL
 
 function isCallOutcome(value: string | null): value is CallOutcome {
-  return value !== null && value in CALL_OUTCOME_LABEL;
+  return value !== null && value in CALL_OUTCOME_LABEL
 }
 
 export function CallInteractionDetails({
@@ -46,40 +46,40 @@ export function CallInteractionDetails({
   leadId,
   canEdit = false,
 }: {
-  interaction: LeadDetailInteraction;
-  leadId: string;
-  canEdit?: boolean;
+  interaction: LeadDetailInteraction
+  leadId: string
+  canEdit?: boolean
 }) {
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const details = getCallInteractionDetails(interaction.payload);
-  const [outcome, setOutcome] = useState<CallOutcome | "">(
-    isCallOutcome(details.outcome) ? details.outcome : "",
-  );
-  const [duration, setDuration] = useState(details.durationMinutes?.toString() ?? "");
-  const [callDate, setCallDate] = useState(details.callDate ?? interaction.created_at.slice(0, 10));
-  const [notes, setNotes] = useState(interaction.body ?? "");
-  const [transcript, setTranscript] = useState(details.transcript ?? "");
-  const feedback = useFormFeedback();
-  const router = useRouter();
-  const hasNotes = Boolean(interaction.body?.trim());
-  const hasTranscript = Boolean(details.transcript);
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const details = getCallInteractionDetails(interaction.payload)
+  const [outcome, setOutcome] = useState<CallOutcome | ''>(
+    isCallOutcome(details.outcome) ? details.outcome : '',
+  )
+  const [duration, setDuration] = useState(details.durationMinutes?.toString() ?? '')
+  const [callDate, setCallDate] = useState(details.callDate ?? interaction.created_at.slice(0, 10))
+  const [notes, setNotes] = useState(interaction.body ?? '')
+  const [transcript, setTranscript] = useState(details.transcript ?? '')
+  const feedback = useFormFeedback()
+  const router = useRouter()
+  const hasNotes = Boolean(interaction.body?.trim())
+  const hasTranscript = Boolean(details.transcript)
   const formattedCallDate = details.callDate
-    ? new Date(`${details.callDate}T12:00:00`).toLocaleDateString("es-ES")
-    : null;
+    ? new Date(`${details.callDate}T12:00:00`).toLocaleDateString('es-ES')
+    : null
 
   const startEditing = () => {
-    setOutcome(isCallOutcome(details.outcome) ? details.outcome : "");
-    setDuration(details.durationMinutes?.toString() ?? "");
-    setCallDate(details.callDate ?? interaction.created_at.slice(0, 10));
-    setNotes(interaction.body ?? "");
-    setTranscript(details.transcript ?? "");
-    setEditing(true);
-  };
+    setOutcome(isCallOutcome(details.outcome) ? details.outcome : '')
+    setDuration(details.durationMinutes?.toString() ?? '')
+    setCallDate(details.callDate ?? interaction.created_at.slice(0, 10))
+    setNotes(interaction.body ?? '')
+    setTranscript(details.transcript ?? '')
+    setEditing(true)
+  }
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    feedback.setPending();
+    event.preventDefault()
+    feedback.setPending()
     const result = await updateLeadCall({
       interactionId: interaction.id,
       leadId,
@@ -88,12 +88,12 @@ export function CallInteractionDetails({
       durationMinutes: duration ? Number(duration) : undefined,
       outcome: outcome || undefined,
       callDate,
-    });
-    if (!result.ok) return feedback.setError(result.error);
-    feedback.setSuccess("Llamada actualizada");
-    setEditing(false);
-    router.refresh();
-  };
+    })
+    if (!result.ok) return feedback.setError(result.error)
+    feedback.setSuccess('Llamada actualizada')
+    setEditing(false)
+    router.refresh()
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -110,12 +110,12 @@ export function CallInteractionDetails({
       </DialogTrigger>
       <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-2xl">
         <DialogHeader className="shrink-0">
-          <DialogTitle>{interaction.subject ?? "Llamada"}</DialogTitle>
+          <DialogTitle>{interaction.subject ?? 'Llamada'}</DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-2">
             <span>
               {formattedCallDate
                 ? `Fecha de llamada: ${formattedCallDate}`
-                : new Date(interaction.created_at).toLocaleString("es-ES")}
+                : new Date(interaction.created_at).toLocaleString('es-ES')}
             </span>
             {interaction.performer ? (
               <MemberLabel member={interaction.performer} size="xs" />
@@ -132,7 +132,7 @@ export function CallInteractionDetails({
                   id={`call-outcome-${interaction.id}`}
                   value={outcome}
                   onChange={(event) =>
-                    setOutcome(isCallOutcome(event.target.value) ? event.target.value : "")
+                    setOutcome(isCallOutcome(event.target.value) ? event.target.value : '')
                   }
                 >
                   <option value="">Sin especificar</option>
@@ -246,5 +246,5 @@ export function CallInteractionDetails({
         )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }

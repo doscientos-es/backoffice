@@ -1,21 +1,15 @@
-"use client";
+'use client'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@doscientos/ui";
-import { Fingerprint, ShieldCheck } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@doscientos/ui'
+import { Fingerprint, ShieldCheck } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-import { PasskeyEnrollmentForm } from "./passkey-enrollment-form";
+import { PasskeyEnrollmentForm } from './passkey-enrollment-form'
 
 /** Shows the account-specific passkey status without exposing credential metadata. */
 export function PasskeyStatusCard({
@@ -23,12 +17,12 @@ export function PasskeyStatusCard({
   vaultPasswordSet,
   setupHref,
 }: {
-  configured: boolean;
-  vaultPasswordSet?: boolean;
+  configured: boolean
+  vaultPasswordSet?: boolean
   /** Use when this card is shown outside Security, where enrollment is managed. */
-  setupHref?: string;
+  setupHref?: string
 }) {
-  const [enrolling, setEnrolling] = useState(false);
+  const [enrolling, setEnrolling] = useState(false)
 
   return (
     <>
@@ -47,13 +41,13 @@ export function PasskeyStatusCard({
                 <CardTitle>Biometría y passkeys</CardTitle>
                 <CardDescription>
                   {configured
-                    ? "Tu cuenta puede confirmar acciones sensibles con el bloqueo del dispositivo."
-                    : "Protege las acciones sensibles con Face ID, Windows Hello, Touch ID o el PIN del dispositivo."}
+                    ? 'Tu cuenta puede confirmar acciones sensibles con el bloqueo del dispositivo.'
+                    : 'Protege las acciones sensibles con Face ID, Windows Hello, Touch ID o el PIN del dispositivo.'}
                 </CardDescription>
               </div>
             </div>
-            <Badge variant={configured ? "success" : "neutral"} className="shrink-0">
-              {configured ? "Configurada" : "Pendiente"}
+            <Badge variant={configured ? 'success' : 'neutral'} className="shrink-0">
+              {configured ? 'Configurada' : 'Pendiente'}
             </Badge>
           </div>
         </CardHeader>
@@ -80,8 +74,8 @@ export function PasskeyStatusCard({
               <DialogTitle>Configurar biometría</DialogTitle>
               <DialogDescription>
                 {vaultPasswordSet
-                  ? "Confirma tu contraseña maestra antes de registrar la passkey de este dispositivo."
-                  : "Antes de activar la biometría, configura una contraseña maestra para la bóveda."}
+                  ? 'Confirma tu contraseña maestra antes de registrar la passkey de este dispositivo.'
+                  : 'Antes de activar la biometría, configura una contraseña maestra para la bóveda.'}
               </DialogDescription>
             </DialogHeader>
             {vaultPasswordSet ? (
@@ -95,5 +89,5 @@ export function PasskeyStatusCard({
         </Dialog>
       ) : null}
     </>
-  );
+  )
 }

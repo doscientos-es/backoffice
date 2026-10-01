@@ -1,10 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ExpenseInvoiceUpload } from "./expense-invoice-upload";
+import { ExpenseInvoiceUpload } from './expense-invoice-upload'
 
-vi.mock("@doscientos/ui", () => ({
+vi.mock('@doscientos/ui', () => ({
   Dialog: ({ open, children }: { open: boolean; children: ReactNode }) =>
     open ? <div role="dialog">{children}</div> : null,
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -12,39 +12,39 @@ vi.mock("@doscientos/ui", () => ({
   DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
-}));
+}))
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock('@/components/ui/button', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
-}));
+}))
 
-const fetchMock = vi.fn();
+const fetchMock = vi.fn()
 
 function jsonResponse(body: unknown, ok = true) {
   return {
     ok,
     status: ok ? 200 : 422,
-    headers: new Headers({ "content-type": "application/json" }),
+    headers: new Headers({ 'content-type': 'application/json' }),
     json: async () => body,
-  };
+  }
 }
 
-describe("ExpenseInvoiceUpload", () => {
+describe('ExpenseInvoiceUpload', () => {
   beforeEach(() => {
-    fetchMock.mockReset();
-    vi.stubGlobal("fetch", fetchMock);
-  });
+    fetchMock.mockReset()
+    vi.stubGlobal('fetch', fetchMock)
+  })
 
-  it("closes the scan dialog and keeps the attachment when extraction fails", async () => {
-    const onAttached = vi.fn();
-    const onExtracted = vi.fn();
-    const onPendingChange = vi.fn();
-    const onReviewChange = vi.fn();
+  it('closes the scan dialog and keeps the attachment when extraction fails', async () => {
+    const onAttached = vi.fn()
+    const onExtracted = vi.fn()
+    const onPendingChange = vi.fn()
+    const onReviewChange = vi.fn()
     fetchMock
-      .mockResolvedValueOnce(jsonResponse({ id: "attachment-1" }))
-      .mockRejectedValueOnce(new Error("Servicio de extracción no disponible"));
+      .mockResolvedValueOnce(jsonResponse({ id: 'attachment-1' }))
+      .mockRejectedValueOnce(new Error('Servicio de extracción no disponible'))
 
     render(
       <ExpenseInvoiceUpload
@@ -53,16 +53,16 @@ describe("ExpenseInvoiceUpload", () => {
         onPendingChange={onPendingChange}
         onReviewChange={onReviewChange}
       />,
-    );
+    )
 
-    const input = screen.getByLabelText("Factura en PDF o foto");
-    fireEvent.change(input, { target: { files: [new File(["pdf"], "factura.pdf")] } });
+    const input = screen.getByLabelText('Factura en PDF o foto')
+    fireEvent.change(input, { target: { files: [new File(['pdf'], 'factura.pdf')] } })
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.getByText("Servicio de extracción no disponible")).toBeDefined();
-    expect(screen.getByText(/PDF quedará adjunto/)).toBeDefined();
-    expect(onAttached).toHaveBeenLastCalledWith({ id: "attachment-1", name: "factura.pdf" });
-    expect(onPendingChange).toHaveBeenLastCalledWith(false);
-  });
-});
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByText('Servicio de extracción no disponible')).toBeDefined()
+    expect(screen.getByText(/PDF quedará adjunto/)).toBeDefined()
+    expect(onAttached).toHaveBeenLastCalledWith({ id: 'attachment-1', name: 'factura.pdf' })
+    expect(onPendingChange).toHaveBeenLastCalledWith(false)
+  })
+})

@@ -1,21 +1,21 @@
-"use client";
+'use client'
 
-import { CreditCard, Landmark } from "lucide-react";
+import { CreditCard, Landmark } from 'lucide-react'
 
-import { CopyButton } from "@/components/ui/copy-button";
-import { formatPortalEUR } from "@/lib/portal/language";
+import { CopyButton } from '@/components/ui/copy-button'
+import { formatPortalEUR } from '@/lib/portal/language'
 
-import { ProposalPaymentButton } from "./proposal-payment-button";
+import { ProposalPaymentButton } from './proposal-payment-button'
 
 interface ProposalPaymentOptionsProps {
-  proposalId: string;
-  token: string;
-  proposalNumber: string;
-  initialPaymentPercentage: number;
-  depositAmount: number;
-  companyName: string | null;
-  iban: string | null;
-  language?: "es" | "ca" | "en";
+  proposalId: string
+  token: string
+  proposalNumber: string
+  initialPaymentPercentage: number
+  depositAmount: number
+  companyName: string | null
+  iban: string | null
+  language?: 'es' | 'ca' | 'en'
 }
 
 /** Offers the agreed first payment through the gateway or a bank transfer. */
@@ -27,70 +27,70 @@ export function ProposalPaymentOptions({
   depositAmount,
   companyName,
   iban,
-  language = "es",
+  language = 'es',
 }: ProposalPaymentOptionsProps) {
   const copy =
-    language === "ca"
+    language === 'ca'
       ? {
-          first: "Fes el primer pagament",
-          intro: "Per posar en marxa el projecte, abona el primer termini acordat (",
-          card: "Targeta o Bizum",
-          safe: "Pagament segur a través de la nostra passarel·la integrada.",
-          pay: "Pagar el primer termini",
-          bank: "Transferència bancària",
-          bankInfo: "També pots pagar aquest termini abans de rebre la factura.",
-          beneficiary: "Beneficiari",
-          concept: "Concepte",
-          amount: "Import",
-          copyIban: "Copiar IBAN",
-          copyBeneficiary: "Copiar beneficiari",
-          copyConcept: "Copiar concepte",
-          copyAll: "Copiar totes les dades de la transferència",
-          copied: "Dades de la transferència copiades",
+          first: 'Fes el primer pagament',
+          intro: 'Per posar en marxa el projecte, abona el primer termini acordat (',
+          card: 'Targeta o Bizum',
+          safe: 'Pagament segur a través de la nostra passarel·la integrada.',
+          pay: 'Pagar el primer termini',
+          bank: 'Transferència bancària',
+          bankInfo: 'També pots pagar aquest termini abans de rebre la factura.',
+          beneficiary: 'Beneficiari',
+          concept: 'Concepte',
+          amount: 'Import',
+          copyIban: 'Copiar IBAN',
+          copyBeneficiary: 'Copiar beneficiari',
+          copyConcept: 'Copiar concepte',
+          copyAll: 'Copiar totes les dades de la transferència',
+          copied: 'Dades de la transferència copiades',
         }
-      : language === "en"
+      : language === 'en'
         ? {
-            first: "Make the first payment",
-            intro: "To get the project started, pay the agreed first instalment (",
-            card: "Card or Bizum",
-            safe: "Secure payment through our integrated payment gateway.",
-            pay: "Pay first instalment",
-            bank: "Bank transfer",
-            bankInfo: "You can also pay this instalment before receiving the invoice.",
-            beneficiary: "Beneficiary",
-            concept: "Reference",
-            amount: "Amount",
-            copyIban: "Copy IBAN",
-            copyBeneficiary: "Copy beneficiary",
-            copyConcept: "Copy reference",
-            copyAll: "Copy all bank transfer details",
-            copied: "Bank transfer details copied",
+            first: 'Make the first payment',
+            intro: 'To get the project started, pay the agreed first instalment (',
+            card: 'Card or Bizum',
+            safe: 'Secure payment through our integrated payment gateway.',
+            pay: 'Pay first instalment',
+            bank: 'Bank transfer',
+            bankInfo: 'You can also pay this instalment before receiving the invoice.',
+            beneficiary: 'Beneficiary',
+            concept: 'Reference',
+            amount: 'Amount',
+            copyIban: 'Copy IBAN',
+            copyBeneficiary: 'Copy beneficiary',
+            copyConcept: 'Copy reference',
+            copyAll: 'Copy all bank transfer details',
+            copied: 'Bank transfer details copied',
           }
         : {
-            first: "Realiza el primer pago",
-            intro: "Para poner en marcha el proyecto, abona el primer plazo acordado (",
-            card: "Tarjeta o Bizum",
-            safe: "Pago seguro mediante nuestra pasarela integrada.",
-            pay: "Pagar primer plazo",
-            bank: "Transferencia bancaria",
-            bankInfo: "También puede pagar este plazo antes de recibir la factura.",
-            beneficiary: "Beneficiario",
-            concept: "Concepto",
-            amount: "Importe",
-            copyIban: "Copiar IBAN",
-            copyBeneficiary: "Copiar beneficiario",
-            copyConcept: "Copiar concepto",
-            copyAll: "Copiar todos los datos de la transferencia",
-            copied: "Datos de la transferencia copiados",
-          };
-  const money = (amount: number) => formatPortalEUR(amount, language);
-  const transferConcept = `Propuesta ${proposalNumber}`;
+            first: 'Realiza el primer pago',
+            intro: 'Para poner en marcha el proyecto, abona el primer plazo acordado (',
+            card: 'Tarjeta o Bizum',
+            safe: 'Pago seguro mediante nuestra pasarela integrada.',
+            pay: 'Pagar primer plazo',
+            bank: 'Transferencia bancaria',
+            bankInfo: 'También puede pagar este plazo antes de recibir la factura.',
+            beneficiary: 'Beneficiario',
+            concept: 'Concepto',
+            amount: 'Importe',
+            copyIban: 'Copiar IBAN',
+            copyBeneficiary: 'Copiar beneficiario',
+            copyConcept: 'Copiar concepto',
+            copyAll: 'Copiar todos los datos de la transferencia',
+            copied: 'Datos de la transferencia copiados',
+          }
+  const money = (amount: number) => formatPortalEUR(amount, language)
+  const transferConcept = `Propuesta ${proposalNumber}`
   const transferCopyText = [
-    `Beneficiario: ${companyName ?? "—"}`,
-    `IBAN: ${iban ?? "—"}`,
+    `Beneficiario: ${companyName ?? '—'}`,
+    `IBAN: ${iban ?? '—'}`,
     `Concepto: ${transferConcept}`,
     `${copy.amount} del primer plazo: ${money(depositAmount)}`,
-  ].join("\n");
+  ].join('\n')
 
   return (
     <section aria-labelledby="proposal-payment-options-title" className="w-full max-w-2xl">
@@ -103,7 +103,7 @@ export function ProposalPaymentOptions({
         </h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           {copy.intro}
-          {initialPaymentPercentage} %) de{" "}
+          {initialPaymentPercentage} %) de{' '}
           <strong className="text-zinc-900 tabular-nums dark:text-zinc-100">
             {money(depositAmount)}
           </strong>
@@ -145,7 +145,7 @@ export function ProposalPaymentOptions({
               <TransferDetail label="IBAN" value={iban} copyLabel={copy.copyIban} />
               <TransferDetail
                 label={copy.beneficiary}
-                value={companyName ?? "—"}
+                value={companyName ?? '—'}
                 copyLabel={copy.copyBeneficiary}
               />
               <TransferDetail
@@ -167,7 +167,7 @@ export function ProposalPaymentOptions({
         ) : null}
       </div>
     </section>
-  );
+  )
 }
 
 function TransferDetail({
@@ -175,17 +175,17 @@ function TransferDetail({
   value,
   copyLabel,
 }: {
-  label: string;
-  value: string;
-  copyLabel?: string;
+  label: string
+  value: string
+  copyLabel?: string
 }) {
   return (
     <div className="flex min-w-0 items-center justify-between gap-3">
       <dt className="shrink-0 text-zinc-500 dark:text-zinc-400">{label}</dt>
       <dd className="flex min-w-0 items-center gap-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-        <span className={label === "IBAN" ? "truncate font-mono" : "truncate"}>{value}</span>
+        <span className={label === 'IBAN' ? 'truncate font-mono' : 'truncate'}>{value}</span>
         {copyLabel ? <CopyButton text={value} label={copyLabel} /> : null}
       </dd>
     </div>
-  );
+  )
 }

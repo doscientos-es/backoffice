@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   ChevronLeft,
@@ -7,88 +7,88 @@ import {
   Download,
   Pencil,
   Trash as Trash2,
-} from "lucide-react";
-import { useState, useTransition } from "react";
-import { sileo } from "sileo";
+} from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { sileo } from 'sileo'
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { type AvatarMember, MemberLabel } from "@/components/ui/member-avatar";
-import { useOptimisticRemoval } from "@/lib/hooks/use-optimistic-removal";
-import { computeHoursFromRange } from "@/lib/schemas/work-log";
-import { formatDate, formatEUR } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { type AvatarMember, MemberLabel } from '@/components/ui/member-avatar'
+import { useOptimisticRemoval } from '@/lib/hooks/use-optimistic-removal'
+import { computeHoursFromRange } from '@/lib/schemas/work-log'
+import { formatDate, formatEUR } from '@/lib/utils'
 
-import { addWorkLog, deleteWorkLog, updateWorkLog } from "./work-log-actions";
+import { addWorkLog, deleteWorkLog, updateWorkLog } from './work-log-actions'
 
 function escapeCsvField(value: string): string {
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-    return `"${value.replace(/"/g, '""')}"`;
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`
   }
-  return value;
+  return value
 }
 
 function buildCsvContent(logs: WorkLogRow[]): string {
-  const header = ["Fecha", "Miembro", "Horas", "Inicio", "Fin", "Nota"].join(",");
+  const header = ['Fecha', 'Miembro', 'Horas', 'Inicio', 'Fin', 'Nota'].join(',')
   const rows = logs.map((it) =>
     [
       escapeCsvField(it.work_date),
-      escapeCsvField(it.member?.name ?? ""),
+      escapeCsvField(it.member?.name ?? ''),
       escapeCsvField(String(it.hours)),
-      escapeCsvField(it.start_time ?? ""),
-      escapeCsvField(it.end_time ?? ""),
-      escapeCsvField(it.note ?? ""),
-    ].join(","),
-  );
-  return [header, ...rows].join("\n");
+      escapeCsvField(it.start_time ?? ''),
+      escapeCsvField(it.end_time ?? ''),
+      escapeCsvField(it.note ?? ''),
+    ].join(','),
+  )
+  return [header, ...rows].join('\n')
 }
 
 function buildClipboardText(logs: WorkLogRow[]): string {
-  const header = ["Fecha", "Miembro", "Horas", "Rango", "Nota"].join("\t");
+  const header = ['Fecha', 'Miembro', 'Horas', 'Rango', 'Nota'].join('\t')
   const rows = logs.map((it) => {
-    const range = it.start_time && it.end_time ? `${it.start_time}–${it.end_time}` : "";
-    const totalMin = Math.round(it.hours * 60);
-    const hrs = Math.floor(totalMin / 60);
-    const mins = totalMin % 60;
-    const hoursLabel = hrs === 0 ? `${mins} min` : mins === 0 ? `${hrs} h` : `${hrs} h ${mins} min`;
-    return [it.work_date, it.member?.name ?? "", hoursLabel, range, it.note ?? ""].join("\t");
-  });
-  return [header, ...rows].join("\n");
+    const range = it.start_time && it.end_time ? `${it.start_time}–${it.end_time}` : ''
+    const totalMin = Math.round(it.hours * 60)
+    const hrs = Math.floor(totalMin / 60)
+    const mins = totalMin % 60
+    const hoursLabel = hrs === 0 ? `${mins} min` : mins === 0 ? `${hrs} h` : `${hrs} h ${mins} min`
+    return [it.work_date, it.member?.name ?? '', hoursLabel, range, it.note ?? ''].join('\t')
+  })
+  return [header, ...rows].join('\n')
 }
 
 export type WorkLogRow = {
-  id: string;
-  work_date: string;
-  start_time: string | null;
-  end_time: string | null;
-  hours: number;
-  note: string | null;
-  member: AvatarMember | null;
-};
+  id: string
+  work_date: string
+  start_time: string | null
+  end_time: string | null
+  hours: number
+  note: string | null
+  member: AvatarMember | null
+}
 
 type Props = {
-  projectId: string;
-  logs: WorkLogRow[];
+  projectId: string
+  logs: WorkLogRow[]
   /** Total invoiced (€, IVA incl.) for the project, used to derive €/h. */
-  invoicedTotal: number;
+  invoicedTotal: number
   /** Billing model. Hourly projects show accrued amount instead of €/h efectivo. */
-  billingType?: "fixed" | "hourly";
+  billingType?: 'fixed' | 'hourly'
   /** Configured €/h for hourly projects. Drives the accrued amount in the footer. */
-  hourlyRate?: number | null;
-  canEdit: boolean;
-};
+  hourlyRate?: number | null
+  canEdit: boolean
+}
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => new Date().toISOString().slice(0, 10)
 
-const ROWS_PER_PAGE = 10;
+const ROWS_PER_PAGE = 10
 
 function formatHours(h: number): string {
-  const totalMin = Math.round(h * 60);
-  const hrs = Math.floor(totalMin / 60);
-  const mins = totalMin % 60;
-  if (hrs === 0) return `${mins} min`;
-  if (mins === 0) return `${hrs} h`;
-  return `${hrs} h ${mins} min`;
+  const totalMin = Math.round(h * 60)
+  const hrs = Math.floor(totalMin / 60)
+  const mins = totalMin % 60
+  if (hrs === 0) return `${mins} min`
+  if (mins === 0) return `${hrs} h`
+  return `${hrs} h ${mins} min`
 }
 
 /**
@@ -100,65 +100,65 @@ export function WorkLogSection({
   projectId,
   logs,
   invoicedTotal,
-  billingType = "fixed",
+  billingType = 'fixed',
   hourlyRate,
   canEdit,
 }: Props) {
-  const { items, remove, pending } = useOptimisticRemoval(logs);
-  const [date, setDate] = useState(today);
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [directHours, setDirectHours] = useState("");
-  const [note, setNote] = useState("");
-  const [adding, startAdd] = useTransition();
+  const { items, remove, pending } = useOptimisticRemoval(logs)
+  const [date, setDate] = useState(today)
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
+  const [directHours, setDirectHours] = useState('')
+  const [note, setNote] = useState('')
+  const [adding, startAdd] = useTransition()
 
   // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(items.length / ROWS_PER_PAGE));
-  const safePage = Math.min(currentPage, totalPages);
-  const visibleItems = items.slice((safePage - 1) * ROWS_PER_PAGE, safePage * ROWS_PER_PAGE);
+  const [currentPage, setCurrentPage] = useState(1)
+  const totalPages = Math.max(1, Math.ceil(items.length / ROWS_PER_PAGE))
+  const safePage = Math.min(currentPage, totalPages)
+  const visibleItems = items.slice((safePage - 1) * ROWS_PER_PAGE, safePage * ROWS_PER_PAGE)
 
   // Inline edit state for an existing row.
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editStart, setEditStart] = useState("");
-  const [editEnd, setEditEnd] = useState("");
-  const [editNote, setEditNote] = useState("");
-  const [saving, startSave] = useTransition();
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editStart, setEditStart] = useState('')
+  const [editEnd, setEditEnd] = useState('')
+  const [editNote, setEditNote] = useState('')
+  const [saving, startSave] = useTransition()
 
-  const totalHours = items.reduce((sum, it) => sum + it.hours, 0);
-  const rate = hourlyRate ?? 0;
-  const isHourly = billingType === "hourly" && rate > 0;
-  const accruedAmount = isHourly ? totalHours * rate : null;
-  const effectiveRate = totalHours > 0 ? invoicedTotal / totalHours : null;
+  const totalHours = items.reduce((sum, it) => sum + it.hours, 0)
+  const rate = hourlyRate ?? 0
+  const isHourly = billingType === 'hourly' && rate > 0
+  const accruedAmount = isHourly ? totalHours * rate : null
+  const effectiveRate = totalHours > 0 ? invoicedTotal / totalHours : null
 
   const addDuration =
-    startTime && endTime ? computeHoursFromRange(startTime, endTime) : Number(directHours) || null;
-  const editDuration = editStart && editEnd ? computeHoursFromRange(editStart, editEnd) : null;
+    startTime && endTime ? computeHoursFromRange(startTime, endTime) : Number(directHours) || null
+  const editDuration = editStart && editEnd ? computeHoursFromRange(editStart, editEnd) : null
 
   function onCopy() {
-    if (items.length === 0) return;
+    if (items.length === 0) return
     navigator.clipboard
       .writeText(buildClipboardText(items))
-      .then(() => sileo.success({ title: "Registro copiado al portapapeles." }))
-      .catch(() => sileo.error({ title: "No se pudo copiar." }));
+      .then(() => sileo.success({ title: 'Registro copiado al portapapeles.' }))
+      .catch(() => sileo.error({ title: 'No se pudo copiar.' }))
   }
 
   function onDownload() {
-    if (items.length === 0) return;
-    const csv = buildCsvContent(items);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `registro-horas-${projectId}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (items.length === 0) return
+    const csv = buildCsvContent(items)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `registro-horas-${projectId}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   function onAdd() {
     if (addDuration === null || addDuration <= 0) {
-      sileo.error({ title: "Indica las horas trabajadas o un rango válido." });
-      return;
+      sileo.error({ title: 'Indica las horas trabajadas o un rango válido.' })
+      return
     }
     startAdd(async () => {
       const res = await addWorkLog({
@@ -168,34 +168,34 @@ export function WorkLogSection({
         end_time: endTime || undefined,
         hours: startTime && endTime ? undefined : addDuration,
         note,
-      });
+      })
       if (!res.ok) {
-        sileo.error({ title: res.error });
-        return;
+        sileo.error({ title: res.error })
+        return
       }
-      setStartTime("");
-      setEndTime("");
-      setDirectHours("");
-      setNote("");
-    });
+      setStartTime('')
+      setEndTime('')
+      setDirectHours('')
+      setNote('')
+    })
   }
 
   function startEdit(it: WorkLogRow) {
-    setEditingId(it.id);
-    setEditStart(it.start_time ?? "");
-    setEditEnd(it.end_time ?? "");
-    setEditNote(it.note ?? "");
+    setEditingId(it.id)
+    setEditStart(it.start_time ?? '')
+    setEditEnd(it.end_time ?? '')
+    setEditNote(it.note ?? '')
   }
 
   function onSaveEdit(id: string) {
-    const hasRange = !!editStart && !!editEnd;
+    const hasRange = !!editStart && !!editEnd
     if (!editStart !== !editEnd) {
-      sileo.error({ title: "Indica inicio y fin, o deja ambos vacíos." });
-      return;
+      sileo.error({ title: 'Indica inicio y fin, o deja ambos vacíos.' })
+      return
     }
     if (hasRange && editDuration === null) {
-      sileo.error({ title: "La hora de fin debe ser posterior a la de inicio." });
-      return;
+      sileo.error({ title: 'La hora de fin debe ser posterior a la de inicio.' })
+      return
     }
     startSave(async () => {
       const res = await updateWorkLog({
@@ -204,13 +204,13 @@ export function WorkLogSection({
         start_time: hasRange ? editStart : undefined,
         end_time: hasRange ? editEnd : undefined,
         note: editNote,
-      });
+      })
       if (!res.ok) {
-        sileo.error({ title: res.error });
-        return;
+        sileo.error({ title: res.error })
+        return
       }
-      setEditingId(null);
-    });
+      setEditingId(null)
+    })
   }
 
   return (
@@ -278,10 +278,10 @@ export function WorkLogSection({
               step="0.25"
               value={directHours}
               onChange={(e) => {
-                setDirectHours(e.target.value);
+                setDirectHours(e.target.value)
                 if (e.target.value) {
-                  setStartTime("");
-                  setEndTime("");
+                  setStartTime('')
+                  setEndTime('')
                 }
               }}
               placeholder="Horas"
@@ -289,7 +289,7 @@ export function WorkLogSection({
               aria-label="Horas trabajadas"
             />
             <span className="pb-2 text-sm text-muted-foreground tabular-nums">
-              {addDuration !== null ? formatHours(addDuration) : "—"}
+              {addDuration !== null ? formatHours(addDuration) : '—'}
             </span>
             <Input
               value={note}
@@ -348,7 +348,7 @@ export function WorkLogSection({
                             />
                           </div>
                           <span className="pb-2 text-sm text-muted-foreground tabular-nums">
-                            {editDuration !== null ? formatHours(editDuration) : "—"}
+                            {editDuration !== null ? formatHours(editDuration) : '—'}
                           </span>
                           <Input
                             value={editNote}
@@ -388,7 +388,7 @@ export function WorkLogSection({
                           </span>
                         ) : null}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">{it.note ?? "—"}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{it.note ?? '—'}</td>
                       {canEdit ? (
                         <td className="px-1 py-2">
                           <div className="flex items-center justify-end gap-0.5">
@@ -423,7 +423,7 @@ export function WorkLogSection({
               <tfoot className="border-t border-border bg-muted/20 text-xs">
                 <tr>
                   <td colSpan={2} className="px-3 py-2 text-right text-muted-foreground">
-                    {isHourly ? "Total · Importe acumulado" : "Total · €/h efectivo"}
+                    {isHourly ? 'Total · Importe acumulado' : 'Total · €/h efectivo'}
                   </td>
                   <td className="px-3 py-2 text-right font-medium tabular-nums">
                     {formatHours(totalHours)}
@@ -433,7 +433,7 @@ export function WorkLogSection({
                       ? `${formatEUR(accruedAmount ?? 0)} · ${formatEUR(rate)}/h`
                       : effectiveRate !== null
                         ? `${formatEUR(effectiveRate)}/h`
-                        : "—"}
+                        : '—'}
                   </td>
                 </tr>
               </tfoot>
@@ -473,5 +473,5 @@ export function WorkLogSection({
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

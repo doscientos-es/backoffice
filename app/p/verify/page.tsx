@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-export const metadata = { title: "Verificación · doscientos" };
+export const metadata = { title: 'Verificación · doscientos' }
 
-type SearchParams = Promise<{ nif?: string; numserie?: string; fecha?: string; importe?: string }>;
+type SearchParams = Promise<{ nif?: string; numserie?: string; fecha?: string; importe?: string }>
 
 export default async function VerifyPage({ searchParams }: { searchParams: SearchParams }) {
-  const p = await searchParams;
+  const p = await searchParams
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
@@ -23,7 +23,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Searc
         </CardContent>
       </Card>
     </main>
-  );
+  )
 }
 
 function Row({ label, value }: { label: string; value: string | undefined }) {
@@ -31,8 +31,8 @@ function Row({ label, value }: { label: string; value: string | undefined }) {
     <div className="grid grid-cols-[140px_1fr] items-center gap-2 border-b border-border py-1.5 last:border-b-0">
       <span className="text-muted">{label}</span>
       <span className="font-medium text-primary" data-tabular>
-        {value ?? "—"}
+        {value ?? '—'}
       </span>
     </div>
-  );
+  )
 }

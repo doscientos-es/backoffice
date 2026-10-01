@@ -1,37 +1,37 @@
-"use client";
+'use client'
 
-import { LoaderCircle as Loader2, Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { sileo } from "sileo";
+import { LoaderCircle as Loader2, Mail } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useTransition } from 'react'
+import { sileo } from 'sileo'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 
-import { syncLeadGmail } from "../actions";
+import { syncLeadGmail } from '../actions'
 
 export function GmailSyncButton({
   leadId,
   leadEmail,
 }: {
-  leadId: string;
-  leadEmail: string | null;
+  leadId: string
+  leadEmail: string | null
 }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
 
   function onClick() {
     startTransition(async () => {
-      const result = await syncLeadGmail({ leadId });
+      const result = await syncLeadGmail({ leadId })
       if (!result.ok) {
-        sileo.error({ title: result.error });
-        return;
+        sileo.error({ title: result.error })
+        return
       }
       const suffix = result.unavailableMailboxes.length
         ? ` · ${result.unavailableMailboxes.length} buzón(es) no disponible(s)`
-        : "";
-      sileo.success({ title: `${result.imported} emails añadidos al historial${suffix}` });
-      router.refresh();
-    });
+        : ''
+      sileo.success({ title: `${result.imported} emails añadidos al historial${suffix}` })
+      router.refresh()
+    })
   }
 
   return (
@@ -41,8 +41,8 @@ export function GmailSyncButton({
       size="sm"
       className="h-8 w-full min-w-0 justify-start gap-2 px-2.5 text-left text-xs"
       disabled={pending || !leadEmail}
-      aria-label={pending ? "Sincronizando Gmail" : "Sincronizar Gmail"}
-      title={leadEmail ? "Importar emails de Gmail" : "Este lead no tiene email registrado"}
+      aria-label={pending ? 'Sincronizando Gmail' : 'Sincronizar Gmail'}
+      title={leadEmail ? 'Importar emails de Gmail' : 'Este lead no tiene email registrado'}
       onClick={onClick}
     >
       {pending ? (
@@ -50,7 +50,7 @@ export function GmailSyncButton({
       ) : (
         <Mail className="size-3.5 text-muted-foreground" />
       )}
-      {pending ? "Sincronizando…" : "Sincronizar"}
+      {pending ? 'Sincronizando…' : 'Sincronizar'}
     </Button>
-  );
+  )
 }

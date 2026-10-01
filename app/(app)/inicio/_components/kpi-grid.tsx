@@ -1,23 +1,23 @@
-import { FileText as FileSignature, Inbox, Target, TrendingUp } from "lucide-react";
+import { FileText as FileSignature, Inbox, Target, TrendingUp } from 'lucide-react'
 
-import { StatCard } from "@/components/layout/stat-card";
-import { getCompanyGoals, getDashboardKpis } from "@/lib/dashboard/queries";
-import type { DashboardRange } from "@/lib/dashboard/types";
-import { cn, formatEUR } from "@/lib/utils";
-import { computeTrend, describeRange, resolveDateRange } from "@/lib/utils/date";
+import { StatCard } from '@/components/layout/stat-card'
+import { getCompanyGoals, getDashboardKpis } from '@/lib/dashboard/queries'
+import type { DashboardRange } from '@/lib/dashboard/types'
+import { cn, formatEUR } from '@/lib/utils'
+import { computeTrend, describeRange, resolveDateRange } from '@/lib/utils/date'
 
-type KpiGridProps = { range: DashboardRange; showFinance: boolean };
+type KpiGridProps = { range: DashboardRange; showFinance: boolean }
 
 export async function KpiGrid({ range, showFinance }: KpiGridProps) {
-  const dateRange = resolveDateRange(range);
-  const [kpis, goals] = await Promise.all([getDashboardKpis(dateRange), getCompanyGoals()]);
-  const rangeLabel = describeRange(range);
+  const dateRange = resolveDateRange(range)
+  const [kpis, goals] = await Promise.all([getDashboardKpis(dateRange), getCompanyGoals()])
+  const rangeLabel = describeRange(range)
 
-  const conversionPct = Math.round(kpis.conversionRate * 1000) / 10;
+  const conversionPct = Math.round(kpis.conversionRate * 1000) / 10
 
   return (
     <div
-      className={cn("grid gap-4 sm:grid-cols-2", showFinance ? "lg:grid-cols-4" : "lg:grid-cols-3")}
+      className={cn('grid gap-4 sm:grid-cols-2', showFinance ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}
     >
       <StatCard
         label="Leads nuevos"
@@ -65,5 +65,5 @@ export async function KpiGrid({ range, showFinance }: KpiGridProps) {
         trend={computeTrend(kpis.conversionRate * 100, kpis.conversionRatePrev * 100)}
       />
     </div>
-  );
+  )
 }

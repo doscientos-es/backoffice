@@ -1,15 +1,15 @@
-"use client";
+'use client'
 
-import { Database as DatabaseBackup, Download, LoaderCircle as Loader2 } from "lucide-react";
-import { useState, useTransition } from "react";
-import { sileo } from "sileo";
+import { Database as DatabaseBackup, Download, LoaderCircle as Loader2 } from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { sileo } from 'sileo'
 
-import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { Button } from '@/components/ui/button'
+import { Select } from '@/components/ui/select'
 
-import { triggerBackofficeBackup } from "./actions";
+import { triggerBackofficeBackup } from './actions'
 
-type ExportTable = { value: string; label: string };
+type ExportTable = { value: string; label: string }
 
 export function BackupActions({
   runnerConfigured,
@@ -18,41 +18,41 @@ export function BackupActions({
   showExportActions = true,
   canIncludePii = false,
 }: {
-  runnerConfigured: boolean;
-  tables: readonly ExportTable[];
-  showBackupAction?: boolean;
-  showExportActions?: boolean;
-  canIncludePii?: boolean;
+  runnerConfigured: boolean
+  tables: readonly ExportTable[]
+  showBackupAction?: boolean
+  showExportActions?: boolean
+  canIncludePii?: boolean
 }) {
-  const [pending, startTransition] = useTransition();
-  const [table, setTable] = useState(tables[0]?.value ?? "");
-  const [includePii, setIncludePii] = useState(false);
+  const [pending, startTransition] = useTransition()
+  const [table, setTable] = useState(tables[0]?.value ?? '')
+  const [includePii, setIncludePii] = useState(false)
 
   function forceBackup() {
     startTransition(async () => {
-      const result = await triggerBackofficeBackup();
-      if (result.ok) sileo.success({ title: "Copia de seguridad iniciada" });
-      else sileo.error({ title: result.error });
-    });
+      const result = await triggerBackofficeBackup()
+      if (result.ok) sileo.success({ title: 'Copia de seguridad iniciada' })
+      else sileo.error({ title: result.error })
+    })
   }
 
-  function exportData(format: "json" | "csv") {
+  function exportData(format: 'json' | 'csv') {
     startTransition(async () => {
-      const response = await fetch("/api/data-export", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ format, table: format === "csv" ? table : undefined, includePii }),
-      });
+      const response = await fetch('/api/data-export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format, table: format === 'csv' ? table : undefined, includePii }),
+      })
       const result = (await response.json().catch(() => null)) as {
-        downloadUrl?: string;
-        error?: string;
-      } | null;
+        downloadUrl?: string
+        error?: string
+      } | null
       if (!response.ok || !result?.downloadUrl) {
-        sileo.error({ title: result?.error ?? "No se pudo preparar la exportación" });
-        return;
+        sileo.error({ title: result?.error ?? 'No se pudo preparar la exportación' })
+        return
       }
-      window.location.assign(result.downloadUrl);
-    });
+      window.location.assign(result.downloadUrl)
+    })
   }
 
   return (
@@ -70,7 +70,7 @@ export function BackupActions({
             ) : (
               <DatabaseBackup className="size-4" />
             )}
-            {pending ? "Creando copia…" : "Crear copia ahora"}
+            {pending ? 'Creando copia…' : 'Crear copia ahora'}
           </Button>
           {!runnerConfigured ? (
             <span className="text-xs text-muted-foreground">
@@ -86,7 +86,7 @@ export function BackupActions({
             type="button"
             variant="outline"
             disabled={pending}
-            onClick={() => exportData("json")}
+            onClick={() => exportData('json')}
           >
             <Download className="size-4" />
             Descargar datos actuales (JSON)
@@ -107,7 +107,7 @@ export function BackupActions({
             type="button"
             variant="outline"
             disabled={!table || pending}
-            onClick={() => exportData("csv")}
+            onClick={() => exportData('csv')}
           >
             <Download className="size-4" />
             Descargar datos actuales (CSV / Excel)
@@ -126,5 +126,5 @@ export function BackupActions({
         </div>
       ) : null}
     </div>
-  );
+  )
 }

@@ -1,20 +1,20 @@
-"use client";
+'use client'
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { sileo } from "sileo";
+import { useRouter } from 'next/navigation'
+import { useTransition } from 'react'
+import { sileo } from 'sileo'
 
-type ActionResult = { ok: true } | { ok: false; error: string };
+type ActionResult = { ok: true } | { ok: false; error: string }
 
 interface UseUndoableDeleteOptions {
   /** Toast text shown after a successful delete, e.g. "Cliente eliminado". */
-  successMessage: string;
+  successMessage: string
   /** Performs the soft-delete. Should set `deleted_at`. */
-  onDelete: () => Promise<ActionResult>;
+  onDelete: () => Promise<ActionResult>
   /** Restores the record (clears `deleted_at`). Bound to the same id. */
-  onRestore: () => Promise<ActionResult>;
+  onRestore: () => Promise<ActionResult>
   /** Optional route to navigate to after deleting (detail pages). */
-  redirectTo?: string;
+  redirectTo?: string
 }
 
 /**
@@ -30,35 +30,35 @@ export function useUndoableDelete({
   onRestore,
   redirectTo,
 }: UseUndoableDeleteOptions) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
 
   const run = () => {
     startTransition(async () => {
-      const res = await onDelete();
+      const res = await onDelete()
       if (!res.ok) {
-        sileo.error({ title: res.error });
-        return;
+        sileo.error({ title: res.error })
+        return
       }
 
-      if (redirectTo) router.push(redirectTo);
-      router.refresh();
+      if (redirectTo) router.push(redirectTo)
+      router.refresh()
 
       sileo.success({
         title: successMessage,
         duration: 5000,
         button: {
-          title: "Deshacer",
+          title: 'Deshacer',
           onClick: () =>
             startTransition(async () => {
-              const restored = await onRestore();
-              if (restored.ok) router.refresh();
-              else sileo.error({ title: restored.error });
+              const restored = await onRestore()
+              if (restored.ok) router.refresh()
+              else sileo.error({ title: restored.error })
             }),
         },
-      });
-    });
-  };
+      })
+    })
+  }
 
-  return { run, pending };
+  return { run, pending }
 }

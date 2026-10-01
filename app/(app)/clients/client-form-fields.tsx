@@ -1,34 +1,34 @@
-"use client";
+'use client'
 
-import { ChevronDown } from "lucide-react";
-import { useCallback, useState } from "react";
+import { ChevronDown } from 'lucide-react'
+import { useCallback, useState } from 'react'
 
-import { ClientLogoUpload } from "@/components/ui/client-logo-upload";
-import { FormRow } from "@/components/ui/form-row";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { ZipInput } from "@/components/ui/zip-input";
-import { COUNTRY_OPTIONS } from "@/lib/address";
+import { ClientLogoUpload } from '@/components/ui/client-logo-upload'
+import { FormRow } from '@/components/ui/form-row'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { ZipInput } from '@/components/ui/zip-input'
+import { COUNTRY_OPTIONS } from '@/lib/address'
 
-import { type ApplySelection, EnrichmentDialog } from "./enrichment-dialog";
-import { type AutofillData, NifInput } from "./nif-input";
+import { type ApplySelection, EnrichmentDialog } from './enrichment-dialog'
+import { type AutofillData, NifInput } from './nif-input'
 
 export type ClientFormDefaults = {
-  name?: string | null;
-  label?: string | null;
-  nif?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  contact_person?: string | null;
-  billing_address_street?: string | null;
-  billing_address_zip?: string | null;
-  billing_address_city?: string | null;
-  billing_address_province?: string | null;
-  billing_address_country?: string | null;
-  notes?: string | null;
-  logo_url?: string | null;
-};
+  name?: string | null
+  label?: string | null
+  nif?: string | null
+  email?: string | null
+  phone?: string | null
+  contact_person?: string | null
+  billing_address_street?: string | null
+  billing_address_zip?: string | null
+  billing_address_city?: string | null
+  billing_address_province?: string | null
+  billing_address_country?: string | null
+  notes?: string | null
+  logo_url?: string | null
+}
 
 /**
  * Shared field block for the client create and edit forms. Keeps both flows
@@ -40,56 +40,56 @@ export type ClientFormDefaults = {
  */
 export function ClientFormFields({
   defaults,
-  idPrefix = "client",
+  idPrefix = 'client',
   autoFocusName = false,
 }: {
-  defaults?: ClientFormDefaults;
-  idPrefix?: string;
-  autoFocusName?: boolean;
+  defaults?: ClientFormDefaults
+  idPrefix?: string
+  autoFocusName?: boolean
 }) {
-  const d = defaults ?? {};
+  const d = defaults ?? {}
   const hasAdditionalDetails = Boolean(
     d.label ||
-      d.contact_person ||
-      d.billing_address_street ||
-      d.billing_address_zip ||
-      d.billing_address_city ||
-      d.billing_address_province ||
-      d.notes ||
-      d.logo_url,
-  );
-  const [showDetails, setShowDetails] = useState(hasAdditionalDetails);
+    d.contact_person ||
+    d.billing_address_street ||
+    d.billing_address_zip ||
+    d.billing_address_city ||
+    d.billing_address_province ||
+    d.notes ||
+    d.logo_url,
+  )
+  const [showDetails, setShowDetails] = useState(hasAdditionalDetails)
 
   // Controlled state for fields that can be autofilled from the Registro Mercantil
-  const [name, setName] = useState(d.name ?? "");
-  const [contactPerson, setContactPerson] = useState(d.contact_person ?? "");
-  const [street, setStreet] = useState(d.billing_address_street ?? "");
-  const [autofillCity, setAutofillCity] = useState(d.billing_address_city ?? "");
-  const [autofillProvince, setAutofillProvince] = useState(d.billing_address_province ?? "");
+  const [name, setName] = useState(d.name ?? '')
+  const [contactPerson, setContactPerson] = useState(d.contact_person ?? '')
+  const [street, setStreet] = useState(d.billing_address_street ?? '')
+  const [autofillCity, setAutofillCity] = useState(d.billing_address_city ?? '')
+  const [autofillProvince, setAutofillProvince] = useState(d.billing_address_province ?? '')
   // Incrementing key forces ZipInput to remount with new defaults when autofill fires
-  const [zipKey, setZipKey] = useState(0);
+  const [zipKey, setZipKey] = useState(0)
 
   // Enrichment dialog state
-  const [enrichmentData, setEnrichmentData] = useState<AutofillData | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [enrichmentData, setEnrichmentData] = useState<AutofillData | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   // Called by NifInput when OpenMercantil returns company data → open dialog
   const handleAutofill = useCallback((data: AutofillData) => {
-    setEnrichmentData(data);
-    setDialogOpen(true);
-  }, []);
+    setEnrichmentData(data)
+    setDialogOpen(true)
+  }, [])
 
   // Called by EnrichmentDialog when the user confirms selected fields
   const handleApply = useCallback((selection: ApplySelection) => {
-    if (selection.name) setName(selection.name);
-    if (selection.contactPerson) setContactPerson(selection.contactPerson);
-    if (selection.address) setStreet(selection.address);
+    if (selection.name) setName(selection.name)
+    if (selection.contactPerson) setContactPerson(selection.contactPerson)
+    if (selection.address) setStreet(selection.address)
     if (selection.city || selection.province) {
-      setAutofillCity(selection.city ?? "");
-      setAutofillProvince(selection.province ?? "");
-      setZipKey((k) => k + 1);
+      setAutofillCity(selection.city ?? '')
+      setAutofillProvince(selection.province ?? '')
+      setZipKey((k) => k + 1)
     }
-  }, []);
+  }, [])
 
   return (
     <>
@@ -140,7 +140,7 @@ export function ClientFormFields({
             type="email"
             inputMode="email"
             maxLength={160}
-            defaultValue={d.email ?? ""}
+            defaultValue={d.email ?? ''}
             placeholder="facturacion@acme.com"
             autoComplete="email"
           />
@@ -152,7 +152,7 @@ export function ClientFormFields({
             type="tel"
             inputMode="tel"
             maxLength={40}
-            defaultValue={d.phone ?? ""}
+            defaultValue={d.phone ?? ''}
             placeholder="+34 600 000 000"
             autoComplete="tel"
           />
@@ -168,7 +168,7 @@ export function ClientFormFields({
           className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-sm font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
         >
           <ChevronDown
-            className={`size-4 transition-transform ${showDetails ? "rotate-180" : ""}`}
+            className={`size-4 transition-transform ${showDetails ? 'rotate-180' : ''}`}
           />
           Más datos de cliente <span className="font-normal">(opcional)</span>
           {hasAdditionalDetails && !showDetails ? (
@@ -177,7 +177,7 @@ export function ClientFormFields({
         </button>
         <div
           id={`${idPrefix}-additional-details`}
-          className={`mt-4 space-y-5 ${showDetails ? "" : "hidden"}`}
+          className={`mt-4 space-y-5 ${showDetails ? '' : 'hidden'}`}
         >
           <div className="grid gap-5 sm:grid-cols-2">
             <FormRow
@@ -189,7 +189,7 @@ export function ClientFormFields({
                 id={`${idPrefix}-label`}
                 name="label"
                 maxLength={100}
-                defaultValue={d.label ?? ""}
+                defaultValue={d.label ?? ''}
                 placeholder="Acme"
               />
             </FormRow>
@@ -237,7 +237,7 @@ export function ClientFormFields({
                 <Select
                   id={`${idPrefix}-billing_address_country`}
                   name="billing_address_country"
-                  defaultValue={d.billing_address_country ?? "ES"}
+                  defaultValue={d.billing_address_country ?? 'ES'}
                   autoComplete="country"
                 >
                   {COUNTRY_OPTIONS.map((c) => (
@@ -259,7 +259,7 @@ export function ClientFormFields({
               name="notes"
               rows={3}
               maxLength={4000}
-              defaultValue={d.notes ?? ""}
+              defaultValue={d.notes ?? ''}
               placeholder="Condiciones de pago, observaciones…"
             />
           </FormRow>
@@ -267,5 +267,5 @@ export function ClientFormFields({
         </div>
       </div>
     </>
-  );
+  )
 }
