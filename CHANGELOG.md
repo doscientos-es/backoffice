@@ -2,6 +2,18 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-01 — v0.1.73
+
+### Correcciones
+
+- Add accessible labels, button type and icon title
+
+## 2026-10-01 — v0.1.69
+
+### Nuevas funciones
+
+- Generate backoffice changelog from git history
+
 ## 2026-09-23 — v0.1.28
 
 ### Correcciones
@@ -338,3 +350,4 @@
 - Add optional chaining to focusNextAfter function for safer DOM access
 - Align ClientRowActions type with structured billing address fields
 - Update revalidateTag calls for Next.js 16 two-arg signature
+

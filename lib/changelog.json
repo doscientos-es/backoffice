@@ -1,6 +1,46 @@
 {
   "releases": [
     {
+      "version": "0.1.73",
+      "date": "2026-10-01",
+      "title": "v0.1.73",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": ["Add accessible labels, button type and icon title"]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "029e2188902e3014e8cac51cdbe646fd3345ba07",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Add accessible labels, button type and icon title"
+        }
+      ]
+    },
+    {
+      "version": "0.1.69",
+      "date": "2026-10-01",
+      "title": "v0.1.69",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": ["Generate backoffice changelog from git history"]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "0b61e918c8c4dcae6f3cab7994ca763ba2854fd8",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Generate backoffice changelog from git history"
+        }
+      ]
+    },
+    {
       "version": "0.1.28",
       "date": "2026-09-23",
       "title": "v0.1.28",
