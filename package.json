@@ -24,14 +24,14 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
-    "changelog:sync": "changelog sync lib/changelog.json",
-    "changelog:check": "changelog sync lib/changelog.json --check",
+    "changelog:sync": "changelog generate lib/changelog.json --md CHANGELOG.md --soft",
+    "changelog:check": "changelog generate lib/changelog.json --md CHANGELOG.md --check",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_REF --schema public > lib/database.types.ts",
     "env:example": "tsx scripts/generate-env-example.ts",
     "google:smoke": "tsx scripts/google-smoke.ts",
     "push:keys": "tsx scripts/generate-push-keys.ts",
     "quality:quick": "pnpm format:check && pnpm lint",
-    "quality": "pnpm changelog:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "hooks:install": "node .githooks/install.mjs"
   },
   "dependencies": {
@@ -90,7 +90,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.5",
-    "@doscientos/changelog": "^0.1.0",
+    "@doscientos/changelog": "^0.1.2",
     "@doscientos/configs": "^0.1.9",
     "@shadcn/lint": "0.2.0",
     "@tailwindcss/postcss": "^4.0.0",

@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 const { requireUser } = vi.hoisted(() => ({ requireUser: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ requireUser }));
 
+import changelog from "@/lib/changelog.json";
+
 import ChangelogSettingsPage, { metadata } from "./page";
 
 describe("changelog in settings", () => {
@@ -11,8 +13,9 @@ describe("changelog in settings", () => {
     const html = renderToStaticMarkup(await ChangelogSettingsPage());
     expect(requireUser).toHaveBeenCalledOnce();
     expect(metadata.title).toContain("Novedades");
-    expect(html).toContain("Mejoras en el trabajo con leads");
-    expect(html).toContain("preguntas de descubrimiento");
-    expect(html).toContain("2026-09-24");
+    const [latest] = changelog.releases;
+    expect(latest).toBeDefined();
+    expect(html).toContain(latest.title);
+    expect(html).toContain(latest.date);
   });
 });

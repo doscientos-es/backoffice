@@ -12,6 +12,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the changelog is generated from the full Git history
 
       - uses: pnpm/action-setup@v4
         with:

@@ -174,8 +174,8 @@ importers:
         specifier: ^2.5.5
         version: 2.5.5
       '@doscientos/changelog':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.2
+        version: 0.1.2
       '@doscientos/configs':
         specifier: ^0.1.9
         version: 0.1.9(oxlint-tsgolint@7.0.2001)(oxlint@1.80.0(oxlint-tsgolint@7.0.2001))(vitest@3.2.4(@types/node@22.19.19)(happy-dom@16.8.1)(jiti@2.7.0)(lightningcss@1.32.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))(tsx@4.22.4))
@@ -535,8 +535,8 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
 
-  '@doscientos/changelog@0.1.0':
-    resolution: {integrity: sha512-p0LdwadXngpLjIAhGMpy6awUK4bB7EHP7HGSLeIlLxgtsEjvKekeikP3O1j1DdV+mGkBLT164mdmtWOwYoeEsQ==}
+  '@doscientos/changelog@0.1.2':
+    resolution: {integrity: sha512-RiQbgLijoDRGDM8ldQs7/OE1GsxQI2EoY14hcBQRcqr+4uhkQQI8g+/87ikZKxki+d/3MXvx0CX/DbGUZx5RxA==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -6276,7 +6276,7 @@ snapshots:
       react: 19.2.6
       tslib: 2.8.1
 
-  '@doscientos/changelog@0.1.0': {}
+  '@doscientos/changelog@0.1.2': {}
 
   '@doscientos/configs@0.1.9(oxlint-tsgolint@7.0.2001)(oxlint@1.80.0(oxlint-tsgolint@7.0.2001))(vitest@3.2.4(@types/node@22.19.19)(happy-dom@16.8.1)(jiti@2.7.0)(lightningcss@1.32.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))(tsx@4.22.4))':
     optionalDependencies:

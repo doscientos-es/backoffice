@@ -1,22 +1,2575 @@
 {
   "releases": [
     {
-      "date": "2026-09-24",
-      "title": "Mejoras en el trabajo con leads",
+      "version": "0.1.28",
+      "date": "2026-09-23",
+      "title": "v0.1.28",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Accept absent Meta attribution on landing leads"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "20087319dc5533004874f2cd125e885b633cd54d",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Accept absent Meta attribution on landing leads"
+        }
+      ]
+    },
+    {
+      "version": "0.1.26",
+      "date": "2026-09-23",
+      "title": "v0.1.26",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Keep landing CORS domains canonical"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "37dbd0727de71fb854cc06829a8bd222e19ccea4",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Keep landing CORS domains canonical"
+        }
+      ]
+    },
+    {
+      "version": "0.1.25",
+      "date": "2026-09-23",
+      "title": "v0.1.25",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Preserve Google Ads attribution on landing leads"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "a04ddd76ddcda7370d5c51322484230567d9b655",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Preserve Google Ads attribution on landing leads"
+        }
+      ]
+    },
+    {
+      "version": "0.1.3",
+      "date": "2026-09-16",
+      "title": "v0.1.3",
       "sections": [
         {
           "title": "Nuevas funciones",
           "items": [
-            "Puedes preparar preguntas de descubrimiento para profundizar en las necesidades de un lead.",
-            "Hay un acceso directo para sincronizar las conversaciones de Gmail desde la ficha de un lead."
+            "Refactor Drawer components to use Sheet and update related usages",
+            "Refactor Drawer components to use Sheet and update related usages",
+            "Implement DrawerQuickActions component and add tests for its functionality",
+            "Add tests for MaintenanceOfferEditor and ProposalEditor components; implement migration for MCP proposal item access",
+            "Enhance proposal and project relationships with new constraints and validations",
+            "Implement CSV export for quarterly invoices and update related components",
+            "Add meeting duration feature and update calendar event creation logic",
+            "Update invoice types and add new SQL migrations for invoice number handling",
+            "Update '@doscientos/ui' dependency to use local file reference",
+            "Refactor scheduled post editing functionality to include caption and scheduled date updates",
+            "Update cron schedule for social post publishing to every 10 minutes",
+            "Implement scheduled post publishing functionality and add cron job for automation",
+            "Refactor UI component imports to '@doscientos/ui' for consistency and add functionality to update scheduled post media",
+            "Enhance logging in syncMetaAction for better error tracking and refactor managedFilterKeys to use useMemo for performance",
+            "Refactor Popover component imports and usage for consistency across the application",
+            "Update Checkbox component props to use isSelected and onChange for consistency",
+            "Refactor imports to unify UI component exports from '@doscientos/ui'",
+            "Streamline query formatting in lead-related functions for improved readability",
+            "Reorder imports in package-adapters test file for consistency",
+            "Enhance lead detail handling with optional company research availability",
+            "Remove aria-busy attribute check from submit button test",
+            "Add extractMetaLeads function and related tests for lead action handling",
+            "Refactor ButtonGroup imports to use centralized component and remove deprecated files",
+            "Update imports to use centralized Separator component in Field and Item",
+            "Remove separator component and update imports in package adapters",
+            "Enhance lead interaction components and improve error handling in marketing sync",
+            "Enhance lead interaction components and improve error handling in marketing sync",
+            "Add DialogRoot export to enhance dialog component functionality",
+            "Add TooltipContent export to enhance tooltip functionality",
+            "Enhance invoice and proposal payment options with company details",
+            "Replace emailAppUrl with externalAppUrl for consistent URL handling across various actions",
+            "Implement emailAppUrl utility to standardize email links and update usages across the application",
+            "Implement emailAppUrl utility to standardize email links and update usages across the application",
+            "Refactor MemberProfilePopover to use Button component and streamline Popover structure",
+            "Refactor MemberProfilePopover to use Button component and streamline Popover structure",
+            "Refactor MemberProfilePopover to use updated Popover component and improve structure",
+            "Refactor MemberProfilePopover to use PopoverTrigger directly and update placement",
+            "Update @doscientos/ui dependency to version 0.1.23 and refactor imports in UI components",
+            "Reorganize exports in Alert and Badge components for improved readability",
+            "Update Accordion component usage to allow multiple expanded items in Invoice and JourneyCard",
+            "Consolidate exports in Accordion, Alert, Badge, and Tooltip components from shared UI library",
+            "Simplify local UI aliases handling in next.config.ts and update Checkbox component documentation",
+            "Refactor Checkbox component to use shared UI library and update props handling",
+            "Update Switch component for accessibility and refactor related code",
+            "Update pnpm-lock.yaml to reflect new package versions and peer dependencies",
+            "Enhance local UI development setup by adding restore functionality and updating build scripts",
+            "Add local React aliases for Turbopack configuration and deduplicate React dependencies in Vitest",
+            "Integrate ButtonGroup components into package adapters tests for accessibility",
+            "Add Separator component and corresponding tests for accessibility",
+            "Update QWhatsAppDialog and WhatsAppComposer tests for improved interaction handling",
+            "Add aiEnabled prop to lead components for AI integration",
+            "Implement invoice extraction feature with AI and rules-based suggestions",
+            "Update Meta marketing integration to include direct destination URL and adjust object URL handling",
+            "Enhance attachment section with camera input for mobile attachments",
+            "Implement clipboard paste functionality and enhance lead creation form",
+            "Enhance startup splash handling and defer call reminders for improved user experience",
+            "Add client-specific fields for tasks including titles and summaries",
+            "Add client-specific fields for tasks including titles and summaries",
+            "Add client-specific fields and functions for project task management",
+            "Enhance task details in ProjectPortalPage to include client-specific titles and summaries",
+            "Enhance web project types and add client visibility",
+            "Update terminology to use 'workspace' instead of 'repository' in comments and tests for clarity",
+            "Add workspace paths management feature with validation and migration support",
+            "Remove unnecessary newline in actions.ts and project-portal.test.ts for cleaner code",
+            "Reorder imports in actions.ts for consistency; add newline in project-portal migrations and tests",
+            "Improve formatting and structure in ProjectPortalPage and ProjectRequestForm components; add tests for project portal migrations and request input validation",
+            "Implement ProjectPortalPage with task and request management features",
+            "Update branding assets and enhance LogoMark component for theme support",
+            "Add WhatsApp follow-up composer",
+            "Update branding assets and enhance LogoMark component for theme support",
+            "Enhance LeadInteractionDetails component with email content display and reply functionality",
+            "Add reply interaction handling to email composer and lead interaction details",
+            "Add LeadInteractionDetails component to display email interaction details",
+            "Enhance task management and email confirmation features",
+            "Implement AI draft generation in EmailComposer with user instructions",
+            "Implement global recovery chaining and enhance invoice QR synchronization",
+            "Add invoice concepts handling and operational health checks for Verifactu",
+            "Enhance invoice handling with additional client and fiscal validation properties",
+            "Enhance invoice handling with additional client and fiscal validation properties",
+            "Enhance invoice handling with regularization support and UI improvements",
+            "Update QR code handling in invoice pages and improve responsive design in layout components",
+            "Implement AEAT regularization handling in invoice actions and UI components",
+            "Update Sidebar and NotificationsBell components to use ghost variant and border-0 class",
+            "Enhance UserMenu component to support avatar-only display mode",
+            "Update invoice action policy to include regularization for AEAT-rejected invoices",
+            "Add migration to enforce uniqueness in verifactu_ledger for regularization process",
+            "Add migration to resolve ledger_id ambiguity in claim_due_verifactu_outboxes function",
+            "Add migration to fix ledger_id ambiguity in regularization process",
+            "Add taxpayer identity fields for synthetic AEAT diagnostics and update related configurations",
+            "Update navigation components and improve layout; add @phosphor-icons/react dependency",
+            "Update navigation components and improve layout; add @phosphor-icons/react dependency",
+            "Update navigation components and improve layout; add @phosphor-icons/react dependency",
+            "Improve layout and styling for invoice and proposal pages",
+            "Update @doscientos/ui dependency to version 0.1.7 and remove unused @phosphor-icons/react dependency",
+            "Implement IconButton component with improved props handling and accessibility",
+            "Implement IconButton component with improved props handling and accessibility",
+            "Enhance invoice action components with improved layout and passkey authentication",
+            "Implement MFA verification for invoice regularization and status changes",
+            "Enhance RegularizeAeatButton with confirmation dialog and improved feedback handling",
+            "Implement IconButton component for consistent icon actions and update usages across the application",
+            "Add regularization functionality for AEAT invoices and implement recovery button",
+            "Implement MFA challenge dialog and enhance invoice action error handling",
+            "Add payment recording functionality to invoices with payment method support",
+            "Refactor Badge component placement for verifactuMode in MobileNav and Sidebar",
+            "Refactor VeriFactu configuration for improved environment handling and diagnostics",
+            "Enhance sidebar with settings link and update user menu to conditionally show settings",
+            "Add createProposalDraftInvoices function to generate invoice drafts for accepted proposals",
+            "Remove duplicate imports and clean up invoice page code",
+            "Lazy load QR code generation to improve page performance",
+            "Update ListControls presentation and adjust padding for search icon",
+            "Enhance navigation components with new features and tests",
+            "Implement responsive navigation tree and refactor sidebar layout",
+            "Consolidate proposal actions into a single dropdown menu and remove duplicate component",
+            "Refactor createVerifactuClient to load dynamically and update related usages",
+            "Import Button component in ProposalDetailError and update import statement in ProposalOverview",
+            "Update error handling in proposal editor and tests, enhance error messages",
+            "Add mock for Select component in proposal editor tests",
+            "Add error handling component for proposal detail page",
+            "Update proposal detail page to manage team members and enhance editing functionality",
+            "Enhance proposal editor with team member management and update UI components",
+            "Implement payment plan functionality for proposals and invoices",
+            "Implement structured payment plans for proposals and invoices",
+            "Add tests for ProposalActions component to verify proposal acceptance functionality",
+            "Update @doscientos/ui and @doscientos/verifactu dependencies to specific versions in package.json and pnpm-lock.yaml",
+            "Implement Verifactu issue handling with dialog and button components",
+            "Add @doscientos/ui dependency as a linked module in package.json and pnpm-lock.yaml",
+            "Remove unused @doscientos/ui dependency from package.json and pnpm-lock.yaml",
+            "Update error handling in VaultClient and adjust secure cookie settings in grantVaultUnlock",
+            "Add verifactuWarnings function and display AEAT warnings in InvoiceDetailPage",
+            "Add verifactuWarnings function and display AEAT warnings in InvoiceDetailPage",
+            "Add verifactuWarnings function and display AEAT warnings in InvoiceDetailPage",
+            "Reorganize imports in invoice actions and progress dialog for consistency",
+            "Reorganize imports in invoice actions and progress dialog for consistency",
+            "Refactor InvoiceIssuanceProgressDialog and related tests for improved readability and structure",
+            "Add unit tests for InvoiceIssuanceProgressDialog to verify fiscal step display and delivery status",
+            "Enhance MfaTotpCard to include authenticator assurance level handling and improve enrollment verification",
+            "Implement invoice issuance progress dialog and enhance status handling",
+            "Refactor MFA TOTP card logic and add unit tests; enhance security settings with SQL migration",
+            "Enhance security settings with MFA and passkey management components",
+            "Implement VERI*FACTU diagnostic gate and related functionality for invoice processing",
+            "Implement password login endpoint with rate limiting and CAPTCHA support",
+            "Enhance VERI*FACTU invoice processing with rectification support and compliance documentation",
+            "Reorganize imports in invoice handling and PDF document generation for clarity",
+            "Refactor WhatsApp follow-up dialog to include email option and improve messaging",
+            "Update test to reflect verifactu status change from accepted to pending",
+            "Update invoice handling to include verifactu status checks and QR code generation logic",
+            "Add email preview functionality for proposals with loading state and validation",
+            "Improve call outcome display and remove unused note update functionality",
+            "Enhance call interaction details with editing capabilities and validation",
+            "Add recommended plan functionality to maintenance offer",
+            "Add call date functionality and per-module upfront payment option",
+            "Implement next action handling for leads with scheduled meetings",
+            "Implement grouping of resend interactions and enhance interaction details in lead timeline",
+            "Enhance lead management with scheduled meetings and reminders",
+            "Add schema reload notification for proposal messages table",
+            "Reorganize imports in ListControls and ListPage for improved readability",
+            "Add status filter and integrate into ListControls component",
+            "Reorganize imports in leads kanban for improved readability",
+            "Add drag-and-drop functionality and necessary imports for leads kanban",
+            "Enhance leads kanban and list controls with avatar support and meeting handling",
+            "Enhance leads kanban functionality with drag-and-drop support and status updates",
+            "Add optimistic concurrency control functions and triggers for proposals and invoices",
+            "Add backup database configuration options and enhance backup actions UI",
+            "Add lead next action task item component with completion and follow-up options",
+            "Add action type classification for lead reminders and update related components",
+            "Implement daily responsibilities notification system and related tests",
+            "Add support for CRM follow-ups endpoint in proxy configuration",
+            "Enhance maintenance options styling and layout in PDF document",
+            "Implement manual save functionality in ProposalEditor and add presentation link in PortalProposalPage",
+            "Add maintenance options to proposal with selection functionality and update PDF generation",
+            "Implement startup splash logic with session storage handling and add tests",
+            "Enhance MaintenanceListTextarea to support multiline edits and bullet list imports",
+            "Add error handling for invalid JSON responses in runAIObject and implement tests",
+            "Add maintenance options and related fields to proposals",
+            "Add ccAdmins functionality to sendEmailToLead and related components",
+            "Add schema reload notification for proposal messages table",
+            "Add proposal message functionality",
+            "Enhance maintenance offer functionality with exclusions and improve proposal handling",
+            "Add tests for proposal maintenance offer functionality",
+            "Integrate maintenance plan handling in proposal PDF generation",
+            "Add maintenance options integration in proposal page and actions",
+            "Integrate maintenance options in proposal detail and editor components",
+            "Add ProposalMaintenanceOptions and MaintenanceOfferEditor components for managing maintenance plans",
+            "Add maintenance options and update proposal handling in database and tests",
+            "Implement proposal validation formatting and enhance error handling in updateProposal function",
+            "Enhance proposal draft generation with scope modules, deliverables, acceptance criteria, payment terms, and change management terms",
+            "Refactor proposal payment components and improve import organization",
+            "Implement dynamic initial payment calculation and enhance proposal payment handling",
+            "Refactor proposal components and enhance PDF generation with improved formatting and structure",
+            "Improve formatting and readability in ProposalEditor component",
+            "Enhance proposal PDF generation with scope modules, deliverables, acceptance criteria, payment terms, and change management sections",
+            "Add scope modules and delivery details to proposal, including payment terms and change management sections",
+            "Enhance proposal editor with scope modules and detailed deliverables, acceptance criteria, payment terms, and change management sections",
+            "Add scope modules editor and related schema updates for proposal management",
+            "Implement Gmail synchronization settings with mailbox management and UI integration",
+            "Exclude drafts from Gmail message search for leads",
+            "Enhance Gmail synchronization with improved message handling and add tests for listLeadGmailMessages",
+            "Implement Gmail synchronization for leads, including UI button and backend logic",
+            "Add tests for invoice request functionality and notification dispatch",
+            "Implement invoice request functionality and enhance notifications for invoice-related actions",
+            "Enhance proposal management with follow-up reminders and lead status updates",
+            "Implement PDF text extraction and indexing for internal documents",
+            "Add PDF download functionality for proposals and implement PDF rendering logic",
+            "Update billing address field to billing_address_street across proposal and client data handling",
+            "Add error handling for proposal data retrieval in Deck and PortalProposal pages",
+            "Improve error handling for proposal data retrieval in Deck and Portal pages",
+            "Enhance problem-solution editor and schemas for improved validation and descriptions",
+            "Enhance proxy logic for public portal and deck paths, including session refresh handling",
+            "Implement nextMove function for lead status handling and add tests for Lead360Timeline component",
+            "Update rectification tests and enhance logging for invoice creation",
+            "Integrate RPC function into rectification tests and update invoice actions",
+            "Refactor invoice creation and rectification logic to use RPC functions",
+            "Refactor lead conversion and proposal item update logic with new RPC functions",
+            "Refactor proposal item handling and totals calculation",
+            "Enhance extract-tasks dialog and client update panel with improved imports and formatting",
+            "Update extract-tasks functionality to allow empty task results and improve lead briefing format",
+            "Enhance call digest dialog with improved AI integration and task management",
+            "Enhance ClientUpdatePanel with detailed project update display and improved state management",
+            "Enhance client update generation with improved schema validation and refined system prompt",
+            "Add ProposalFollowUpAssistant component for actionable proposal follow-ups",
+            "Implement AI call copilot and next best action endpoints with task creation support",
+            "Add AI draft generation tests for proposal endpoint, including validation and response checks",
+            "Implement AI draft generation for proposals, enhance proposal forms and editor with AI context support",
+            "Add VAULT_ENCRYPTION_KEY support and validation schema, update env example and tests",
+            "Refactor Meta CAPI integration to use qualified lead stage and update related functions",
+            "Implement cross-module dashboard pulse and enhance lead and subscription details",
+            "Update rate limit mock to use distributedRateLimit and enhance test input structure",
+            "Implement distributed rate limiting and enhance diagnostics input validation",
+            "Add payment revert functionality and enhance AEAT feedback messages",
+            "Implement Verifactu durable ledger and transactional outbox with delivery state management",
+            "Simplify className logic for signal buttons in Mom Test dialog",
+            "Implement Mom Test accessibility feature with automated and manual signals",
+            "Optimize lead ingestion process by refactoring conversion event handling",
+            "Enhance marketing metrics with outbound clicks and landing page views tracking",
+            "Implement token-gated access for MCP with RLS policies and cleanup obsolete authentication methods",
+            "Add lead analytics page and related components",
+            "Add PasskeyStatusCard component and integrate passkey checks in various pages",
+            "Add VerifiedWebProjectForm component for creating and editing web projects",
+            "Enhance ConversionEventsPage with improved event icons and layout adjustments",
+            "Enhance LeadConversionJourneySection with formatted journey events display",
+            "Implement recurring subscription invoice generation with cron job and database function",
+            "Implement lead briefing functionality and enhance lead detail retrieval",
+            "Refactor brand kit API to include token retrieval and improve error handling",
+            "Add guides management with CRUD operations and public API integration",
+            "Enhance diagnostics report generation with landing URL and improved CORS handling",
+            "Add MEETING_PROJECT_STATUSES for project state selection in lead meetings",
+            "Add LeadDetailError component to handle errors in lead detail page",
+            "Refactor lead detail page to use async sections for conversion journey, diagnostics, attachments, and quick actions",
+            "Add SalesControlWidget for team coordination and enhance lead notifications with call and WhatsApp actions",
+            "Automate sales follow-up and unify action queue",
+            "Implement call reminder functionality and WhatsApp follow-up feature",
+            "Add language selection for email drafting and update API to support language parameter",
+            "Add loading skeleton components for brand, calendar, subscriptions, and vault",
+            "Integrate Meta CAPI notifications for invoice payments and lead status updates",
+            "Integrate Meta CAPI for server-side lead tracking and enhance deduplication logic",
+            "Enhance calendar components with improved event handling and UI updates - Refactored CalendarCreateDialog to handle contacts instead of leads - Added deleteCalendarEvent function to manage Google Calendar events - Introduced LayersDropdown for filtering calendar event types - Updated EntityCombobox to support custom item rendering and ghost text - Enhanced CalendarGrid with new WeekTimeGrid for better time management - Improved CalendarHeader with dropdown for layer selection",
+            "Enhance phone actions and notifications with improved URL handling and notification click behavior",
+            "Add onlyBuiltDependencies configuration for pnpm to optimize package management",
+            "Introduce new hooks and utilities for enhanced form handling and UI skeletons",
+            "Add new UI components including Input, Item, Kbd, Label, Markdown, Menubar, PasswordStrength, Popover, Select, Separator, Skeleton, SubmitButton, Switch, Table, and Textarea",
+            "Scaffold backoffice MVP - Next 16 + Supabase + Verifactu + Resend"
           ]
         },
         {
-          "title": "Mejoras",
+          "title": "Correcciones",
           "items": [
-            "Las acciones rápidas y los diálogos de leads son más fáciles de utilizar en diferentes tamaños de pantalla.",
-            "Hemos ajustado la presentación de formularios y diálogos para que se adapten mejor a pantallas pequeñas."
+            "Update cron schedule for social post publishing from every 15 minutes to every 45 minutes",
+            "Update @doscientos/ui dependency from local file to version 0.1.29",
+            "Adjust z-index for PopoverContent in NotificationsBell component",
+            "Correct expected output in draft email test case",
+            "Update mock implementation for updateLeadMomTestSignal to return a resolved promise feat: add actions test file with task completion and movement tests",
+            "Remove unnecessary newlines in export statements for consistency",
+            "Remove unnecessary newlines in export statements for consistency",
+            "Simplify status assignment in getCertificateHealth function",
+            "Reorder import statement for consistency in lead follow-up summary tests",
+            "Reorder import statement for consistency in lead follow-up summary tests",
+            "Update proposal status display and refactor header layout",
+            "Trim whitespace from context markdown and update related tests to omit empty context slide",
+            "Update test to ensure button click is properly handled and add missing properties in verifactu delivery tests",
+            "Defer verifactu diagnostics loading",
+            "Defer verifactu runtime loading",
+            "Reorder import statement and correct error message formatting in crypto.ts",
+            "Reorder import statement and clarify comments in next.config.ts",
+            "Clean up formatting and improve readability in ListControls and ListPage components",
+            "Clean up formatting and improve readability in ListControls component",
+            "Reorder imports for consistency in ProposalMessageThread component",
+            "Remove unused import and update event type in ProposalMessageThread component",
+            "Remove unnecessary blank line in PortalProposalPage component",
+            "Update service worker registration error handling in PwaRegister component",
+            "Update error handling to retry on structured output errors in normalizeAIError",
+            "Ensure draft state updates correctly on textarea change in MaintenanceListTextarea",
+            "Ensure proper policy management for proposal messages table",
+            "Reorder import statement for useState in GmailSyncForm component",
+            "Ensure consistent formatting in error message for VAULT_ENCRYPTION_KEY requirement",
+            "Qualify verifactu cancellation outbox claim",
+            "Qualify verifactu retry outbox columns",
+            "Ensure verifactu error status across environments",
+            "Correct verifactu outbox completion query",
+            "Align verifactu migration with invoice schema",
+            "Enhance logLeadCall to update lead status and log interactions on call outcome",
+            "Add scheduleLeadMeeting action and related tests for Google Calendar integration",
+            "Refactor WhatsApp message construction for clarity and maintainability",
+            "Reorder imports for consistency in phone actions component",
+            "Reorder imports and refactor date formatting in lead AI panel and lead detail page",
+            "Format code for better readability in lead AI panel and queries",
+            "Reorder import statements in lead AI panel and update lead detail query for attachments",
+            "Reorder import statements and update comment in brand kit route",
+            "Reorder import statements in brand kit route",
+            "Reorder import statements in LeadDetailError component",
+            "Remove OpenAI API key section from environment example",
+            "Reorder imports for consistency and improved readability across multiple components",
+            "Remove unnecessary whitespace in promise catch blocks for consistency",
+            "Add biome-ignore comments for accessibility linting in various components",
+            "Add optional chaining to focusNextAfter function for safer DOM access",
+            "Align ClientRowActions type with structured billing address fields",
+            "Update revalidateTag calls for Next.js 16 two-arg signature"
           ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "1dce5a6e4bd227a045ecabd29afbe90b9c06f77e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor Drawer components to use Sheet and update related usages"
+        },
+        {
+          "sha": "fd65bfe9301e36d44df48878ae4b349ac7b9c3dd",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor Drawer components to use Sheet and update related usages"
+        },
+        {
+          "sha": "e2ff0b9d5c3005120e0ce5ebfcefbc918c2ca6cf",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement DrawerQuickActions component and add tests for its functionality"
+        },
+        {
+          "sha": "9e38f71347bd41f275edc31f55b76c03e89856e7",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add tests for MaintenanceOfferEditor and ProposalEditor components; implement migration for MCP proposal item access"
+        },
+        {
+          "sha": "793eb1f60e001ed88d8edd80c7fd5081a1d553cf",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance proposal and project relationships with new constraints and validations"
+        },
+        {
+          "sha": "a234ebc12eb3e3f4684f83662eecf9b2e99fb4a2",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement CSV export for quarterly invoices and update related components"
+        },
+        {
+          "sha": "4f6a89f0e4b5f133235dafbec6f4516656a88c33",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Update cron schedule for social post publishing from every 15 minutes to every 45 minutes"
+        },
+        {
+          "sha": "edc93817f8c6caffc75a7fbd10f6a6831f6acc27",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Update @doscientos/ui dependency from local file to version 0.1.29"
+        },
+        {
+          "sha": "e6984dc386735c2da6b5b86c0d4063bb35ac1ac0",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add meeting duration feature and update calendar event creation logic"
+        },
+        {
+          "sha": "500d49bfe09359bfa34d50d200c4f41017c146e3",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Adjust z-index for PopoverContent in NotificationsBell component"
+        },
+        {
+          "sha": "090b7527d227b7518308e18ce71335fd95477ee1",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update invoice types and add new SQL migrations for invoice number handling"
+        },
+        {
+          "sha": "c55695f75f3fa2d61f1be8ae058d2989f7a89336",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update '@doscientos/ui' dependency to use local file reference"
+        },
+        {
+          "sha": "58e81c21018e4a762d678a7679d82626658b33dd",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor scheduled post editing functionality to include caption and scheduled date updates"
+        },
+        {
+          "sha": "2955702a43ee2aa1b0915f4019377e8dc51256b5",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update cron schedule for social post publishing to every 10 minutes"
+        },
+        {
+          "sha": "fcb95162b14b92edde9bfe084f620ca173cc031a",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement scheduled post publishing functionality and add cron job for automation"
+        },
+        {
+          "sha": "c33157c0da3a092bd27ff71dce835400b8b4c972",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor UI component imports to '@doscientos/ui' for consistency and add functionality to update scheduled post media"
+        },
+        {
+          "sha": "9930b55e474fb9bea4fe0ecb39a31179db01107b",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance logging in syncMetaAction for better error tracking and refactor managedFilterKeys to use useMemo for performance"
+        },
+        {
+          "sha": "6b595469e3e04e859064e3582e25bae6dab7b974",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor Popover component imports and usage for consistency across the application"
+        },
+        {
+          "sha": "2251c18e70d37c6e87cb1f52705fca96ba537150",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update Checkbox component props to use isSelected and onChange for consistency"
+        },
+        {
+          "sha": "3516dda4ca70859eb30eb25546a4d6c907bd74e3",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor imports to unify UI component exports from '@doscientos/ui'"
+        },
+        {
+          "sha": "afd1ff44e59a5127432c5d657f1a73bbe270698f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Streamline query formatting in lead-related functions for improved readability"
+        },
+        {
+          "sha": "ff4f937504d793510cd0dbb3f76060f25d8157e4",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder imports in package-adapters test file for consistency"
+        },
+        {
+          "sha": "9747a9516987e60f0f18aac40f67c990e2722874",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance lead detail handling with optional company research availability"
+        },
+        {
+          "sha": "785a246fb11c293c45e93474a5e6219727921e59",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove aria-busy attribute check from submit button test"
+        },
+        {
+          "sha": "2b8d6671884a6b5e723b92b9fdef2c86a515bdc0",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add extractMetaLeads function and related tests for lead action handling"
+        },
+        {
+          "sha": "29bafb17009935d06c86d7e6f38f991b9edc2593",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor ButtonGroup imports to use centralized component and remove deprecated files"
+        },
+        {
+          "sha": "ff5976812815a0211d20882890c1f3dd270ffded",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update imports to use centralized Separator component in Field and Item"
+        },
+        {
+          "sha": "b59e2d947135904d73c98db95df965315309164c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove separator component and update imports in package adapters"
+        },
+        {
+          "sha": "e08c377830e696616812ed384dca3269fb443329",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance lead interaction components and improve error handling in marketing sync"
+        },
+        {
+          "sha": "6b9d4716cccd392664ec8b0683f9439a5e8d6959",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance lead interaction components and improve error handling in marketing sync"
+        },
+        {
+          "sha": "d9683b8904a0a333b8b52c5a011cf4529ef4b15e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add DialogRoot export to enhance dialog component functionality"
+        },
+        {
+          "sha": "8794614e54e43ecc3234b58883b4279b43ff1ce5",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add TooltipContent export to enhance tooltip functionality"
+        },
+        {
+          "sha": "a48eb54a2adda493cae1794757e1f937785a216f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance invoice and proposal payment options with company details"
+        },
+        {
+          "sha": "43959af707f4f2535cd965b5b4284f53341200ac",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Replace emailAppUrl with externalAppUrl for consistent URL handling across various actions"
+        },
+        {
+          "sha": "14786792b5f5202753e409c2ef7942bd0382cfd5",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement emailAppUrl utility to standardize email links and update usages across the application"
+        },
+        {
+          "sha": "ce11628082f50f656bf853ed7160be314bb244f2",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement emailAppUrl utility to standardize email links and update usages across the application"
+        },
+        {
+          "sha": "1d6f63d07f988b4b4063d7d17d920e9562863756",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor MemberProfilePopover to use Button component and streamline Popover structure"
+        },
+        {
+          "sha": "9bc5b863d10eabad43f6dde532c8337f8f2fc3c4",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor MemberProfilePopover to use Button component and streamline Popover structure"
+        },
+        {
+          "sha": "cc436e7f00400768ac26858d2d65fe6186455639",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor MemberProfilePopover to use updated Popover component and improve structure"
+        },
+        {
+          "sha": "7fb05324c1d343ae9f6cd499b7f32a41e85b8cae",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor MemberProfilePopover to use PopoverTrigger directly and update placement"
+        },
+        {
+          "sha": "ec9897a46dce6955172134678de9a1be4e02f36f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update @doscientos/ui dependency to version 0.1.23 and refactor imports in UI components"
+        },
+        {
+          "sha": "28c44e7a0d65d0fc05178c19c459790741caea35",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorganize exports in Alert and Badge components for improved readability"
+        },
+        {
+          "sha": "cbf4fc270696f49078dc6db2d017f6e87b4a4cd9",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update Accordion component usage to allow multiple expanded items in Invoice and JourneyCard"
+        },
+        {
+          "sha": "0ee09329172c8696a4916aa0b6e5cd2c7d75364b",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Consolidate exports in Accordion, Alert, Badge, and Tooltip components from shared UI library"
+        },
+        {
+          "sha": "32c9390fd34961863fb1876991c343c18ecd32ef",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Simplify local UI aliases handling in next.config.ts and update Checkbox component documentation"
+        },
+        {
+          "sha": "6cb99992c55117537bb870b7b8f880da937bd19a",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor Checkbox component to use shared UI library and update props handling"
+        },
+        {
+          "sha": "df6b6a300d8f6f39f050161317f5e79f3f7c5b23",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update Switch component for accessibility and refactor related code"
+        },
+        {
+          "sha": "a6848cc95f26013196625f8f89adc36f9034cc17",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update pnpm-lock.yaml to reflect new package versions and peer dependencies"
+        },
+        {
+          "sha": "8a1b4a9815e1a22d1556a19037e951bd40a0ab79",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance local UI development setup by adding restore functionality and updating build scripts"
+        },
+        {
+          "sha": "beeb7bb7e4770391183e6a5fc4f7ffb96ebaa55f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add local React aliases for Turbopack configuration and deduplicate React dependencies in Vitest"
+        },
+        {
+          "sha": "4712e4e9b1d806da4c372b6f10b205c88d7a13a1",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Integrate ButtonGroup components into package adapters tests for accessibility"
+        },
+        {
+          "sha": "0014a87ef3243731d8a72ffd8c802adfca188e06",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add Separator component and corresponding tests for accessibility"
+        },
+        {
+          "sha": "d853d00403e65237f800ac7f336c70da7d8736bb",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update QWhatsAppDialog and WhatsAppComposer tests for improved interaction handling"
+        },
+        {
+          "sha": "8b6afcaa3ce5b260462036e45af1d1e33a956b18",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add aiEnabled prop to lead components for AI integration"
+        },
+        {
+          "sha": "f3912463b6ec643c3484b31872bccd0b7087efad",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement invoice extraction feature with AI and rules-based suggestions"
+        },
+        {
+          "sha": "8aea7a969ac7e7ed2246d489f19578dbb8a73df8",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update Meta marketing integration to include direct destination URL and adjust object URL handling"
+        },
+        {
+          "sha": "0d2fb17c87a9f53e27571259ec131cd690eb3911",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance attachment section with camera input for mobile attachments"
+        },
+        {
+          "sha": "4b190392c3906584a699c0323290573939dff5c8",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement clipboard paste functionality and enhance lead creation form"
+        },
+        {
+          "sha": "058045a1afcbf9864990ea9f24ba64d08a9fc475",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance startup splash handling and defer call reminders for improved user experience"
+        },
+        {
+          "sha": "e67e00606fe6f34dadb8d51f2779781d4f891a6a",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add client-specific fields for tasks including titles and summaries"
+        },
+        {
+          "sha": "b5591b3ed3d5528b7afd4514616e33d81f1acc12",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add client-specific fields for tasks including titles and summaries"
+        },
+        {
+          "sha": "4203cff168f41246058cee44571077f0cddc0379",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add client-specific fields and functions for project task management"
+        },
+        {
+          "sha": "5d8060858f8d4fbf028ba5afa740719ce366983c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance task details in ProjectPortalPage to include client-specific titles and summaries"
+        },
+        {
+          "sha": "fb7e6fb125e4f7eb078c7031e0986375fe16669e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance web project types and add client visibility"
+        },
+        {
+          "sha": "3ee7ff93f103be94eab373dd45adad44202844c6",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update terminology to use 'workspace' instead of 'repository' in comments and tests for clarity"
+        },
+        {
+          "sha": "4f935e262049e97012f0ed01fa269863300eee35",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add workspace paths management feature with validation and migration support"
+        },
+        {
+          "sha": "5deeb28da44a9b820f708d4428585bdde28b0727",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove unnecessary newline in actions.ts and project-portal.test.ts for cleaner code"
+        },
+        {
+          "sha": "10ea58a0b190d47e6430cfd42f5de2ad262049f4",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder imports in actions.ts for consistency; add newline in project-portal migrations and tests"
+        },
+        {
+          "sha": "14597e765da4ad884d4059a08fc62d3461f8e2d7",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Improve formatting and structure in ProjectPortalPage and ProjectRequestForm components; add tests for project portal migrations and request input validation"
+        },
+        {
+          "sha": "dc606ba1c284eb5fcb1bad56f43450c0b7f46b65",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement ProjectPortalPage with task and request management features"
+        },
+        {
+          "sha": "fbee23681974b0471c832e6bab1aaddbad53dd5d",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update branding assets and enhance LogoMark component for theme support"
+        },
+        {
+          "sha": "d79c74f8f79ccab6ae3ff1855042bed4d8bcb1d0",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add WhatsApp follow-up composer"
+        },
+        {
+          "sha": "b40b0f1b9b1a4ff6f48fa99057cf7bf535748edb",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update branding assets and enhance LogoMark component for theme support"
+        },
+        {
+          "sha": "44248d2741de0c9749eb7f206b0e3f0cdff93078",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance LeadInteractionDetails component with email content display and reply functionality"
+        },
+        {
+          "sha": "8784e8a3a8db26a740782d08717a2d1af9c684dd",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add reply interaction handling to email composer and lead interaction details"
+        },
+        {
+          "sha": "e7c2f783b484c1af75ea3505ca7be38da5637a8c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add LeadInteractionDetails component to display email interaction details"
+        },
+        {
+          "sha": "6fc91a7b8cc0cdac50317bb3bccb68d4e67e2efb",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Correct expected output in draft email test case"
+        },
+        {
+          "sha": "6f664e357f0c91b0b7d8bf49258997bff566f53b",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance task management and email confirmation features"
+        },
+        {
+          "sha": "c66c63b32477339eac5c2de02849007f860c5fb3",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement AI draft generation in EmailComposer with user instructions"
+        },
+        {
+          "sha": "b2577b63aeaf5350a7a6f17141245470d39c524a",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Update mock implementation for updateLeadMomTestSignal to return a resolved promise feat: add actions test file with task completion and movement tests"
+        },
+        {
+          "sha": "961a207359b8c14664c480dffbc5d565d98c0a40",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove unnecessary newlines in export statements for consistency"
+        },
+        {
+          "sha": "e23c80a2ccb388eea61eef5e6feec33fbcd80dab",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove unnecessary newlines in export statements for consistency"
+        },
+        {
+          "sha": "1548172f25c949e2dbe1534bd8a45d0e468b5e68",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement global recovery chaining and enhance invoice QR synchronization"
+        },
+        {
+          "sha": "f6f7e3e2044dcde2e12249edf69167686004481c",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Simplify status assignment in getCertificateHealth function"
+        },
+        {
+          "sha": "11e2276d1967c690d89d8e341f9622d97e744943",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add invoice concepts handling and operational health checks for Verifactu"
+        },
+        {
+          "sha": "f469cc097168039920d0d8bd81e0a3fe600b8884",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance invoice handling with additional client and fiscal validation properties"
+        },
+        {
+          "sha": "4e2f5ecfb09598db725ae0b5f0b9ceb5e8402b19",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance invoice handling with additional client and fiscal validation properties"
+        },
+        {
+          "sha": "a3cda6c95bb17c7e971580acedc336d76d07fab6",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder import statement for consistency in lead follow-up summary tests"
+        },
+        {
+          "sha": "9b1eee6e1c6296f94ade417aa068f80bcd150b90",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder import statement for consistency in lead follow-up summary tests"
+        },
+        {
+          "sha": "0183d1364ca7d3dc85c0cb6fbc5384e2c2983282",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance invoice handling with regularization support and UI improvements"
+        },
+        {
+          "sha": "10c2e1a9e03229ea47352f3881d7a93e2427c31f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update QR code handling in invoice pages and improve responsive design in layout components"
+        },
+        {
+          "sha": "9620dd31fdb8e5b94455b66f288b0aea244372c5",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement AEAT regularization handling in invoice actions and UI components"
+        },
+        {
+          "sha": "1a5098cf7e39e126c1da4b148f98e52dd5a84b9a",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update Sidebar and NotificationsBell components to use ghost variant and border-0 class"
+        },
+        {
+          "sha": "7958a0d054c995fe76ce8687957abd08e596d423",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance UserMenu component to support avatar-only display mode"
+        },
+        {
+          "sha": "f2439ece6b55d3b1e0e07255537ee0591477b14c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update invoice action policy to include regularization for AEAT-rejected invoices"
+        },
+        {
+          "sha": "0db9597ff8ab990a21c82d6cd52a675b55b68169",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add migration to enforce uniqueness in verifactu_ledger for regularization process"
+        },
+        {
+          "sha": "86ea270474b3762af4cb808a921aef84fe33d7ea",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add migration to resolve ledger_id ambiguity in claim_due_verifactu_outboxes function"
+        },
+        {
+          "sha": "de40dad9aa0271ed36f17e533046e3d1168d0931",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add migration to fix ledger_id ambiguity in regularization process"
+        },
+        {
+          "sha": "690b1fd6d28157cc92310acdad2365e7081d36cb",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add taxpayer identity fields for synthetic AEAT diagnostics and update related configurations"
+        },
+        {
+          "sha": "3329bd0ba0f6a5309832636add4265d78a5dce26",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update navigation components and improve layout; add @phosphor-icons/react dependency"
+        },
+        {
+          "sha": "edd6b02e0e2b8ebb40215158511d18ca8977bee9",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update navigation components and improve layout; add @phosphor-icons/react dependency"
+        },
+        {
+          "sha": "488a13e861a8207fcc4bb1a0072aa0260dcb9b52",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update navigation components and improve layout; add @phosphor-icons/react dependency"
+        },
+        {
+          "sha": "b621b04afe7f675a4a4a7a3e733f0c3f02196a67",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Improve layout and styling for invoice and proposal pages"
+        },
+        {
+          "sha": "741d0a5ce7491439484a43effe450c5fb6a39b8e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update @doscientos/ui dependency to version 0.1.7 and remove unused @phosphor-icons/react dependency"
+        },
+        {
+          "sha": "22f3400120fbbf5c4401141559435ecbe49641f0",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement IconButton component with improved props handling and accessibility"
+        },
+        {
+          "sha": "8d848234e4954ea577b257a656042b9a1aa619c8",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement IconButton component with improved props handling and accessibility"
+        },
+        {
+          "sha": "c8c51efd3b23b514000484d19c3a8e45f25b0ce9",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance invoice action components with improved layout and passkey authentication"
+        },
+        {
+          "sha": "ab85f8afe21c057aff4c015a280dfc05a687f9f1",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement MFA verification for invoice regularization and status changes"
+        },
+        {
+          "sha": "0634da19f9af7c4c977e3488bf87bb63c709aa6a",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance RegularizeAeatButton with confirmation dialog and improved feedback handling"
+        },
+        {
+          "sha": "5d0465c5434fe3e9ac66f8a4ffeb48443457af53",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement IconButton component for consistent icon actions and update usages across the application"
+        },
+        {
+          "sha": "6c82c4162f6685fe57b6ad8811515fb801106e98",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add regularization functionality for AEAT invoices and implement recovery button"
+        },
+        {
+          "sha": "7cb7550b7ade75ba84fd883b788b64082ffee34e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement MFA challenge dialog and enhance invoice action error handling"
+        },
+        {
+          "sha": "7aa01b39f2503fd9e6b9168aba95a3ba1c444838",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add payment recording functionality to invoices with payment method support"
+        },
+        {
+          "sha": "ded128feb4a5d507bf925fc6b147c1420f94bc1e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor Badge component placement for verifactuMode in MobileNav and Sidebar"
+        },
+        {
+          "sha": "89782f89a72704e1192808a48cbb83123a1f56ab",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor VeriFactu configuration for improved environment handling and diagnostics"
+        },
+        {
+          "sha": "da1e357f94bbf5723f748e23685c8fc93e41380a",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance sidebar with settings link and update user menu to conditionally show settings"
+        },
+        {
+          "sha": "61e46089ea2e0ec8a79c2dfb5645e0724d80ecee",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add createProposalDraftInvoices function to generate invoice drafts for accepted proposals"
+        },
+        {
+          "sha": "5b48c6cec9ba13bc1992e2e2def7d110b305d7fe",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove duplicate imports and clean up invoice page code"
+        },
+        {
+          "sha": "5149339f038400a7fbb573e7e5109439fcbe7680",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Lazy load QR code generation to improve page performance"
+        },
+        {
+          "sha": "4927da3a7174ae741583435fdf6f3b6cea7d4735",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update ListControls presentation and adjust padding for search icon"
+        },
+        {
+          "sha": "15759cf3cacc81f74e25ef47f148287f11b6cfbf",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance navigation components with new features and tests"
+        },
+        {
+          "sha": "7a5064018169225d9976f189f6e75e8deca3e0f4",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement responsive navigation tree and refactor sidebar layout"
+        },
+        {
+          "sha": "6ef5b8d56a6bd0cb28b8b0732649cbf2e1937731",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Update proposal status display and refactor header layout"
+        },
+        {
+          "sha": "f16ca1d5a549fb8af78240affda4889a93710e61",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Consolidate proposal actions into a single dropdown menu and remove duplicate component"
+        },
+        {
+          "sha": "8976ba2097aa75da84dc5f4fe12e7c8c0ffec85f",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Trim whitespace from context markdown and update related tests to omit empty context slide"
+        },
+        {
+          "sha": "36dd1cf8543157727edcf10936348b93108be4ee",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Update test to ensure button click is properly handled and add missing properties in verifactu delivery tests"
+        },
+        {
+          "sha": "ffd6e87699d686db286b7afab2aed774af78db83",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Defer verifactu diagnostics loading"
+        },
+        {
+          "sha": "9234fffa7012b5cb2534e3bdce87b2a00c93c66c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor createVerifactuClient to load dynamically and update related usages"
+        },
+        {
+          "sha": "f8f8e56e12aa4b56224291f831628422071d42a4",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Defer verifactu runtime loading"
+        },
+        {
+          "sha": "ab9a522b66c631e0472fdd025ff5e5ae0c6fa924",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Import Button component in ProposalDetailError and update import statement in ProposalOverview"
+        },
+        {
+          "sha": "3f0fc67451a0f4640bf902641e47bd139ce18c6a",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update error handling in proposal editor and tests, enhance error messages"
+        },
+        {
+          "sha": "ae5a4a05271df38e515e3534252f849d0b6f9548",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add mock for Select component in proposal editor tests"
+        },
+        {
+          "sha": "164daffe2733b1a51232c076d7c47bab17445bbc",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add error handling component for proposal detail page"
+        },
+        {
+          "sha": "45e55cd51fc724d95c7cc8dcf01da2c455522609",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update proposal detail page to manage team members and enhance editing functionality"
+        },
+        {
+          "sha": "d89e1fdc6abec5470bf00c345c845de3a3e511b9",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance proposal editor with team member management and update UI components"
+        },
+        {
+          "sha": "76089498d4e29b40c7f46704f8de48c380ba85b9",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder import statement and correct error message formatting in crypto.ts"
+        },
+        {
+          "sha": "9a097151b11aa84f60c3e36baee60f5a5a11883e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement payment plan functionality for proposals and invoices"
+        },
+        {
+          "sha": "db804c2642e87a38982e97bd96c12bb66d3e90a9",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement structured payment plans for proposals and invoices"
+        },
+        {
+          "sha": "5ff594d79b5e5b41e7a565a21d804d0ea6d0ffc4",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add tests for ProposalActions component to verify proposal acceptance functionality"
+        },
+        {
+          "sha": "2ebdefa4893d63707791d5633a175e6e17d51463",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder import statement and clarify comments in next.config.ts"
+        },
+        {
+          "sha": "f2a0dc51d1e23e20044c50ece98c9238c1e35f6c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update @doscientos/ui and @doscientos/verifactu dependencies to specific versions in package.json and pnpm-lock.yaml"
+        },
+        {
+          "sha": "7b0f1e56f997e860a1e4008115f948eb91b658cb",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement Verifactu issue handling with dialog and button components"
+        },
+        {
+          "sha": "0b3145ab16746bcca979f129260365273b6c57c5",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add @doscientos/ui dependency as a linked module in package.json and pnpm-lock.yaml"
+        },
+        {
+          "sha": "aa70c8c1165706e895d4ca75bc4331430f75d118",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove unused @doscientos/ui dependency from package.json and pnpm-lock.yaml"
+        },
+        {
+          "sha": "c7b0567ac828599d08b20bd2978879dd0bd48130",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update error handling in VaultClient and adjust secure cookie settings in grantVaultUnlock"
+        },
+        {
+          "sha": "068b5eeb8f1ce419bda5cc666d4b4dc0f3e7bd6c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add verifactuWarnings function and display AEAT warnings in InvoiceDetailPage"
+        },
+        {
+          "sha": "5cce2fad03a233d6825147b3afbc29730ce87ed7",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add verifactuWarnings function and display AEAT warnings in InvoiceDetailPage"
+        },
+        {
+          "sha": "fb9a9242e7dda41f7269ad6362399a939d3a9bb9",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add verifactuWarnings function and display AEAT warnings in InvoiceDetailPage"
+        },
+        {
+          "sha": "978520133d63d03481505f27c1e74564ba23e619",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorganize imports in invoice actions and progress dialog for consistency"
+        },
+        {
+          "sha": "6e3a6f47e3560abf36d8dc2b13736ba0837cecd7",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorganize imports in invoice actions and progress dialog for consistency"
+        },
+        {
+          "sha": "c7d11e7a7bb9445b1c56aafb8aee543dd8740aa9",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor InvoiceIssuanceProgressDialog and related tests for improved readability and structure"
+        },
+        {
+          "sha": "37962226bc60e3d5a782242466118e65a1803f40",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add unit tests for InvoiceIssuanceProgressDialog to verify fiscal step display and delivery status"
+        },
+        {
+          "sha": "1ed5bbda246ff22f5a0882f2ea96e112964f8723",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance MfaTotpCard to include authenticator assurance level handling and improve enrollment verification"
+        },
+        {
+          "sha": "02e7375f95428701f5c4917976505b36a4093f32",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement invoice issuance progress dialog and enhance status handling"
+        },
+        {
+          "sha": "c838f36b25cbe28444ed0313c8ac4d9a0c00fe33",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor MFA TOTP card logic and add unit tests; enhance security settings with SQL migration"
+        },
+        {
+          "sha": "e48d9ed2e9b2d8f31a9e1808b4b6db69c7f9a98d",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance security settings with MFA and passkey management components"
+        },
+        {
+          "sha": "c239fe92290f6f00ec1ab97846e7cce91892f4ed",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement VERI*FACTU diagnostic gate and related functionality for invoice processing"
+        },
+        {
+          "sha": "74c9f84deaa9177a971acdf066b9876374d46ef5",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement password login endpoint with rate limiting and CAPTCHA support"
+        },
+        {
+          "sha": "6ca3e451382d7ab6f2ad40437ee7ca6622675620",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance VERI*FACTU invoice processing with rectification support and compliance documentation"
+        },
+        {
+          "sha": "d1dbf34caa6a9d4c99e8a5a42766cabfba50b5ec",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorganize imports in invoice handling and PDF document generation for clarity"
+        },
+        {
+          "sha": "8c4451d8b92e4db7fa99fefcdd583ac5974af4f6",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor WhatsApp follow-up dialog to include email option and improve messaging"
+        },
+        {
+          "sha": "d9f13a1bc749b4e1bafac6c51ff901d1bf752193",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update test to reflect verifactu status change from accepted to pending"
+        },
+        {
+          "sha": "cb92ab2ed1fcbf4bf57ed60127e62ad4cc1ceee0",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update invoice handling to include verifactu status checks and QR code generation logic"
+        },
+        {
+          "sha": "d4e6d51f2146457df2d3e784fd0110b8df237b96",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add email preview functionality for proposals with loading state and validation"
+        },
+        {
+          "sha": "fe77ca99dd1140209a16e7abd3b8da72bfb10895",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Improve call outcome display and remove unused note update functionality"
+        },
+        {
+          "sha": "c20b87fd5a1bea9a6477a6f3455c44c776bfe6e5",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance call interaction details with editing capabilities and validation"
+        },
+        {
+          "sha": "74c9be83bbb1d26c0a511a64c403a64faa2b6f94",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add recommended plan functionality to maintenance offer"
+        },
+        {
+          "sha": "341f3df6931ae0d3a2ddff162e6ed5db213d39dd",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add call date functionality and per-module upfront payment option"
+        },
+        {
+          "sha": "88bcfbb10a4299ad0f2fde9cb4b843f5f8a15329",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement next action handling for leads with scheduled meetings"
+        },
+        {
+          "sha": "d04d961a43c32f44c30da667449edde7af42c68d",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement grouping of resend interactions and enhance interaction details in lead timeline"
+        },
+        {
+          "sha": "c4574ab606f4b9fa9fd748a536b2f8c37fc96be6",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance lead management with scheduled meetings and reminders"
+        },
+        {
+          "sha": "5c23ec71027ac00e8ce6c17d826f62f85065f493",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add schema reload notification for proposal messages table"
+        },
+        {
+          "sha": "88c502894f6f49bc445269b55f83eb8ce9bd4663",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Clean up formatting and improve readability in ListControls and ListPage components"
+        },
+        {
+          "sha": "f9fd8e62b6e902796017fdc51c771012b3417b5c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorganize imports in ListControls and ListPage for improved readability"
+        },
+        {
+          "sha": "c48170ade93fca1d9a6988d8fd1975a8fd7e7cb9",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Clean up formatting and improve readability in ListControls component"
+        },
+        {
+          "sha": "0018c55bb9fcbbbb2c56f86c21e61e1a4bcbc7b9",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add status filter and integrate into ListControls component"
+        },
+        {
+          "sha": "0a7555ca7eb36cdb6c32c05a65e7ace7e898c65f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorganize imports in leads kanban for improved readability"
+        },
+        {
+          "sha": "c5c1582e79b200c4c66bccc87c8d72867e4d6474",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add drag-and-drop functionality and necessary imports for leads kanban"
+        },
+        {
+          "sha": "cb961ef59e86c07a92a244715529bd6a92edd9fe",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance leads kanban and list controls with avatar support and meeting handling"
+        },
+        {
+          "sha": "a6bb7c0eca74a31ee5cb409b943e976a0e2431be",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance leads kanban functionality with drag-and-drop support and status updates"
+        },
+        {
+          "sha": "5f1e262a576b1e43ab4c859816f177a02d8405db",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add optimistic concurrency control functions and triggers for proposals and invoices"
+        },
+        {
+          "sha": "0bbd40f3f59acb3815e5d43fba4a68d690724ea6",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add backup database configuration options and enhance backup actions UI"
+        },
+        {
+          "sha": "a0f42063f66364f532d609a17e2808e22c50a3f6",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add lead next action task item component with completion and follow-up options"
+        },
+        {
+          "sha": "feaa3c6bb5e984598e3600f55943439b83dbd6b6",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add action type classification for lead reminders and update related components"
+        },
+        {
+          "sha": "01c2f03d83c10c55a63c85b204224920f034b9d7",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement daily responsibilities notification system and related tests"
+        },
+        {
+          "sha": "2c480fd250b8f9696ef9bd04aa7d020353df9983",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add support for CRM follow-ups endpoint in proxy configuration"
+        },
+        {
+          "sha": "99cc2d78f7eff3cdca07804bd560d702ec6f66cb",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder imports for consistency in ProposalMessageThread component"
+        },
+        {
+          "sha": "8282f13736b72f3bae6c0955b3725f53aba7a5ab",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove unused import and update event type in ProposalMessageThread component"
+        },
+        {
+          "sha": "2f46b3c8d0d9e3a0abb9c64edc806be3e1866a2d",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance maintenance options styling and layout in PDF document"
+        },
+        {
+          "sha": "ac973505538139e18d502622b3a27ab876e06f0b",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement manual save functionality in ProposalEditor and add presentation link in PortalProposalPage"
+        },
+        {
+          "sha": "2f96596daddacab345962ca1c2b5474af4db15c9",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove unnecessary blank line in PortalProposalPage component"
+        },
+        {
+          "sha": "5bbdb0a35c1458d0b5f9a4877add6d5d4b311240",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add maintenance options to proposal with selection functionality and update PDF generation"
+        },
+        {
+          "sha": "6ffdff0d97139a14d3e5773c5495d2cd69040738",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Update service worker registration error handling in PwaRegister component"
+        },
+        {
+          "sha": "e882d62e7e3c2573c60f1911e61d94815c7dae0f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement startup splash logic with session storage handling and add tests"
+        },
+        {
+          "sha": "3dc210ec370b42789da7ab4e0b8f8ed562cfd4bf",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Update error handling to retry on structured output errors in normalizeAIError"
+        },
+        {
+          "sha": "1ef451d0f6c9c3b67fcd10bee292a2d4c447d66b",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Ensure draft state updates correctly on textarea change in MaintenanceListTextarea"
+        },
+        {
+          "sha": "953d676736d3d7324b649a2f8729dbf49298d7dd",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance MaintenanceListTextarea to support multiline edits and bullet list imports"
+        },
+        {
+          "sha": "3f57b7f4e6fa9744788199b1e1cb35bb388893b4",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add error handling for invalid JSON responses in runAIObject and implement tests"
+        },
+        {
+          "sha": "bcbd0ef938fc39682d40376d9351b05f06d7448e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add maintenance options and related fields to proposals"
+        },
+        {
+          "sha": "dcb8fdcfc10fe9ce0c468f8f8d8affb669cada95",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add ccAdmins functionality to sendEmailToLead and related components"
+        },
+        {
+          "sha": "816ae34250cbb7848e2d37b9f8912b7d0488b4d6",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add schema reload notification for proposal messages table"
+        },
+        {
+          "sha": "a92c375c270ce3d07ca8b8f4b932b06b7b28ccbf",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Ensure proper policy management for proposal messages table"
+        },
+        {
+          "sha": "a68e46437b100c008a3e69c400015fb0229889eb",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add proposal message functionality"
+        },
+        {
+          "sha": "40431c66225d336fd5799bd1de38a77c5090bf9c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance maintenance offer functionality with exclusions and improve proposal handling"
+        },
+        {
+          "sha": "dd4d37c6e07184302d7d75d4255f895f1e0e36f8",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add tests for proposal maintenance offer functionality"
+        },
+        {
+          "sha": "79dddf749304ad8441d2637e653f1ce326d9b61d",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Integrate maintenance plan handling in proposal PDF generation"
+        },
+        {
+          "sha": "6e6bae2fd0577e0175e0095888989d994e85e01f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add maintenance options integration in proposal page and actions"
+        },
+        {
+          "sha": "e0a980af97f4eb8d029131ccbe37b0dd86df16d3",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Integrate maintenance options in proposal detail and editor components"
+        },
+        {
+          "sha": "6aba21cd12f3e60cc35ad2ae056987dd4763b27e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add ProposalMaintenanceOptions and MaintenanceOfferEditor components for managing maintenance plans"
+        },
+        {
+          "sha": "5a86a5697ce1ac73bbf66c24bde8e2398afcd5d2",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add maintenance options and update proposal handling in database and tests"
+        },
+        {
+          "sha": "3c2ad8b5de62d2af50031f334bb0371fec77b6f2",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement proposal validation formatting and enhance error handling in updateProposal function"
+        },
+        {
+          "sha": "d4f3bd5b8d07c5cf201714bd904df5eba716c906",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance proposal draft generation with scope modules, deliverables, acceptance criteria, payment terms, and change management terms"
+        },
+        {
+          "sha": "9f127180e986eb9115ce447d7b1f38f2758d50e3",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor proposal payment components and improve import organization"
+        },
+        {
+          "sha": "63790ddc31eabac275625140d477720390976084",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement dynamic initial payment calculation and enhance proposal payment handling"
+        },
+        {
+          "sha": "f6c56ad4f8c0103951209b4aadcf0d61fb9f0be4",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor proposal components and enhance PDF generation with improved formatting and structure"
+        },
+        {
+          "sha": "42ef3b85e8873881af85a21dcebaec8e26057c01",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Improve formatting and readability in ProposalEditor component"
+        },
+        {
+          "sha": "dec4dfe536462272ea209e5e4a968c445e83eb27",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance proposal PDF generation with scope modules, deliverables, acceptance criteria, payment terms, and change management sections"
+        },
+        {
+          "sha": "77e5226783b3d3fab3dc321c2d99f906614885d1",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add scope modules and delivery details to proposal, including payment terms and change management sections"
+        },
+        {
+          "sha": "864c1e8398089600e793fbeaaeebf04361511340",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance proposal editor with scope modules and detailed deliverables, acceptance criteria, payment terms, and change management sections"
+        },
+        {
+          "sha": "82d4f6a75ef085af5f3125a3b9286da0cabf3c41",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add scope modules editor and related schema updates for proposal management"
+        },
+        {
+          "sha": "3f445008f397158db5ccb6dafed83bfd75c3b2bf",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder import statement for useState in GmailSyncForm component"
+        },
+        {
+          "sha": "30c067bd25fab3724d8bd7ffb808dbcd1887a649",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement Gmail synchronization settings with mailbox management and UI integration"
+        },
+        {
+          "sha": "dbdc02a7ed3f1ae4f90989062cb392cb07a1923f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Exclude drafts from Gmail message search for leads"
+        },
+        {
+          "sha": "6aa5ee493044147301351ecc156f7cba668552d6",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance Gmail synchronization with improved message handling and add tests for listLeadGmailMessages"
+        },
+        {
+          "sha": "17b3095d3db84bdb1dddb94a6f48645843966f0c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement Gmail synchronization for leads, including UI button and backend logic"
+        },
+        {
+          "sha": "88fa07ea2c4f78dee2fcdbf88163856b6dcb0ea2",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add tests for invoice request functionality and notification dispatch"
+        },
+        {
+          "sha": "1c0a1820a2cd3da5d0fc89dff7871fe7ffe1ddea",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement invoice request functionality and enhance notifications for invoice-related actions"
+        },
+        {
+          "sha": "d0cf8faf237dfb17977322d2bf24091e27f3af56",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance proposal management with follow-up reminders and lead status updates"
+        },
+        {
+          "sha": "921289222bb0bfb1c806fa7cc441fe6b71565a3f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement PDF text extraction and indexing for internal documents"
+        },
+        {
+          "sha": "3ae0249c4b7aafa3334a56ef978bb94fe8243177",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add PDF download functionality for proposals and implement PDF rendering logic"
+        },
+        {
+          "sha": "c1a6c25622306468c16cba762bd6d964dd72e7e9",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update billing address field to billing_address_street across proposal and client data handling"
+        },
+        {
+          "sha": "03195e441e852ce02c49fb87d54a80d6dacbf3ff",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add error handling for proposal data retrieval in Deck and PortalProposal pages"
+        },
+        {
+          "sha": "b46279e66868468a23d613ffebc69e1c360ba22d",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Improve error handling for proposal data retrieval in Deck and Portal pages"
+        },
+        {
+          "sha": "6ebf0741ca46b02cddec22b7532899d5a4e37b54",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance problem-solution editor and schemas for improved validation and descriptions"
+        },
+        {
+          "sha": "0f2dce92c93ceb00eadf5334426bccf59a9001f7",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance proxy logic for public portal and deck paths, including session refresh handling"
+        },
+        {
+          "sha": "7563ce58049100c4fed8c8ffa8d35509c829c55e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement nextMove function for lead status handling and add tests for Lead360Timeline component"
+        },
+        {
+          "sha": "3ec16afcdb55497e05c3ca322eb8d48af008351f",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update rectification tests and enhance logging for invoice creation"
+        },
+        {
+          "sha": "1fba01a7e2f8c07c0bf37d89916355b9a914c463",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Integrate RPC function into rectification tests and update invoice actions"
+        },
+        {
+          "sha": "b3216c2794f145f207dbced93e58b441d628c2a5",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor invoice creation and rectification logic to use RPC functions"
+        },
+        {
+          "sha": "83a87f190f90f39f85b76ff5408f2affdf4fdcd5",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor lead conversion and proposal item update logic with new RPC functions"
+        },
+        {
+          "sha": "ab237e684aa7aee28bac0f787b69c4d25ee4219e",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Refactor proposal item handling and totals calculation"
+        },
+        {
+          "sha": "5bf39df2d1d6bb6ee9d527653f5d4936e334bc3c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance extract-tasks dialog and client update panel with improved imports and formatting"
+        },
+        {
+          "sha": "b9e80b53a6ee3e8e778e4c15a739ef3c1f57c23c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update extract-tasks functionality to allow empty task results and improve lead briefing format"
+        },
+        {
+          "sha": "fb374f8c7faa9b2766aa30dffc78dcf53d371951",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance call digest dialog with improved AI integration and task management"
+        },
+        {
+          "sha": "fe2fd24ba882dadd571d6896cd8199c53eb5abc8",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance ClientUpdatePanel with detailed project update display and improved state management"
+        },
+        {
+          "sha": "57ce874b5893b083690bbc0445223a9f64c1437d",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance client update generation with improved schema validation and refined system prompt"
+        },
+        {
+          "sha": "44746c49d8232a17fa2c807501a30a5e1bd22ae1",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add ProposalFollowUpAssistant component for actionable proposal follow-ups"
+        },
+        {
+          "sha": "2aa29b0ed6ad6fd5d3c717a8d49c5afb8602916c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement AI call copilot and next best action endpoints with task creation support"
+        },
+        {
+          "sha": "8eda3d8abe4a215126489d7997cb16624781ec7e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add AI draft generation tests for proposal endpoint, including validation and response checks"
+        },
+        {
+          "sha": "c9bd8b533b2a710fccb28037a63d8895a3213411",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement AI draft generation for proposals, enhance proposal forms and editor with AI context support"
+        },
+        {
+          "sha": "c99182832abce67c96f8009ed26d59a476f8a7c2",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Ensure consistent formatting in error message for VAULT_ENCRYPTION_KEY requirement"
+        },
+        {
+          "sha": "dc8745ac507b1b009f2e89f746238259ae9961df",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add VAULT_ENCRYPTION_KEY support and validation schema, update env example and tests"
+        },
+        {
+          "sha": "6b3e0a64a1dd3bf01356497a9bc9370e93ba52b0",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor Meta CAPI integration to use qualified lead stage and update related functions"
+        },
+        {
+          "sha": "9317f3b12516015133a96473456d9856dc43e78d",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement cross-module dashboard pulse and enhance lead and subscription details"
+        },
+        {
+          "sha": "e2858cfa2b6145339ac96f1e086fdc7c30637b0b",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Update rate limit mock to use distributedRateLimit and enhance test input structure"
+        },
+        {
+          "sha": "17e9655e4ea136e5cc9a38dbfb095076975680cf",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement distributed rate limiting and enhance diagnostics input validation"
+        },
+        {
+          "sha": "99d04041c45244ba5b3c7c22f4a3d3efe0f843d4",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add payment revert functionality and enhance AEAT feedback messages"
+        },
+        {
+          "sha": "f1c7cf50d5d9c1bc26317a15765fb12abeb496d4",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Qualify verifactu cancellation outbox claim"
+        },
+        {
+          "sha": "2ba8202a101d1450135f1818c316587a07077b58",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Qualify verifactu retry outbox columns"
+        },
+        {
+          "sha": "051021a0039d8f4c0786839d4fb4c142508d72d8",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Ensure verifactu error status across environments"
+        },
+        {
+          "sha": "e4a52f299474636228d56a873e36cf407de2fc60",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Correct verifactu outbox completion query"
+        },
+        {
+          "sha": "589efc1ee45eb9183606be9b4b160646739692a6",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Align verifactu migration with invoice schema"
+        },
+        {
+          "sha": "b022e6979edd6773f9633dc094601ac3581bd3e9",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement Verifactu durable ledger and transactional outbox with delivery state management"
+        },
+        {
+          "sha": "7ac8676b88ea15295db540f72537b25d22087fa3",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Simplify className logic for signal buttons in Mom Test dialog"
+        },
+        {
+          "sha": "aff1dd5449b1ab368746cff18136146171df3b09",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement Mom Test accessibility feature with automated and manual signals"
+        },
+        {
+          "sha": "abcf94632e1c6e842e938913f435fc7608e0a48c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Optimize lead ingestion process by refactoring conversion event handling"
+        },
+        {
+          "sha": "1996b165d1610d63883e00c3d71087491e66bcd0",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance marketing metrics with outbound clicks and landing page views tracking"
+        },
+        {
+          "sha": "7349f67e48364d8b5d3629b1888553ddf84c76af",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement token-gated access for MCP with RLS policies and cleanup obsolete authentication methods"
+        },
+        {
+          "sha": "49813a95748b57b4d46024f556eacfa9f2567e0e",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add lead analytics page and related components"
+        },
+        {
+          "sha": "1ec3ac355c718d996b1f073c4cfeafaf4ff0f783",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add PasskeyStatusCard component and integrate passkey checks in various pages"
+        },
+        {
+          "sha": "2bc61ac58517d4420be12be1b99102e13b5d830d",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add VerifiedWebProjectForm component for creating and editing web projects"
+        },
+        {
+          "sha": "363e06a707f81029afd541f68d6b4062016c1f7a",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance ConversionEventsPage with improved event icons and layout adjustments"
+        },
+        {
+          "sha": "c80321ac68c355c11f0725325d876f8ef9df324a",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance LeadConversionJourneySection with formatted journey events display"
+        },
+        {
+          "sha": "5b738f7ef4b5d9f9a0028fe72de53f620c1b1d03",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement recurring subscription invoice generation with cron job and database function"
+        },
+        {
+          "sha": "16a8db8a3c2733f42531658d45da54aeeaf10cbb",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance logLeadCall to update lead status and log interactions on call outcome"
+        },
+        {
+          "sha": "b678bfddf1f4970bcec1dd20a91714d07024c2b9",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Add scheduleLeadMeeting action and related tests for Google Calendar integration"
+        },
+        {
+          "sha": "58f074e6c90272f64254b1b3759a4d01bf70867e",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor WhatsApp message construction for clarity and maintainability"
+        },
+        {
+          "sha": "554d7629739d2b0e48b97eb947dabeab0e4691e0",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder imports for consistency in phone actions component"
+        },
+        {
+          "sha": "365ee29bb596a0f52363d151f724725b315f73d4",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder imports and refactor date formatting in lead AI panel and lead detail page"
+        },
+        {
+          "sha": "a0d2a22e1f7ce3dbd5e836dbc915ab561efe622c",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Format code for better readability in lead AI panel and queries"
+        },
+        {
+          "sha": "0bc759009e168d20023ff9e8c6434c91a29a4fd2",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder import statements in lead AI panel and update lead detail query for attachments"
+        },
+        {
+          "sha": "3bcbd56b9cdc4d72119b5b8745cff32eaeb20d2c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement lead briefing functionality and enhance lead detail retrieval"
+        },
+        {
+          "sha": "73364cd121142c3fe5219f02bf3dc81b0142850c",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder import statements and update comment in brand kit route"
+        },
+        {
+          "sha": "366aa46d221b27b1101a8a332c671ad32bdcac80",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder import statements in brand kit route"
+        },
+        {
+          "sha": "ccd6fc9c9ff72ad4317eb054d35ff761c9b9a040",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor brand kit API to include token retrieval and improve error handling"
+        },
+        {
+          "sha": "03b165a790561ecd86ec5183cde36ddf95236a3d",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add guides management with CRUD operations and public API integration"
+        },
+        {
+          "sha": "b2cd1897d756d9f3752dc9bf370eb0ebe5dd7de0",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance diagnostics report generation with landing URL and improved CORS handling"
+        },
+        {
+          "sha": "ae2a3ab888ae3d1452fed50b4cbdbbd48d031fd1",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add MEETING_PROJECT_STATUSES for project state selection in lead meetings"
+        },
+        {
+          "sha": "c435c8e5e164b05e9963896c9f9ad9619a12a147",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder import statements in LeadDetailError component"
+        },
+        {
+          "sha": "cdf3ad69dcd6a15866d8c06f20d6db9370b57347",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add LeadDetailError component to handle errors in lead detail page"
+        },
+        {
+          "sha": "1b18a21368c52b16b0983dda0b5fd212b0c34cb8",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Refactor lead detail page to use async sections for conversion journey, diagnostics, attachments, and quick actions"
+        },
+        {
+          "sha": "81ced0572e1f860c38896a59212dce5dee6b6271",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add SalesControlWidget for team coordination and enhance lead notifications with call and WhatsApp actions"
+        },
+        {
+          "sha": "aabd4b19fad6d5bb06f7d19b6a0e6e5dae8fbc54",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Automate sales follow-up and unify action queue"
+        },
+        {
+          "sha": "4591e0ab2481d4763f89cb689e85d92eadeb6cbc",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Implement call reminder functionality and WhatsApp follow-up feature"
+        },
+        {
+          "sha": "a9af745ef15779972ee289c0f578edf658ee74d8",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add language selection for email drafting and update API to support language parameter"
+        },
+        {
+          "sha": "2622920f460fdf872583ae9d8c24d96713bd229f",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove OpenAI API key section from environment example"
+        },
+        {
+          "sha": "503ae2ce14d83d8aecf99893079f97e0d812b6ae",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reorder imports for consistency and improved readability across multiple components"
+        },
+        {
+          "sha": "1be4f26e8df96fa8c2afd9a5d17e6f361af8b971",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Remove unnecessary whitespace in promise catch blocks for consistency"
+        },
+        {
+          "sha": "4d0a0d7599b60d139311585693fdf8e7d07e9661",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Add biome-ignore comments for accessibility linting in various components"
+        },
+        {
+          "sha": "881d1b33c18686b2d2d4fdcd0d207992417460f1",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add loading skeleton components for brand, calendar, subscriptions, and vault"
+        },
+        {
+          "sha": "c4f941559fec062fd0dd8a7185d6145db613fb31",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Add optional chaining to focusNextAfter function for safer DOM access"
+        },
+        {
+          "sha": "14a268d39f69b651aa61b9483eb8e2b57869ca3c",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Integrate Meta CAPI notifications for invoice payments and lead status updates"
+        },
+        {
+          "sha": "93870b91732532c9e1da4834bafe99dbd8a116e4",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Integrate Meta CAPI for server-side lead tracking and enhance deduplication logic"
+        },
+        {
+          "sha": "cde7936cc87ab4de4c7988d57f94f27521ab3ab3",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance calendar components with improved event handling and UI updates - Refactored CalendarCreateDialog to handle contacts instead of leads - Added deleteCalendarEvent function to manage Google Calendar events - Introduced LayersDropdown for filtering calendar event types - Updated EntityCombobox to support custom item rendering and ghost text - Enhanced CalendarGrid with new WeekTimeGrid for better time management - Improved CalendarHeader with dropdown for layer selection"
+        },
+        {
+          "sha": "97f550c30671ea3dcb8b824797465f12d1d9ef79",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Enhance phone actions and notifications with improved URL handling and notification click behavior"
+        },
+        {
+          "sha": "0a34546a3756ee07df93aca53332d2af9e3d35fb",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add onlyBuiltDependencies configuration for pnpm to optimize package management"
+        },
+        {
+          "sha": "df54cb8ee37e11da6b1dce9ca3997422f3808967",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Introduce new hooks and utilities for enhanced form handling and UI skeletons"
+        },
+        {
+          "sha": "09eb778d2a2da5f64f3237cfe4285b234cdef2f5",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Add new UI components including Input, Item, Kbd, Label, Markdown, Menubar, PasswordStrength, Popover, Select, Separator, Skeleton, SubmitButton, Switch, Table, and Textarea"
+        },
+        {
+          "sha": "b06dff87f8883990dd720c3e3b2ff830e1f63888",
+          "type": "fix",
+          "scope": "clients",
+          "breaking": false,
+          "description": "Align ClientRowActions type with structured billing address fields"
+        },
+        {
+          "sha": "3cf713d6914737d0c262f055c71eca98dde4dba3",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Update revalidateTag calls for Next.js 16 two-arg signature"
+        },
+        {
+          "sha": "f20ab27a5e792103f5133ac50efc314fe1f3accc",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Scaffold backoffice MVP - Next 16 + Supabase + Verifactu + Resend"
         }
       ]
     }
