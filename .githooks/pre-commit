@@ -1,5 +1,5 @@
 #!/bin/sh
-# Formatea los ficheros staged (oxfmt --write), los vuelve a añadir y ejecuta el lint.
+# Corrige (biome lint --write) y formatea (oxfmt --write) los ficheros staged, los vuelve a añadir y ejecuta el lint.
 if ! command -v pnpm >/dev/null 2>&1; then
   echo 'pre-commit: pnpm is not on PATH. Install dependencies and check your Git GUI PATH.' >&2
   exit 1
@@ -10,6 +10,12 @@ files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(tsx?|jsx?
 if [ -n "$files" ]; then
   # Ficheros con cambios sin stagear: se calculan antes de formatear.
   partial=$(git diff --name-only)
+  # Aplica los arreglos seguros de biome y, de los inseguros, solo noUselessFragments (no cambia el comportamiento).
+  # El resto (p. ej. renombrar variables sin usar) lo sigue reportando `pnpm lint`.
+  echo "$files" | while IFS= read -r f; do
+    pnpm exec biome lint --write --no-errors-on-unmatched "$f" >/dev/null 2>&1 || true
+    pnpm exec biome lint --write --unsafe --only=complexity/noUselessFragments --no-errors-on-unmatched "$f" >/dev/null 2>&1 || true
+  done
   echo "$files" | while IFS= read -r f; do pnpm exec oxfmt -c .oxfmtrc.json --no-error-on-unmatched-pattern --write "$f" || exit 1; done || exit 1
   echo "$files" | while IFS= read -r f; do
     if echo "$partial" | grep -Fxq "$f"; then

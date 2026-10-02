@@ -16,26 +16,26 @@ type Props = { memberRole: MemberRole; mfaVerified: boolean }
 export function MfaSessionGate({ memberRole, mfaVerified }: Props) {
   const pathname = usePathname()
   const router = useRouter()
-  const [verifiedPath, setVerifiedPath] = useState<string | null>(mfaVerified ? pathname : null)
+  // Verification belongs to the session, not to a route. Keeping it across
+  // navigations avoids flashing the dialog while the background re-check runs.
+  const [verified, setVerified] = useState(mfaVerified)
   const requiresMfa =
     (memberRole === 'owner' || memberRole === 'admin') && pathname !== '/settings/security'
-  const open = requiresMfa && verifiedPath !== pathname
+  const open = requiresMfa && !verified
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname intentionally re-triggers the background MFA re-check on navigation
   useEffect(() => {
-    if (!requiresMfa) {
-      setVerifiedPath(pathname)
-      return
-    }
+    if (!requiresMfa) return
 
     let active = true
     void (async () => {
       try {
         const { data, error } = await getBrowserClient().auth.mfa.getAuthenticatorAssuranceLevel()
-        const verified = !error && data?.currentLevel === 'aal2'
-        const hasAccess = verified || (await hasCurrentMfaAccess())
-        if (active) setVerifiedPath(hasAccess ? pathname : null)
+        const aal2 = !error && data?.currentLevel === 'aal2'
+        const hasAccess = aal2 || (await hasCurrentMfaAccess())
+        if (active) setVerified(hasAccess)
       } catch {
-        if (active) setVerifiedPath(null)
+        if (active) setVerified(false)
       }
     })()
 
@@ -49,7 +49,7 @@ export function MfaSessionGate({ memberRole, mfaVerified }: Props) {
       open={open}
       onOpenChange={() => undefined}
       onVerified={() => {
-        setVerifiedPath(pathname)
+        setVerified(true)
         router.refresh()
       }}
       dismissible={false}

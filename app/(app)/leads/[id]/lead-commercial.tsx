@@ -75,100 +75,93 @@ export function LeadCommercial({
   invoices,
 }: LeadCommercialProps) {
   return (
-    <>
-      <section aria-label="Relaciones comerciales">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Relaciones comerciales</CardTitle>
-            <p className="mt-1 text-sm font-normal text-muted-foreground">
-              {[
-                relationshipSummary(proposals.length, 'propuesta', 'propuestas'),
-                relationshipSummary(projects.length, 'proyecto', 'proyectos'),
-                relationshipSummary(invoices.length, 'factura', 'facturas'),
-              ].join(' · ')}
-            </p>
-          </CardHeader>
-          <CardContent>
-            <dl className="flex flex-col gap-4">
-              <MobileRelationshipRow icon={<FileText className="size-3.5" />} label="Propuestas">
-                {proposals.length === 0 ? (
-                  <MobileEmptyLink href={`/proposals/new?lead_id=${leadId}`}>
-                    Crear propuesta
-                  </MobileEmptyLink>
-                ) : (
-                  proposals.map((proposal) => (
-                    <Link
-                      key={proposal.id}
-                      href={`/proposals/${proposal.id}`}
-                      className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
-                    >
-                      <span className="truncate font-medium">
-                        {proposal.number ?? proposal.title ?? 'Propuesta'}
-                      </span>
-                      <span className="shrink-0 text-muted-foreground tabular-nums">
-                        {formatEUR(Number(proposal.total ?? 0))}
-                      </span>
-                    </Link>
-                  ))
-                )}
-              </MobileRelationshipRow>
+    <section aria-label="Relaciones comerciales">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Relaciones comerciales</CardTitle>
+          <p className="mt-1 text-sm font-normal text-muted-foreground">
+            {[
+              relationshipSummary(proposals.length, 'propuesta', 'propuestas'),
+              relationshipSummary(projects.length, 'proyecto', 'proyectos'),
+              relationshipSummary(invoices.length, 'factura', 'facturas'),
+            ].join(' · ')}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <dl className="flex flex-col gap-4">
+            <MobileRelationshipRow icon={<FileText className="size-3.5" />} label="Propuestas">
+              {proposals.length === 0 ? (
+                <MobileEmptyLink href={`/proposals/new?lead_id=${leadId}`}>
+                  Crear propuesta
+                </MobileEmptyLink>
+              ) : (
+                proposals.map((proposal) => (
+                  <Link
+                    key={proposal.id}
+                    href={`/proposals/${proposal.id}`}
+                    className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
+                  >
+                    <span className="truncate font-medium">
+                      {proposal.number ?? proposal.title ?? 'Propuesta'}
+                    </span>
+                    <span className="shrink-0 text-muted-foreground tabular-nums">
+                      {formatEUR(Number(proposal.total ?? 0))}
+                    </span>
+                  </Link>
+                ))
+              )}
+            </MobileRelationshipRow>
 
-              <MobileRelationshipRow
-                icon={<BriefcaseBusiness className="size-3.5" />}
-                label="Proyectos"
-              >
-                {!linkedClientId ? (
-                  <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
-                ) : projects.length === 0 ? (
-                  <MobileEmptyLink href={`/projects/new?client_id=${linkedClientId}`}>
-                    Crear proyecto
-                  </MobileEmptyLink>
-                ) : (
-                  projects.map((project) => (
-                    <Link
-                      key={project.id}
-                      href={`/projects/${project.id}`}
-                      className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
-                    >
-                      <span className="truncate font-medium">{project.name}</span>
-                      <StatusBadge meta={PROJECT_STATUS} value={project.status as ProjectStatus} />
-                    </Link>
-                  ))
-                )}
-              </MobileRelationshipRow>
+            <MobileRelationshipRow
+              icon={<BriefcaseBusiness className="size-3.5" />}
+              label="Proyectos"
+            >
+              {!linkedClientId ? (
+                <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
+              ) : projects.length === 0 ? (
+                <MobileEmptyLink href={`/projects/new?client_id=${linkedClientId}`}>
+                  Crear proyecto
+                </MobileEmptyLink>
+              ) : (
+                projects.map((project) => (
+                  <Link
+                    key={project.id}
+                    href={`/projects/${project.id}`}
+                    className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
+                  >
+                    <span className="truncate font-medium">{project.name}</span>
+                    <StatusBadge meta={PROJECT_STATUS} value={project.status as ProjectStatus} />
+                  </Link>
+                ))
+              )}
+            </MobileRelationshipRow>
 
-              <MobileRelationshipRow icon={<ReceiptText className="size-3.5" />} label="Facturas">
-                {!linkedClientId ? (
-                  <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
-                ) : invoices.length === 0 ? (
-                  <span className="text-xs text-muted-foreground">Sin facturas</span>
-                ) : (
-                  invoices.map((invoice) => (
-                    <Link
-                      key={invoice.id}
-                      href={`/invoices/${invoice.id}`}
-                      className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
-                    >
-                      <span className="truncate font-medium">
-                        {invoice.full_number ?? 'Factura'}
+            <MobileRelationshipRow icon={<ReceiptText className="size-3.5" />} label="Facturas">
+              {!linkedClientId ? (
+                <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
+              ) : invoices.length === 0 ? (
+                <span className="text-xs text-muted-foreground">Sin facturas</span>
+              ) : (
+                invoices.map((invoice) => (
+                  <Link
+                    key={invoice.id}
+                    href={`/invoices/${invoice.id}`}
+                    className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
+                  >
+                    <span className="truncate font-medium">{invoice.full_number ?? 'Factura'}</span>
+                    <span className="flex shrink-0 items-center gap-1.5">
+                      <StatusBadge meta={INVOICE_STATUS} value={invoice.status as InvoiceStatus} />
+                      <span className="text-muted-foreground tabular-nums">
+                        {formatEUR(Number(invoice.total ?? 0))}
                       </span>
-                      <span className="flex shrink-0 items-center gap-1.5">
-                        <StatusBadge
-                          meta={INVOICE_STATUS}
-                          value={invoice.status as InvoiceStatus}
-                        />
-                        <span className="text-muted-foreground tabular-nums">
-                          {formatEUR(Number(invoice.total ?? 0))}
-                        </span>
-                      </span>
-                    </Link>
-                  ))
-                )}
-              </MobileRelationshipRow>
-            </dl>
-          </CardContent>
-        </Card>
-      </section>
-    </>
+                    </span>
+                  </Link>
+                ))
+              )}
+            </MobileRelationshipRow>
+          </dl>
+        </CardContent>
+      </Card>
+    </section>
   )
 }
