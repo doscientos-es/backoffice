@@ -21,6 +21,7 @@ describe('onRequestError', () => {
         routerKind: 'App Router',
         routePath: '/internal-docs/[id]',
         routeType: 'render',
+        revalidateReason: undefined,
       },
     )
     expect(output).toHaveBeenCalledWith('[server.request.error]', {
