@@ -2,7 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
-## 2026-10-02 — v0.1.82
+## 2026-10-02 — v0.1.83
+
+### Correcciones
+
+- Isolate PDF initialization from internal document details
+
+## 2026-10-01 — v0.1.82
 
 ### Mejoras
 

@@ -1,8 +1,30 @@
 {
   "releases": [
     {
-      "version": "0.1.82",
+      "version": "0.1.83",
       "date": "2026-10-02",
+      "title": "v0.1.83",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Isolate PDF initialization from internal document details"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "e055bf30fa06aebc6e9eae986757e101814a82b6",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Isolate PDF initialization from internal document details"
+        }
+      ]
+    },
+    {
+      "version": "0.1.82",
+      "date": "2026-10-01",
       "title": "v0.1.82",
       "sections": [
         {
