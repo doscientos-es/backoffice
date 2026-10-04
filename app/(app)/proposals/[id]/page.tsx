@@ -592,6 +592,7 @@ export default async function ProposalDetailPage({
                     <>
                       <ShareLinks
                         token={token}
+                        proposalTitle={proposal.title as string}
                         portalViewedAt={portalViewedAt}
                         deckViewedAt={deckViewedAt}
                         isDraft={status === 'draft'}

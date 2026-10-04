@@ -10,6 +10,7 @@ describe('PWA manifest', () => {
     expect(result.shortcuts?.map((shortcut) => shortcut.url)).toEqual([
       '/leads/new',
       '/tasks',
+      '/tasks/new',
       '/calendar',
     ])
     expect(result.share_target).toMatchObject({

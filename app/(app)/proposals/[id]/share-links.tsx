@@ -7,6 +7,7 @@ import {
   ExternalLink,
   FileText,
   Presentation,
+  Share2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { sileo } from 'sileo'
@@ -45,11 +46,13 @@ function formatViewedAt(value: string): string {
  */
 export function ShareLinks({
   token,
+  proposalTitle,
   portalViewedAt,
   deckViewedAt,
   isDraft = false,
 }: {
   token: string
+  proposalTitle: string
   portalViewedAt: string | null
   deckViewedAt: string | null
   isDraft?: boolean
@@ -65,8 +68,20 @@ export function ShareLinks({
           </span>
         </div>
       )}
-      <ShareLinkRow kind="portal" token={token} lastViewedAt={portalViewedAt} isDraft={isDraft} />
-      <ShareLinkRow kind="deck" token={token} lastViewedAt={deckViewedAt} isDraft={isDraft} />
+      <ShareLinkRow
+        kind="portal"
+        token={token}
+        proposalTitle={proposalTitle}
+        lastViewedAt={portalViewedAt}
+        isDraft={isDraft}
+      />
+      <ShareLinkRow
+        kind="deck"
+        token={token}
+        proposalTitle={proposalTitle}
+        lastViewedAt={deckViewedAt}
+        isDraft={isDraft}
+      />
     </div>
   )
 }
@@ -74,11 +89,13 @@ export function ShareLinks({
 function ShareLinkRow({
   kind,
   token,
+  proposalTitle,
   lastViewedAt,
   isDraft = false,
 }: {
   kind: ShareLinkKind
   token: string
+  proposalTitle: string
   lastViewedAt: string | null
   isDraft?: boolean
 }) {
@@ -100,6 +117,26 @@ function ShareLinkRow({
 
   const handleOpen = () => {
     window.open(path, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}${path}`
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: proposalTitle,
+          text: `Te comparto ${meta.label.toLowerCase()}: ${proposalTitle}`,
+          url,
+        })
+        return
+      }
+
+      await navigator.clipboard.writeText(url)
+      sileo.success({ title: 'Enlace copiado' })
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      sileo.error({ title: 'No se pudo compartir el enlace' })
+    }
   }
 
   return (
@@ -160,6 +197,17 @@ function ShareLinkRow({
           ) : (
             <Copy className="size-3.5" />
           )}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleShare}
+          disabled={isDraft}
+          aria-label={`Compartir enlace de ${meta.label.toLowerCase()}`}
+          title={`Compartir enlace de ${meta.label.toLowerCase()}`}
+        >
+          <Share2 className="size-3.5" />
         </Button>
         <Button
           type="button"

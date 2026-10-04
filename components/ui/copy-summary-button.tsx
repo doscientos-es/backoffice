@@ -54,8 +54,8 @@ export function CopySummaryButton({ lines, urlPath, label, className }: CopySumm
     <button
       type="button"
       onClick={handleCopy}
-      aria-label="Copiar ficha"
-      title="Copiar ficha al portapapeles"
+      aria-label="Compartir ficha"
+      title="Compartir ficha o copiar al portapapeles"
       className={cn(
         'inline-flex h-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
         className,

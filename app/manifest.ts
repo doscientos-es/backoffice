@@ -29,6 +29,12 @@ export default function manifest(): MetadataRoute.Manifest {
         url: '/tasks',
       },
       {
+        name: 'Nueva tarea',
+        short_name: 'Crear tarea',
+        description: 'Crear una tarea rápidamente',
+        url: '/tasks/new',
+      },
+      {
         name: 'Agenda',
         description: 'Ver la agenda de trabajo',
         url: '/calendar',
