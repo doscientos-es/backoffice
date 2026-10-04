@@ -4,6 +4,10 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/ratelimit'
 
 const PUBLIC_PATHS = [
+  // PWA metadata and the service worker must be readable before sign-in so
+  // browsers can validate and install the app.
+  '/manifest.webmanifest',
+  '/sw.js',
   '/login',
   '/auth/callback',
   // OTP confirmation for admin-generated tokens (team invitations). Must be

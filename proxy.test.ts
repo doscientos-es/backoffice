@@ -113,6 +113,8 @@ describe('proxy – public paths (always pass through)', () => {
   })
 
   it.each([
+    ['/manifest.webmanifest'],
+    ['/sw.js'],
     ['/login'],
     ['/login/forgot-password'],
     ['/auth/callback'],
@@ -128,6 +130,7 @@ describe('proxy – public paths (always pass through)', () => {
     const res = await proxy(req(path))
     expect(res.status).not.toBe(307)
     expect(res.headers.get('location')).toBeNull()
+    expect(auth.getUserCalls).toBe(0)
   })
 
   it.each(['/login-evil', '/api/publicity/status', '/api/webhooks-not-public'])(
