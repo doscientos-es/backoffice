@@ -202,8 +202,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginTop: 14,
   },
-  totalLabel: { color: MUTED, fontSize: 9, marginRight: 12 },
-  totalValue: { color: BRAND, fontFamily: 'Helvetica-Bold', fontSize: 18 },
+  totalLabel: { color: MUTED, fontSize: 8.5, marginRight: 12 },
+  totalValue: { color: MUTED, fontSize: 9 },
   footer: { bottom: 25, color: MUTED, fontSize: 7.5, left: 48, position: 'absolute', right: 48 },
   footerLine: { borderTopColor: '#D9E1D7', borderTopWidth: 1, paddingTop: 8 },
   bullet: { color: MUTED, fontSize: 8.5, lineHeight: 1.45, marginTop: 3 },
@@ -463,10 +463,10 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
     concept: ca ? 'Concepte' : en ? 'Item' : 'Concepto',
     amount: ca ? 'Import' : en ? 'Amount' : 'Importe',
     total: ca
-      ? 'Total inicial, IVA inclòs'
+      ? 'Total inicial previst amb IVA'
       : en
-        ? 'Initial total, including VAT'
-        : 'Total inicial, IVA incluido',
+        ? 'Estimated initial total incl. VAT'
+        : 'Total inicial previsto con IVA',
     payment: ca ? 'Pagament' : en ? 'Payment' : 'Pago',
     notes: ca ? 'Notes' : en ? 'Notes' : 'Notas',
     maintenance: ca ? 'Manteniment' : en ? 'Maintenance' : 'Mantenimiento',

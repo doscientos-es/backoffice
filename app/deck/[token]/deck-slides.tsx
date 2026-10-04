@@ -343,6 +343,11 @@ function DeliverySlide({ proposal }: { proposal: DeckProposal }) {
 
 function PricingTotals({ totals }: { totals: ProposalTotals }) {
   const recurring = hasRecurring(totals)
+  const recurringBuckets = [
+    { label: 'Mensual', bucket: totals.monthly },
+    { label: 'Trimestral', bucket: totals.quarterly },
+    { label: 'Anual', bucket: totals.yearly },
+  ].filter(({ bucket }) => bucket.total > 0)
   return (
     <div className="flex w-full flex-col items-end gap-3">
       <div className="flex flex-col items-end gap-2">
@@ -351,16 +356,16 @@ function PricingTotals({ totals }: { totals: ProposalTotals }) {
             Inversión inicial
           </p>
         ) : null}
-        <div className="flex gap-6 text-xs text-zinc-500 sm:gap-12 sm:text-sm">
-          <span>Subtotal</span>
+        <div className="flex items-baseline gap-6 text-xl font-semibold text-zinc-900 sm:gap-12 sm:text-2xl">
+          <span>Importe antes de IVA</span>
           <span className="tabular-nums">{formatEUR(totals.oneTime.subtotal)}</span>
         </div>
         <div className="flex gap-6 text-xs text-zinc-500 sm:gap-12 sm:text-sm">
-          <span>IVA</span>
+          <span>IVA aplicable</span>
           <span className="tabular-nums">{formatEUR(totals.oneTime.taxAmount)}</span>
         </div>
-        <div className="mt-2 flex gap-6 border-t-2 border-zinc-300 pt-3 text-xl font-bold text-zinc-900 sm:gap-12 sm:text-2xl md:text-3xl">
-          <span>Total</span>
+        <div className="mt-1 flex gap-6 border-t border-zinc-200 pt-2 text-xs font-medium text-zinc-500 sm:gap-12 sm:text-sm">
+          <span>Total previsto con IVA</span>
           <span className="tabular-nums">{formatEUR(totals.oneTime.total)}</span>
         </div>
       </div>
@@ -370,26 +375,18 @@ function PricingTotals({ totals }: { totals: ProposalTotals }) {
           <p className="text-[10px] font-semibold tracking-[0.25em] text-[#2A4227] uppercase sm:text-xs">
             Mantenimiento recurrente
           </p>
-          {totals.monthly.total > 0 ? (
-            <div className="flex gap-6 text-sm text-zinc-700 sm:gap-12 sm:text-base">
-              <span>Mensual</span>
-              <span className="font-semibold tabular-nums">{formatEUR(totals.monthly.total)}</span>
+          {recurringBuckets.map(({ label, bucket }) => (
+            <div key={label} className="flex flex-col items-end gap-1">
+              <div className="flex gap-6 text-sm font-medium text-zinc-700 sm:gap-12 sm:text-base">
+                <span>{label} · antes de IVA</span>
+                <span className="tabular-nums">{formatEUR(bucket.subtotal)}</span>
+              </div>
+              <div className="flex gap-6 text-[10px] text-zinc-500 sm:gap-12 sm:text-xs">
+                <span>IVA {formatEUR(bucket.taxAmount)} · Total con IVA</span>
+                <span className="tabular-nums">{formatEUR(bucket.total)}</span>
+              </div>
             </div>
-          ) : null}
-          {totals.quarterly.total > 0 ? (
-            <div className="flex gap-6 text-sm text-zinc-700 sm:gap-12 sm:text-base">
-              <span>Trimestral</span>
-              <span className="font-semibold tabular-nums">
-                {formatEUR(totals.quarterly.total)}
-              </span>
-            </div>
-          ) : null}
-          {totals.yearly.total > 0 ? (
-            <div className="flex gap-6 text-sm text-zinc-700 sm:gap-12 sm:text-base">
-              <span>Anual</span>
-              <span className="font-semibold tabular-nums">{formatEUR(totals.yearly.total)}</span>
-            </div>
-          ) : null}
+          ))}
         </div>
       ) : null}
     </div>

@@ -71,9 +71,17 @@ describe('proposal PDF helpers', () => {
     ) as ArrayBuffer
     const { pages } = await extractPdfPages(pdfBytes)
     const coverText = pages[0]?.content.replace(/\s+/g, '').toLocaleUpperCase() ?? ''
+    const fullText = pages
+      .map((page) => page.content)
+      .join(' ')
+      .replace(/\s+/g, '')
+      .toLocaleUpperCase()
     expect(coverText).toContain('INVERSIÓNINICIAL')
     expect(coverText).toContain('1000,00€')
     expect(coverText).toContain('(IVANOINCLUIDO)')
     expect(coverText).not.toContain('1210,00€')
+    expect(fullText).toContain('SEAÑADIRÁELIVACORRESPONDIENTE')
+    expect(fullText).toContain('TOTAL INICIAL PREVISTO CON IVA'.replace(/ /g, ''))
+    expect(fullText).toContain('1210,00€')
   })
 })

@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { buildSlides } from './deck-slides'
 import type { DeckProposal } from './page'
@@ -29,6 +30,8 @@ const proposal: DeckProposal = {
 }
 
 describe('buildSlides', () => {
+  afterEach(cleanup)
+
   it('omits the delivery slide when deliverables and criteria only contain whitespace', () => {
     const slides = buildSlides(proposal, [], 'portal-token')
 
@@ -49,5 +52,38 @@ describe('buildSlides', () => {
     )
 
     expect(slides).toContainEqual(expect.objectContaining({ key: 'delivery' }))
+  })
+
+  it('emphasizes pre-VAT pricing and still shows the estimated total including VAT', () => {
+    const slides = buildSlides(
+      proposal,
+      [
+        {
+          id: 'item-1',
+          description: 'Implementación',
+          quantity: 1,
+          unit_price: 3000,
+          vat_rate: 21,
+          subtotal: 3000,
+          billing_cycle: 'none',
+        },
+      ],
+      'portal-token',
+    )
+    const pricingSlide = slides.find((slide) => slide.key === 'pricing')
+
+    expect(pricingSlide).toBeDefined()
+    render(pricingSlide?.element)
+
+    expect(screen.getByText('Importe antes de IVA')).toBeDefined()
+    expect(screen.getByText('IVA aplicable')).toBeDefined()
+    expect(screen.getByText('Total previsto con IVA')).toBeDefined()
+    expect(screen.getByText('Importe antes de IVA').nextElementSibling?.textContent).toMatch(
+      /^3000,00/,
+    )
+    expect(screen.getByText('IVA aplicable').nextElementSibling?.textContent).toMatch(/^630,00/)
+    expect(screen.getByText('Total previsto con IVA').nextElementSibling?.textContent).toMatch(
+      /^3630,00/,
+    )
   })
 })

@@ -52,6 +52,7 @@ import { sendProposalQuestion, unlockProposalPortal } from './actions'
 import { PortalKeyPointsList, PortalNarrativeBlock } from './narrative'
 import { ProposalActions } from './proposal-actions'
 import { ProposalMaintenanceOptions } from './proposal-maintenance-options'
+import { ProposalPriceBreakdown } from './proposal-price-breakdown'
 
 const log = scopedLogger('portal.proposal')
 
@@ -201,9 +202,6 @@ export default async function PortalProposalPage({
           validUntil: 'Vàlida fins al',
           download: 'Descarregar PDF',
           recipient: 'Adreçada a',
-          subtotal: 'Subtotal',
-          vat: 'IVA',
-          total: 'Total',
           draft: 'Esborrany',
           teamOnly: 'Vista prèvia — només visible per a l’equip',
           confirmed: 'Pagament confirmat',
@@ -215,9 +213,6 @@ export default async function PortalProposalPage({
             validUntil: 'Valid until',
             download: 'Download PDF',
             recipient: 'Prepared for',
-            subtotal: 'Subtotal',
-            vat: 'VAT',
-            total: 'Total',
             draft: 'Draft',
             teamOnly: 'Preview — visible to the team only',
             confirmed: 'Payment confirmed',
@@ -228,9 +223,6 @@ export default async function PortalProposalPage({
             validUntil: 'Válida hasta el',
             download: 'Descargar PDF',
             recipient: 'Dirigido a',
-            subtotal: 'Subtotal',
-            vat: 'IVA',
-            total: 'Total',
             draft: 'Borrador',
             teamOnly: 'Vista previa — solo visible para el equipo',
             confirmed: 'Pago confirmado',
@@ -497,6 +489,11 @@ export default async function PortalProposalPage({
   )
   const hasRecurring =
     totals.monthly.total > 0 || totals.quarterly.total > 0 || totals.yearly.total > 0
+  const recurringBuckets = [
+    { title: tr('Mensual', 'Mensual', 'Monthly'), bucket: totals.monthly },
+    { title: tr('Trimestral', 'Trimestral', 'Quarterly'), bucket: totals.quarterly },
+    { title: tr('Anual', 'Anual', 'Yearly'), bucket: totals.yearly },
+  ].filter(({ bucket }) => bucket.total > 0)
 
   const confirmedPayments = proposalPayments ?? []
   const signalPaid = confirmedPayments.length > 0
@@ -728,7 +725,7 @@ export default async function PortalProposalPage({
                     {tr('IVA', 'IVA', 'VAT')}
                   </th>
                   <th className="px-8 py-3 text-right text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {copy.subtotal}
+                    {tr('Subtotal', 'Subtotal', 'Subtotal')}
                   </th>
                 </tr>
               </thead>
@@ -801,31 +798,13 @@ export default async function PortalProposalPage({
           {/* Totals */}
           <div className="flex justify-end border-t border-zinc-200 px-8 py-5 dark:border-zinc-800">
             <div className="flex w-64 flex-col gap-3">
-              <div className="flex flex-col gap-1.5">
-                {hasRecurring ? (
-                  <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('Inversión inicial', 'Inversió inicial', 'Initial investment')}
-                  </p>
-                ) : null}
-                <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                  <span>{copy.subtotal}</span>
-                  <span className="tabular-nums">
-                    {formatPortalEUR(totals.oneTime.subtotal, portalLanguage)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                  <span>{copy.vat}</span>
-                  <span className="tabular-nums">
-                    {formatPortalEUR(totals.oneTime.taxAmount, portalLanguage)}
-                  </span>
-                </div>
-                <div className="mt-1 flex justify-between border-t border-zinc-200 pt-2 text-sm font-bold text-zinc-900 dark:border-zinc-700 dark:text-zinc-100">
-                  <span>{copy.total}</span>
-                  <span className="tabular-nums">
-                    {formatPortalEUR(totals.oneTime.total, portalLanguage)}
-                  </span>
-                </div>
-              </div>
+              <ProposalPriceBreakdown
+                title={tr('Inversión inicial', 'Inversió inicial', 'Initial investment')}
+                subtotal={totals.oneTime.subtotal}
+                taxAmount={totals.oneTime.taxAmount}
+                total={totals.oneTime.total}
+                language={portalLanguage}
+              />
 
               {hasRecurring ? (
                 <div className="flex flex-col gap-1.5 border-t border-zinc-200 pt-3 dark:border-zinc-800">
@@ -836,30 +815,17 @@ export default async function PortalProposalPage({
                       'Recurring maintenance',
                     )}
                   </p>
-                  {totals.monthly.total > 0 ? (
-                    <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                      <span>{tr('Mensual', 'Mensual', 'Monthly')}</span>
-                      <span className="font-medium tabular-nums">
-                        {formatPortalEUR(totals.monthly.total, portalLanguage)}
-                      </span>
-                    </div>
-                  ) : null}
-                  {totals.quarterly.total > 0 ? (
-                    <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                      <span>{tr('Trimestral', 'Trimestral', 'Quarterly')}</span>
-                      <span className="font-medium tabular-nums">
-                        {formatPortalEUR(totals.quarterly.total, portalLanguage)}
-                      </span>
-                    </div>
-                  ) : null}
-                  {totals.yearly.total > 0 ? (
-                    <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                      <span>{tr('Anual', 'Anual', 'Yearly')}</span>
-                      <span className="font-medium tabular-nums">
-                        {formatPortalEUR(totals.yearly.total, portalLanguage)}
-                      </span>
-                    </div>
-                  ) : null}
+                  {recurringBuckets.map(({ title, bucket }) => (
+                    <ProposalPriceBreakdown
+                      key={title}
+                      title={title}
+                      subtotal={bucket.subtotal}
+                      taxAmount={bucket.taxAmount}
+                      total={bucket.total}
+                      language={portalLanguage}
+                      compact
+                    />
+                  ))}
                 </div>
               ) : null}
             </div>

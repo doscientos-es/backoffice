@@ -39,7 +39,7 @@ describe('LeadCommercial', () => {
     expect(
       within(mobileSection).getByRole('link', { name: 'Crear proyecto' }).getAttribute('href'),
     ).toBe('/projects/new?client_id=client-1')
-    expect(within(mobileSection).getByText(/1\.200,00/)).toBeInTheDocument()
+    expect(within(mobileSection).getByText(/1200,00/)).toBeTruthy()
   })
 
   it('hides proposal totals when the user cannot see prices', () => {
@@ -67,6 +67,6 @@ describe('LeadCommercial', () => {
       />,
     )
 
-    expect(screen.queryByText(/1\.200,00/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/1200,00/)).toBeNull()
   })
 })

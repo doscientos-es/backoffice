@@ -38,4 +38,10 @@ describe('role permissions', () => {
     expect(migration).toContain('access.user_id = auth.uid()')
     expect(migration).toContain("and p.status <> 'draft'")
   })
+
+  it('requires record scope in privileged RPC permission checks', () => {
+    expect(migration).toContain('public.can_access_lead(p_lead_id)')
+    expect(migration).toContain('public.can_access_project(p_project_id)')
+    expect(migration).toContain('public.can_access_proposal(p_proposal_id)')
+  })
 })

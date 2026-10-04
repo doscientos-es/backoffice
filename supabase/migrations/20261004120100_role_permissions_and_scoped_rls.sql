@@ -724,17 +724,17 @@ begin
       when 'convert_lead_to_client' then replace(
         f.body,
         $old$if coalesce(public.current_member_role()::text, '') not in ('owner', 'admin', 'member') then$old$,
-        $new$if not (public.has_permission('leads.write') and public.has_permission('clients.write')) then$new$
+        $new$if not (public.has_permission('leads.write') and public.has_permission('clients.write') and public.can_access_lead(p_lead_id)) then$new$
       )
       when 'create_hourly_invoice' then replace(
         f.body,
         $old$if coalesce(public.current_member_role()::text, '') not in ('owner', 'admin', 'member') then$old$,
-        $new$if not public.has_permission('finance.write') then$new$
+        $new$if not (public.has_permission('finance.write') and public.can_access_project(p_project_id)) then$new$
       )
       else replace(
         f.body,
         $old$if coalesce(public.current_member_role()::text, '') not in ('owner', 'admin', 'member') then$old$,
-        $new$if not (public.has_permission('proposals.write') and public.has_permission('proposals.prices')) then$new$
+        $new$if not (public.has_permission('proposals.write') and public.has_permission('proposals.prices') and public.can_access_proposal(p_proposal_id)) then$new$
       )
     end;
     if definition = f.body then

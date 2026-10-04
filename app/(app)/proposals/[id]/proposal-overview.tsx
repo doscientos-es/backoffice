@@ -22,6 +22,8 @@ type TeamMember = { id: string; name: string; job_title: string | null }
 
 type Props = {
   canSeePrices?: boolean
+  subtotal: number
+  taxAmount: number
   total: number
   validUntil: string | null
   paymentPlan: PaymentPlanItem[]
@@ -40,6 +42,8 @@ type Props = {
 /** Read-only, scannable proposal view; actions intentionally live outside it. */
 export function ProposalOverview({
   canSeePrices = true,
+  subtotal,
+  taxAmount,
   total,
   validUntil,
   paymentPlan,
@@ -65,8 +69,16 @@ export function ProposalOverview({
             <CardContent className="flex flex-col gap-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-lg bg-muted/40 p-4">
-                  <p className="text-xs text-muted-foreground">Inversión inicial · IVA incluido</p>
-                  <p className="mt-1 text-2xl font-semibold tabular-nums">{formatEUR(total)}</p>
+                  <p className="text-xs text-muted-foreground">Inversión inicial · antes de IVA</p>
+                  <p className="mt-1 text-2xl font-semibold tabular-nums">{formatEUR(subtotal)}</p>
+                  <div className="mt-3 flex justify-between gap-3 text-xs text-muted-foreground">
+                    <span>IVA aplicable</span>
+                    <span className="tabular-nums">{formatEUR(taxAmount)}</span>
+                  </div>
+                  <div className="mt-2 flex justify-between gap-3 border-t border-border pt-2 text-xs font-medium">
+                    <span>Total previsto con IVA</span>
+                    <span className="tabular-nums">{formatEUR(total)}</span>
+                  </div>
                 </div>
                 <div className="rounded-lg bg-muted/40 p-4">
                   <p className="text-xs text-muted-foreground">Válida hasta</p>

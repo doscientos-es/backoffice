@@ -563,6 +563,8 @@ export default async function ProposalDetailPage({
       ) : (
         <ProposalOverview
           canSeePrices={canSeePrices}
+          subtotal={Number(priceSummary?.subtotal ?? 0)}
+          taxAmount={Number(priceSummary?.tax_amount ?? 0)}
           total={proposalTotal}
           validUntil={(proposal.valid_until as string | null) ?? null}
           paymentPlan={paymentPlan}
