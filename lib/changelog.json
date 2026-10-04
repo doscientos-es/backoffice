@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.87",
+      "date": "2026-10-05",
+      "title": "v0.1.87",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add public paths for PWA metadata and service worker"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "b6c32c12670bbb8ffe27a3a0881b35a245a23334",
+          "type": "feat",
+          "scope": "proxy",
+          "breaking": false,
+          "description": "Add public paths for PWA metadata and service worker"
+        }
+      ]
+    },
+    {
       "version": "0.1.86",
       "date": "2026-10-04",
       "title": "v0.1.86",

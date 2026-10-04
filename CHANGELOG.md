@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-05 — v0.1.87
+
+### Nuevas funciones
+
+- Add public paths for PWA metadata and service worker
+
 ## 2026-10-04 — v0.1.86
 
 ### Nuevas funciones
