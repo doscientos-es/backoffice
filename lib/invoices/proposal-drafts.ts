@@ -1,16 +1,9 @@
 import 'server-only'
 import { computeLineTotals } from '@/lib/finance'
-import {
-  parsePaymentPlan,
-  paymentPlanForSchedule,
-  paymentScheduleInput,
-  splitItemsForPaymentPlan,
-} from '@/lib/proposals/scope'
+import { effectivePaymentPlan, splitItemsForPaymentPlan } from '@/lib/proposals/scope'
 import type { createAdminClient } from '@/lib/supabase/admin'
 
 type AdminClient = ReturnType<typeof createAdminClient>
-
-const fullPaymentPlan = [{ id: 'full', title: 'Importe completo', percentage: 100, due_date: null }]
 
 /**
  * Creates the missing editable invoice drafts for an accepted proposal.
@@ -33,15 +26,7 @@ export async function createProposalDraftInvoices(
     throw new Error('Solo se puede facturar una propuesta aceptada')
   if (!proposal.client_id) throw new Error('La propuesta aceptada no tiene cliente facturable')
 
-  const configuredPlan = parsePaymentPlan(proposal.payment_plan)
-  const schedule = paymentScheduleInput.safeParse(proposal.payment_schedule)
-  const plan =
-    configuredPlan.length > 0
-      ? configuredPlan
-      : schedule.success
-        ? paymentPlanForSchedule(schedule.data)
-        : fullPaymentPlan
-  const effectivePlan = plan.length > 0 ? plan : fullPaymentPlan
+  const effectivePlan = effectivePaymentPlan(proposal.payment_plan, proposal.payment_schedule)
 
   const [itemsResult, clientResult, settingsResult, existingResult] = await Promise.all([
     supabase

@@ -26,6 +26,8 @@ type SignatureForm = {
   signer_name: string
   signer_role: string
   accepts_terms: boolean
+  client_capacity: 'business' | 'consumer' | ''
+  consumer_early_start: boolean
 }
 
 type Props = {
@@ -71,7 +73,16 @@ export function ProposalActions({
           address: 'Adreça de facturació *',
           phone: 'Telèfon',
           declaration:
-            'Declaro que tinc capacitat suficient per representar el Client i accepto íntegrament la proposta, les seves condicions particulars i l’annex contractual.',
+            'Declaro que tinc capacitat suficient per representar el Client i accepto íntegrament la proposta, les seves condicions particulars i l’annex contractual. He pogut llegir, descarregar i desar el document abans de signar, i rebré confirmació per correu electrònic.',
+          capacity: 'Contractes com a',
+          capacityError: 'Indica si contractes com a empresa/professional o com a consumidor.',
+          capacityBusiness: 'Empresa o professional',
+          capacityConsumer: 'Particular (consumidor)',
+          earlyStart:
+            'Sol·licito expressament que els serveis comencin durant el termini de desistiment de 14 dies naturals. Si desisteixo, abonaré la part proporcional ja prestada i perdré el dret de desistiment quan el servei s’hagi executat completament.',
+          standardStart:
+            'Si no ho sol·licites, els treballs començaran un cop passats els 14 dies naturals de desistiment, durant els quals pots desistir sense indicar el motiu.',
+          downloadPdf: 'Descarregar la proposta en PDF',
           readTerms: 'Llegir l’annex contractual complet',
           processing: 'En procés…',
           cancel: 'Cancel·lar',
@@ -109,7 +120,17 @@ export function ProposalActions({
             address: 'Billing address *',
             phone: 'Phone',
             declaration:
-              'I confirm that I have authority to represent the Client and fully accept this proposal, its specific terms, and the contractual annex.',
+              'I confirm that I have authority to represent the Client and fully accept this proposal, its specific terms, and the contractual annex. I was able to read, download, and save the document before signing, and I will receive confirmation by email.',
+            capacity: 'You are contracting as',
+            capacityError:
+              'Select whether you are contracting as a business/professional or consumer.',
+            capacityBusiness: 'Business or professional',
+            capacityConsumer: 'Individual (consumer)',
+            earlyStart:
+              'I expressly request that the services begin during the 14-calendar-day withdrawal period. If I withdraw, I will pay for the proportion already provided, and I will lose the right of withdrawal once the service has been fully performed.',
+            standardStart:
+              'If you do not request it, work will begin once the 14-calendar-day withdrawal period has ended, during which you may withdraw without giving a reason.',
+            downloadPdf: 'Download the proposal as PDF',
             readTerms: 'Read the full contractual annex',
             processing: 'Processing…',
             cancel: 'Cancel',
@@ -146,7 +167,16 @@ export function ProposalActions({
             address: 'Dirección de facturación *',
             phone: 'Teléfono',
             declaration:
-              'Declaro que tengo capacidad suficiente para representar al Cliente y acepto íntegramente la propuesta, sus condiciones particulares y el anexo contractual.',
+              'Declaro que tengo capacidad suficiente para representar al Cliente y acepto íntegramente la propuesta, sus condiciones particulares y el anexo contractual. He podido leer, descargar y guardar el documento antes de firmar, y recibiré confirmación por correo electrónico.',
+            capacity: 'Contratas como',
+            capacityError: 'Indica si contratas como empresa/profesional o como consumidor.',
+            capacityBusiness: 'Empresa o profesional',
+            capacityConsumer: 'Particular (consumidor)',
+            earlyStart:
+              'Solicito expresamente que los servicios comiencen durante el plazo de desistimiento de 14 días naturales. Si desisto, abonaré la parte proporcional ya prestada y perderé el derecho de desistimiento cuando el servicio se haya ejecutado completamente.',
+            standardStart:
+              'Si no lo solicitas, los trabajos comenzarán una vez transcurridos los 14 días naturales de desistimiento, durante los cuales puedes desistir sin indicar el motivo.',
+            downloadPdf: 'Descargar la propuesta en PDF',
             readTerms: 'Leer el anexo contractual completo',
             processing: 'Procesando…',
             cancel: 'Cancelar',
@@ -173,11 +203,17 @@ export function ProposalActions({
     signer_name: signerPrefill,
     signer_role: '',
     accepts_terms: false,
+    client_capacity: '',
+    consumer_early_start: false,
   })
 
   const onAccept = async () => {
     if (!signature.signer_name.trim()) {
       feedback.setError(copy.acceptError)
+      return
+    }
+    if (!signature.client_capacity) {
+      feedback.setError(copy.capacityError)
       return
     }
     if (!signature.accepts_terms) {
@@ -208,6 +244,9 @@ export function ProposalActions({
         signer_name: signature.signer_name.trim(),
         signer_role: signature.signer_role.trim() || undefined,
         accepts_terms: true,
+        client_capacity: signature.client_capacity,
+        consumer_early_start:
+          signature.client_capacity === 'consumer' && signature.consumer_early_start,
       },
       fiscalData,
     )
@@ -327,6 +366,63 @@ export function ProposalActions({
                 </div>
               </>
             ) : null}
+            <fieldset className="flex flex-col gap-2" disabled={feedback.pending}>
+              <legend className="mb-1 text-sm font-medium">{copy.capacity}</legend>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(
+                  [
+                    ['business', copy.capacityBusiness],
+                    ['consumer', copy.capacityConsumer],
+                  ] as const
+                ).map(([value, label]) => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-border p-3 text-sm"
+                  >
+                    <input
+                      type="radio"
+                      name="client-capacity"
+                      value={value}
+                      checked={signature.client_capacity === value}
+                      onChange={() =>
+                        setSignature((previous) => ({ ...previous, client_capacity: value }))
+                      }
+                      className="size-4 shrink-0"
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+              {signature.client_capacity === 'consumer' ? (
+                <>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={signature.consumer_early_start}
+                      onChange={(event) =>
+                        setSignature((previous) => ({
+                          ...previous,
+                          consumer_early_start: event.target.checked,
+                        }))
+                      }
+                      className="mt-0.5 size-4 shrink-0"
+                    />
+                    <span>{copy.earlyStart}</span>
+                  </label>
+                  {!signature.consumer_early_start ? (
+                    <p className="text-xs text-muted-foreground">{copy.standardStart}</p>
+                  ) : null}
+                </>
+              ) : null}
+            </fieldset>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              <a
+                href={`/p/proposal/${token}/pdf?lang=${language}`}
+                className="text-sm font-medium text-primary underline underline-offset-4"
+              >
+                {copy.downloadPdf}
+              </a>
+            </div>
             <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 text-sm">
               <input
                 type="checkbox"

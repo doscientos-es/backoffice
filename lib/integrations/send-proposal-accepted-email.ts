@@ -13,7 +13,7 @@ export async function sendProposalAcceptedEmail(proposalId: string): Promise<voi
   const { data } = await admin
     .from('proposals')
     .select(
-      'id, title, acceptance_email_sent_at, clients(name, email, lead_id, leads(language)), leads(name, email, language)',
+      'id, title, portal_token, acceptance_email_sent_at, clients(name, email, lead_id, leads(language)), leads(name, email, language)',
     )
     .eq('id', proposalId)
     .is('deleted_at', null)
@@ -45,8 +45,31 @@ export async function sendProposalAcceptedEmail(proposalId: string): Promise<voi
 
   try {
     const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
+    const { data: acceptance } = await admin
+      .from('proposal_acceptances')
+      .select('signer_name, accepted_at, document_hash')
+      .eq('proposal_id', proposalId)
+      .order('accepted_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    const portalToken = (data.portal_token as string | null) ?? null
     const html = await renderEmail(
-      ProposalAcceptedEmail({ clientName, proposalTitle: data.title as string, appUrl, language }),
+      ProposalAcceptedEmail({
+        clientName,
+        proposalTitle: data.title as string,
+        appUrl,
+        language,
+        signature: acceptance
+          ? {
+              signerName: acceptance.signer_name as string,
+              acceptedAt: acceptance.accepted_at as string,
+              documentHash: acceptance.document_hash as string,
+            }
+          : null,
+        signedPdfUrl: portalToken
+          ? `${appUrl}/p/proposal/${portalToken}/pdf?lang=${language}`
+          : null,
+      }),
     )
     const sent = await sendEmail({
       fromName: 'doscientos',

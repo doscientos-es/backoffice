@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { z } from 'zod'
 
+import { formatAddress } from '@/lib/address'
 import {
   ensureClientForProposal,
   ensureProjectForProposal,
@@ -21,23 +22,24 @@ import {
   getRedsysUrl,
 } from '@/lib/integrations/redsys'
 import { sendProposalAcceptedEmail } from '@/lib/integrations/send-proposal-accepted-email'
+import { createDepositInvoice } from '@/lib/invoices/create-deposit-invoice'
 import { createProposalDraftInvoices } from '@/lib/invoices/proposal-drafts'
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { isPortalUnlocked, unlockPortalResource } from '@/lib/portal/access'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
 import {
-  PROPOSAL_ACCEPTANCE_CONSENT,
   PROPOSAL_ACCEPTANCE_VERSION,
+  proposalAcceptanceConsentText,
   proposalAcceptanceHash,
   proposalAcceptanceSnapshot,
 } from '@/lib/proposals/proposal-acceptance'
 import { paymentInitialPercentage, paymentScheduleInput } from '@/lib/proposals/scope'
 import {
+  AcceptProposalContractSignature,
+  type AcceptProposalContractSignatureType,
   AcceptProposalFiscalData,
   type AcceptProposalFiscalDataType,
-  AcceptProposalSignature,
-  type AcceptProposalSignatureType,
   ProposalPortalToken,
   ProposalRejectionReason,
 } from '@/lib/schemas/proposal'
@@ -125,7 +127,7 @@ async function acceptWithFiscal(
 ): Promise<ActionResult> {
   const parsed = ProposalPortalToken.safeParse(token)
   if (!parsed.success) return { ok: false, error: 'Token inválido' }
-  const parsedSignature = AcceptProposalSignature.safeParse(signatureInput)
+  const parsedSignature = AcceptProposalContractSignature.safeParse(signatureInput)
   if (!parsedSignature.success) {
     return {
       ok: false,
@@ -189,10 +191,66 @@ async function acceptWithFiscal(
     .order('position')
   if (itemsError) return { ok: false, error: 'No se pudo preparar la firma de la propuesta' }
 
+  // Both contracting parties are identified inside the hashed document (LSSI art. 27).
+  const [{ data: settings }, { data: linked }] = await Promise.all([
+    admin
+      .from('settings')
+      .select(
+        'company_name, company_nif, company_address_street, company_address_zip, company_address_city, company_address_province, company_address_country',
+      )
+      .eq('id', 1)
+      .maybeSingle(),
+    admin
+      .from('proposals')
+      .select(
+        'clients(name, nif, billing_address_street, billing_address_zip, billing_address_city, billing_address_province, billing_address_country)',
+      )
+      .eq('id', proposal.id)
+      .maybeSingle(),
+  ])
+  const signedClient = (linked as unknown as { clients?: Record<string, string | null> | null })
+    ?.clients
+  const parties = {
+    provider: {
+      name: (settings?.company_name as string | null) ?? null,
+      nif: (settings?.company_nif as string | null) ?? null,
+      address:
+        formatAddress({
+          street: (settings?.company_address_street as string | null) ?? null,
+          zip: (settings?.company_address_zip as string | null) ?? null,
+          city: (settings?.company_address_city as string | null) ?? null,
+          province: (settings?.company_address_province as string | null) ?? null,
+          country: (settings?.company_address_country as string | null) ?? null,
+        }) || null,
+    },
+    client: {
+      name: fiscal?.name ?? signedClient?.name ?? client?.name ?? null,
+      nif: fiscal?.nif ?? signedClient?.nif ?? client?.nif ?? null,
+      address:
+        fiscal?.billing_address ??
+        (formatAddress({
+          street: signedClient?.billing_address_street ?? client?.billing_address_street ?? null,
+          zip: signedClient?.billing_address_zip ?? null,
+          city: signedClient?.billing_address_city ?? null,
+          province: signedClient?.billing_address_province ?? null,
+          country: signedClient?.billing_address_country ?? null,
+        }) ||
+          null),
+    },
+  }
+  const contract = {
+    client_capacity: parsedSignature.data.client_capacity,
+    consumer_early_start_requested:
+      parsedSignature.data.client_capacity === 'consumer' &&
+      parsedSignature.data.consumer_early_start,
+  }
+
   const snapshot = proposalAcceptanceSnapshot(
     proposal as unknown as Record<string, unknown>,
     (items ?? []) as Parameters<typeof proposalAcceptanceSnapshot>[1],
     fiscal,
+    parties,
+    contract,
   )
   const acceptedAt = new Date().toISOString()
   const requestHeaders = await headers()
@@ -204,7 +262,7 @@ async function acceptWithFiscal(
     p_accepted_at: acceptedAt,
     p_signer_name: parsedSignature.data.signer_name,
     p_signer_role: parsedSignature.data.signer_role ?? '',
-    p_consent_text: PROPOSAL_ACCEPTANCE_CONSENT,
+    p_consent_text: proposalAcceptanceConsentText(contract),
     p_evidence_version: PROPOSAL_ACCEPTANCE_VERSION,
     p_document_snapshot: snapshot,
     p_document_hash: proposalAcceptanceHash(snapshot),
@@ -334,7 +392,7 @@ async function rejectAction(token: string, rejectionReason?: string): Promise<Ac
 
 export async function acceptProposal(
   token: string,
-  signature: AcceptProposalSignatureType,
+  signature: AcceptProposalContractSignatureType,
   fiscal?: unknown,
 ): Promise<ActionResult> {
   return acceptWithFiscal(token, signature, fiscal)
@@ -489,7 +547,18 @@ export async function initiateProposalPayment(
   if (initialPercentage === null) {
     return { ok: false, error: 'La forma de pago seleccionada no admite cobro automático' }
   }
-  const amount = Math.round(Number(proposal.total) * initialPercentage) / 100
+  const depositInvoice = await createDepositInvoice(admin, parsedProposalId.data)
+  if (!depositInvoice.ok || depositInvoice.total <= 0) {
+    log.error(
+      { proposalId: proposal.id, err: depositInvoice.ok ? 'zero_total' : depositInvoice.error },
+      'deposit_invoice_unavailable',
+    )
+    return { ok: false, error: 'No se pudo preparar la factura del primer plazo' }
+  }
+  if (depositInvoice.status === 'paid') {
+    return { ok: false, error: 'Ya existe un pago de señal pendiente o confirmado' }
+  }
+  const amount = depositInvoice.total
 
   const { data: payment, error: insertError } = await admin.rpc('create_proposal_deposit_payment', {
     p_proposal_id: parsedProposalId.data,

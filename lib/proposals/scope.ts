@@ -134,6 +134,25 @@ export function paymentPlanForSchedule(schedule: PaymentSchedule): PaymentPlanIt
   return templates[schedule]?.map((item) => ({ ...item })) ?? []
 }
 
+const FULL_PAYMENT_PLAN: readonly PaymentPlanItem[] = [
+  { id: 'full', title: 'Importe completo', percentage: 100, due_date: null },
+]
+
+/**
+ * Billing milestones of a proposal: the bespoke plan, the schedule template or,
+ * when neither applies, a single 100 % milestone.
+ */
+export function effectivePaymentPlan(
+  paymentPlan: unknown,
+  paymentSchedule: unknown,
+): PaymentPlanItem[] {
+  const configured = parsePaymentPlan(paymentPlan)
+  if (configured.length > 0) return configured
+  const schedule = paymentScheduleInput.safeParse(paymentSchedule)
+  const template = schedule.success ? paymentPlanForSchedule(schedule.data) : []
+  return template.length > 0 ? template : FULL_PAYMENT_PLAN.map((item) => ({ ...item }))
+}
+
 type BillableItem = {
   description: string | null
   quantity: number

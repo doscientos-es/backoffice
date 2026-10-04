@@ -181,12 +181,8 @@ export async function POST(req: Request) {
 
       // Handle Proposal payment (deposit)
       if (payment.proposal_id) {
-        // Auto-generate a draft deposit invoice (best-effort — must not block the webhook)
-        const depositResult = await createDepositInvoice(
-          supabase,
-          payment.proposal_id as string,
-          Number(payment.amount),
-        )
+        // Link the first-milestone invoice (best-effort — must not block the webhook)
+        const depositResult = await createDepositInvoice(supabase, payment.proposal_id as string)
         if (depositResult.ok) {
           // Link the payment to the newly created invoice
           await supabase
@@ -221,7 +217,8 @@ export async function POST(req: Request) {
             .is('deleted_at', null)
 
           if (recipients?.length) {
-            const body = `Se\u00f1al recibida: ${proposal.number} \u2014 ${formatEUR(Number(payment.amount))}`
+            const pendingIssue = !depositResult.ok || depositResult.status === 'draft'
+            const body = `Se\u00f1al recibida: ${proposal.number} \u2014 ${formatEUR(Number(payment.amount))}${pendingIssue ? ' \u00b7 emite la factura de anticipo' : ''}`
 
             await dispatchNotifications({
               recipientIds: recipients.map((r) => r.id as string),

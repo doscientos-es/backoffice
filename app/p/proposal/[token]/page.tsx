@@ -39,6 +39,7 @@ import { effectiveProposalTerms } from '@/lib/proposals/proposal-acceptance'
 import { recordClientProposalView } from '@/lib/proposals/record-client-view'
 import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import {
+  effectivePaymentPlan,
   type PaymentSchedule,
   parseScopeModules,
   paymentInitialPercentage,
@@ -264,6 +265,7 @@ export default async function PortalProposalPage({
     { data: messages },
     { data: settings },
     { data: proposalPayments },
+    { data: depositInvoice },
   ] = await Promise.all([
     admin
       .from('proposal_items')
@@ -288,6 +290,17 @@ export default async function PortalProposalPage({
       .select('id, amount, status, created_at')
       .eq('proposal_id', proposal.id as string)
       .eq('status', 'confirmed'),
+    // First-milestone invoice: the deposit is charged for exactly its total
+    admin
+      .from('invoices')
+      .select('total')
+      .eq('proposal_id', proposal.id as string)
+      .eq(
+        'proposal_payment_plan_item_id',
+        effectivePaymentPlan(proposal.payment_plan, proposal.payment_schedule)[0]?.id ?? '',
+      )
+      .is('deleted_at', null)
+      .maybeSingle(),
   ])
 
   // View tracking is best-effort, so run it after the response is sent instead of
@@ -491,7 +504,9 @@ export default async function PortalProposalPage({
   const depositAmount =
     initialPaymentPercentage === null
       ? null
-      : Math.round(Number(proposal.total) * initialPaymentPercentage) / 100
+      : depositInvoice
+        ? Number(depositInvoice.total)
+        : Math.round(Number(proposal.total) * initialPaymentPercentage) / 100
 
   return (
     <div className="flex flex-col gap-4 pt-4 lg:pt-6">

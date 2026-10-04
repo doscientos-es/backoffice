@@ -4,12 +4,18 @@ import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
 
 const {
   assertRedsysConfigured,
+  createDepositInvoice,
   createProposalDraftInvoices,
   createRedsysPayment,
   isPortalUnlocked,
   sendProposalAcceptedEmail,
 } = vi.hoisted(() => ({
   assertRedsysConfigured: vi.fn(),
+  createDepositInvoice: vi.fn(
+    async (): Promise<
+      { ok: true; invoiceId: string; total: number; status: string } | { ok: false; error: string }
+    > => ({ ok: true, invoiceId: 'inv-1', total: 500, status: 'draft' }),
+  ),
   createProposalDraftInvoices: vi.fn(async () => ({ ids: [], created: 0 })),
   createRedsysPayment: vi.fn(() => ({
     Ds_SignatureVersion: 'HMAC_SHA256_V1',
@@ -35,6 +41,7 @@ vi.mock('@/lib/env', () => ({
   }),
 }))
 vi.mock('@/lib/invoices/proposal-drafts', () => ({ createProposalDraftInvoices }))
+vi.mock('@/lib/invoices/create-deposit-invoice', () => ({ createDepositInvoice }))
 vi.mock('@/lib/integrations/send-proposal-accepted-email', () => ({ sendProposalAcceptedEmail }))
 vi.mock('@/lib/integrations/redsys', () => ({
   assertRedsysConfigured,
@@ -130,6 +137,7 @@ const SIGNATURE = {
   signer_name: 'Ana Gómez',
   signer_role: 'Administradora',
   accepts_terms: true,
+  client_capacity: 'business',
 } as const
 
 // A client row with the minimum fiscal data so `acceptWithFiscal` skips the
@@ -164,6 +172,7 @@ describe('portal proposal actions', () => {
     state.lastUpdateId = null
     state.lastRpc = null
     createProposalDraftInvoices.mockClear()
+    createDepositInvoice.mockClear()
     assertRedsysConfigured.mockReset()
     createRedsysPayment.mockClear()
     isPortalUnlocked.mockReset()
@@ -280,11 +289,37 @@ describe('portal proposal actions', () => {
     expect(state.lastRpc?.args).toMatchObject({
       p_proposal_id: 'p1',
       p_signer_name: 'Ana Gómez',
-      p_evidence_version: 'doscientos-proposal-acceptance-v3',
+      p_evidence_version: 'doscientos-proposal-acceptance-v4',
       p_document_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
+      p_document_snapshot: expect.objectContaining({
+        parties: expect.objectContaining({
+          client: expect.objectContaining({ name: 'Acme SL', nif: 'B12345678' }),
+        }),
+        contract: { client_capacity: 'business', consumer_early_start_requested: false },
+      }),
     })
+    expect(state.lastRpc?.args.p_consent_text).not.toContain('consumidor')
     expect(createProposalDraftInvoices).toHaveBeenCalledWith(expect.anything(), 'p1', null)
     expect(revalidatePath).toHaveBeenCalledWith(`/p/proposal/${VALID_TOKEN}`)
+  })
+
+  it('records consumer capacity and the early-start request in the signed evidence', async () => {
+    state.fetchResult = {
+      data: { id: 'p1', status: 'sent', lead_id: null, client_id: 'c1', clients: COMPLETE_CLIENT },
+      error: null,
+    }
+
+    await acceptProposal(VALID_TOKEN, {
+      ...SIGNATURE,
+      client_capacity: 'consumer',
+      consumer_early_start: true,
+    })
+    expect(state.lastRpc?.args).toMatchObject({
+      p_document_snapshot: expect.objectContaining({
+        contract: { client_capacity: 'consumer', consumer_early_start_requested: true },
+      }),
+      p_consent_text: expect.stringContaining('solicito expresamente'),
+    })
   })
 
   it('rejects a viewed proposal and stores the rejection reason', async () => {
@@ -393,6 +428,34 @@ describe('portal proposal actions', () => {
       initiateProposalPayment('494d62cb-fd56-4650-b131-9e3a927a20ad', VALID_TOKEN),
     ).resolves.toEqual({ ok: false, error: 'Ya existe un pago de señal pendiente o confirmado' })
     expect(createRedsysPayment).not.toHaveBeenCalled()
+  })
+
+  it('charges the first-milestone invoice total and refuses when it cannot be prepared', async () => {
+    state.fetchResult = {
+      data: {
+        id: '494d62cb-fd56-4650-b131-9e3a927a20ad',
+        status: 'accepted',
+        total: 1_000,
+        payment_schedule: 'half_half',
+      },
+      error: null,
+    }
+    state.rpcResult = { data: [{ redsys_order: '1234567890' }], error: null }
+    createDepositInvoice.mockResolvedValueOnce({
+      ok: true,
+      invoiceId: 'inv-1',
+      total: 500.01,
+      status: 'issued',
+    })
+    await initiateProposalPayment('494d62cb-fd56-4650-b131-9e3a927a20ad', VALID_TOKEN)
+    expect(state.lastRpc?.args).toMatchObject({ p_amount: 500.01 })
+
+    state.lastRpc = null
+    createDepositInvoice.mockResolvedValueOnce({ ok: false, error: 'sin cliente' })
+    await expect(
+      initiateProposalPayment('494d62cb-fd56-4650-b131-9e3a927a20ad', VALID_TOKEN),
+    ).resolves.toEqual({ ok: false, error: 'No se pudo preparar la factura del primer plazo' })
+    expect(state.lastRpc).toBeNull()
   })
 
   it('does not create a deposit when Redsys is unavailable', async () => {

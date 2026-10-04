@@ -208,9 +208,16 @@ export const AcceptProposalSignature = z.object({
 })
 export type AcceptProposalSignatureType = z.infer<typeof AcceptProposalSignature>
 
+/** Proposal contract signature: adds the client's legal capacity (TRLGDCU arts. 98.8 and 103). */
+export const AcceptProposalContractSignature = AcceptProposalSignature.extend({
+  client_capacity: z.enum(['business', 'consumer']),
+  consumer_early_start: z.boolean().default(false),
+})
+export type AcceptProposalContractSignatureType = z.input<typeof AcceptProposalContractSignature>
+
 export const AcceptProposalInput = z.object({
   token: ProposalPortalToken,
-  signature: AcceptProposalSignature,
+  signature: AcceptProposalContractSignature,
   fiscal: AcceptProposalFiscalData.optional(),
 })
 export type AcceptProposalInputType = z.infer<typeof AcceptProposalInput>

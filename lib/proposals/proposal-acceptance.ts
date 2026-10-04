@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 
-export const PROPOSAL_ACCEPTANCE_VERSION = 'doscientos-proposal-acceptance-v3'
+export const PROPOSAL_ACCEPTANCE_VERSION = 'doscientos-proposal-acceptance-v4'
 
 export const DEFAULT_PROPOSAL_LEGAL_TERMS = `1. **Contrato, partes y alcance.** La aceptación electrónica de esta propuesta, junto con sus anexos y condiciones particulares, formaliza el encargo entre Doscientos y el Cliente identificados en ella. Quien firma declara disponer de facultades suficientes para representar al Cliente. Solo están incluidos los trabajos y entregables descritos expresamente; cualquier cambio requerirá aceptación previa por escrito y, cuando proceda, presupuesto adicional.
 
@@ -39,6 +39,41 @@ export const DEFAULT_PROPOSAL_LEGAL_TERMS = `1. **Contrato, partes y alcance.** 
 export const PROPOSAL_ACCEPTANCE_CONSENT =
   'Declaro que tengo capacidad suficiente para representar al Cliente y acepto íntegramente la propuesta, sus condiciones particulares y el anexo contractual.'
 
+export const PROPOSAL_ACCEPTANCE_DOCUMENT_NOTICE =
+  'He podido leer, descargar y guardar la propuesta y el anexo contractual antes de firmar, y recibiré confirmación de la aceptación por correo electrónico.'
+
+export const PROPOSAL_CONSUMER_EARLY_START_CONSENT =
+  'Actúo como consumidor y solicito expresamente que los servicios comiencen durante el plazo de desistimiento de 14 días naturales. Reconozco que, si desisto, abonaré la parte proporcional ya prestada y que perderé el derecho de desistimiento cuando el servicio se haya ejecutado completamente.'
+
+export const PROPOSAL_CONSUMER_STANDARD_START =
+  'Actúo como consumidor y no solicito el inicio anticipado: los servicios comenzarán una vez transcurrido el plazo de desistimiento de 14 días naturales, durante el cual puedo desistir sin indicar el motivo.'
+
+export type ProposalClientCapacity = 'business' | 'consumer'
+
+export type ProposalAcceptanceContract = {
+  client_capacity: ProposalClientCapacity
+  consumer_early_start_requested: boolean
+}
+
+export type ProposalAcceptanceParty = {
+  name: string | null
+  nif: string | null
+  address: string | null
+}
+
+/** Full declaration text the signer consented to, stored with the acceptance evidence. */
+export function proposalAcceptanceConsentText(contract: ProposalAcceptanceContract): string {
+  const declarations = [PROPOSAL_ACCEPTANCE_CONSENT, PROPOSAL_ACCEPTANCE_DOCUMENT_NOTICE]
+  if (contract.client_capacity === 'consumer') {
+    declarations.push(
+      contract.consumer_early_start_requested
+        ? PROPOSAL_CONSUMER_EARLY_START_CONSENT
+        : PROPOSAL_CONSUMER_STANDARD_START,
+    )
+  }
+  return declarations.join(' ')
+}
+
 type ProposalAcceptanceSource = Record<string, unknown>
 
 type ProposalAcceptanceItem = {
@@ -62,9 +97,13 @@ export function proposalAcceptanceSnapshot(
   proposal: ProposalAcceptanceSource,
   items: ProposalAcceptanceItem[],
   fiscalData: unknown,
+  parties: { provider: ProposalAcceptanceParty; client: ProposalAcceptanceParty } | null = null,
+  contract: ProposalAcceptanceContract | null = null,
 ) {
   return {
     version: PROPOSAL_ACCEPTANCE_VERSION,
+    parties,
+    contract,
     proposal: {
       id: proposal.id ?? null,
       number: proposal.number ?? null,
