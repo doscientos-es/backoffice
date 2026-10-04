@@ -661,7 +661,9 @@ begin
     into safe_columns
   from information_schema.columns
   where table_schema = 'public' and table_name = 'proposals'
-    and column_name not in ('subtotal', 'tax_amount', 'total');
+    and column_name not in (
+      'subtotal', 'tax_amount', 'total', 'maintenance_options', 'payment_terms'
+    );
   execute format('grant select (%s) on public.proposals to authenticated', safe_columns);
 end
 $$;
@@ -669,13 +671,35 @@ $$;
 create or replace view public.proposal_prices
 with (security_barrier = true)
 as
-  select p.id as proposal_id, p.subtotal, p.tax_amount, p.total
+  select p.id as proposal_id, p.subtotal, p.tax_amount, p.total,
+    p.maintenance_options, p.payment_terms
   from public.proposals p
   where public.has_permission('proposals.prices')
     and public.can_access_proposal(p.id);
 
 revoke all on public.proposal_prices from public, anon;
 grant select on public.proposal_prices to authenticated;
+
+-- Authenticated client-portal users are not team members and therefore cannot
+-- use the internal price view. Expose only the totals of proposals assigned to
+-- their enabled portal account; draft and deleted proposals remain hidden.
+create or replace view public.client_portal_proposal_prices
+with (security_barrier = true)
+as
+  select p.id as proposal_id, p.subtotal, p.tax_amount, p.total,
+    p.maintenance_options, p.payment_terms
+  from public.proposals p
+  where p.deleted_at is null
+    and p.status <> 'draft'
+    and exists (
+      select 1 from public.client_portal_access access
+      where access.client_id = p.client_id
+        and access.user_id = auth.uid()
+        and access.enabled = true
+    );
+
+revoke all on public.client_portal_proposal_prices from public, anon;
+grant select on public.client_portal_proposal_prices to authenticated;
 
 -- New clients/projects remain visible to their creator when scope is assigned.
 alter table public.clients alter column created_by set default auth.uid();

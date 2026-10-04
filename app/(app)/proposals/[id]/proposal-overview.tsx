@@ -21,6 +21,7 @@ type Item = {
 type TeamMember = { id: string; name: string; job_title: string | null }
 
 type Props = {
+  canSeePrices?: boolean
   total: number
   validUntil: string | null
   paymentPlan: PaymentPlanItem[]
@@ -38,6 +39,7 @@ type Props = {
 
 /** Read-only, scannable proposal view; actions intentionally live outside it. */
 export function ProposalOverview({
+  canSeePrices = true,
   total,
   validUntil,
   paymentPlan,
@@ -55,68 +57,84 @@ export function ProposalOverview({
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(20rem,0.8fr)]">
       <div className="flex min-w-0 flex-col gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Inversión y condiciones</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg bg-muted/40 p-4">
-                <p className="text-xs text-muted-foreground">Inversión inicial · IVA incluido</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums">{formatEUR(total)}</p>
+        {canSeePrices ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Inversión y condiciones</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg bg-muted/40 p-4">
+                  <p className="text-xs text-muted-foreground">Inversión inicial · IVA incluido</p>
+                  <p className="mt-1 text-2xl font-semibold tabular-nums">{formatEUR(total)}</p>
+                </div>
+                <div className="rounded-lg bg-muted/40 p-4">
+                  <p className="text-xs text-muted-foreground">Válida hasta</p>
+                  <p className="mt-1 text-lg font-semibold">{formatDate(validUntil)}</p>
+                </div>
               </div>
-              <div className="rounded-lg bg-muted/40 p-4">
-                <p className="text-xs text-muted-foreground">Válida hasta</p>
-                <p className="mt-1 text-lg font-semibold">{formatDate(validUntil)}</p>
-              </div>
-            </div>
-            {paymentPlan.length > 0 ? (
-              <ul className="divide-y rounded-lg border border-border text-sm">
-                {paymentPlan.map((item) => (
-                  <li key={item.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                    <span>{item.title}</span>
-                    <span className="text-right font-medium tabular-nums">
-                      {item.percentage} % · {formatEUR((total * item.percentage) / 100)}
-                    </span>
+              {paymentPlan.length > 0 ? (
+                <ul className="divide-y rounded-lg border border-border text-sm">
+                  {paymentPlan.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 px-3 py-2.5"
+                    >
+                      <span>{item.title}</span>
+                      <span className="text-right font-medium tabular-nums">
+                        {item.percentage} % · {formatEUR((total * item.percentage) / 100)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {paymentTerms ? <Markdown source={paymentTerms} /> : null}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Información económica</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Los importes y las partidas económicas están restringidos a tu rol.
+            </CardContent>
+          </Card>
+        )}
+
+        {canSeePrices ? (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
+              <CardTitle>Partidas</CardTitle>
+              {scopeModules.length > 0 ? (
+                <Button variant="ghost" size="xs" asChild>
+                  <Link href="#proposal-scope">Ver módulos</Link>
+                </Button>
+              ) : null}
+            </CardHeader>
+            <CardContent className="px-0">
+              <ul className="divide-y divide-border text-sm">
+                {items.map((item) => (
+                  <li
+                    key={item.id}
+                    className="flex items-start justify-between gap-4 px-6 py-3 transition-colors hover:bg-muted/30"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium">{item.description}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {item.quantity} × {formatEUR(item.unit_price)} · IVA {item.vat_rate} %
+                        {item.billing_cycle && item.billing_cycle !== 'none'
+                          ? ` · ${BILLING_CYCLE_LABELS[item.billing_cycle as BillingCycle] ?? item.billing_cycle}`
+                          : ''}
+                      </p>
+                    </div>
+                    <span className="font-medium tabular-nums">{formatEUR(item.subtotal)}</span>
                   </li>
                 ))}
               </ul>
-            ) : null}
-            {paymentTerms ? <Markdown source={paymentTerms} /> : null}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle>Partidas</CardTitle>
-            {scopeModules.length > 0 ? (
-              <Button variant="ghost" size="xs" asChild>
-                <Link href="#proposal-scope">Ver módulos</Link>
-              </Button>
-            ) : null}
-          </CardHeader>
-          <CardContent className="px-0">
-            <ul className="divide-y divide-border text-sm">
-              {items.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-start justify-between gap-4 px-6 py-3 transition-colors hover:bg-muted/30"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium">{item.description}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {item.quantity} × {formatEUR(item.unit_price)} · IVA {item.vat_rate} %
-                      {item.billing_cycle && item.billing_cycle !== 'none'
-                        ? ` · ${BILLING_CYCLE_LABELS[item.billing_cycle as BillingCycle] ?? item.billing_cycle}`
-                        : ''}
-                    </p>
-                  </div>
-                  <span className="font-medium tabular-nums">{formatEUR(item.subtotal)}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : null}
 
         {scopeModules.length > 0 || deliverables || acceptanceCriteria || notes ? (
           <Card id="proposal-scope">

@@ -78,7 +78,7 @@ export type Database = {
         | 'contacted'
         | 'in_conversation'
       lead_temperature: 'hot' | 'warm' | 'cold'
-      member_role: 'owner' | 'admin' | 'member' | 'viewer'
+      member_role: 'owner' | 'admin' | 'member' | 'sales' | 'delivery' | 'accountant' | 'viewer'
       project_status: 'planning' | 'active' | 'on_hold' | 'done' | 'cancelled'
       proposal_status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'
       proposal_viewer_type: 'team' | 'client'

@@ -6,11 +6,18 @@ import type { DashboardRange } from '@/lib/dashboard/types'
 import { cn, formatEUR } from '@/lib/utils'
 import { computeTrend, describeRange, resolveDateRange } from '@/lib/utils/date'
 
-type KpiGridProps = { range: DashboardRange; showFinance: boolean }
+type KpiGridProps = {
+  range: DashboardRange
+  showFinance: boolean
+  showProposalPrices: boolean
+}
 
-export async function KpiGrid({ range, showFinance }: KpiGridProps) {
+export async function KpiGrid({ range, showFinance, showProposalPrices }: KpiGridProps) {
   const dateRange = resolveDateRange(range)
-  const [kpis, goals] = await Promise.all([getDashboardKpis(dateRange), getCompanyGoals()])
+  const [kpis, goals] = await Promise.all([
+    getDashboardKpis(dateRange, { showFinance, showProposalPrices }),
+    getCompanyGoals(),
+  ])
   const rangeLabel = describeRange(range)
 
   const conversionPct = Math.round(kpis.conversionRate * 1000) / 10

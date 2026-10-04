@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ClientAvatar } from '@/components/ui/client-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
-import { requireUser } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import { PROPOSAL_STATUS, type ProposalStatus } from '@/lib/status'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
@@ -40,7 +41,9 @@ export default async function ProposalsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  await requireUser()
+  const user = await requirePagePermission('proposals.read')
+  const canSeePrices = can(user.role, 'proposals.prices')
+  const canWriteProposals = can(user.role, 'proposals.write')
   const sp = await searchParams
   const q = parseStringParam(sp, 'q')
   const status = parseStringParam(sp, 'status')
@@ -49,7 +52,10 @@ export default async function ProposalsPage({
   const expiry = parseStringParam(sp, 'expiry')
   const followUp = parseStringParam(sp, 'followup')
   const page = parsePage(sp)
-  const { sort, dir } = parseSortParam(sp, PROPOSAL_SORT_COLUMNS, 'created_at', 'desc')
+  const sortColumns = canSeePrices
+    ? PROPOSAL_SORT_COLUMNS
+    : PROPOSAL_SORT_COLUMNS.filter((column) => column !== 'total')
+  const { sort, dir } = parseSortParam(sp, sortColumns, 'created_at', 'desc')
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
@@ -72,7 +78,7 @@ export default async function ProposalsPage({
   let query = supabase
     .from('proposals')
     .select(
-      'id, number, title, status, delivered_at, total, valid_until, sent_at, client_id, clients(name, logo_url), lead_id, leads(name), project_id, projects(name)',
+      'id, number, title, status, delivered_at, valid_until, sent_at, client_id, clients(name, logo_url), lead_id, leads(name), project_id, projects(name)',
       { count: 'exact' },
     )
     .is('deleted_at', null)
@@ -111,6 +117,20 @@ export default async function ProposalsPage({
     .order(sort, { ascending, nullsFirst: false })
     .range(from, to)
 
+  const pricesByProposal = new Map<string, number>()
+  if (canSeePrices && data?.length) {
+    const { data: prices } = await supabase
+      .from('proposal_prices')
+      .select('proposal_id, total')
+      .in(
+        'proposal_id',
+        data.map((proposal) => proposal.id as string),
+      )
+    for (const price of prices ?? []) {
+      pricesByProposal.set(price.proposal_id as string, Number(price.total) || 0)
+    }
+  }
+
   const newAction = (
     <Button asChild size="sm">
       <Link href="/proposals/new">
@@ -127,10 +147,10 @@ export default async function ProposalsPage({
       title="Propuestas"
       empty={hasFilters ? 'Sin coincidencias.' : 'Aún no hay propuestas.'}
       error={error?.message}
-      actions={newAction}
-      emptyAction={newAction}
-      addHref="/proposals/new"
-      addLabel="Nueva propuesta"
+      actions={canWriteProposals ? newAction : undefined}
+      emptyAction={canWriteProposals ? newAction : undefined}
+      addHref={canWriteProposals ? '/proposals/new' : undefined}
+      addLabel={canWriteProposals ? 'Nueva propuesta' : undefined}
       searchKey="q"
       searchPlaceholder="Buscar por número o título…"
       filters={[
@@ -147,7 +167,17 @@ export default async function ProposalsPage({
         { key: 'proyecto', label: 'Proyecto', minWidth: '10rem' },
         { key: 'estado', label: 'Estado', sortKey: 'status', minWidth: '7rem' },
         { key: 'seguimiento', label: 'Seguimiento', minWidth: '7.5rem' },
-        { key: 'importe', label: 'Importe', align: 'right', sortKey: 'total', minWidth: '7rem' },
+        ...(canSeePrices
+          ? [
+              {
+                key: 'importe',
+                label: 'Importe',
+                align: 'right' as const,
+                sortKey: 'total',
+                minWidth: '7rem',
+              },
+            ]
+          : []),
         { key: 'valida_hasta', label: 'Válida hasta', sortKey: 'valid_until', minWidth: '7.5rem' },
       ]}
 
@@ -169,6 +199,7 @@ export default async function ProposalsPage({
               {clientName}
             </span>
           )
+          const total = pricesByProposal.get(p.id as string)
           return {
             id: p.id as string,
             href: `/proposals/${p.id}`,
@@ -193,7 +224,9 @@ export default async function ProposalsPage({
                 content: p.sent_at ? relativeTime(p.sent_at as string) : 'Sin enviar',
                 value: (p.sent_at as string | null) ?? '',
               },
-              importe: { content: formatEUR(p.total as number), value: p.total as number },
+              ...(canSeePrices
+                ? { importe: { content: formatEUR(total ?? 0), value: total ?? 0 } }
+                : {}),
               valida_hasta: {
                 content: formatDate(p.valid_until as string | null),
                 value: (p.valid_until as string | null) ?? '',

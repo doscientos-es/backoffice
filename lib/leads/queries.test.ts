@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
+  proposalRows: [] as Record<string, unknown>[],
+  proposalPrices: [] as Record<string, unknown>[],
+  proposalPriceQueries: 0,
   tasks: [] as Record<string, unknown>[],
   campaigns: [] as Record<string, unknown>[],
   ads: [] as Record<string, unknown>[],
@@ -18,17 +21,22 @@ vi.mock('@/lib/supabase/server', () => ({
   createServerClient: async () => ({
     from: (table: string) => {
       let selection = ''
+      if (table === 'proposal_prices') state.proposalPriceQueries += 1
       const result = {
         data:
           table === 'leads'
             ? state.rows
-            : table === 'tasks'
-              ? state.tasks
-              : table === 'marketing_campaigns'
-                ? state.campaigns
-                : table === 'marketing_ads'
-                  ? state.ads
-                  : [],
+            : table === 'proposals'
+              ? state.proposalRows
+              : table === 'proposal_prices'
+                ? state.proposalPrices
+                : table === 'tasks'
+                  ? state.tasks
+                  : table === 'marketing_campaigns'
+                    ? state.campaigns
+                    : table === 'marketing_ads'
+                      ? state.ads
+                      : [],
         error: null,
         count: table === 'leads' ? state.rows.length : null,
       }
@@ -83,6 +91,9 @@ import { getLeadDetail, listLeads } from './queries'
 describe('listLeads client avatar enrichment', () => {
   beforeEach(() => {
     state.rows = []
+    state.proposalRows = []
+    state.proposalPrices = []
+    state.proposalPriceQueries = 0
     state.tasks = []
     state.campaigns = []
     state.ads = []
@@ -240,6 +251,9 @@ describe('listLeads client avatar enrichment', () => {
 describe('getLeadDetail resilience', () => {
   beforeEach(() => {
     state.rows = []
+    state.proposalRows = []
+    state.proposalPrices = []
+    state.proposalPriceQueries = 0
     state.tasks = []
     state.campaigns = []
     state.ads = []
@@ -260,6 +274,25 @@ describe('getLeadDetail resilience', () => {
     expect(result?.lead.id).toBe('lead-1')
     expect(result?.companyResearchAvailable).toBe(false)
     expect(result?.lead.company_research).toBeNull()
+  })
+
+  it('does not query proposal prices unless the caller has enabled them', async () => {
+    state.proposalRows = [{ id: 'proposal-1', number: 'P-001' }]
+
+    const result = await getLeadDetail('lead-1')
+
+    expect(state.proposalPriceQueries).toBe(0)
+    expect(result?.proposals[0]?.total).toBeNull()
+  })
+
+  it('loads proposal prices only when explicitly requested', async () => {
+    state.proposalRows = [{ id: 'proposal-1', number: 'P-001' }]
+    state.proposalPrices = [{ proposal_id: 'proposal-1', total: '1200.00' }]
+
+    const result = await getLeadDetail('lead-1', { includeProposalPrices: true })
+
+    expect(state.proposalPriceQueries).toBe(1)
+    expect(result?.proposals[0]?.total).toBe(1200)
   })
 
   it('throws a query failure instead of treating it as a missing lead', async () => {

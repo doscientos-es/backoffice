@@ -25,4 +25,17 @@ describe('role permissions', () => {
     expect(can('delivery', 'proposals.prices')).toBe(false)
     expect(can('delivery', 'finance.read')).toBe(false)
   })
+
+  it('keeps proposal totals and maintenance prices behind the permission-checked view', () => {
+    expect(migration).toContain(
+      "'subtotal', 'tax_amount', 'total', 'maintenance_options', 'payment_terms'",
+    )
+    expect(migration).toContain(
+      'p.subtotal, p.tax_amount, p.total,\n    p.maintenance_options, p.payment_terms',
+    )
+    expect(migration).toContain("public.has_permission('proposals.prices')")
+    expect(migration).toContain('public.client_portal_proposal_prices')
+    expect(migration).toContain('access.user_id = auth.uid()')
+    expect(migration).toContain("and p.status <> 'draft'")
+  })
 })

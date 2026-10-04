@@ -22,6 +22,7 @@ import { getLeadDetail } from '@/lib/leads/queries'
 import type { LeadCompanyResearch as LeadCompanyResearchData } from '@/lib/leads/types'
 import { leadDisplayName } from '@/lib/leads/utils'
 import { listActiveMembers } from '@/lib/members/queries'
+import { can } from '@/lib/permissions'
 import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from '@/lib/status'
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 
@@ -88,8 +89,9 @@ export default async function LeadDetailPage({
   const query = await searchParams
   const tab = resolveLeadTab(query?.tab)
   const user = await requireUser()
+  const canSeeProposalPrices = can(user.role, 'proposals.prices')
 
-  const result = await getLeadDetail(id)
+  const result = await getLeadDetail(id, { includeProposalPrices: canSeeProposalPrices })
   if (!result) notFound()
   const {
     lead,
@@ -561,6 +563,7 @@ export default async function LeadDetailPage({
                 leadId={lead.id as string}
                 linkedClientId={linkedClientId}
                 proposals={proposals}
+                canSeeProposalPrices={canSeeProposalPrices}
                 projects={projects}
                 invoices={invoices}
               />

@@ -29,7 +29,7 @@ export default async function ClientPortalPage() {
   const [{ data: proposals }, { data: invoices }, { data: projects }] = await Promise.all([
     supabase
       .from('proposals')
-      .select('id, number, title, status, portal_token, total, sent_at')
+      .select('id, number, title, status, portal_token, sent_at')
       .eq('client_id', access.client_id)
       .neq('status', 'draft')
       .order('sent_at', { ascending: false }),
@@ -47,6 +47,22 @@ export default async function ClientPortalPage() {
       .order('created_at', { ascending: false }),
   ])
 
+  const proposalIds = (proposals ?? []).map((proposal) => proposal.id as string)
+  const { data: proposalPrices } =
+    proposalIds.length > 0
+      ? await supabase
+          .from('client_portal_proposal_prices')
+          .select('proposal_id, total')
+          .in('proposal_id', proposalIds)
+      : { data: [] }
+  const proposalPriceById = new Map(
+    (proposalPrices ?? []).map((price) => [price.proposal_id as string, price.total]),
+  )
+  const proposalsWithPrices = (proposals ?? []).map((proposal) => ({
+    ...proposal,
+    total: proposalPriceById.get(proposal.id as string) ?? null,
+  }))
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
       <p className="text-sm text-muted-foreground">Área de cliente</p>
@@ -58,7 +74,7 @@ export default async function ClientPortalPage() {
         {[
           [
             'Propuestas',
-            proposals ?? [],
+            proposalsWithPrices,
             (item: any) => `/p/proposal/${item.portal_token}`,
             (item: any) => `${item.number} · ${item.title}`,
           ],

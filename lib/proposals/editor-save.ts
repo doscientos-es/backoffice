@@ -1,7 +1,7 @@
 import { revalidatePath } from 'next/cache'
 import 'server-only'
 
-import { requireUser } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { scopedLogger } from '@/lib/logger'
 import { isProposalEditable } from '@/lib/proposals/items'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
@@ -22,7 +22,8 @@ type UpdateResult = { ok: true; version: number } | { ok: false; error: string; 
  * Locked once the proposal is `accepted` or `rejected`.
  */
 export async function updateProposalRecord(input: unknown): Promise<UpdateResult> {
-  await requireUser()
+  await requirePermission('proposals.write')
+  await requirePermission('proposals.prices')
 
   const parsed = UpdateProposalInput.safeParse(input)
   if (!parsed.success) {
@@ -43,11 +44,19 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
 
   const { data: current, error: readError } = await supabase
     .from('proposals')
-    .select('status, created_at, payment_schedule, payment_terms')
+    .select('status, created_at, payment_schedule')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
   if (readError || !current) return { ok: false, error: 'Propuesta no encontrada' }
+  const { data: priceFields, error: priceError } = await supabase
+    .from('proposal_prices')
+    .select('payment_terms')
+    .eq('proposal_id', id)
+    .maybeSingle()
+  if (priceError || !priceFields) {
+    return { ok: false, error: 'No se pudo cargar la información económica de la propuesta' }
+  }
   if (!isProposalEditable(current.status)) {
     return { ok: false, error: 'La propuesta ya ha sido respondida y no se puede editar' }
   }
@@ -94,8 +103,8 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
     persistedItems &&
     rest.payment_terms === undefined &&
     current.payment_schedule === 'half_half' &&
-    typeof current.payment_terms === 'string' &&
-    current.payment_terms.includes('50 %')
+    typeof priceFields.payment_terms === 'string' &&
+    priceFields.payment_terms.includes('50 %')
   ) {
     const automaticPaymentTerms = recurringPaymentTerms(
       persistedItems,
@@ -160,7 +169,7 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
 export async function replaceProposalTeam(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireUser()
+  await requirePermission('proposals.write')
 
   const parsed = UpdateProposalTeamInput.safeParse(input)
   if (!parsed.success) return { ok: false, error: 'Datos no válidos' }
@@ -219,7 +228,7 @@ export type EditorSaveResult =
  * A team failure returns the persisted version so the draft can be retried safely.
  */
 export async function saveProposalEditorDraft(input: unknown): Promise<EditorSaveResult> {
-  await requireUser()
+  await requirePermission('proposals.write')
   // Validate the complete intent before either write, including team member IDs.
   const parsed = EditorInput.safeParse(input)
   if (!parsed.success)

@@ -17,6 +17,7 @@ type LeadCommercialProps = {
   leadId: string
   linkedClientId: string | null
   proposals: LeadRelatedProposal[]
+  canSeeProposalPrices: boolean
   projects: LeadRelatedProject[]
   invoices: LeadRelatedInvoice[]
 }
@@ -71,6 +72,7 @@ export function LeadCommercial({
   leadId,
   linkedClientId,
   proposals,
+  canSeeProposalPrices,
   projects,
   invoices,
 }: LeadCommercialProps) {
@@ -104,9 +106,11 @@ export function LeadCommercial({
                     <span className="truncate font-medium">
                       {proposal.number ?? proposal.title ?? 'Propuesta'}
                     </span>
-                    <span className="shrink-0 text-muted-foreground tabular-nums">
-                      {formatEUR(Number(proposal.total ?? 0))}
-                    </span>
+                    {canSeeProposalPrices && proposal.total != null ? (
+                      <span className="shrink-0 text-muted-foreground tabular-nums">
+                        {formatEUR(proposal.total)}
+                      </span>
+                    ) : null}
                   </Link>
                 ))
               )}

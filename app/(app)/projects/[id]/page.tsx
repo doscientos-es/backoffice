@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/ui/status-badge'
 import { requireUser } from '@/lib/auth'
 import { githubDefaultInstallationId, isAIEnabled } from '@/lib/env'
 import { computeProjectProfitability } from '@/lib/finance'
+import { can } from '@/lib/permissions'
 import { getProjectWorkspace } from '@/lib/projects/queries'
 import { INVOICE_STATUS, PROJECT_STATUS, PROPOSAL_STATUS } from '@/lib/status'
 import { formatDate, formatEUR } from '@/lib/utils'
@@ -46,7 +47,8 @@ export default async function ProjectDetailPage({
   const { tasks_view } = await searchParams
   const isBoard = tasks_view === 'board'
   const user = await requireUser()
-  const canEdit = user.role !== 'viewer'
+  const canEdit = can(user.role, 'projects.write')
+  const canSeeProposalPrices = can(user.role, 'proposals.prices')
   const workspace = await getProjectWorkspace(id, {
     includeClients: canEdit,
     tasksView: isBoard ? 'board' : 'list',
@@ -546,9 +548,11 @@ export default async function ProjectDetailPage({
                     </Link>
                     <div className="flex shrink-0 items-center gap-2">
                       <StatusBadge meta={PROPOSAL_STATUS} value={p.status as string} />
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {formatEUR(Number(p.total ?? 0))}
-                      </span>
+                      {canSeeProposalPrices && p.total !== null ? (
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {formatEUR(Number(p.total))}
+                        </span>
+                      ) : null}
                     </div>
                   </li>
                 ))}

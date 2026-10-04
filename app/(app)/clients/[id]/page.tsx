@@ -14,6 +14,7 @@ import { formatAddress } from '@/lib/address'
 import { requireUser } from '@/lib/auth'
 import { getClientDetail } from '@/lib/clients/queries'
 import { listActiveMembers } from '@/lib/members/queries'
+import { can } from '@/lib/permissions'
 import {
   INVOICE_STATUS,
   type InvoiceStatus,
@@ -38,6 +39,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const { id } = await params
   const user = await requireUser()
   const canEdit = user.role !== 'viewer'
+  const canSeeProposalPrices = can(user.role, 'proposals.prices')
 
   const [result, members] = await Promise.all([
     getClientDetail(id),
@@ -328,9 +330,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Propuestas</CardTitle>
-            <Button asChild size="sm">
-              <Link href={`/proposals/new?client_id=${id}`}>Nueva</Link>
-            </Button>
+            {can(user.role, 'proposals.write') ? (
+              <Button asChild size="sm">
+                <Link href={`/proposals/new?client_id=${id}`}>Nueva</Link>
+              </Button>
+            ) : null}
           </CardHeader>
           <CardContent className="px-0">
             {!proposals || proposals.length === 0 ? (
@@ -350,9 +354,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     </Link>
                     <div className="flex shrink-0 items-center gap-2">
                       <StatusBadge meta={PROPOSAL_STATUS} value={p.status as ProposalStatus} />
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {formatEUR(Number(p.total ?? 0))}
-                      </span>
+                      {canSeeProposalPrices && p.total !== null ? (
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {formatEUR(Number(p.total))}
+                        </span>
+                      ) : null}
                     </div>
                   </li>
                 ))}

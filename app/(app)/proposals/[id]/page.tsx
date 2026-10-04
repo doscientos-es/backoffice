@@ -23,9 +23,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
 import { SectionBoundary } from '@/components/ui/error-boundary'
 import { StatusBadge } from '@/components/ui/status-badge'
-import { requireUser } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
 import { hasCompleteFiscalData } from '@/lib/crm/conversion'
 import { isAIEnabled } from '@/lib/env'
+import { can } from '@/lib/permissions'
 import { parseKeyPoints, toEditableKeyPoints } from '@/lib/proposals/key-points'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
 import { recurringAmount } from '@/lib/proposals/recurring'
@@ -188,13 +189,15 @@ export default async function ProposalDetailPage({
 }) {
   const { id } = await params
   const { ai_draft, mode } = await searchParams
-  const user = await requireUser()
+  const user = await requirePagePermission('proposals.read')
+  const canSeePrices = can(user.role, 'proposals.prices')
+  const canEditProposal = can(user.role, 'proposals.write')
   const supabase = await createServerClient()
 
   const { data: proposal } = await supabase
     .from('proposals')
     .select(
-      '*, clients(id, name, nif, billing_address_street, email, phone, contact_person), leads(id, name, company, email, phone), projects(id, name)',
+      'id, number, title, status, delivered_at, client_id, lead_id, project_id, version, payment_plan, payment_schedule, valid_until, notes, context_markdown, problems, solutions, terms, scope_modules, deliverables, acceptance_criteria, change_management_terms, legal_terms, maintenance_selected_plan_id, portal_token, is_client_visible, portal_password_hash, sent_at, viewed_at, responded_at, created_at, clients(id, name, nif, billing_address_street, email, phone, contact_person), leads(id, name, company, email, phone), projects(id, name)',
     )
     .eq('id', id)
     .is('deleted_at', null)
@@ -202,11 +205,24 @@ export default async function ProposalDetailPage({
 
   if (!proposal) notFound()
 
-  const { data: items } = await supabase
-    .from('proposal_items')
-    .select('id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle')
-    .eq('proposal_id', id)
-    .order('position')
+  const [{ data: priceSummary }, { data: items }] = await Promise.all([
+    canSeePrices
+      ? supabase
+          .from('proposal_prices')
+          .select('subtotal, tax_amount, total, maintenance_options, payment_terms')
+          .eq('proposal_id', id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    canSeePrices
+      ? supabase
+          .from('proposal_items')
+          .select(
+            'id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle',
+          )
+          .eq('proposal_id', id)
+          .order('position')
+      : Promise.resolve({ data: [] }),
+  ])
 
   // Page-level opens (one row per visit). Slide-level rows are excluded.
   const { data: views } = await supabase
@@ -372,7 +388,7 @@ export default async function ProposalDetailPage({
         phone: lead?.phone ?? '',
       }
   const locked = status === 'accepted' || status === 'rejected'
-  const editing = !locked && (mode === 'edit' || ai_draft === '1')
+  const editing = canEditProposal && !locked && (mode === 'edit' || ai_draft === '1')
   const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan)
   const paymentSchedule = paymentScheduleInput.safeParse(proposal.payment_schedule)
   const paymentPlan =
@@ -411,11 +427,12 @@ export default async function ProposalDetailPage({
       job_title: string | null
     }>
   ).filter((member) => selectedTeamIds.includes(member.id))
-  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options)
+  const maintenanceOffer = parseMaintenanceOffer(priceSummary?.maintenance_options)
   const selectedMaintenance = selectedMaintenancePlan(
     maintenanceOffer,
     (proposal.maintenance_selected_plan_id as string | null) ?? null,
   )
+  const proposalTotal = Number(priceSummary?.total ?? 0)
   const { data: maintenanceSubscription } =
     status === 'accepted' && selectedMaintenance && proposal.client_id
       ? await supabase
@@ -444,8 +461,7 @@ export default async function ProposalDetailPage({
                   [
                     client ? `Cliente: ${client.name}` : lead ? `Lead: ${lead.name}` : null,
                     `Estado: ${PROPOSAL_STATUS[status]?.label ?? status}`,
-                    Number(proposal.total ?? 0) > 0 &&
-                      `Total: ${formatEUR(Number(proposal.total))}`,
+                    canSeePrices && proposalTotal > 0 && `Total: ${formatEUR(proposalTotal)}`,
                   ]
                     .filter(Boolean)
                     .join(' · '),
@@ -457,7 +473,7 @@ export default async function ProposalDetailPage({
             <StatusBadge meta={PROPOSAL_STATUS} value={status} />
             {deliveredAt ? <Badge variant="success">Terminada</Badge> : null}
             {editing ? <div id="proposal-editor-actions" className="contents" /> : null}
-            {!locked ? (
+            {!locked && canEditProposal ? (
               <Button variant="outline" size="sm" asChild>
                 <Link href={editing ? `/proposals/${id}` : `/proposals/${id}?mode=edit`}>
                   <Pencil aria-hidden />
@@ -467,7 +483,7 @@ export default async function ProposalDetailPage({
             ) : null}
             {!editing ? (
               <>
-                {status === 'accepted' ? (
+                {status === 'accepted' && canEditProposal ? (
                   needsFiscal ? (
                     <MarkAcceptedButton
                       proposalId={id}
@@ -478,25 +494,26 @@ export default async function ProposalDetailPage({
                   ) : (
                     <GenerateInvoiceButton
                       proposalId={id}
-                      canGenerateInvoice={['owner', 'admin'].includes(user.role)}
+                      canGenerateInvoice={can(user.role, 'finance.write')}
                       paymentPlan={paymentPlan}
                     />
                   )
-                ) : status !== 'rejected' ? (
+                ) : status !== 'rejected' && canEditProposal ? (
                   <MarkAcceptedButton
                     proposalId={id}
                     needsFiscal={needsFiscal}
                     fiscalPrefill={fiscalPrefill}
                   />
                 ) : null}
-                {locked && !deliveredAt && <ReopenProposalButton proposalId={id} />}
-                <ProposalMoreActions
-                  proposalId={id}
-                  canReject={
-                    ['owner', 'admin'].includes(user.role) &&
-                    ['sent', 'viewed', 'expired'].includes(status)
-                  }
-                />
+                {locked && !deliveredAt && canEditProposal ? (
+                  <ReopenProposalButton proposalId={id} />
+                ) : null}
+                {canEditProposal ? (
+                  <ProposalMoreActions
+                    proposalId={id}
+                    canReject={['sent', 'viewed', 'expired'].includes(status)}
+                  />
+                ) : null}
               </>
             ) : null}
           </div>
@@ -521,12 +538,12 @@ export default async function ProposalDetailPage({
             initialAcceptanceCriteria={(proposal.acceptance_criteria as string | null) ?? null}
             initialPaymentSchedule={(proposal.payment_schedule as PaymentSchedule | null) ?? null}
             initialPaymentPlan={paymentPlan}
-            initialPaymentTerms={(proposal.payment_terms as string | null) ?? null}
+            initialPaymentTerms={(priceSummary?.payment_terms as string | null) ?? null}
             initialChangeManagementTerms={
               (proposal.change_management_terms as string | null) ?? null
             }
             initialLegalTerms={(proposal.legal_terms as string | null) ?? null}
-            initialMaintenanceOptions={parseMaintenanceOffer(proposal.maintenance_options)}
+            initialMaintenanceOptions={parseMaintenanceOffer(priceSummary?.maintenance_options)}
             initialMaintenanceSelectedPlanId={
               (proposal.maintenance_selected_plan_id as string | null) ?? null
             }
@@ -545,10 +562,11 @@ export default async function ProposalDetailPage({
         </SectionBoundary>
       ) : (
         <ProposalOverview
-          total={Number(proposal.total ?? 0)}
+          canSeePrices={canSeePrices}
+          total={proposalTotal}
           validUntil={(proposal.valid_until as string | null) ?? null}
           paymentPlan={paymentPlan}
-          paymentTerms={(proposal.payment_terms as string | null) ?? null}
+          paymentTerms={(priceSummary?.payment_terms as string | null) ?? null}
           items={((items ?? []) as Parameters<typeof ProposalOverview>[0]['items']).map((item) => ({
             ...item,
             quantity: Number(item.quantity),
@@ -604,9 +622,11 @@ export default async function ProposalDetailPage({
                     proposalId={id}
                     note={deliveryNote}
                     hasMaintenance={Boolean(selectedMaintenance)}
-                    canEdit={user.role !== 'viewer'}
+                    canEdit={can(user.role, 'projects.write')}
                   />
-                  {selectedMaintenance && !maintenanceSubscription ? (
+                  {can(user.role, 'finance.write') &&
+                  selectedMaintenance &&
+                  !maintenanceSubscription ? (
                     <CreateSubscriptionFromProposalButton
                       proposalId={id}
                       planName={selectedMaintenance.name}
@@ -623,27 +643,29 @@ export default async function ProposalDetailPage({
                       )}
                     />
                   ) : null}
-                  <ProposalPaymentPlan
-                    proposalId={id}
-                    initialPlan={paymentPlan}
-                    initialVersion={Number(proposal.version)}
-                    total={Number(proposal.total ?? 0)}
-                    canEdit={user.role !== 'viewer'}
-                    invoices={(
-                      (paymentPlanInvoices ?? []) as Array<Record<string, unknown>>
-                    ).flatMap((invoice) => {
-                      const planItemId = invoice.proposal_payment_plan_item_id as string | null
-                      if (!planItemId) return []
-                      return [
-                        {
-                          id: invoice.id as string,
-                          planItemId,
-                          number: (invoice.full_number as string | null) ?? 'Borrador',
-                          status: invoice.status as string,
-                        },
-                      ]
-                    })}
-                  />
+                  {canSeePrices ? (
+                    <ProposalPaymentPlan
+                      proposalId={id}
+                      initialPlan={paymentPlan}
+                      initialVersion={Number(proposal.version)}
+                      total={proposalTotal}
+                      canEdit={can(user.role, 'finance.write')}
+                      invoices={(
+                        (paymentPlanInvoices ?? []) as Array<Record<string, unknown>>
+                      ).flatMap((invoice) => {
+                        const planItemId = invoice.proposal_payment_plan_item_id as string | null
+                        if (!planItemId) return []
+                        return [
+                          {
+                            id: invoice.id as string,
+                            planItemId,
+                            number: (invoice.full_number as string | null) ?? 'Borrador',
+                            status: invoice.status as string,
+                          },
+                        ]
+                      })}
+                    />
+                  ) : null}
                 </>
               ) : null}
 

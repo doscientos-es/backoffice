@@ -9,6 +9,7 @@ describe('LeadCommercial', () => {
       <LeadCommercial
         leadId="lead-1"
         linkedClientId="client-1"
+        canSeeProposalPrices
         proposals={[
           {
             id: 'proposal-1',
@@ -38,5 +39,34 @@ describe('LeadCommercial', () => {
     expect(
       within(mobileSection).getByRole('link', { name: 'Crear proyecto' }).getAttribute('href'),
     ).toBe('/projects/new?client_id=client-1')
+    expect(within(mobileSection).getByText(/1\.200,00/)).toBeInTheDocument()
+  })
+
+  it('hides proposal totals when the user cannot see prices', () => {
+    render(
+      <LeadCommercial
+        leadId="lead-1"
+        linkedClientId="client-1"
+        canSeeProposalPrices={false}
+        proposals={[
+          {
+            id: 'proposal-1',
+            number: 'P-2026-001',
+            title: 'Automatización',
+            status: 'draft',
+            total: 1200,
+            valid_until: null,
+            sent_at: null,
+            viewed_at: null,
+            responded_at: null,
+            notes: null,
+          },
+        ]}
+        projects={[]}
+        invoices={[]}
+      />,
+    )
+
+    expect(screen.queryByText(/1\.200,00/)).not.toBeInTheDocument()
   })
 })

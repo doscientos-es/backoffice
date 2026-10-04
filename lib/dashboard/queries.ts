@@ -97,7 +97,13 @@ function toMyTask(row: Record<string, unknown>): MyTaskRow {
   }
 }
 
-export async function getDashboardKpis(range: DateRange): Promise<DashboardKpis> {
+export async function getDashboardKpis(
+  range: DateRange,
+  access: { showFinance: boolean; showProposalPrices: boolean } = {
+    showFinance: false,
+    showProposalPrices: false,
+  },
+): Promise<DashboardKpis> {
   const supabase = await createServerClient()
   const now = new Date()
   const today = toIsoDate(now)
@@ -124,34 +130,48 @@ export async function getDashboardKpis(range: DateRange): Promise<DashboardKpis>
     countLeads({ from: range.previous.from, to: range.previous.to, status: 'won' }),
     countOpenProposals(range.current),
     countOpenProposals(range.previous),
-    supabase
-      .from('proposals')
-      .select('total')
-      .in('status', ['sent', 'viewed'])
-      .is('deleted_at', null),
+    access.showProposalPrices
+      ? supabase
+          .from('proposals')
+          .select('id')
+          .in('status', ['sent', 'viewed'])
+          .is('deleted_at', null)
+      : Promise.resolve({ data: [] }),
     supabase
       .from('invoices')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'sent')
       .lt('due_date', today)
       .is('deleted_at', null),
-    supabase
-      .from('invoices')
-      .select('total')
-      .gte('issue_date', toIsoDate(range.current.from))
-      .lte('issue_date', toIsoDate(range.current.to))
-      .in('status', ['issued', 'paid', 'overdue'])
-      .is('deleted_at', null),
-    supabase
-      .from('invoices')
-      .select('total')
-      .gte('issue_date', toIsoDate(range.previous.from))
-      .lte('issue_date', toIsoDate(range.previous.to))
-      .in('status', ['issued', 'paid', 'overdue'])
-      .is('deleted_at', null),
+    access.showFinance
+      ? supabase
+          .from('invoices')
+          .select('total')
+          .gte('issue_date', toIsoDate(range.current.from))
+          .lte('issue_date', toIsoDate(range.current.to))
+          .in('status', ['issued', 'paid', 'overdue'])
+          .is('deleted_at', null)
+      : Promise.resolve({ data: [] }),
+    access.showFinance
+      ? supabase
+          .from('invoices')
+          .select('total')
+          .gte('issue_date', toIsoDate(range.previous.from))
+          .lte('issue_date', toIsoDate(range.previous.to))
+          .in('status', ['issued', 'paid', 'overdue'])
+          .is('deleted_at', null)
+      : Promise.resolve({ data: [] }),
   ])
 
-  const pipelineValue = (pipelineRes.data ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0)
+  const proposalIds = (pipelineRes.data ?? []).map((proposal) => proposal.id as string)
+  const pipelinePrices =
+    access.showProposalPrices && proposalIds.length > 0
+      ? await supabase.from('proposal_prices').select('total').in('proposal_id', proposalIds)
+      : { data: [] }
+  const pipelineValue = (pipelinePrices.data ?? []).reduce(
+    (a, row) => a + Number(row.total ?? 0),
+    0,
+  )
   const monthRevenue = (monthRevenueRes.data ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0)
   const monthRevenuePrev = (prevMonthRevenueRes.data ?? []).reduce(
     (a, r) => a + Number(r.total ?? 0),

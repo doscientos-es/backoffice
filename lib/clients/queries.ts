@@ -89,9 +89,7 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
     notDeleted(supabase.from('projects').select('id, name, status').eq('client_id', id))
       .order('created_at', { ascending: false })
       .limit(CLIENT_PROJECTS_LIMIT),
-    notDeleted(
-      supabase.from('proposals').select('id, number, title, status, total').eq('client_id', id),
-    )
+    notDeleted(supabase.from('proposals').select('id, number, title, status').eq('client_id', id))
       .order('created_at', { ascending: false })
       .limit(CLIENT_RELATED_LIMIT),
     notDeleted(
@@ -127,6 +125,18 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
         .eq('client_id', id),
     ).order('name'),
   ])
+
+  const proposalPriceMap = new Map<string, number>()
+  const proposalIds = (proposals ?? []).map((proposal) => proposal.id as string)
+  if (proposalIds.length > 0) {
+    const { data: proposalPrices } = await supabase
+      .from('proposal_prices')
+      .select('proposal_id, total')
+      .in('proposal_id', proposalIds)
+    for (const price of proposalPrices ?? []) {
+      proposalPriceMap.set(price.proposal_id as string, Number(price.total) || 0)
+    }
+  }
 
   return {
     client: {
@@ -176,7 +186,7 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
       number: (p.number as string | null) ?? null,
       title: (p.title as string | null) ?? null,
       status: (p.status as string | null) ?? null,
-      total: p.total == null ? null : Number(p.total),
+      total: proposalPriceMap.get(p.id as string) ?? null,
     })),
     invoices: (invoices ?? []).map((i) => ({
       id: i.id as string,

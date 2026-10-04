@@ -93,7 +93,7 @@ export async function getProjectDetail(
         .order('created_at', { ascending: false })
         .limit(PROJECT_TASKS_LIMIT),
       notDeleted(
-        supabase.from('proposals').select('id, number, title, status, total').eq('project_id', id),
+        supabase.from('proposals').select('id, number, title, status').eq('project_id', id),
       )
         .order('created_at', { ascending: false })
         .limit(PROJECT_RELATED_LIMIT),
@@ -106,6 +106,18 @@ export async function getProjectDetail(
         .order('issue_date', { ascending: false })
         .limit(PROJECT_RELATED_LIMIT),
     ])
+
+  const proposalPriceMap = new Map<string, number>()
+  const proposalIds = (proposals ?? []).map((proposal) => proposal.id as string)
+  if (proposalIds.length > 0) {
+    const { data: proposalPrices } = await supabase
+      .from('proposal_prices')
+      .select('proposal_id, total')
+      .in('proposal_id', proposalIds)
+    for (const price of proposalPrices ?? []) {
+      proposalPriceMap.set(price.proposal_id as string, Number(price.total) || 0)
+    }
+  }
 
   return {
     project: {
@@ -135,7 +147,7 @@ export async function getProjectDetail(
       number: (p.number as string | null) ?? null,
       title: (p.title as string | null) ?? null,
       status: (p.status as string | null) ?? null,
-      total: p.total ?? null,
+      total: proposalPriceMap.get(p.id as string) ?? null,
     })),
     invoices: (invoices ?? []).map((i) => ({
       id: i.id as string,
@@ -215,7 +227,7 @@ export async function getProjectWorkspace(
           .limit(PROJECT_TASKS_LIMIT),
     supabase
       .from('proposals')
-      .select('id, number, title, status, total')
+      .select('id, number, title, status')
       .eq('project_id', id)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
@@ -292,12 +304,27 @@ export async function getProjectWorkspace(
       .order('name'),
   ])
 
+  const proposalPriceMap = new Map<string, number>()
+  const proposalIds = (proposals ?? []).map((proposal) => proposal.id as string)
+  if (proposalIds.length > 0) {
+    const { data: proposalPrices } = await supabase
+      .from('proposal_prices')
+      .select('proposal_id, total')
+      .in('proposal_id', proposalIds)
+    for (const price of proposalPrices ?? []) {
+      proposalPriceMap.set(price.proposal_id as string, Number(price.total) || 0)
+    }
+  }
+
   return {
     project,
     client,
     clients: clientsResult.data ?? [],
     tasks: tasks ?? [],
-    proposals: proposals ?? [],
+    proposals: (proposals ?? []).map((proposal) => ({
+      ...proposal,
+      total: proposalPriceMap.get(proposal.id as string) ?? null,
+    })),
     invoices: invoices ?? [],
     members: members ?? [],
     attachments: attachments ?? [],

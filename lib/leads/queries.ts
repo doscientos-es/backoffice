@@ -344,7 +344,10 @@ async function loadRecentInteractions(leadIds: string[]): Promise<Map<string, Le
   return byLead
 }
 
-export async function getLeadDetail(id: string): Promise<LeadDetailResult | null> {
+export async function getLeadDetail(
+  id: string,
+  { includeProposalPrices = false }: { includeProposalPrices?: boolean } = {},
+): Promise<LeadDetailResult | null> {
   const supabase = await createServerClient()
 
   const [
@@ -428,9 +431,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   const proposalsBuilder = notDeleted(
     supabase
       .from('proposals')
-      .select(
-        'id, number, title, status, total, valid_until, sent_at, viewed_at, responded_at, notes',
-      ),
+      .select('id, number, title, status, valid_until, sent_at, viewed_at, responded_at, notes'),
   )
   const { data: proposalRows } = await (
     linkedClientId
@@ -439,6 +440,18 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
   )
     .order('created_at', { ascending: false })
     .limit(LEAD_RELATED_LIMIT)
+
+  const proposalPriceById = new Map<string, number>()
+  const proposalIds = (proposalRows ?? []).map((proposal) => proposal.id as string)
+  if (includeProposalPrices && proposalIds.length > 0) {
+    const { data: proposalPrices } = await supabase
+      .from('proposal_prices')
+      .select('proposal_id, total')
+      .in('proposal_id', proposalIds)
+    for (const price of proposalPrices ?? []) {
+      proposalPriceById.set(price.proposal_id as string, Number(price.total) || 0)
+    }
+  }
 
   let projectRows: Record<string, unknown>[] = []
   let invoiceRows: Record<string, unknown>[] = []
@@ -494,7 +507,7 @@ export async function getLeadDetail(id: string): Promise<LeadDetailResult | null
       number: (p.number as string | null) ?? null,
       title: (p.title as string | null) ?? null,
       status: (p.status as string | null) ?? null,
-      total: p.total == null ? null : Number(p.total),
+      total: proposalPriceById.get(p.id as string) ?? null,
       valid_until: (p.valid_until as string | null) ?? null,
       sent_at: (p.sent_at as string | null) ?? null,
       viewed_at: (p.viewed_at as string | null) ?? null,

@@ -205,7 +205,8 @@ export async function createSubscriptionFromProposal(
 }
 
 export async function createProposal(formData: FormData): Promise<void> {
-  const user = await requireUser()
+  const user = await requirePermission('proposals.write')
+  await requirePermission('proposals.prices')
 
   const itemsRaw = formData.get('items')?.toString() ?? '[]'
   let items: unknown
@@ -242,7 +243,8 @@ export async function createProposal(formData: FormData): Promise<void> {
 export async function createProposalAction(
   input: unknown,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const user = await requireUser()
+  const user = await requirePermission('proposals.write')
+  await requirePermission('proposals.prices')
 
   const parsed = CreateProposalInput.safeParse(input)
   if (!parsed.success) {
@@ -266,7 +268,8 @@ export async function createProposalAction(
 export async function duplicateProposal(
   input: unknown,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const user = await requireUser()
+  const user = await requirePermission('proposals.write')
+  await requirePermission('proposals.prices')
 
   const parsed = DuplicateProposalInput.safeParse(input)
   if (!parsed.success) {
@@ -277,12 +280,21 @@ export async function duplicateProposal(
   const { data: source, error: readError } = await supabase
     .from('proposals')
     .select(
-      'client_id, lead_id, title, valid_until, notes, context_markdown, problems, solutions, terms, legal_terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_terms, change_management_terms, subtotal, tax_amount, total, currency',
+      'client_id, lead_id, title, valid_until, notes, context_markdown, problems, solutions, terms, legal_terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, change_management_terms, currency',
     )
     .eq('id', parsed.data.id)
     .is('deleted_at', null)
     .maybeSingle()
   if (readError || !source) return { ok: false, error: 'Propuesta no encontrada' }
+
+  const { data: sourcePrices, error: priceError } = await supabase
+    .from('proposal_prices')
+    .select('payment_terms')
+    .eq('proposal_id', parsed.data.id)
+    .maybeSingle()
+  if (priceError || !sourcePrices) {
+    return { ok: false, error: 'No se pudo cargar la información económica de la propuesta' }
+  }
 
   const { data: items, error: itemsErr } = await supabase
     .from('proposal_items')
@@ -316,7 +328,7 @@ export async function duplicateProposal(
       deliverables: source.deliverables,
       acceptance_criteria: source.acceptance_criteria,
       payment_schedule: automaticPaymentTerms ? 'custom' : source.payment_schedule,
-      payment_terms: source.payment_terms ?? automaticPaymentTerms,
+      payment_terms: sourcePrices.payment_terms ?? automaticPaymentTerms,
       change_management_terms: source.change_management_terms,
       created_by: user.id,
     })
@@ -716,7 +728,8 @@ async function renderProposalPreview(
 
 /** Renders the exact proposal email for review without delivering it. */
 export async function previewProposalEmail(input: unknown): Promise<ProposalEmailPreviewResult> {
-  await requireUser()
+  await requirePermission('proposals.write')
+  await requirePermission('proposals.prices')
 
   const parsed = SendProposalPreviewInput.safeParse(input)
   if (!parsed.success) {
@@ -727,20 +740,26 @@ export async function previewProposalEmail(input: unknown): Promise<ProposalEmai
   const { data: proposal, error } = await supabase
     .from('proposals')
     .select(
-      'id, number, title, total, portal_token, valid_until, clients(name, email, phone, lead_id, leads(language)), leads(name, email, phone, language)',
+      'id, number, title, portal_token, valid_until, clients(name, email, phone, lead_id, leads(language)), leads(name, email, phone, language)',
     )
     .eq('id', parsed.data.id)
     .is('deleted_at', null)
     .maybeSingle()
   if (error || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
 
-  const rendered = await renderProposalPreview(
-    supabase,
-    proposal as unknown as ProposalEmailData,
-    parsed.data.message,
-  )
+  const { data: prices } = await supabase
+    .from('proposal_prices')
+    .select('total')
+    .eq('proposal_id', parsed.data.id)
+    .maybeSingle()
+  if (!prices) return { ok: false, error: 'No se pudo cargar el importe de la propuesta' }
+  const proposalEmailData = {
+    ...proposal,
+    total: Number(prices.total),
+  } as unknown as ProposalEmailData
+
+  const rendered = await renderProposalPreview(supabase, proposalEmailData, parsed.data.message)
   if (!rendered.ok) return rendered
-  const proposalEmailData = proposal as unknown as ProposalEmailData
   const client = proposalEmailData.clients
   const lead = proposalEmailData.leads
   return {
@@ -760,7 +779,8 @@ export async function previewProposalEmail(input: unknown): Promise<ProposalEmai
  * Idempotent for already-sent proposals.
  */
 export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult> {
-  const user = await requireUser()
+  const user = await requirePermission('proposals.write')
+  await requirePermission('proposals.prices')
 
   const parsed = SendProposalPreviewInput.safeParse(input)
   if (!parsed.success) {
@@ -772,17 +792,27 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   const { data: proposal, error: readError } = await supabase
     .from('proposals')
     .select(
-      'id, number, title, total, status, portal_token, valid_until, sent_at, lead_id, client_id, clients(name, email, phone, lead_id, leads(language)), leads(name, email, phone, language)',
+      'id, number, title, status, portal_token, valid_until, sent_at, lead_id, client_id, clients(name, email, phone, lead_id, leads(language)), leads(name, email, phone, language)',
     )
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
   if (readError || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
 
+  const { data: prices } = await supabase
+    .from('proposal_prices')
+    .select('total')
+    .eq('proposal_id', id)
+    .maybeSingle()
+  if (!prices) return { ok: false, error: 'No se pudo cargar el importe de la propuesta' }
+
   // Recipient: prefer the explicit override, otherwise fall back to the
   // client email and finally to the lead email when the proposal targets a
   // lead that hasn't yet been upgraded to a client.
-  const proposalEmailData = proposal as unknown as ProposalEmailData
+  const proposalEmailData = {
+    ...proposal,
+    total: Number(prices.total),
+  } as unknown as ProposalEmailData
   const client = proposalEmailData.clients
   const lead = proposalEmailData.leads
   const recipient = overrideTo ?? client?.email ?? lead?.email ?? null

@@ -12,6 +12,7 @@ import {
 import { PasskeyStatusCard } from '@/components/security/passkey-status-card'
 import { SectionBoundary } from '@/components/ui/error-boundary'
 import { canViewFinance, requireUser } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import { hasRegisteredPasskey } from '@/lib/security/webauthn'
 import { getGreeting, parseDashboardRange } from '@/lib/utils/date'
 
@@ -49,6 +50,7 @@ export default async function InicioPage({ searchParams }: PageProps) {
   const greeting = getGreeting()
   const firstName = user.name.split(' ')[0]
   const showFinance = canViewFinance(user.role)
+  const showProposalPrices = can(user.role, 'proposals.prices')
   const today = new Intl.DateTimeFormat('es-ES', {
     weekday: 'long',
     day: 'numeric',
@@ -132,7 +134,11 @@ export default async function InicioPage({ searchParams }: PageProps) {
             pending={<KpiGridSkeleton />}
             label="No se pudieron cargar los KPIs"
           >
-            <KpiGrid range={range} showFinance={showFinance} />
+            <KpiGrid
+              range={range}
+              showFinance={showFinance}
+              showProposalPrices={showProposalPrices}
+            />
           </SectionBoundary>
 
           {showFinance ? (

@@ -8,9 +8,19 @@ const db: {
   myLeads: unknown[]
   unassigned: unknown[]
   proposals: unknown[]
+  proposalPrices: unknown[]
   invoices: unknown[]
   payments: unknown[]
-} = { tasks: [], myLeads: [], unassigned: [], proposals: [], invoices: [], payments: [] }
+} = {
+  tasks: [],
+  myLeads: [],
+  unassigned: [],
+  proposals: [],
+  proposalPrices: [],
+  invoices: [],
+  payments: [],
+}
+const proposalPriceReads: string[] = []
 const filters: Array<{ table: string; column: string; value: unknown }> = []
 const invoiceDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value: unknown }> = []
 const paymentDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value: unknown }> = []
@@ -24,6 +34,7 @@ const paymentDateFilters: Array<{ operator: 'gte' | 'lte'; column: string; value
 vi.mock('@/lib/supabase/server', () => ({
   createServerClient: () => ({
     from: (table: string) => {
+      if (table === 'proposal_prices') proposalPriceReads.push(table)
       let assignedToMode: 'owned' | 'unassigned' | null = null
       let isCountQuery = false
       let invoiceFrom: string | null = null
@@ -107,6 +118,7 @@ vi.mock('@/lib/supabase/server', () => ({
           if (isCountQuery) return { data: null, count: 0, error: null }
           if (table === 'tasks') return { data: db.tasks, error: null }
           if (table === 'proposals') return { data: db.proposals, error: null }
+          if (table === 'proposal_prices') return { data: db.proposalPrices, error: null }
           if (table === 'invoices') return { data: resolveInvoices(), error: null }
           if (table === 'invoice_payments') return { data: resolvePayments(), error: null }
           if (assignedToMode === 'unassigned') return { data: db.unassigned, error: null }
@@ -122,13 +134,15 @@ vi.mock('@/lib/supabase/server', () => ({
               ? { data: db.tasks, error: null }
               : table === 'proposals'
                 ? { data: db.proposals, error: null }
-                : table === 'invoices'
-                  ? { data: resolveInvoices(), error: null }
-                  : table === 'invoice_payments'
-                    ? { data: resolvePayments(), error: null }
-                    : assignedToMode === 'unassigned'
-                      ? { data: db.unassigned, error: null }
-                      : { data: db.myLeads, error: null }
+                : table === 'proposal_prices'
+                  ? { data: db.proposalPrices, error: null }
+                  : table === 'invoices'
+                    ? { data: resolveInvoices(), error: null }
+                    : table === 'invoice_payments'
+                      ? { data: resolvePayments(), error: null }
+                      : assignedToMode === 'unassigned'
+                        ? { data: db.unassigned, error: null }
+                        : { data: db.myLeads, error: null }
           Promise.resolve(result).then(resolve)
         },
         update: () => chain,
@@ -327,6 +341,9 @@ describe('getDashboardKpis', () => {
   beforeEach(() => {
     invoiceDateFilters.length = 0
     paymentDateFilters.length = 0
+    proposalPriceReads.length = 0
+    db.proposals = []
+    db.proposalPrices = []
     vi.resetModules()
   })
 
@@ -336,10 +353,13 @@ describe('getDashboardKpis', () => {
 
   it('filters revenue by the selected current and comparison windows', async () => {
     const { getDashboardKpis } = await import('@/lib/dashboard/queries')
-    await getDashboardKpis({
-      current: { from: new Date('2026-05-08T12:00:00Z'), to: new Date('2026-05-15T12:00:00Z') },
-      previous: { from: new Date('2026-05-01T12:00:00Z'), to: new Date('2026-05-08T12:00:00Z') },
-    })
+    await getDashboardKpis(
+      {
+        current: { from: new Date('2026-05-08T12:00:00Z'), to: new Date('2026-05-15T12:00:00Z') },
+        previous: { from: new Date('2026-05-01T12:00:00Z'), to: new Date('2026-05-08T12:00:00Z') },
+      },
+      { showFinance: true, showProposalPrices: true },
+    )
 
     expect(invoiceDateFilters).toEqual([
       { operator: 'gte', column: 'issue_date', value: '2026-05-08' },
@@ -347,6 +367,16 @@ describe('getDashboardKpis', () => {
       { operator: 'gte', column: 'issue_date', value: '2026-05-01' },
       { operator: 'lte', column: 'issue_date', value: '2026-05-08' },
     ])
+  })
+
+  it('does not query protected proposal prices without the permission', async () => {
+    const { getDashboardKpis } = await import('@/lib/dashboard/queries')
+    await getDashboardKpis({
+      current: { from: new Date('2026-05-08T12:00:00Z'), to: new Date('2026-05-15T12:00:00Z') },
+      previous: { from: new Date('2026-05-01T12:00:00Z'), to: new Date('2026-05-08T12:00:00Z') },
+    })
+
+    expect(proposalPriceReads).toEqual([])
   })
 })
 
