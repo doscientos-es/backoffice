@@ -30,7 +30,7 @@ export function MobileNav({ user }: { user: CurrentUser }) {
             type="button"
             aria-label="Abrir menú"
             aria-expanded={open}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground active:scale-95"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -50,7 +50,7 @@ export function MobileNav({ user }: { user: CurrentUser }) {
             <button
               type="button"
               aria-label="Cerrar menú"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground active:scale-95"
               onClick={() => setOpen(false)}
             >
               <X className="h-4 w-4" />

@@ -8,7 +8,6 @@ import {
   DropdownMenuTrigger,
 } from '@doscientos/ui'
 import { Briefcase, FileText, ListChecks, Plus, User, Users } from 'lucide-react'
-import Link from 'next/link'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -27,7 +26,7 @@ export function QuickCreateButton() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-end px-4 md:px-6">
+    <div className="app-mobile-quick-create pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-end px-4 md:px-6">
       <div className="pointer-events-auto">
         <DropdownMenuTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
           <Button

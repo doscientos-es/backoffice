@@ -412,6 +412,114 @@ table,
   display: flex;
 }
 
+.app-mobile-tabbar {
+  display: grid;
+}
+
+@media (max-width: 47.999rem) {
+  .app-mobile-header {
+    box-sizing: border-box;
+    height: calc(3.5rem + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    background: linear-gradient(
+      to bottom,
+      #2a4227 0,
+      #2a4227 env(safe-area-inset-top),
+      var(--background) env(safe-area-inset-top),
+      var(--background) 100%
+    );
+  }
+
+  .app-shell > div > main {
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+
+  .app-mobile-tabbar {
+    z-index: 30;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.25rem max(0.25rem, env(safe-area-inset-right)) env(safe-area-inset-bottom)
+      max(0.25rem, env(safe-area-inset-left));
+    border-top: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+    background: color-mix(in oklab, var(--background) 92%, transparent);
+    box-shadow: 0 -8px 24px rgb(23 23 23 / 7%);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+
+  .app-mobile-tab {
+    display: flex;
+    min-width: 0;
+    min-height: 3.5rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    border-radius: 0.875rem;
+    color: var(--muted-foreground);
+    font-size: 0.6875rem;
+    font-weight: 550;
+    line-height: 1;
+    text-decoration: none;
+    transition:
+      background-color 140ms ease,
+      color 140ms ease,
+      transform 140ms ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .app-mobile-tab svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    stroke-width: 1.8;
+  }
+
+  .app-mobile-tab[aria-current='page'] {
+    background: color-mix(in oklab, var(--primary) 10%, transparent);
+    color: var(--primary);
+  }
+
+  .app-mobile-tab:active {
+    transform: scale(0.96);
+  }
+
+  .app-mobile-quick-create {
+    bottom: calc(4rem + env(safe-area-inset-bottom) + 0.75rem);
+  }
+
+  :where(button, a, [role='button']) {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  input:not([type]),
+  input:is(
+    [type='text'],
+    [type='search'],
+    [type='email'],
+    [type='password'],
+    [type='tel'],
+    [type='url'],
+    [type='number'],
+    [type='date'],
+    [type='datetime-local'],
+    [type='time'],
+    [type='month'],
+    [type='week']
+  ),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 @media (min-width: 48rem) {
   .app-shell {
     flex-direction: row;
@@ -422,7 +530,14 @@ table,
   }
 
   .app-mobile-header,
-  .app-mobile-nav {
+  .app-mobile-nav,
+  .app-mobile-tabbar {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-mobile-tab {
+    transition: none;
   }
 }
