@@ -140,7 +140,13 @@ describe('GET /p/proposal/[token]/pdf', () => {
       signer_role: 'Administradora',
       accepted_at: '2026-09-10T12:34:56.000Z',
       document_hash: 'a'.repeat(64),
+      consent_text: 'Acepto la propuesta y solicito inicio anticipado.',
       document_snapshot: {
+        parties: {
+          provider: { name: 'doscientos', nif: 'B12345678', address: 'Barcelona' },
+          client: { name: 'Acme SL', nif: 'B22222222', address: 'Madrid' },
+        },
+        contract: { client_capacity: 'consumer', consumer_early_start_requested: true },
         proposal: {
           number: 'P-001',
           title: 'Título firmado',
@@ -172,6 +178,11 @@ describe('GET /p/proposal/[token]/pdf', () => {
       expect.objectContaining({
         title: 'Título firmado',
         recipientName: 'Acme SL',
+        recipientNif: 'B22222222',
+        recipientAddress: 'Madrid',
+        companyName: 'doscientos',
+        companyNif: 'B12345678',
+        companyAddress: 'Barcelona',
         legalTerms: 'Condiciones firmadas',
         items: [expect.objectContaining({ description: 'Implementación firmada' })],
         acceptance: {
@@ -179,6 +190,9 @@ describe('GET /p/proposal/[token]/pdf', () => {
           signerRole: 'Administradora',
           acceptedAt: '2026-09-10T12:34:56.000Z',
           documentHash: 'a'.repeat(64),
+          consentText: 'Acepto la propuesta y solicito inicio anticipado.',
+          clientCapacity: 'consumer',
+          consumerEarlyStartRequested: true,
         },
       }),
     )

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { BackLink } from '@/components/layout/back-link'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent } from '@/components/ui/card'
-import { requirePageRole } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
 import { recurringAmount } from '@/lib/proposals/recurring'
 import { SUBSCRIPTION_BILLING_CYCLE, type SubscriptionBillingCycle } from '@/lib/status'
@@ -28,7 +28,7 @@ type ProposalRow = {
 }
 
 export default async function CreateSubscriptionFromProposalPage() {
-  await requirePageRole(['owner', 'admin'])
+  await requirePagePermission('finance.write')
   const supabase = await createServerClient()
 
   const [{ data: proposalData, error }, { data: linkedData }] = await Promise.all([

@@ -4,10 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { TeamInviteEmail } from '@/components/email'
-import { type MemberRole, requireRole } from '@/lib/auth'
+import { type AccessScope, type MemberRole, requireRole } from '@/lib/auth'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
 import { serverEnv } from '@/lib/env'
+import { ROLE_OPTIONS } from '@/lib/permissions'
 import { consumeUserVerification } from '@/lib/security/user-verification'
 import { userVerificationScope } from '@/lib/security/user-verification-scope'
 import { createAdminClient, generateAuthLink } from '@/lib/supabase/admin'
@@ -15,31 +16,27 @@ import { createServerClient } from '@/lib/supabase/server'
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 
-const ASSIGNABLE_ROLES = ['owner', 'admin', 'member', 'viewer'] as const
+const ASSIGNABLE_ROLES = ROLE_OPTIONS.map((option) => option.value) as [MemberRole, ...MemberRole[]]
 const RoleEnum = z.enum(ASSIGNABLE_ROLES)
+const AccessScopeEnum = z.enum(['all', 'assigned'])
 
 const InviteInput = z.object({
   name: z.string().trim().max(160, 'El nombre no puede superar 160 caracteres').optional(),
   email: z.string().email('Email no válido').max(200),
   role: RoleEnum,
+  accessScope: AccessScopeEnum.default('assigned'),
 })
 
 const RoleInput = z.object({
   memberId: z.string().uuid(),
   role: RoleEnum,
+  accessScope: AccessScopeEnum.optional(),
 })
 
 const MemberIdInput = z.object({ memberId: z.string().uuid() })
 
-const ROLE_LABELS: Record<string, string> = {
-  owner: 'Propietario',
-  admin: 'Administrador',
-  member: 'Miembro',
-  viewer: 'Solo lectura',
-}
-
 function roleLabel(role: string): string {
-  return ROLE_LABELS[role] ?? role
+  return ROLE_OPTIONS.find((option) => option.value === role)?.label ?? role
 }
 
 function canAssignRole(actor: MemberRole, target: MemberRole): boolean {
@@ -95,6 +92,7 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
     name: formData.get('name')?.toString() ?? '',
     email: formData.get('email')?.toString().trim().toLowerCase() ?? '',
     role: formData.get('role')?.toString() ?? 'member',
+    accessScope: formData.get('accessScope')?.toString() ?? 'assigned',
   })
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? 'Datos no válidos' }
@@ -104,6 +102,7 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
   }
 
   const { email, role } = parsed.data
+  const accessScope = role === 'owner' || role === 'admin' ? 'all' : parsed.data.accessScope
   // Name is optional: fall back to the email local-part so the member always
   // has a readable label until they set their real name during onboarding.
   const name = parsed.data.name || email.split('@')[0]
@@ -182,6 +181,7 @@ export async function inviteTeamMember(formData: FormData): Promise<ActionResult
       email,
       name,
       role,
+      access_scope: accessScope,
       deleted_at: null,
       updated_at: new Date().toISOString(),
     },
@@ -277,25 +277,36 @@ export async function updateMemberRole(input: unknown): Promise<ActionResult> {
   }
 
   const supabase = await createServerClient()
-  const { data: target } = await supabase
+  const { data: target, error: targetError } = await supabase
     .from('team_members')
-    .select('role')
+    .select('role, deleted_at')
     .eq('id', parsed.data.memberId)
     .maybeSingle()
+  if (targetError) return { ok: false, error: targetError.message }
+  if (!target) return { ok: false, error: 'Miembro no encontrado.' }
+  if (target.deleted_at) return { ok: false, error: 'No puedes modificar un miembro desactivado.' }
   if (target?.role === 'owner' && actor.role !== 'owner') {
     return { ok: false, error: 'Solo un propietario puede modificar a otro propietario.' }
   }
+  const accessScope: AccessScope =
+    parsed.data.role === 'owner' || parsed.data.role === 'admin'
+      ? 'all'
+      : (parsed.data.accessScope ?? 'assigned')
   await consumeUserVerification(
     actor.id,
     userVerificationScope(
       'team.member.role.update',
-      `member:${parsed.data.memberId}:role:${parsed.data.role}`,
+      `member:${parsed.data.memberId}:role:${parsed.data.role}:scope:${accessScope}`,
     ),
   )
 
   const { error } = await supabase
     .from('team_members')
-    .update({ role: parsed.data.role, updated_at: new Date().toISOString() })
+    .update({
+      role: parsed.data.role,
+      access_scope: accessScope,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', parsed.data.memberId)
   if (error) return { ok: false, error: error.message }
 

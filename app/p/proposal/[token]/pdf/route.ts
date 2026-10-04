@@ -80,7 +80,7 @@ export async function GET(
     .maybeSingle()
   const { data: acceptance } = await admin
     .from('proposal_acceptances')
-    .select('signer_name, signer_role, accepted_at, document_hash, document_snapshot')
+    .select('signer_name, signer_role, accepted_at, document_hash, consent_text, document_snapshot')
     .eq('proposal_id', proposal.id as string)
     .order('accepted_at', { ascending: false })
     .limit(1)
@@ -90,6 +90,14 @@ export async function GET(
     version?: string
     proposal?: Record<string, unknown>
     fiscal_data?: { name?: string } | null
+    parties?: {
+      provider?: { name?: string | null; nif?: string | null; address?: string | null }
+      client?: { name?: string | null; nif?: string | null; address?: string | null }
+    } | null
+    contract?: {
+      client_capacity?: 'business' | 'consumer'
+      consumer_early_start_requested?: boolean
+    } | null
   } | null
   const signedProposal = signedSnapshot?.proposal
   const documentSource = signedProposal ?? (proposal as Record<string, unknown>)
@@ -180,7 +188,17 @@ export async function GET(
     number: (documentSource.number as string | null) ?? null,
     title: documentSource.title as string,
     recipientName:
-      signedSnapshot?.fiscal_data?.name ?? client?.name ?? lead?.company ?? lead?.name ?? 'Cliente',
+      signedSnapshot?.parties?.client?.name ??
+      signedSnapshot?.fiscal_data?.name ??
+      client?.name ??
+      lead?.company ??
+      lead?.name ??
+      'Cliente',
+    recipientNif:
+      signedSnapshot?.parties?.client?.nif ??
+      (signedSnapshot?.fiscal_data as { nif?: string } | null)?.nif ??
+      null,
+    recipientAddress: signedSnapshot?.parties?.client?.address ?? null,
     validUntil: (documentSource.valid_until as string | null) ?? null,
     context: (documentSource.context_markdown as string | null) ?? null,
     problems: parseKeyPoints(documentSource.problems),
@@ -200,8 +218,11 @@ export async function GET(
     maintenanceOffer,
     maintenanceSelectedPlanId,
     portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${token}?lang=${language}`,
-    companyName: (settings?.company_name as string | null) ?? null,
-    companyNif: (settings?.company_nif as string | null) ?? null,
+    companyName:
+      signedSnapshot?.parties?.provider?.name ?? (settings?.company_name as string | null) ?? null,
+    companyNif:
+      signedSnapshot?.parties?.provider?.nif ?? (settings?.company_nif as string | null) ?? null,
+    companyAddress: signedSnapshot?.parties?.provider?.address ?? null,
     iban: (settings?.iban as string | null) ?? null,
     acceptance:
       proposal.status === 'accepted' && acceptance
@@ -210,6 +231,10 @@ export async function GET(
             signerRole: (acceptance.signer_role as string | null) ?? null,
             acceptedAt: acceptance.accepted_at as string,
             documentHash: acceptance.document_hash as string,
+            consentText: acceptance.consent_text as string,
+            clientCapacity: signedSnapshot?.contract?.client_capacity ?? null,
+            consumerEarlyStartRequested:
+              signedSnapshot?.contract?.consumer_early_start_requested ?? false,
           }
         : null,
     acceptedWithoutSignature: proposal.status === 'accepted' && !acceptance,

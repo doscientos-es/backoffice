@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
-import { type MemberRole, requirePageRole } from '@/lib/auth'
+import { type AccessScope, type MemberRole, requirePageRole } from '@/lib/auth'
+import { effectiveAccessScope, ROLE_OPTIONS } from '@/lib/permissions'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, memberAvatarUrl, relativeTime } from '@/lib/utils'
@@ -19,17 +20,17 @@ export const dynamic = 'force-dynamic'
 
 const INACTIVE_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000
 
-const ROLE_LABELS: Record<MemberRole, string> = {
-  owner: 'Propietario',
-  admin: 'Administrador',
-  member: 'Miembro',
-  viewer: 'Solo lectura',
-}
+const ROLE_LABELS = Object.fromEntries(
+  ROLE_OPTIONS.map(({ value, label }) => [value, label]),
+) as Record<MemberRole, string>
 
 const ROLE_VARIANT: Record<MemberRole, 'default' | 'info' | 'neutral'> = {
   owner: 'default',
   admin: 'info',
   member: 'neutral',
+  sales: 'neutral',
+  delivery: 'neutral',
+  accountant: 'neutral',
   viewer: 'neutral',
 }
 
@@ -49,6 +50,7 @@ type MemberRow = {
   name: string
   email: string
   role: MemberRole
+  access_scope: AccessScope
   created_at: string
   deleted_at: string | null
   avatar_url: string | null
@@ -74,7 +76,7 @@ export default async function TeamSettingsPage() {
     supabase
       .from('team_members')
       .select(
-        'id, name, email, role, created_at, deleted_at, avatar_url, github_handle, job_title, phone, contact_email, email_alias, leads_assignable',
+        'id, name, email, role, access_scope, created_at, deleted_at, avatar_url, github_handle, job_title, phone, contact_email, email_alias, leads_assignable',
       )
       .order('deleted_at', { ascending: true, nullsFirst: true })
       .order('created_at', { ascending: true }),
@@ -134,7 +136,8 @@ export default async function TeamSettingsPage() {
                 <thead className="bg-surface text-left text-xs tracking-wide text-(--text-muted) uppercase">
                   <tr>
                     <th className="px-5 py-2 font-medium">Miembro</th>
-                    <th className="px-5 py-2 font-medium">Rol</th>
+                    <th className="px-5 py-2 font-medium">Rol y permisos</th>
+                    <th className="px-5 py-2 font-medium">Alcance</th>
                     <th className="px-5 py-2 font-medium">Estado</th>
                     <th className="px-5 py-2 font-medium whitespace-nowrap">Incorporación</th>
                     <th
@@ -201,7 +204,19 @@ export default async function TeamSettingsPage() {
                           </div>
                         </td>
                         <td className="px-5 py-2.5 align-middle">
-                          <Badge variant={ROLE_VARIANT[m.role]}>{ROLE_LABELS[m.role]}</Badge>
+                          <div className="flex flex-col items-start gap-1">
+                            <Badge variant={ROLE_VARIANT[m.role]}>{ROLE_LABELS[m.role]}</Badge>
+                            <span className="max-w-52 text-xs text-(--text-muted)">
+                              {ROLE_OPTIONS.find((option) => option.value === m.role)?.description}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-2.5 align-middle">
+                          <Badge variant="neutral">
+                            {effectiveAccessScope(m.role, m.access_scope) === 'all'
+                              ? 'Todos'
+                              : 'Asignados'}
+                          </Badge>
                         </td>
                         <td className="px-5 py-2.5 align-middle">
                           {isDeactivated ? (
@@ -237,6 +252,7 @@ export default async function TeamSettingsPage() {
                             memberId={m.id}
                             memberEmail={m.email}
                             role={m.role}
+                            accessScope={m.access_scope}
                             isSelf={isSelf}
                             isDeactivated={isDeactivated}
                             isPending={isPending}

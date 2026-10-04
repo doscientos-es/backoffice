@@ -232,6 +232,8 @@ export type ProposalPdfData = {
   number: string | null
   title: string
   recipientName: string
+  recipientNif?: string | null
+  recipientAddress?: string | null
   validUntil: string | null
   context: string | null
   problems: KeyPoint[]
@@ -253,12 +255,16 @@ export type ProposalPdfData = {
   portalUrl: string
   companyName: string | null
   companyNif?: string | null
+  companyAddress?: string | null
   iban: string | null
   acceptance?: {
     signerName: string
     signerRole: string | null
     acceptedAt: string
     documentHash: string
+    consentText?: string | null
+    clientCapacity?: 'business' | 'consumer' | null
+    consumerEarlyStartRequested?: boolean
   } | null
   acceptedWithoutSignature?: boolean
 }
@@ -486,6 +492,29 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
       : en
         ? 'General and specific terms'
         : 'Condiciones generales y particulares',
+    parties: ca ? 'Parts del contracte' : en ? 'Contracting parties' : 'Partes del contrato',
+    provider: ca ? 'Prestador' : en ? 'Service provider' : 'Prestador del servicio',
+    client: ca ? 'Client' : en ? 'Client' : 'Cliente',
+    taxId: ca ? 'NIF' : en ? 'Tax ID' : 'NIF',
+    address: ca ? 'Adreça' : en ? 'Address' : 'Domicili',
+    capacity: ca ? 'Capacitat del client' : en ? 'Client capacity' : 'Condició del cliente',
+    business: ca
+      ? 'Empresa o professional'
+      : en
+        ? 'Business or professional'
+        : 'Empresa o profesional',
+    consumer: ca ? 'Consumidor' : en ? 'Consumer' : 'Consumidor',
+    earlyStart: ca
+      ? 'Inici anticipat sol·licitat expressament durant el termini de desistiment.'
+      : en
+        ? 'Early commencement during the withdrawal period expressly requested.'
+        : 'Inicio anticipado durante el plazo de desistimiento solicitado expresamente.',
+    standardStart: ca
+      ? 'No s’ha sol·licitat l’inici anticipat; els serveis començaran després del termini de desistiment.'
+      : en
+        ? 'Early commencement was not requested; services begin after the withdrawal period.'
+        : 'No se ha solicitado el inicio anticipado; los servicios comenzarán tras el plazo de desistimiento.',
+    declaration: ca ? 'Declaració acceptada' : en ? 'Accepted declaration' : 'Declaración aceptada',
   }
   const validUntil = date(data.validUntil)
   const hasRecurring = data.items.some((item) => item.billingCycle && item.billingCycle !== 'none')
@@ -583,6 +612,34 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             ) : null}
           </View>
         ) : null}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>{copy.parties}</Text>
+          <View style={styles.point}>
+            <Text style={styles.pointTitle}>{copy.provider}</Text>
+            <Text style={styles.pointText}>
+              {[
+                data.companyName,
+                data.companyNif ? `${copy.taxId}: ${data.companyNif}` : null,
+                data.companyAddress ? `${copy.address}: ${data.companyAddress}` : null,
+              ]
+                .filter(Boolean)
+                .join('\n')}
+            </Text>
+          </View>
+          <View style={styles.point}>
+            <Text style={styles.pointTitle}>{copy.client}</Text>
+            <Text style={styles.pointText}>
+              {[
+                data.recipientName,
+                data.recipientNif ? `${copy.taxId}: ${data.recipientNif}` : null,
+                data.recipientAddress ? `${copy.address}: ${data.recipientAddress}` : null,
+              ]
+                .filter(Boolean)
+                .join('\n')}
+            </Text>
+          </View>
+        </View>
 
         <View
           style={styles.section}
@@ -707,7 +764,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
         ) : null}
         {data.acceptance ? (
-          <View style={styles.acceptance} break wrap={false}>
+          <View style={styles.acceptance} break>
             <Text style={styles.sectionLabel}>{copy.acceptance}</Text>
             <Text style={[styles.sectionTitle, { fontSize: 15 }]}>{copy.signed}</Text>
             <Text style={styles.body}>
@@ -719,6 +776,22 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             <Text style={styles.body}>
               {`Emisor: ${data.companyName ?? 'doscientos'}${data.companyNif ? ` · NIF ${data.companyNif}` : ''}`}
             </Text>
+            {data.acceptance.clientCapacity ? (
+              <Text style={styles.body}>
+                {`${copy.capacity}: ${data.acceptance.clientCapacity === 'consumer' ? copy.consumer : copy.business}`}
+              </Text>
+            ) : null}
+            {data.acceptance.clientCapacity === 'consumer' ? (
+              <Text style={styles.body}>
+                {data.acceptance.consumerEarlyStartRequested ? copy.earlyStart : copy.standardStart}
+              </Text>
+            ) : null}
+            {data.acceptance.consentText ? (
+              <>
+                <Text style={[styles.pointTitle, { marginTop: 10 }]}>{copy.declaration}</Text>
+                <Text style={styles.pointText}>{data.acceptance.consentText}</Text>
+              </>
+            ) : null}
             <Text
               style={styles.acceptanceHash}
             >{`Huella SHA-256 del documento aceptado: ${data.acceptance.documentHash}`}</Text>

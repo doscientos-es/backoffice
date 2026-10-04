@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
-import { requireRole } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { deliveryAcceptanceHash, deliveryNoteSnapshot } from '@/lib/delivery-acceptance'
 import { scopedLogger } from '@/lib/logger'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
@@ -22,7 +22,7 @@ const IdInput = z.object({ id: z.string().uuid() })
  * the client can sign.
  */
 export async function createDeliveryNote(input: unknown): Promise<ActionResult> {
-  const user = await requireRole(['owner', 'admin', 'member'])
+  const user = await requirePermission('projects.write')
   const parsed = IdInput.safeParse(input)
   if (!parsed.success) return { ok: false, error: 'ID de propuesta no válido' }
   const proposalId = parsed.data.id
@@ -118,7 +118,7 @@ export async function createDeliveryNote(input: unknown): Promise<ActionResult> 
 
 /** Voids a pending delivery note so its link can no longer be signed. */
 export async function cancelDeliveryNote(input: unknown): Promise<ActionResult> {
-  const user = await requireRole(['owner', 'admin', 'member'])
+  const user = await requirePermission('projects.write')
   const parsed = IdInput.safeParse(input)
   if (!parsed.success) return { ok: false, error: 'ID de albarán no válido' }
 

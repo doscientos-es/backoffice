@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent } from '@/components/ui/card'
-import { requirePageRole } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
 import { getExpenseDetail, getExpenseVendorSuggestions } from '@/lib/finance/queries'
 import { createServerClient } from '@/lib/supabase/server'
 
@@ -16,7 +16,7 @@ export default async function NewExpensePage({
 }: {
   searchParams: Promise<{ from?: string }>
 }) {
-  await requirePageRole(['owner', 'admin'])
+  await requirePagePermission('finance.write')
   const { from } = await searchParams
 
   const supabase = await createServerClient()

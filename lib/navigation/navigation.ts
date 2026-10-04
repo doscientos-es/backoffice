@@ -24,20 +24,19 @@ import {
 import type { ComponentType } from 'react'
 
 import type { MemberRole } from '@/lib/auth'
+import { can, type PermissionKey } from '@/lib/permissions'
 
 export type NavigationItem = {
   href: string
   label: string
   icon: ComponentType<{ className?: string }>
-  allowedRoles?: MemberRole[]
+  requires?: PermissionKey
 }
 
 export type NavigationGroup = {
   label?: string
   items: NavigationItem[]
 }
-
-const ADMIN_ROLES: MemberRole[] = ['owner', 'admin']
 
 /** Single source of truth for sidebar, mobile drawer and command palette. */
 export const NAVIGATION_GROUPS: NavigationGroup[] = [
@@ -55,50 +54,50 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
   {
     label: 'Comercial',
     items: [
-      { href: '/leads', label: 'Leads', icon: Inbox },
-      { href: '/leads/recovery', label: 'Repesca', icon: LifeBuoy },
-      { href: '/clients', label: 'Clientes', icon: Users },
-      { href: '/proposals', label: 'Propuestas', icon: FileSignature },
+      { href: '/leads', label: 'Leads', icon: Inbox, requires: 'leads.read' },
+      { href: '/leads/recovery', label: 'Repesca', icon: LifeBuoy, requires: 'leads.read' },
+      { href: '/clients', label: 'Clientes', icon: Users, requires: 'clients.read' },
+      { href: '/proposals', label: 'Propuestas', icon: FileSignature, requires: 'proposals.read' },
     ],
   },
   {
     label: 'Entrega',
     items: [
-      { href: '/projects', label: 'Proyectos', icon: FolderKanban },
-      { href: '/webs', label: 'Webs', icon: Globe, allowedRoles: ADMIN_ROLES },
+      { href: '/projects', label: 'Proyectos', icon: FolderKanban, requires: 'projects.read' },
+      { href: '/webs', label: 'Webs', icon: Globe, requires: 'marketing.read' },
     ],
   },
   {
     label: 'Finanzas',
     items: [
-      { href: '/invoices', label: 'Facturas', icon: Receipt, allowedRoles: ADMIN_ROLES },
-      { href: '/subscriptions', label: 'Suscripciones', icon: Repeat, allowedRoles: ADMIN_ROLES },
-      { href: '/finance', label: 'Finanzas', icon: Wallet, allowedRoles: ADMIN_ROLES },
+      { href: '/invoices', label: 'Facturas', icon: Receipt, requires: 'finance.read' },
+      { href: '/subscriptions', label: 'Suscripciones', icon: Repeat, requires: 'finance.read' },
+      { href: '/finance', label: 'Finanzas', icon: Wallet, requires: 'finance.read' },
       {
         href: '/finance/portfolio',
         label: 'Portfolio',
         icon: BarChart3,
-        allowedRoles: ADMIN_ROLES,
+        requires: 'finance.read',
       },
     ],
   },
   {
     label: 'Growth',
     items: [
-      { href: '/marketing', label: 'Publicidad', icon: Megaphone, allowedRoles: ADMIN_ROLES },
+      { href: '/marketing', label: 'Publicidad', icon: Megaphone, requires: 'marketing.read' },
       {
         href: '/marketing/newsletters',
         label: 'Newsletters',
         icon: Mail,
-        allowedRoles: ADMIN_ROLES,
+        requires: 'marketing.read',
       },
       {
         href: '/marketing/events',
         label: 'Eventos',
         icon: MousePointerClick,
-        allowedRoles: ADMIN_ROLES,
+        requires: 'marketing.read',
       },
-      { href: '/social', label: 'Social', icon: Share2, allowedRoles: ADMIN_ROLES },
+      { href: '/social', label: 'Social', icon: Share2, requires: 'marketing.read' },
     ],
   },
   {
@@ -106,8 +105,8 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
     items: [
       { href: '/internal-docs', label: 'Docs internos', icon: Archive },
       { href: '/brand', label: 'Marca', icon: Images },
-      { href: '/settings/team', label: 'Equipo', icon: Users, allowedRoles: ADMIN_ROLES },
-      { href: '/vault', label: 'Bóveda', icon: KeyRound, allowedRoles: ADMIN_ROLES },
+      { href: '/settings/team', label: 'Equipo', icon: Users, requires: 'team.manage' },
+      { href: '/vault', label: 'Bóveda', icon: KeyRound, requires: 'vault.read' },
     ],
   },
 ]
@@ -115,6 +114,6 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
 export function visibleNavigationGroups(role: MemberRole) {
   return NAVIGATION_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !item.allowedRoles || item.allowedRoles.includes(role)),
+    items: group.items.filter((item) => !item.requires || can(role, item.requires)),
   })).filter((group) => group.items.length > 0)
 }

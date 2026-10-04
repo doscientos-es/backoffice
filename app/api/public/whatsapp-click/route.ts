@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   // SEO/social crawlers recrawl every link on the site, including this footer
   // CTA — don't let them inflate the WhatsApp click count. Always redirect
   // either way so the link keeps working (and bots don't get a broken page).
-  if (!isLikelyBot(userAgent)) {
+  if (!isLikelyBot(userAgent) && url.searchParams.get('analytics_consent') === 'true') {
     const payload = {
       event_id: safeText(url.searchParams.get('event_id'), 120),
       visitor_id: safeText(url.searchParams.get('visitor_id'), 120),

@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 import { ProjectKickoffEmail } from '@/components/email'
 import { defineAction } from '@/lib/actions/define-action'
-import { requireRole } from '@/lib/auth'
+import { requirePermission, requireRole } from '@/lib/auth'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
 import { externalAppUrl } from '@/lib/email/app-url'
 import { renderEmail } from '@/lib/email/render'
@@ -169,7 +169,7 @@ export async function updateProjectPortalAccess(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    await requireRole(['owner', 'admin', 'member'])
+    await requirePermission('projects.write')
   } catch {
     return { ok: false, error: 'No autorizado' }
   }
@@ -378,7 +378,7 @@ async function renderProjectPortalEmail(
 
 /** Renders the project kick-off email so the team can review it before re-sending. */
 export async function previewProjectPortalEmail(input: unknown) {
-  await requireRole(['owner', 'admin', 'member'])
+  await requirePermission('projects.write')
   const parsed = ProjectPortalEmailInput.safeParse(input)
   if (!parsed.success) {
     return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Datos no válidos' }
@@ -403,7 +403,7 @@ export async function previewProjectPortalEmail(input: unknown) {
 
 /** Sends the already-published project portal link by email. */
 export async function sendProjectPortalEmail(input: unknown) {
-  const user = await requireRole(['owner', 'admin', 'member'])
+  const user = await requirePermission('projects.write')
   const parsed = ProjectPortalEmailInput.safeParse(input)
   if (!parsed.success) {
     return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Datos no válidos' }

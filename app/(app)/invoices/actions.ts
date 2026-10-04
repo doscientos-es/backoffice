@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 import { InvoiceEmail } from '@/components/email'
 import { defineAction } from '@/lib/actions/define-action'
-import { requireRole } from '@/lib/auth'
+import { requirePermission, requireRole } from '@/lib/auth'
 import { ensureInvoiceRecipientVerified } from '@/lib/clients/fiscal-verification'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
 import { hasCompleteFiscalData } from '@/lib/crm/conversion'
@@ -767,7 +767,7 @@ export async function updateInvoicePortalAccess(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    await requireRole(['owner', 'admin'])
+    await requirePermission('finance.write')
   } catch {
     return { ok: false, error: 'No autorizado' }
   }

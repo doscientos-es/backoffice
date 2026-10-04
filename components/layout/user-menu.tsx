@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { CurrentUser, MemberRole } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import { clearTrustedMfaDevice } from '@/lib/security/mfa-actions'
 import { getBrowserClient } from '@/lib/supabase/browser'
 import { memberAvatarUrl } from '@/lib/utils'
@@ -42,6 +43,9 @@ const ROLE_LABELS: Record<MemberRole, string> = {
   owner: 'Propietario',
   admin: 'Administrador',
   member: 'Miembro',
+  sales: 'Comercial',
+  delivery: 'Entrega',
+  accountant: 'Finanzas',
   viewer: 'Solo lectura',
 }
 
@@ -49,6 +53,9 @@ const ROLE_VARIANT: Record<MemberRole, 'default' | 'info' | 'neutral'> = {
   owner: 'default',
   admin: 'info',
   member: 'neutral',
+  sales: 'neutral',
+  delivery: 'neutral',
+  accountant: 'neutral',
   viewer: 'neutral',
 }
 
@@ -56,7 +63,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [signOutError, setSignOutError] = useState<string | null>(null)
-  const canManageTeam = user.role === 'owner' || user.role === 'admin'
+  const canManageTeam = can(user.role, 'team.manage')
   const avatarSrc = memberAvatarUrl(user, 64)
 
   async function signOut() {

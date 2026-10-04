@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 import { ListPage } from '@/components/layout/list-page'
 import { Button } from '@/components/ui/button'
-import { requirePageRole } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR } from '@/lib/utils'
 
@@ -26,7 +26,7 @@ type ReceivedInvoice = {
 }
 
 export default async function ReceivedInvoicesPage() {
-  await requirePageRole(['owner', 'admin'])
+  await requirePagePermission('finance.read')
   const supabase = await createServerClient()
   const { data, error } = await supabase
     .from('attachments')

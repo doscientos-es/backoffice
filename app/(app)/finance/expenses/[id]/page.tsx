@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DangerZone } from '@/components/ui/danger-zone'
 import { StatusBadge } from '@/components/ui/status-badge'
-import { requirePageRole } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
 import {
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_PAYMENT_SOURCE_LABELS,
@@ -27,7 +27,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ExpenseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await requirePageRole(['owner', 'admin'])
+  const user = await requirePagePermission('finance.read')
 
   const supabase = await createServerClient()
   const [result, { data: teamMembersRaw }, { data: attachments, error: attachmentsError }] =

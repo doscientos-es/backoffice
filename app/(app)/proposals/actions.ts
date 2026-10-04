@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
-import { requireRole, requireUser } from '@/lib/auth'
+import { requirePermission, requireRole, requireUser } from '@/lib/auth'
 import {
   ensureClientForProposal,
   ensureProjectForProposal,
@@ -187,7 +187,7 @@ async function insertDraftProposal(
 export async function createSubscriptionFromProposal(
   input: unknown,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const user = await requireRole(['owner', 'admin', 'member'])
+  const user = await requirePermission('finance.write')
   const parsed = z.object({ id: z.string().uuid() }).safeParse(input)
   if (!parsed.success) return { ok: false, error: 'ID de propuesta no válido' }
 
@@ -854,7 +854,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
 export async function markProposalAsRejected(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await requireRole(['owner', 'admin'])
+  const user = await requirePermission('proposals.write')
 
   const parsed = z.object({ id: z.string().uuid() }).safeParse(input)
   if (!parsed.success) return { ok: false, error: 'ID inválido' }
@@ -898,7 +898,7 @@ export async function markProposalAsRejected(
 export async function markProposalAsAccepted(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await requireRole(['owner', 'admin'])
+  const user = await requirePermission('proposals.write')
 
   const parsed = z
     .object({ id: z.string().uuid(), fiscal: AcceptProposalFiscalData.optional() })
@@ -1012,7 +1012,7 @@ export async function markProposalAsAccepted(
 export async function reopenProposal(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await requireRole(['owner', 'admin'])
+  const user = await requirePermission('proposals.write')
 
   const parsed = z.object({ id: z.string().uuid() }).safeParse(input)
   if (!parsed.success) return { ok: false, error: 'ID inválido' }

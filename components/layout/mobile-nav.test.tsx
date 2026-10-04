@@ -32,6 +32,7 @@ const user: CurrentUser = {
   email: 'ana@example.com',
   name: 'Ana Pérez',
   role: 'admin',
+  accessScope: 'all',
   avatarUrl: null,
   emailAlias: null,
   githubHandle: null,

@@ -1,13 +1,14 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { SubmitButton } from '@/components/ui/submit-button'
-import type { MemberRole } from '@/lib/auth'
+import type { AccessScope, MemberRole } from '@/lib/auth'
+import { ACCESS_SCOPE_OPTIONS, ROLE_OPTIONS } from '@/lib/permissions'
 
 import { inviteTeamMember } from './actions'
 
@@ -18,6 +19,21 @@ interface Props {
 export function InviteForm({ actorRole }: Props) {
   const feedback = useFormFeedback()
   const formRef = useRef<HTMLFormElement>(null)
+  const [role, setRole] = useState<MemberRole>('member')
+  const [accessScope, setAccessScope] = useState<AccessScope>('assigned')
+  const fullScopeRole = role === 'owner' || role === 'admin'
+
+  function handleRoleChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const nextRole = event.target.value as MemberRole
+    setRole(nextRole)
+    setAccessScope((current) =>
+      nextRole === 'owner' || nextRole === 'admin'
+        ? 'all'
+        : role === 'owner' || role === 'admin'
+          ? 'assigned'
+          : current,
+    )
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -38,7 +54,7 @@ export function InviteForm({ actorRole }: Props) {
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="grid gap-4 sm:grid-cols-[1fr_1fr_180px]">
+      <div className="grid gap-4 sm:grid-cols-[1fr_1fr_180px_180px]">
         <Field>
           <FieldLabel htmlFor="invite_name" className="text-xs font-medium">
             Nombre <span className="font-normal text-muted-foreground">(opcional)</span>
@@ -69,12 +85,38 @@ export function InviteForm({ actorRole }: Props) {
           <FieldLabel htmlFor="invite_role" className="text-xs font-medium">
             Rol <span className="text-destructive">*</span>
           </FieldLabel>
-          <Select id="invite_role" name="role" defaultValue="member">
-            {actorRole === 'owner' ? <option value="owner">Propietario</option> : null}
-            <option value="admin">Administrador</option>
-            <option value="member">Miembro</option>
-            <option value="viewer">Solo lectura</option>
+          <Select id="invite_role" name="role" value={role} onChange={handleRoleChange}>
+            {ROLE_OPTIONS.filter((option) => actorRole === 'owner' || option.value !== 'owner').map(
+              (option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ),
+            )}
           </Select>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="invite_scope" className="text-xs font-medium">
+            Alcance
+          </FieldLabel>
+          <Select
+            id="invite_scope"
+            name="accessScope"
+            value={accessScope}
+            disabled={fullScopeRole}
+            onChange={(event) => setAccessScope(event.target.value as AccessScope)}
+          >
+            {ACCESS_SCOPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+          <FieldDescription>
+            {fullScopeRole
+              ? 'Este rol siempre tiene acceso a todos los registros.'
+              : 'Se puede cambiar más adelante.'}
+          </FieldDescription>
         </Field>
       </div>
       <FieldDescription>

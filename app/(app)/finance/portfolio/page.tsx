@@ -5,7 +5,7 @@ import { BackLink } from '@/components/layout/back-link'
 import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
 import { SectionBoundary } from '@/components/ui/error-boundary'
-import { requirePageRole } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
 import { getProjectPortfolio } from '@/lib/finance/portfolio'
 import { cn, formatEUR } from '@/lib/utils'
 
@@ -142,7 +142,7 @@ function TableSkeleton() {
 }
 
 export default async function PortfolioPage() {
-  await requirePageRole(['owner', 'admin'])
+  await requirePagePermission('finance.read')
 
   return (
     <div className="flex flex-col gap-6">

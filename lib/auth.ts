@@ -2,18 +2,28 @@ import { redirect } from 'next/navigation'
 import { cache } from 'react'
 
 import { scopedLogger } from '@/lib/logger'
+import { can, type PermissionKey } from '@/lib/permissions'
 import { hasTrustedMfaDevice } from '@/lib/security/trusted-mfa-device'
 import { createServerClient } from '@/lib/supabase/server'
 
 const log = scopedLogger('auth')
 
-export type MemberRole = 'owner' | 'admin' | 'member' | 'viewer'
+export type MemberRole =
+  | 'owner'
+  | 'admin'
+  | 'member'
+  | 'sales'
+  | 'delivery'
+  | 'accountant'
+  | 'viewer'
+export type AccessScope = 'all' | 'assigned'
 
 export type CurrentUser = {
   id: string
   email: string
   name: string
   role: MemberRole
+  accessScope: AccessScope
   avatarUrl: string | null
   emailAlias: string | null
   githubHandle: string | null
@@ -45,7 +55,7 @@ export const getCurrentUser = cache(async (): Promise<AuthResult> => {
   const { data: member, error } = await supabase
     .from('team_members')
     .select(
-      'id, name, email, role, avatar_url, email_alias, github_handle, onboarded_at, deleted_at, job_title, phone, contact_email',
+      'id, name, email, role, access_scope, avatar_url, email_alias, github_handle, onboarded_at, deleted_at, job_title, phone, contact_email',
     )
     .eq('id', user.id)
     .maybeSingle()
@@ -69,6 +79,7 @@ export const getCurrentUser = cache(async (): Promise<AuthResult> => {
       email: member.email as string,
       name: member.name as string,
       role: member.role as MemberRole,
+      accessScope: (member.access_scope as AccessScope | null) ?? 'assigned',
       avatarUrl: (member.avatar_url as string | null) ?? null,
       emailAlias: (member.email_alias as string | null) ?? null,
       githubHandle: (member.github_handle as string | null) ?? null,
@@ -126,6 +137,21 @@ export async function requirePageRole(roles: MemberRole[]): Promise<CurrentUser>
   return u
 }
 
+/** Guard for Server Actions and Route Handlers that require a permission. */
+export async function requirePermission(permission: PermissionKey): Promise<CurrentUser> {
+  const user = await requireUser()
+  if (!can(user.role, permission)) redirect('/inicio?error=forbidden')
+  if (user.role === 'owner' || user.role === 'admin') await requireAal2(user.id)
+  return user
+}
+
+/** Guard for Server Components; administrative MFA is challenged by the app shell. */
+export async function requirePagePermission(permission: PermissionKey): Promise<CurrentUser> {
+  const user = await requireUser()
+  if (!can(user.role, permission)) redirect('/inicio?error=forbidden')
+  return user
+}
+
 /**
  * Require MFA access for administrative work. A current Supabase AAL2 session
  * always qualifies; a browser trusted after an AAL2 challenge qualifies for a
@@ -158,5 +184,5 @@ export async function hasMfaAccess(userId: string): Promise<boolean> {
  * members and viewers should not see revenue, expenses, or accounts-receivable figures.
  */
 export function canViewFinance(role: MemberRole): boolean {
-  return role === 'owner' || role === 'admin'
+  return can(role, 'finance.read')
 }

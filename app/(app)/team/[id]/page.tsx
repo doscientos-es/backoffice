@@ -25,6 +25,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/u
 import { StatusBadge } from '@/components/ui/status-badge'
 import { type MemberRole, requireUser } from '@/lib/auth'
 import { ACTIVE_LEAD_STATUSES } from '@/lib/leads/pipeline'
+import { ROLE_OPTIONS } from '@/lib/permissions'
 import { LEAD_STATUS, PROJECT_STATUS, TASK_STATUS } from '@/lib/status'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, memberAvatarUrl, relativeTime } from '@/lib/utils'
@@ -32,17 +33,17 @@ import { formatDate, memberAvatarUrl, relativeTime } from '@/lib/utils'
 export const metadata: Metadata = { title: 'Detalle del miembro · doscientos' }
 export const dynamic = 'force-dynamic'
 
-const ROLE_LABELS: Record<MemberRole, string> = {
-  owner: 'Propietario',
-  admin: 'Administrador',
-  member: 'Miembro',
-  viewer: 'Solo lectura',
-}
+const ROLE_LABELS = Object.fromEntries(
+  ROLE_OPTIONS.map(({ value, label }) => [value, label]),
+) as Record<MemberRole, string>
 
 const ROLE_VARIANT: Record<MemberRole, 'default' | 'info' | 'neutral'> = {
   owner: 'default',
   admin: 'info',
   member: 'neutral',
+  sales: 'neutral',
+  delivery: 'neutral',
+  accountant: 'neutral',
   viewer: 'neutral',
 }
 

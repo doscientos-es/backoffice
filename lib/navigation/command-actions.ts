@@ -1,4 +1,5 @@
 import type { MemberRole } from '@/lib/auth'
+import { can, type PermissionKey } from '@/lib/permissions'
 
 export type CommandAction = {
   key:
@@ -12,7 +13,7 @@ export type CommandAction = {
   label: string
   description: string
   keywords: string
-  requiresFinance?: boolean
+  requires?: PermissionKey
 }
 
 /** Atajos que llevan directamente a trabajo pendiente, no a módulos genéricos. */
@@ -51,7 +52,7 @@ export const COMMAND_ACTIONS: readonly CommandAction[] = [
     label: 'Cobros pendientes',
     description: 'Ver facturas emitidas que aún no constan como cobradas',
     keywords: 'facturas cobros dinero pendientes',
-    requiresFinance: true,
+    requires: 'finance.read',
   },
   {
     key: 'overdue-invoices',
@@ -59,11 +60,10 @@ export const COMMAND_ACTIONS: readonly CommandAction[] = [
     label: 'Facturas vencidas',
     description: 'Revisar cobros que ya han superado su vencimiento',
     keywords: 'facturas vencidas cobros morosidad',
-    requiresFinance: true,
+    requires: 'finance.read',
   },
 ]
 
 export function visibleCommandActions(role: MemberRole): CommandAction[] {
-  const canViewFinance = role === 'owner' || role === 'admin'
-  return COMMAND_ACTIONS.filter((action) => !action.requiresFinance || canViewFinance)
+  return COMMAND_ACTIONS.filter((action) => !action.requires || can(role, action.requires))
 }

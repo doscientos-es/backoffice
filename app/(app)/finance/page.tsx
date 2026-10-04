@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
 import { SectionBoundary } from '@/components/ui/error-boundary'
-import { requirePageRole } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
 import { getCommandCenterMetrics } from '@/lib/finance/command-center'
 import { financeRangeToDates, parseFinanceRange } from '@/lib/finance/range'
 
@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic'
 type SearchParams = Promise<{ range?: string }>
 
 export default async function FinancePage({ searchParams }: { searchParams: SearchParams }) {
-  await requirePageRole(['owner', 'admin'])
+  await requirePagePermission('finance.read')
   const sp = await searchParams
   const range = parseFinanceRange(sp.range)
   const { since, until, label: rangeLabel } = financeRangeToDates(range)
