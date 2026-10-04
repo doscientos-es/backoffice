@@ -2,6 +2,14 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-04 — v0.1.86
+
+### Nuevas funciones
+
+- Add price breakdown component and update pricing display
+- Add price visibility control and permissions for proposals
+- Add role-based permissions and access control logic
+
 ## 2026-10-04 — v0.1.85
 
 ### Nuevas funciones

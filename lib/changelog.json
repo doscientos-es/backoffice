@@ -1,6 +1,44 @@
 {
   "releases": [
     {
+      "version": "0.1.86",
+      "date": "2026-10-04",
+      "title": "v0.1.86",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add price breakdown component and update pricing display",
+            "Add price visibility control and permissions for proposals",
+            "Add role-based permissions and access control logic"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "6e5578c898e1248721c3c7509218cdc0a8c6ad10",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add price breakdown component and update pricing display"
+        },
+        {
+          "sha": "de86bc0e761e20047c90161cd3d361b6bb5c4eb0",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Add price visibility control and permissions for proposals"
+        },
+        {
+          "sha": "b7e375a2b29885be839b3f4535b5b9c8e555ac0b",
+          "type": "feat",
+          "scope": "permissions",
+          "breaking": false,
+          "description": "Add role-based permissions and access control logic"
+        }
+      ]
+    },
+    {
       "version": "0.1.85",
       "date": "2026-10-04",
       "title": "v0.1.85",
