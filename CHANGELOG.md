@@ -2,7 +2,14 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
-## 2026-10-05 — v0.1.87
+## 2026-10-05 — v0.1.88
+
+### Nuevas funciones
+
+- Add sharing functionality for proposals with title
+- Add mobile tab bar and update layout for better UX
+
+## 2026-10-04 — v0.1.87
 
 ### Nuevas funciones
 

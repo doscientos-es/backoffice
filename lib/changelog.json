@@ -1,8 +1,38 @@
 {
   "releases": [
     {
-      "version": "0.1.87",
+      "version": "0.1.88",
       "date": "2026-10-05",
+      "title": "v0.1.88",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add sharing functionality for proposals with title",
+            "Add mobile tab bar and update layout for better UX"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "721063fff91858e27703a9a44b1a3a9c1f38cf76",
+          "type": "feat",
+          "scope": "share-links",
+          "breaking": false,
+          "description": "Add sharing functionality for proposals with title"
+        },
+        {
+          "sha": "20354a7f94163ecc4e916e6e3d7b48a8f0fc5744",
+          "type": "feat",
+          "scope": "layout",
+          "breaking": false,
+          "description": "Add mobile tab bar and update layout for better UX"
+        }
+      ]
+    },
+    {
+      "version": "0.1.87",
+      "date": "2026-10-04",
       "title": "v0.1.87",
       "sections": [
         {
