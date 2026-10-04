@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-04 — v0.1.85
+
+### Nuevas funciones
+
+- Add electronic signature confirmation to proposal acceptance
+
 ## 2026-10-02 — v0.1.83
 
 ### Correcciones

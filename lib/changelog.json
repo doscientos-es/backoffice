@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.85",
+      "date": "2026-10-04",
+      "title": "v0.1.85",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add electronic signature confirmation to proposal acceptance"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "ea586fe60c40ecd7d4ff4e0692643ca6b6fa8ed9",
+          "type": "feat",
+          "scope": "email",
+          "breaking": false,
+          "description": "Add electronic signature confirmation to proposal acceptance"
+        }
+      ]
+    },
+    {
       "version": "0.1.83",
       "date": "2026-10-02",
       "title": "v0.1.83",
