@@ -99,13 +99,21 @@ describe('buildLeadJourneyAnalytics', () => {
     expect(result.sankeyLinks.some((link) => link.source === 'stage:lost')).toBe(false)
   })
 
-  it('groups paid social UTM sources under Meta Ads', () => {
+  it('groups paid social source variants under Meta Ads', () => {
     const result = buildLeadJourneyAnalytics(
       [
         {
-          id: 'lead-meta',
+          id: 'lead-meta-lowercase',
           source: 'Landing',
           utm_source: 'facebook',
+          status: 'new',
+          estimated_value: null,
+          created_at: '2026-08-01T10:00:00Z',
+        },
+        {
+          id: 'lead-meta-titlecase',
+          source: 'Facebook',
+          utm_source: null,
           status: 'new',
           estimated_value: null,
           created_at: '2026-08-01T10:00:00Z',
@@ -117,6 +125,8 @@ describe('buildLeadJourneyAnalytics', () => {
       '2026-08-10',
     )
 
-    expect(result.sourcePerformance[0]?.source).toBe('Anuncios Meta')
+    expect(result.sourcePerformance).toEqual([
+      expect.objectContaining({ source: 'Anuncios Meta', leads: 2 }),
+    ])
   })
 })

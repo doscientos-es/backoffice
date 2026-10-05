@@ -121,10 +121,6 @@ function eventTarget(payload: unknown): PipelineStage | null {
 }
 
 function sourceName(source: string | null, utmSource: string | null): string {
-  const value = (utmSource ?? source)?.trim().toLowerCase()
-  if (value === 'facebook' || value === 'instagram' || value === 'paid_social') {
-    return 'Anuncios Meta'
-  }
   return normalizeLeadSource(utmSource ?? source) ?? 'Sin origen'
 }
 

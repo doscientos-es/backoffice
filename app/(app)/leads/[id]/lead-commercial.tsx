@@ -8,6 +8,7 @@ import type { LeadRelatedInvoice, LeadRelatedProject, LeadRelatedProposal } from
 import {
   INVOICE_STATUS,
   type InvoiceStatus,
+  PROPOSAL_STATUS,
   PROJECT_STATUS,
   type ProjectStatus,
 } from '@/lib/status'
@@ -33,6 +34,21 @@ function ClientRequiredHint() {
 
 function relationshipSummary(count: number, singular: string, plural: string) {
   return `${count} ${count === 1 ? singular : plural}`
+}
+
+function proposalFollowUpHint(proposal: LeadRelatedProposal): string | null {
+  if (proposal.status !== 'sent' && proposal.status !== 'viewed') return null
+  if (proposal.valid_until && new Date(`${proposal.valid_until}T23:59:59`) < new Date()) {
+    return 'Vigencia vencida · confirmar si sigue interesado'
+  }
+  if (!proposal.sent_at) return 'Enviada · confirmar recepción'
+  const elapsedHours = (Date.now() - new Date(proposal.sent_at).getTime()) / 3_600_000
+  if (elapsedHours >= 72) {
+    const elapsedDays = Math.floor(elapsedHours / 24)
+    return `Enviada hace ${elapsedDays} ${elapsedDays === 1 ? 'día' : 'días'} · confirmar respuesta`
+  }
+  if (proposal.viewed_at) return 'Vista · resolver dudas y acordar siguiente paso'
+  return null
 }
 
 function MobileRelationshipRow({
@@ -101,14 +117,26 @@ export function LeadCommercial({
                   <Link
                     key={proposal.id}
                     href={`/proposals/${proposal.id}`}
-                    className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 text-xs transition-colors hover:bg-muted"
+                    className="flex min-w-0 flex-col gap-1 rounded-md px-1 py-1.5 text-xs transition-colors hover:bg-muted"
                   >
-                    <span className="truncate font-medium">
-                      {proposal.number ?? proposal.title ?? 'Propuesta'}
+                    <span className="flex min-w-0 items-center justify-between gap-2">
+                      <span className="truncate font-medium">
+                        {proposal.number ?? proposal.title ?? 'Propuesta'}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        {proposal.status ? (
+                          <StatusBadge meta={PROPOSAL_STATUS} value={proposal.status} />
+                        ) : null}
+                        {canSeeProposalPrices && proposal.total != null ? (
+                          <span className="text-muted-foreground tabular-nums">
+                            {formatEUR(proposal.total)}
+                          </span>
+                        ) : null}
+                      </span>
                     </span>
-                    {canSeeProposalPrices && proposal.total != null ? (
-                      <span className="shrink-0 text-muted-foreground tabular-nums">
-                        {formatEUR(proposal.total)}
+                    {proposalFollowUpHint(proposal) ? (
+                      <span className="text-[11px] leading-snug text-warning">
+                        {proposalFollowUpHint(proposal)}
                       </span>
                     ) : null}
                   </Link>

@@ -20,6 +20,15 @@ const SIGNALS = [
   { key: 'comparing_other_companies', label: 'Comparando con otras empresas', positiveWhen: false },
 ] as const
 
+const NEXT_QUESTIONS: Partial<Record<(typeof SIGNALS)[number]['key'], string>> = {
+  real_problem: '¿Qué tarea o problema concreto os está quitando más tiempo ahora mismo?',
+  aware_problem: '¿Cuándo os disteis cuenta de que este proceso necesitaba cambiar?',
+  tried_solutions: '¿Qué habéis probado hasta ahora y qué se quedó corto?',
+  decision_power_or_budget:
+    '¿Quién participa en la decisión y qué presupuesto o vía de aprobación tenéis previsto?',
+  accessible: '¿Quién del equipo podría enseñarnos el proceso real y sus excepciones?',
+}
+
 type SignalKey = (typeof SIGNALS)[number]['key']
 export type MomTestValues = Record<SignalKey, boolean | null>
 
@@ -50,6 +59,17 @@ export function MomTestChecklist({
   }, [scoreSlotId])
 
   const score = SIGNALS.filter((s) => values[s.key] === s.positiveWhen).length
+  const answered = SIGNALS.filter((s) => values[s.key] !== null).length
+  const nextQuestionKey = (
+    [
+      'real_problem',
+      'decision_power_or_budget',
+      'accessible',
+      'tried_solutions',
+      'aware_problem',
+    ] as const
+  ).find((key) => values[key] === null)
+  const nextQuestion = nextQuestionKey ? NEXT_QUESTIONS[nextQuestionKey] : null
 
   function setSignal(key: SignalKey, next: boolean | null) {
     const prev = values[key]
@@ -64,13 +84,30 @@ export function MomTestChecklist({
   }
 
   const scoreBadge = (
-    <Badge variant={score >= 4 ? 'success' : score >= 2 ? 'warning' : 'neutral'}>
-      {score}/{SIGNALS.length}
-    </Badge>
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge variant={score >= 4 ? 'success' : score >= 2 ? 'warning' : 'neutral'}>
+        {score}/{SIGNALS.length} señales positivas
+      </Badge>
+      {answered < SIGNALS.length ? (
+        <span className="text-xs text-muted-foreground">
+          {SIGNALS.length - answered} por validar
+        </span>
+      ) : null}
+    </div>
   )
   return (
     <div className="flex flex-col gap-2">
       {scoreSlot ? createPortal(scoreBadge, scoreSlot) : scoreBadge}
+      {nextQuestion ? (
+        <p className="rounded-md bg-muted/60 px-2.5 py-2 text-xs leading-relaxed text-muted-foreground">
+          <span className="font-medium text-foreground">Siguiente pregunta:</span> {nextQuestion}
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Señales revisadas. Contrasta las respuestas con ejemplos concretos antes de recomendar
+          alcance.
+        </p>
+      )}
       <ul className="flex flex-col gap-1.5">
         {SIGNALS.map((s) => {
           const value = values[s.key]

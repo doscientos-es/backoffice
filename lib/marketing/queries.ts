@@ -575,7 +575,7 @@ export async function getMarketingRoi(since: string, until: string): Promise<Mar
   const { data: closedLeadRows, error: closedLeadsErr } = await notDeleted(
     supabase
       .from('leads')
-      .select('status, estimated_value, external_source, utm_source')
+      .select('status, estimated_value, external_source, utm_source, source')
       .gte('created_at', since)
       .lte('created_at', endOfDay(until)),
   )
@@ -585,11 +585,13 @@ export async function getMarketingRoi(since: string, until: string): Promise<Mar
     estimated_value: number | null
     external_source: string | null
     utm_source: string | null
+    source: string | null
   }>
   const metaPeriodLeads = periodLeads.filter((lead) =>
     isMetaAttributedLead({
       external_source: lead.external_source,
       utm_source: lead.utm_source,
+      source: lead.source,
     }),
   )
   const closedLeads = metaPeriodLeads.filter((lead) => lead.status === 'won')
@@ -597,7 +599,7 @@ export async function getMarketingRoi(since: string, until: string): Promise<Mar
 
   // 2. Clients acquired in the window from a Meta-sourced lead.
   const { data: metaLeads, error: leadsErr } = await notDeleted(
-    supabase.from('leads').select('id, external_source, utm_source'),
+    supabase.from('leads').select('id, external_source, utm_source, source'),
   )
   if (leadsErr) log.error({ err: leadsErr.message }, 'roi_meta_leads_failed')
   const metaLeadIds = (metaLeads ?? [])
@@ -605,6 +607,7 @@ export async function getMarketingRoi(since: string, until: string): Promise<Mar
       isMetaAttributedLead({
         external_source: (lead.external_source as string | null) ?? null,
         utm_source: (lead.utm_source as string | null) ?? null,
+        source: (lead.source as string | null) ?? null,
       }),
     )
     .map((lead) => lead.id as string)

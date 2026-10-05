@@ -1,10 +1,15 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
+import { AttachmentSection, type AttachmentItem } from '@/components/ui/attachment-section'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Markdown } from '@/components/ui/markdown'
 import { BILLING_CYCLE_LABELS, type BillingCycle } from '@/lib/finance'
+import type { EditablePair } from '@/lib/proposals/key-points'
+import type { MaintenanceOffer } from '@/lib/proposals/maintenance'
+import { recurringAmount } from '@/lib/proposals/recurring'
 import type { PaymentPlanItem, ScopeModule } from '@/lib/proposals/scope'
 import { formatDate, formatEUR } from '@/lib/utils'
 
@@ -30,9 +35,18 @@ type Props = {
   paymentTerms: string | null
   items: Item[]
   scopeModules: ScopeModule[]
+  contextMarkdown: string | null
+  problemSolutionPairs: EditablePair[]
   deliverables: string | null
   acceptanceCriteria: string | null
   notes: string | null
+  terms: string | null
+  changeManagementTerms: string | null
+  legalTerms: string | null
+  maintenanceOffer: MaintenanceOffer | null
+  maintenanceSelectedPlanId: string | null
+  proposalId: string
+  attachments: AttachmentItem[]
   team: TeamMember[]
   mainContent?: ReactNode
   sidebarTop?: ReactNode
@@ -50,9 +64,18 @@ export function ProposalOverview({
   paymentTerms,
   items,
   scopeModules,
+  contextMarkdown,
+  problemSolutionPairs,
   deliverables,
   acceptanceCriteria,
   notes,
+  terms,
+  changeManagementTerms,
+  legalTerms,
+  maintenanceOffer,
+  maintenanceSelectedPlanId,
+  proposalId,
+  attachments,
   team,
   mainContent,
   sidebarTop,
@@ -148,6 +171,49 @@ export function ProposalOverview({
           </Card>
         ) : null}
 
+        {contextMarkdown || problemSolutionPairs.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Contexto y solución</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {contextMarkdown ? (
+                <section>
+                  <h3 className="mb-1 text-sm font-medium">Contexto</h3>
+                  <Markdown source={contextMarkdown} />
+                </section>
+              ) : null}
+              {problemSolutionPairs.map((pair) => (
+                <div
+                  key={pair.id}
+                  className="grid gap-3 rounded-lg border border-border p-3 md:grid-cols-2"
+                >
+                  {pair.problem || pair.problemDescription ? (
+                    <section>
+                      <h3 className="text-sm font-medium">
+                        Problema{pair.problem ? ` · ${pair.problem}` : ''}
+                      </h3>
+                      {pair.problemDescription ? (
+                        <Markdown source={pair.problemDescription} />
+                      ) : null}
+                    </section>
+                  ) : null}
+                  {pair.solution || pair.solutionDescription ? (
+                    <section>
+                      <h3 className="text-sm font-medium">
+                        Solución{pair.solution ? ` · ${pair.solution}` : ''}
+                      </h3>
+                      {pair.solutionDescription ? (
+                        <Markdown source={pair.solutionDescription} />
+                      ) : null}
+                    </section>
+                  ) : null}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
+
         {scopeModules.length > 0 || deliverables || acceptanceCriteria || notes ? (
           <Card id="proposal-scope">
             <CardHeader>
@@ -168,6 +234,130 @@ export function ProposalOverview({
             </CardContent>
           </Card>
         ) : null}
+
+        {terms || changeManagementTerms || legalTerms ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Condiciones de la propuesta</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {terms ? (
+                <section>
+                  <h3 className="mb-1 text-sm font-medium">Condiciones adicionales</h3>
+                  <Markdown source={terms} />
+                </section>
+              ) : null}
+              {changeManagementTerms ? (
+                <section>
+                  <h3 className="mb-1 text-sm font-medium">Gestión de cambios</h3>
+                  <Markdown source={changeManagementTerms} />
+                </section>
+              ) : null}
+              {legalTerms ? (
+                <details className="rounded-lg border border-border bg-muted/20 p-3">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    Anexo contractual
+                  </summary>
+                  <div className="mt-3">
+                    <Markdown source={legalTerms} />
+                  </div>
+                </details>
+              ) : null}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {maintenanceOffer ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {maintenanceOffer.enabled ? maintenanceOffer.heading : 'Mantenimiento'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {maintenanceOffer.enabled ? (
+                <>
+                  <p className="text-sm text-muted-foreground">{maintenanceOffer.intro}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Facturación {BILLING_CYCLE_LABELS[maintenanceOffer.billing_cycle]} · importes +
+                    IVA
+                  </p>
+                  {maintenanceOffer.plans.map((plan) => {
+                    const recommended = maintenanceOffer.recommended_plan_id === plan.id
+                    const selected = maintenanceSelectedPlanId === plan.id
+                    return (
+                      <article key={plan.id} className="rounded-lg border border-border p-4">
+                        <header className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <h3 className="font-semibold">{plan.name}</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">{plan.summary}</p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {recommended ? <Badge variant="info">Recomendado</Badge> : null}
+                            {selected ? <Badge variant="success">Seleccionado</Badge> : null}
+                            <span className="text-sm font-semibold tabular-nums">
+                              {formatEUR(
+                                recurringAmount(plan.monthly_price, maintenanceOffer.billing_cycle),
+                              )}
+                              {' / '}
+                              {BILLING_CYCLE_LABELS[maintenanceOffer.billing_cycle]} + IVA
+                            </span>
+                          </div>
+                        </header>
+                        <details className="mt-3 rounded-md bg-muted/30 p-3">
+                          <summary className="cursor-pointer text-sm font-medium">
+                            Ver cobertura y exclusiones
+                          </summary>
+                          <div className="mt-3 grid gap-4 text-sm sm:grid-cols-2">
+                            <section>
+                              <h4 className="font-medium">Incluye</h4>
+                              {plan.coverage.length > 0 ? (
+                                <ul className="mt-1 list-disc space-y-1 pl-5 text-muted-foreground">
+                                  {plan.coverage.map((item) => (
+                                    <li key={item}>{item}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="mt-1 text-muted-foreground">
+                                  Sin coberturas detalladas.
+                                </p>
+                              )}
+                            </section>
+                            <section>
+                              <h4 className="font-medium">No incluye</h4>
+                              {plan.exclusions.length > 0 ? (
+                                <ul className="mt-1 list-disc space-y-1 pl-5 text-muted-foreground">
+                                  {plan.exclusions.map((item) => (
+                                    <li key={item}>{item}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="mt-1 text-muted-foreground">
+                                  Sin exclusiones detalladas.
+                                </p>
+                              )}
+                            </section>
+                          </div>
+                        </details>
+                      </article>
+                    )
+                  })}
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No se incluyó una oferta de mantenimiento en esta propuesta.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        <AttachmentSection
+          entityType="proposal"
+          entityId={proposalId}
+          attachments={attachments}
+          canEdit={false}
+        />
         {mainContent}
       </div>
 

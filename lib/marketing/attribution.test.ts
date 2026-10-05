@@ -45,4 +45,19 @@ describe('isMetaAttributedLead', () => {
     expect(isMetaAttributedLead({ external_source: 'Landing', utm_source: 'facebook' })).toBe(true)
     expect(isMetaAttributedLead({ external_source: 'Landing', utm_source: 'google' })).toBe(false)
   })
+
+  it('recognizes legacy Facebook source values regardless of case', () => {
+    expect(
+      isMetaAttributedLead({ external_source: null, utm_source: null, source: 'facebook' }),
+    ).toBe(true)
+    expect(
+      isMetaAttributedLead({ external_source: null, utm_source: null, source: ' Facebook ' }),
+    ).toBe(true)
+  })
+
+  it('does not let a non-Meta UTM be overridden by a Facebook source label', () => {
+    expect(
+      isMetaAttributedLead({ external_source: null, utm_source: 'google', source: 'Facebook' }),
+    ).toBe(false)
+  })
 })

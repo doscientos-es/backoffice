@@ -15,6 +15,20 @@ export type MarketingInvoiceRow = {
   total: number | null
 }
 
+const META_SOURCE_ALIASES = new Set([
+  'facebook',
+  'instagram',
+  'paid_social',
+  'meta',
+  'meta_lead_ads',
+  'anuncios meta',
+])
+
+function normalizedSource(value: string | null | undefined): string | null {
+  const normalized = value?.trim().toLocaleLowerCase('es-ES')
+  return normalized || null
+}
+
 export type AdCommercialPerformance = {
   crmLeads: number
   qualifiedLeads: number
@@ -28,12 +42,17 @@ export type AdCommercialPerformance = {
 export function isMetaAttributedLead(input: {
   external_source: string | null
   utm_source: string | null
+  source?: string | null
 }): boolean {
+  const externalSource = normalizedSource(input.external_source)
+  const utmSource = normalizedSource(input.utm_source)
+  if (META_SOURCE_ALIASES.has(externalSource ?? '') || META_SOURCE_ALIASES.has(utmSource ?? '')) {
+    return true
+  }
+
+  // Fall back to the CRM source only when no more-specific attribution exists.
   return (
-    input.external_source === 'Anuncios Meta' ||
-    input.utm_source === 'facebook' ||
-    input.utm_source === 'instagram' ||
-    input.utm_source === 'paid_social'
+    !externalSource && !utmSource && META_SOURCE_ALIASES.has(normalizedSource(input.source) ?? '')
   )
 }
 

@@ -36,6 +36,9 @@ const SOURCE_ALIASES = new Map<string, (typeof LEAD_SOURCES)[number]>([
   ['meta', 'Anuncios Meta'],
   ['meta_lead_ads', 'Anuncios Meta'],
   ['anuncios meta', 'Anuncios Meta'],
+  ['facebook', 'Anuncios Meta'],
+  ['instagram', 'Anuncios Meta'],
+  ['paid_social', 'Anuncios Meta'],
 ])
 
 export function normalizeLeadSource(value: string | null | undefined): string | null {
