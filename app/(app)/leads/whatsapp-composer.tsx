@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { publicEnv } from '@/lib/env'
+import { sanitizeLeadSharedText } from '@/lib/leads/shared-content'
 import { buildLeadWhatsAppMessage, buildWhatsAppUrl } from '@/lib/leads/whatsapp'
 
 import { logLeadWhatsApp } from './actions'
@@ -24,6 +25,8 @@ const LANGUAGES = [
 type Props = {
   leadId: string
   leadName: string
+  leadAlias?: string | null
+  leadCompany?: string | null
   leadEmail: string | null
   leadPhone: string | null
   senderName: string
@@ -44,6 +47,8 @@ function signedMessage(message: string, senderName: string): string {
 export function WhatsAppComposer({
   leadId,
   leadName,
+  leadAlias,
+  leadCompany,
   leadEmail,
   leadPhone,
   senderName,
@@ -54,13 +59,17 @@ export function WhatsAppComposer({
   defaultLanguage,
   onSuccess,
 }: Props) {
+  const leadIdentity = { name: leadName, alias: leadAlias, company: leadCompany }
   const fallbackMessage = buildLeadWhatsAppMessage(
     { id: leadId, name: leadName, email: leadEmail },
     senderName,
     publicEnv.NEXT_PUBLIC_CAL_LINK,
     defaultLanguage === 'ca' || defaultLanguage === 'en' ? defaultLanguage : 'es',
   )
-  const initialMessage = signedMessage(defaultMessage ?? fallbackMessage, senderName)
+  const initialMessage = signedMessage(
+    sanitizeLeadSharedText(defaultMessage ?? fallbackMessage, leadIdentity),
+    senderName,
+  )
   const [message, setMessage] = useState(initialMessage)
   const normalizedDefaultLanguage =
     defaultLanguage === 'ca' || defaultLanguage === 'en' ? defaultLanguage : 'es'
@@ -98,7 +107,7 @@ export function WhatsAppComposer({
       if (!response.ok || !json.body) {
         throw new Error(json.error ?? 'No se pudo generar el borrador.')
       }
-      setMessage(signedMessage(json.body, senderName))
+      setMessage(signedMessage(sanitizeLeadSharedText(json.body, leadIdentity), senderName))
     } catch (reason) {
       feedback.setError(reason instanceof Error ? reason.message : 'Error al generar el borrador.')
     } finally {
@@ -118,7 +127,8 @@ export function WhatsAppComposer({
     onSuccess?.()
   }
 
-  const href = buildWhatsAppUrl(leadPhone, message)
+  const sharedMessage = sanitizeLeadSharedText(message, leadIdentity)
+  const href = buildWhatsAppUrl(leadPhone, sharedMessage)
 
   return (
     <div className="flex flex-col gap-3">
@@ -177,12 +187,12 @@ export function WhatsAppComposer({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <FormFeedback state={feedback.state} pendingLabel="Registrando…" />
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline" disabled={!message.trim()}>
+          <Button asChild variant="outline" disabled={!sharedMessage.trim()}>
             <a
               href={href}
               target="_blank"
               rel="noreferrer"
-              onClick={() => setOpenedMessage(message)}
+              onClick={() => setOpenedMessage(sharedMessage)}
             >
               <MessageCircle className="size-4 text-emerald-600" />
               Abrir WhatsApp

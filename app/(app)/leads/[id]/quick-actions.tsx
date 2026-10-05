@@ -15,6 +15,8 @@ import type { ExtractTasksDialogProps } from './extract-tasks-dialog'
 type Props = {
   leadId: string
   leadName: string
+  leadAlias?: string | null
+  leadCompany?: string | null
   leadEmail: string | null
   leadPhone: string | null
   leadLanguage?: string | null
@@ -37,6 +39,8 @@ type Props = {
 export function LeadQuickActions({
   leadId,
   leadName,
+  leadAlias,
+  leadCompany,
   leadEmail,
   leadPhone,
   leadLanguage,
@@ -60,6 +64,8 @@ export function LeadQuickActions({
       <LeadQuickActionGroups
         leadId={leadId}
         leadName={leadName}
+        leadAlias={leadAlias}
+        leadCompany={leadCompany}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
         leadLanguage={leadLanguage}

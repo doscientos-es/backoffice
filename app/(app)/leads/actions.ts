@@ -27,6 +27,7 @@ import {
   normalizePhoneForWhatsApp,
 } from '@/lib/leads/call-workflow'
 import { normalizeCompanySize, normalizeLeadSource, normalizeUrgency } from '@/lib/leads/constants'
+import { sanitizeLeadSharedText } from '@/lib/leads/shared-content'
 import {
   buildLeadStatusPatch,
   canAutomateLeadAccessibility,
@@ -759,19 +760,22 @@ export const sendEmailToLead = defineAction({
 
     const { data: lead, error: leadErr } = await supabase
       .from('leads')
-      .select('id, name, email, company')
+      .select('id, name, alias, email, company')
       .eq('id', data.leadId)
       .is('deleted_at', null)
       .single()
     if (leadErr || !lead) throw new Error(leadErr?.message ?? 'Lead no encontrado')
 
     const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
-    const renderedMarkdown = renderTemplate(data.bodyHtml, {
-      nombre: lead.name as string,
-      empresa: (lead.company as string | null) ?? '',
-      email: (lead.email as string | null) ?? '',
-      sender_name: user.name,
-    })
+    const renderedMarkdown = sanitizeLeadSharedText(
+      renderTemplate(data.bodyHtml, {
+        nombre: lead.name as string,
+        empresa: (lead.company as string | null) ?? '',
+        email: (lead.email as string | null) ?? '',
+        sender_name: user.name,
+      }),
+      lead,
+    )
     const renderedHtml = markdownToHtml(renderedMarkdown)
     const finalHtml = data.includeSignature
       ? appendSignature(
@@ -788,10 +792,13 @@ export const sendEmailToLead = defineAction({
         )
       : renderedHtml
 
-    const renderedSubject = renderTemplate(data.subject, {
-      nombre: lead.name as string,
-      empresa: (lead.company as string | null) ?? '',
-    })
+    const renderedSubject = sanitizeLeadSharedText(
+      renderTemplate(data.subject, {
+        nombre: lead.name as string,
+        empresa: (lead.company as string | null) ?? '',
+      }),
+      lead,
+    )
 
     const { data: campaign, error: campaignErr } = await supabase
       .from('lead_campaigns')
@@ -1674,7 +1681,13 @@ export const checkLeadMeetingSlot = defineAction({
  */
 export const scheduleLeadMeeting = defineAction<
   typeof ScheduleLeadMeetingInput,
-  { eventId: string; htmlLink: string | null; meetUrl: string | null }
+  {
+    eventId: string
+    htmlLink: string | null
+    meetUrl: string | null
+    title: string
+    description: string | null
+  }
 >({
   name: 'leads.scheduleMeeting',
   schema: ScheduleLeadMeetingInput,
@@ -1688,26 +1701,38 @@ export const scheduleLeadMeeting = defineAction<
       import('@/lib/google/client'),
       import('@/lib/google/calendar'),
     ])
+    const supabase = await createServerClient()
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .select('name, alias, company')
+      .eq('id', data.leadId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (leadError || !lead) throw new Error(leadError?.message ?? 'Lead no encontrado')
+
+    const title = sanitizeLeadSharedText(data.title, lead)
+    const description = data.description
+      ? sanitizeLeadSharedText(data.description, lead)
+      : undefined
     const subject = resolveSubject(user.email)
     const attendeeEmails = [...new Set([...(data.attendeeEmails ?? []), user.email])]
 
     const event = await insertEvent({
       subject,
       calendarId,
-      summary: data.title,
-      description: data.description,
+      summary: title,
+      description,
       start: new Date(data.start),
       end: new Date(data.end),
       attendees: attendeeEmails,
       withMeet: data.withMeet,
     })
 
-    const supabase = await createServerClient()
     const { error } = await supabase.from('lead_interactions').insert({
       lead_id: data.leadId,
       type: 'meeting',
-      subject: data.title,
-      body: data.description ?? null,
+      subject: title,
+      body: description ?? null,
       performed_by: user.id,
       project_id: data.projectId ?? null,
       payload: {
@@ -1726,8 +1751,8 @@ export const scheduleLeadMeeting = defineAction<
     const { error: reminderError } = await supabase.from('tasks').insert({
       kind: 'reminder',
       action_type: 'meeting',
-      title: data.title,
-      description: data.description ?? null,
+      title,
+      description: description ?? null,
       start_at: data.start,
       lead_id: data.leadId,
       project_id: data.projectId ?? null,
@@ -1742,6 +1767,12 @@ export const scheduleLeadMeeting = defineAction<
 
     await markFirstContacted(supabase, data.leadId)
 
-    return { eventId: event.id, htmlLink: event.htmlLink, meetUrl: event.meetUrl }
+    return {
+      eventId: event.id,
+      htmlLink: event.htmlLink,
+      meetUrl: event.meetUrl,
+      title,
+      description: description ?? null,
+    }
   },
 })

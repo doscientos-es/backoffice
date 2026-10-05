@@ -324,7 +324,9 @@ export default async function LeadDetailPage({
                             <PhoneQuickActions
                               phone={lead.phone as string}
                               leadId={lead.id as string}
-                              leadName={displayName}
+                              leadName={lead.name as string}
+                              leadAlias={lead.alias as string | null}
+                              leadCompany={lead.company as string | null}
                               leadEmail={(lead.email as string | null) ?? null}
                               leadLanguage={(lead.language as string | null) ?? null}
                               firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
@@ -640,6 +642,8 @@ export default async function LeadDetailPage({
                 lead={{
                   id: lead.id,
                   name: lead.name,
+                  alias: lead.alias,
+                  company: lead.company,
                   email: lead.email,
                   phone: lead.phone,
                   language: lead.language,

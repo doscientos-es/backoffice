@@ -204,6 +204,8 @@ export async function LeadQuickActionsSection({
   lead: {
     id: string
     name: string
+    alias?: string | null
+    company?: string | null
     email: string | null
     phone: string | null
     language?: string | null
@@ -244,6 +246,8 @@ export async function LeadQuickActionsSection({
     <LeadQuickActions
       leadId={lead.id}
       leadName={lead.name}
+      leadAlias={lead.alias}
+      leadCompany={lead.company}
       leadEmail={lead.email}
       leadPhone={lead.phone}
       leadLanguage={lead.language}

@@ -110,6 +110,8 @@ export function PhoneQuickActions({
   phone,
   leadId,
   leadName,
+  leadAlias,
+  leadCompany,
   leadEmail,
   leadLanguage,
   firstContactedAt,
@@ -119,6 +121,8 @@ export function PhoneQuickActions({
   phone: string
   leadId?: string
   leadName?: string
+  leadAlias?: string | null
+  leadCompany?: string | null
   leadEmail?: string | null
   leadLanguage?: string | null
   firstContactedAt?: string | null
@@ -149,6 +153,8 @@ export function PhoneQuickActions({
         <LeadWhatsAppButton
           leadId={leadId}
           leadName={leadName}
+          leadAlias={leadAlias}
+          leadCompany={leadCompany}
           leadEmail={leadEmail ?? null}
           leadLanguage={leadLanguage}
           phone={phone}
@@ -164,6 +170,8 @@ export function PhoneQuickActions({
 export function LeadWhatsAppButton({
   leadId,
   leadName,
+  leadAlias,
+  leadCompany,
   leadEmail,
   leadLanguage,
   phone,
@@ -173,6 +181,8 @@ export function LeadWhatsAppButton({
 }: {
   leadId: string
   leadName: string
+  leadAlias?: string | null
+  leadCompany?: string | null
   leadEmail: string | null
   leadLanguage?: string | null
   phone: string
@@ -223,6 +233,8 @@ export function LeadWhatsAppButton({
         <WhatsAppComposer
           leadId={leadId}
           leadName={leadName}
+          leadAlias={leadAlias}
+          leadCompany={leadCompany}
           leadEmail={leadEmail}
           leadPhone={phone}
           defaultLanguage={leadLanguage ?? undefined}

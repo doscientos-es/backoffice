@@ -22,6 +22,11 @@ const { db, authUser, googleCalendar, sendEmail } = vi.hoisted(() => ({
     updatedRows: [] as Record<string, unknown>[],
     queryError: null as string | null,
     leadStatus: 'new' as string,
+    leadDetails: { name: 'Ana García', alias: 'Nube', company: 'Acme S.L.' } as {
+      name: string
+      alias: string | null
+      company: string | null
+    },
     recentCallPayloads: [] as Array<{ payload: { outcome?: string | null } }>,
     leadMomTest: {
       mom_test_real_problem: null as boolean | null,
@@ -76,6 +81,15 @@ vi.mock('@/lib/supabase/server', () => ({
         }
         if (table === 'leads' && selectedColumns.includes('mom_test_accessible')) {
           return { data: db.leadMomTest, error: null }
+        }
+        if (table === 'leads' && selectedColumns === 'name, alias, company') {
+          return { data: db.leadDetails, error: null }
+        }
+        if (table === 'leads' && selectedColumns === 'id, name, alias, email, company') {
+          return {
+            data: { id: 'lead-1', ...db.leadDetails, email: 'lead@example.com' },
+            error: null,
+          }
         }
         if (table === 'team_members') return { data: db.adminEmails, error: null }
         return {
@@ -137,6 +151,9 @@ vi.mock('@/lib/supabase/server', () => ({
         async maybeSingle() {
           if (table === 'leads' && selectedColumns.includes('mom_test_accessible')) return resolve()
           if (table === 'leads' && selectedColumns === 'status, lost_reason') return resolve()
+          if (table === 'leads' && selectedColumns === 'name, alias, company') return resolve()
+          if (table === 'leads' && selectedColumns === 'id, name, alias, email, company')
+            return resolve()
           if (table === 'leads' && db.queryError)
             return { data: null, error: { message: db.queryError } }
           // claimLead checks `.is("assigned_to", null)` → return a row with id
@@ -233,6 +250,7 @@ beforeEach(() => {
   db.updatedRows = []
   db.queryError = null
   db.leadStatus = 'new'
+  db.leadDetails = { name: 'Ana García', alias: 'Nube', company: 'Acme S.L.' }
   db.recentCallPayloads = []
   db.leadMomTest = {
     mom_test_real_problem: null,
@@ -443,12 +461,12 @@ describe('lead discovery questions', () => {
 })
 
 describe('sendEmailToLead', () => {
-  it('copies active owners and admins for a post-call email', async () => {
+  it('sanitizes shared content and copies active owners and admins for a post-call email', async () => {
     const result = await sendEmailToLead({
       leadId: '00000000-0000-0000-0000-000000000001',
       to: 'lead@example.com',
-      subject: 'Resumen de nuestra llamada',
-      bodyHtml: 'Gracias por tu tiempo.',
+      subject: 'Seguimiento de Nube para {{empresa}}',
+      bodyHtml: 'Hola Ana García, gracias por tu tiempo con Nube.',
       ccAdmins: true,
     })
 
@@ -457,6 +475,8 @@ describe('sendEmailToLead', () => {
       expect.objectContaining({
         to: 'lead@example.com',
         cc: ['admin@doscientos.es', 'owner@doscientos.es'],
+        subject: 'Seguimiento de Acme S.L. para Acme S.L.',
+        html: expect.stringContaining('Hola Acme S.L., gracias por tu tiempo con Acme S.L.'),
       }),
     )
   })
@@ -622,19 +642,57 @@ describe('logLeadWhatsApp', () => {
 })
 
 describe('scheduleLeadMeeting', () => {
-  it('adds the member who schedules it as an attendee', async () => {
+  it('uses the company name instead of the lead alias in shared meeting content', async () => {
     const result = await scheduleLeadMeeting({
       leadId: '00000000-0000-0000-0000-000000000001',
-      title: 'Reunión con Acme',
+      title: 'Consultoría Nube - Doscientos',
+      description: 'Reunión con Ana García y Nube.',
       start: '2026-08-10T10:00:00.000Z',
       end: '2026-08-10T11:00:00.000Z',
       attendeeEmails: ['lead@example.com'],
       withMeet: true,
     })
 
-    expect(result).toMatchObject({ ok: true, meetUrl: 'https://meet.google.com/abc-defg-hij' })
+    expect(result).toMatchObject({
+      ok: true,
+      meetUrl: 'https://meet.google.com/abc-defg-hij',
+      title: 'Consultoría Acme S.L. - Doscientos',
+      description: 'Reunión con Acme S.L. y Acme S.L.',
+    })
     expect(googleCalendar.insertEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ attendees: ['lead@example.com', 'pol@doscientos.es'] }),
+      expect.objectContaining({
+        summary: 'Consultoría Acme S.L. - Doscientos',
+        description: 'Reunión con Acme S.L. y Acme S.L.',
+        attendees: ['lead@example.com', 'pol@doscientos.es'],
+      }),
+    )
+    expect(db.insertedRows).toContainEqual(
+      expect.objectContaining({
+        table: 'lead_interactions',
+        subject: 'Consultoría Acme S.L. - Doscientos',
+        body: 'Reunión con Acme S.L. y Acme S.L.',
+      }),
+    )
+    expect(db.insertedRows).toContainEqual(
+      expect.objectContaining({ table: 'tasks', title: 'Consultoría Acme S.L. - Doscientos' }),
+    )
+  })
+
+  it('falls back to the lead name when no company is available', async () => {
+    db.leadDetails = { name: 'Ana García', alias: 'Nube', company: null }
+
+    const result = await scheduleLeadMeeting({
+      leadId: '00000000-0000-0000-0000-000000000001',
+      title: 'Reunión con Nube',
+      start: '2026-08-10T10:00:00.000Z',
+      end: '2026-08-10T11:00:00.000Z',
+      attendeeEmails: ['lead@example.com'],
+      withMeet: true,
+    })
+
+    expect(result).toMatchObject({ ok: true, title: 'Reunión con Ana García' })
+    expect(googleCalendar.insertEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ summary: 'Reunión con Ana García' }),
     )
   })
 })

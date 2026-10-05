@@ -23,6 +23,8 @@ import {
 type Props = {
   leadId: string
   leadName: string
+  leadAlias?: string | null
+  leadCompany?: string | null
   leadEmail: string | null
   leadPhone: string | null
   leadLanguage?: string | null
@@ -44,6 +46,8 @@ type Props = {
 export function LeadQuickActionGroups({
   leadId,
   leadName,
+  leadAlias,
+  leadCompany,
   leadEmail,
   leadPhone,
   leadLanguage,
@@ -70,6 +74,8 @@ export function LeadQuickActionGroups({
         leadPhone={leadPhone}
         leadLanguage={leadLanguage}
         leadName={leadName}
+        leadAlias={leadAlias}
+        leadCompany={leadCompany}
         leadEmail={leadEmail}
         senderName={senderName}
         aiEnabled={aiEnabled}
@@ -81,6 +87,8 @@ export function LeadQuickActionGroups({
       <QWhatsAppDialog
         leadId={leadId}
         leadName={leadName}
+        leadAlias={leadAlias}
+        leadCompany={leadCompany}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
         leadLanguage={leadLanguage}

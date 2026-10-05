@@ -92,6 +92,8 @@ export function QuickActionTile({
 function LastAttemptDialog({
   leadId,
   leadName,
+  leadAlias,
+  leadCompany,
   leadEmail,
   leadPhone,
   leadLanguage,
@@ -102,6 +104,8 @@ function LastAttemptDialog({
 }: {
   leadId: string
   leadName: string
+  leadAlias?: string | null
+  leadCompany?: string | null
   leadEmail: string | null
   leadPhone: string | null
   leadLanguage?: string | null
@@ -204,6 +208,8 @@ function LastAttemptDialog({
           <WhatsAppComposer
             leadId={leadId}
             leadName={leadName}
+            leadAlias={leadAlias}
+            leadCompany={leadCompany}
             leadEmail={leadEmail}
             leadPhone={leadPhone}
             defaultLanguage={leadLanguage ?? undefined}
@@ -637,6 +643,8 @@ function FollowUpSection({
 export function QCallDialog({
   leadId,
   leadName,
+  leadAlias,
+  leadCompany,
   leadPhone,
   leadEmail,
   leadLanguage,
@@ -649,6 +657,8 @@ export function QCallDialog({
 }: {
   leadId: string
   leadName: string
+  leadAlias?: string | null
+  leadCompany?: string | null
   leadPhone: string | null
   leadEmail: string | null
   leadLanguage?: string | null
@@ -984,6 +994,8 @@ export function QCallDialog({
       <LastAttemptDialog
         leadId={leadId}
         leadName={leadName}
+        leadAlias={leadAlias}
+        leadCompany={leadCompany}
         leadEmail={leadEmail}
         leadPhone={leadPhone}
         leadLanguage={leadLanguage}
@@ -999,6 +1011,8 @@ export function QCallDialog({
 export function QWhatsAppDialog({
   leadId,
   leadName,
+  leadAlias,
+  leadCompany,
   leadEmail,
   leadPhone,
   leadLanguage,
@@ -1007,6 +1021,8 @@ export function QWhatsAppDialog({
 }: {
   leadId: string
   leadName: string
+  leadAlias?: string | null
+  leadCompany?: string | null
   leadEmail: string | null
   leadPhone: string | null
   leadLanguage?: string | null
@@ -1042,6 +1058,8 @@ export function QWhatsAppDialog({
         <WhatsAppComposer
           leadId={leadId}
           leadName={leadName}
+          leadAlias={leadAlias}
+          leadCompany={leadCompany}
           leadEmail={leadEmail}
           leadPhone={leadPhone}
           defaultLanguage={leadLanguage ?? undefined}

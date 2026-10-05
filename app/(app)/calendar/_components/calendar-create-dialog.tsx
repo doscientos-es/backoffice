@@ -157,7 +157,7 @@ export function CalendarCreateDialog({
           onCreated({
             id: `google_meeting:${res.eventId}`,
             kind: 'google_meeting',
-            title: title.trim(),
+            title: res.title,
             start: startISO,
             end: endISO,
             allDay: false,
@@ -169,7 +169,7 @@ export function CalendarCreateDialog({
             meta: {
               meetUrl: res.meetUrl ?? undefined,
               htmlLink: res.htmlLink ?? undefined,
-              description: description || undefined,
+              description: res.description ?? undefined,
             },
           })
           onClose()
