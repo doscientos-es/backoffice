@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-05 — v0.1.100
+
+### Nuevas funciones
+
+- Add proposal details and external payment tracking to invoices
+
 ## 2026-10-05 — v0.1.99
 
 ### Nuevas funciones

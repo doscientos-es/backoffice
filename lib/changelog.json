@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.100",
+      "date": "2026-10-05",
+      "title": "v0.1.100",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add proposal details and external payment tracking to invoices"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "2d0602b3a83e3e715bab72c49312b15035ed8827",
+          "type": "feat",
+          "scope": "invoices",
+          "breaking": false,
+          "description": "Add proposal details and external payment tracking to invoices"
+        }
+      ]
+    },
+    {
       "version": "0.1.99",
       "date": "2026-10-05",
       "title": "v0.1.99",
