@@ -598,6 +598,19 @@ export const createInvoicesFromProposalPlan = defineAction<
       findInvoiceSeries(),
       findInvoicedProposalPaymentPlanIds(proposalId),
     ])
+    const supabase = await createServerClient()
+    const { data: paidItems, error: paidItemsError } = await supabase
+      .from('invoice_payments')
+      .select('proposal_payment_plan_item_id')
+      .eq('proposal_id', proposalId)
+      .eq('status', 'confirmed')
+      .not('proposal_payment_plan_item_id', 'is', null)
+    if (paidItemsError) throw new Error(paidItemsError.message)
+    for (const payment of paidItems ?? []) {
+      if (typeof payment.proposal_payment_plan_item_id === 'string') {
+        invoicedPlanIds.add(payment.proposal_payment_plan_item_id)
+      }
+    }
     if (!client || !hasCompleteFiscalData(client)) {
       throw new Error(
         'La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar',
@@ -640,6 +653,160 @@ export const createInvoicesFromProposalPlan = defineAction<
       ids.push(id)
     }
     return { ids, created: ids.length }
+  },
+})
+
+/** Creates one editable draft for a selected proposal payment-plan item or records an external payment. */
+export const createInvoiceFromProposalPlanItem = defineAction<
+  z.ZodObject<{
+    proposalId: z.ZodString
+    planItemId: z.ZodString
+    markPaidExternally: z.ZodOptional<z.ZodBoolean>
+  }>,
+  { id: string }
+>({
+  name: 'invoices.createFromProposalPlanItem',
+  schema: CreateInvoicesFromProposalPlanInput.extend({
+    planItemId: z.string().min(1).max(100),
+    markPaidExternally: z.boolean().optional(),
+  }),
+  roles: ['owner', 'admin'],
+  revalidate: (_p, input) => ['/invoices', `/proposals/${input.proposalId}`],
+  handler: async ({ proposalId, planItemId, markPaidExternally }, { user }) => {
+    if (markPaidExternally && user.role !== 'owner' && user.role !== 'admin') {
+      throw new Error('No tienes permiso para registrar pagos')
+    }
+    const proposal = await findProposalForInvoice(proposalId)
+    if (!proposal) throw new Error('Propuesta no encontrada')
+    if (proposal.status !== 'accepted')
+      throw new Error('Solo se puede facturar una propuesta aceptada')
+    if (!proposal.client_id) throw new Error('La propuesta aceptada no tiene datos fiscales')
+
+    const configuredPlan = parsePaymentPlan(proposal.payment_plan)
+    const schedule = paymentScheduleInput.safeParse(proposal.payment_schedule)
+    const plan =
+      configuredPlan.length > 0
+        ? configuredPlan
+        : schedule.success
+          ? paymentPlanForSchedule(schedule.data)
+          : []
+    const index = plan.findIndex((item) => item.id === planItemId)
+    const milestone = plan[index]
+    if (!milestone) throw new Error('No se encontró ese plazo en la propuesta')
+
+    const supabase = await createServerClient()
+    const [{ data: priceSummary }, client, series, invoicedPlanIds] = await Promise.all([
+      supabase.from('proposal_prices').select('total').eq('proposal_id', proposalId).maybeSingle(),
+      findClientInfo(proposal.client_id),
+      findInvoiceSeries(),
+      findInvoicedProposalPaymentPlanIds(proposalId),
+    ])
+    const { data: paidItems, error: paidItemsError } = await supabase
+      .from('invoice_payments')
+      .select('proposal_payment_plan_item_id')
+      .eq('proposal_id', proposalId)
+      .eq('status', 'confirmed')
+      .not('proposal_payment_plan_item_id', 'is', null)
+    if (paidItemsError) throw new Error(paidItemsError.message)
+    for (const payment of paidItems ?? []) {
+      if (typeof payment.proposal_payment_plan_item_id === 'string')
+        invoicedPlanIds.add(payment.proposal_payment_plan_item_id)
+    }
+    if (!client || !hasCompleteFiscalData(client)) {
+      throw new Error(
+        'La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar',
+      )
+    }
+    if (invoicedPlanIds.has(planItemId))
+      throw new Error('Este plazo ya tiene una factura preparada')
+    const { data: existingPayment, error: existingPaymentError } = await supabase
+      .from('invoice_payments')
+      .select('id')
+      .eq('proposal_id', proposalId)
+      .eq('proposal_payment_plan_item_id', planItemId)
+      .eq('status', 'confirmed')
+      .maybeSingle()
+    if (existingPaymentError) throw new Error(existingPaymentError.message)
+    if (existingPayment) throw new Error('Este plazo ya figura como pagado')
+
+    if (markPaidExternally) {
+      const sourceItems = (await findProposalItems(proposalId)).filter(
+        (item) => (item.billing_cycle ?? 'none') === 'none',
+      )
+      const amount = computeLineTotals(splitItemsForPaymentPlan(sourceItems, plan, index)).total
+      const [{ data: externalPayments }, { data: linkedInvoices }] = await Promise.all([
+        supabase
+          .from('invoice_payments')
+          .select('amount')
+          .eq('proposal_id', proposalId)
+          .eq('status', 'confirmed'),
+        supabase
+          .from('invoices')
+          .select('invoice_payments(amount,status)')
+          .eq('proposal_id', proposalId)
+          .is('deleted_at', null),
+      ])
+      const externalTotal = (externalPayments ?? []).reduce(
+        (sum, payment) => sum + Number(payment.amount ?? 0),
+        0,
+      )
+      const invoiceTotal = (linkedInvoices ?? []).reduce(
+        (sum, invoice) =>
+          sum +
+          ((invoice.invoice_payments as Array<{ amount: number; status: string }> | null) ?? [])
+            .filter((payment) => payment.status === 'confirmed')
+            .reduce((invoiceSum, payment) => invoiceSum + Number(payment.amount ?? 0), 0),
+        0,
+      )
+      if (Number(priceSummary?.total ?? 0) - externalTotal - invoiceTotal < amount - 0.01) {
+        throw new Error('El saldo restante no cubre el importe de este plazo')
+      }
+      const { error } = await supabase.from('invoice_payments').insert({
+        proposal_id: proposalId,
+        proposal_payment_plan_item_id: planItemId,
+        amount,
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString(),
+      })
+      if (error) throw new Error(error.message)
+      return { id: '' }
+    }
+
+    const items = (await findProposalItems(proposalId)).filter(
+      (item) => (item.billing_cycle ?? 'none') === 'none',
+    )
+    if (items.length === 0) throw new Error('La propuesta no tiene líneas puntuales para facturar')
+    const invoiceItems = splitItemsForPaymentPlan(items, plan, index)
+    if (invoiceItems.length === 0)
+      throw new Error(`El plazo «${milestone.title}» no tiene importe facturable`)
+    const { subtotal, taxAmount, total } = computeLineTotals(invoiceItems)
+    const { id } = await insertInvoiceWithItems(
+      {
+        client_id: proposal.client_id,
+        project_id: proposal.project_id,
+        proposal_id: proposal.id,
+        proposal_payment_plan_item_id: milestone.id,
+        series,
+        status: 'draft',
+        currency: 'EUR',
+        subtotal,
+        tax_amount: taxAmount,
+        total,
+        due_date: milestone.due_date ?? null,
+        client_nif: client.nif ?? null,
+        client_name: client.name ?? null,
+        client_address_street: client.billing_address_street ?? null,
+        client_address_zip: client.billing_address_zip ?? null,
+        client_address_city: client.billing_address_city ?? null,
+        client_address_province: client.billing_address_province ?? null,
+        client_address_country: client.billing_address_country ?? null,
+        notes: proposal.notes,
+        payment_terms: `${milestone.title} · ${milestone.percentage} %`,
+        created_by: user.id,
+      },
+      invoiceItems.map((item, position) => ({ ...item, position })),
+    )
+    return { id }
   },
 })
 

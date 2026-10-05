@@ -185,6 +185,7 @@ export default async function InvoicesPage({
       columns={[
         { key: 'n', label: 'Nº', sortKey: 'full_number', minWidth: '8rem' },
         { key: 'cliente', label: 'Cliente', sortKey: 'client_name', minWidth: '11rem' },
+        { key: 'propuesta', label: 'Propuesta', minWidth: '12rem' },
         { key: 'conceptos', label: 'Conceptos', minWidth: '15rem' },
         { key: 'idfact', label: 'IDFACT', minWidth: '7rem' },
         { key: 'estado', label: 'Estado', sortKey: 'status' },
@@ -219,6 +220,23 @@ export default async function InvoicesPage({
               </Link>
             ) : null,
             value: i.client_name ?? '',
+          },
+          propuesta: {
+            content: i.proposal_url ? (
+              <Link
+                key="proposal"
+                href={i.proposal_url}
+                className="block max-w-48 text-sm text-primary hover:underline"
+                title={i.proposal_title ?? undefined}
+              >
+                <span className="line-clamp-2">
+                  {i.proposal_number ?? i.proposal_title ?? 'Ver propuesta'}
+                </span>
+              </Link>
+            ) : (
+              <span className="text-muted-foreground/50">—</span>
+            ),
+            value: i.proposal_number ?? i.proposal_title ?? '',
           },
           conceptos: {
             content:

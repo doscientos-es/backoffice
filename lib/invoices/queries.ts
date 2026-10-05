@@ -66,7 +66,7 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
         supabase
           .from('invoices')
           .select(
-            'id, client_id, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name, invoice_items(description, position)',
+            'id, client_id, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name, proposal_id, proposals(id, number, title), invoice_items(description, position)',
             { count: 'exact' },
           ),
       )
@@ -126,6 +126,12 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
       issue_date: (i.issue_date as string | null) ?? null,
       due_date: (i.due_date as string | null) ?? null,
       client_name: (i.client_name as string | null) ?? null,
+      proposal_id: (i.proposal_id as string | null) ?? null,
+      proposal_title:
+        (i.proposals as unknown as Array<{ title: string | null }> | null)?.[0]?.title ?? null,
+      proposal_number:
+        (i.proposals as unknown as Array<{ number: string | null }> | null)?.[0]?.number ?? null,
+      proposal_url: i.proposal_id ? `/proposals/${i.proposal_id}` : null,
     })),
     count: listRes.count ?? 0,
     stats: {

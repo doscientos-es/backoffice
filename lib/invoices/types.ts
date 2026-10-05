@@ -18,6 +18,10 @@ export type InvoiceListItem = {
   issue_date: string | null
   due_date: string | null
   client_name: string | null
+  proposal_id: string | null
+  proposal_title: string | null
+  proposal_number: string | null
+  proposal_url: string | null
 }
 
 export type InvoiceStats = {

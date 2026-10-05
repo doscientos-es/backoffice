@@ -332,9 +332,17 @@ export default async function ProposalDetailPage({
     .eq('proposal_id', id)
     .order('created_at', { ascending: false })
 
+  const { data: milestonePayments } = await supabase
+    .from('invoice_payments')
+    .select('proposal_payment_plan_item_id, amount, status')
+    .eq('proposal_id', id)
+    .not('proposal_payment_plan_item_id', 'is', null)
+
   const { data: paymentPlanInvoices } = await supabase
     .from('invoices')
-    .select('id, full_number, status, proposal_payment_plan_item_id')
+    .select(
+      'id, full_number, status, total, proposal_payment_plan_item_id, invoice_payments(amount,status)',
+    )
     .eq('proposal_id', id)
     .is('deleted_at', null)
     .not('proposal_payment_plan_item_id', 'is', null)
@@ -664,9 +672,27 @@ export default async function ProposalDetailPage({
                             planItemId,
                             number: (invoice.full_number as string | null) ?? 'Borrador',
                             status: invoice.status as string,
+                            total: Number(invoice.total ?? 0),
+                            paid: (
+                              (invoice.invoice_payments as Array<{
+                                amount: number
+                                status: string
+                              }> | null) ?? []
+                            )
+                              .filter((payment) => payment.status === 'confirmed')
+                              .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0),
                           },
                         ]
                       })}
+                      externalPayments={(milestonePayments ?? [])
+                        .filter(
+                          (payment) =>
+                            payment.status === 'confirmed' && payment.proposal_payment_plan_item_id,
+                        )
+                        .map((payment) => ({
+                          planItemId: payment.proposal_payment_plan_item_id as string,
+                          amount: Number(payment.amount ?? 0),
+                        }))}
                     />
                   ) : null}
                 </>
