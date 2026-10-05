@@ -20,6 +20,7 @@ export async function getInternalDocPreviewUrl(
       'internal-docs',
       storagePath,
       PREVIEW_TTL,
+      { download: false },
     )
     if (url) return url
 

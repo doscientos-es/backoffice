@@ -31,6 +31,12 @@ describe('getInternalDocPreviewUrl', () => {
     await expect(getInternalDocPreviewUrl('doc-1', 'other/doc-1/file.pdf')).resolves.toBe(
       'https://preview.example/doc',
     )
+    expect(mocks.createSignedUrl).toHaveBeenCalledWith(
+      'internal-docs',
+      'other/doc-1/file.pdf',
+      600,
+      { download: false },
+    )
   })
 
   it('falls back and logs safe context when Storage returns an error', async () => {
