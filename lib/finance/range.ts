@@ -1,12 +1,13 @@
 /**
  * Finance dashboard date-range parsing.
  * URL-driven so server components can render the right window without client state.
- * Default range: "month" (current calendar month).
+ * Default range: "quarter" (current calendar quarter to date).
  */
 
-export type FinanceRange = 'month' | 'last_month' | 'ytd' | '90d' | '365d' | 'max'
+export type FinanceRange = 'quarter' | 'month' | 'last_month' | 'ytd' | '90d' | '365d' | 'max'
 
 const VALID_RANGES: ReadonlySet<FinanceRange> = new Set([
+  'quarter',
   'month',
   'last_month',
   'ytd',
@@ -16,6 +17,7 @@ const VALID_RANGES: ReadonlySet<FinanceRange> = new Set([
 ])
 
 export const FINANCE_RANGE_OPTIONS: { value: FinanceRange; label: string }[] = [
+  { value: 'quarter', label: 'Este trimestre' },
   { value: 'month', label: 'Este mes' },
   { value: 'last_month', label: 'Mes pasado' },
   { value: 'ytd', label: 'Este año' },
@@ -30,7 +32,7 @@ function toIsoDate(d: Date): string {
 
 export function parseFinanceRange(value: string | string[] | undefined): FinanceRange {
   const v = Array.isArray(value) ? value[0] : value
-  return v && VALID_RANGES.has(v as FinanceRange) ? (v as FinanceRange) : 'month'
+  return v && VALID_RANGES.has(v as FinanceRange) ? (v as FinanceRange) : 'quarter'
 }
 
 export function financeRangeToDates(range: FinanceRange): {
@@ -43,6 +45,12 @@ export function financeRangeToDates(range: FinanceRange): {
   const daysAgo = (n: number) => toIsoDate(new Date(now.getTime() - n * 86_400_000))
 
   switch (range) {
+    case 'quarter':
+      return {
+        since: toIsoDate(new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)),
+        until,
+        label: 'Este trimestre',
+      }
     case 'month':
       return {
         since: toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1)),

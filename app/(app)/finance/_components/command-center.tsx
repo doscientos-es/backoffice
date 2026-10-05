@@ -1,25 +1,18 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent } from '@/components/ui/card'
 import type { CommandCenterMetrics } from '@/lib/finance/command-center'
 import { formatEUR } from '@/lib/utils'
 
 export function CommandCenter({ metrics }: { metrics: CommandCenterMetrics }) {
-  const [taxRate, setTaxRate] = useState(10),
-    [target, setTarget] = useState(10000),
-    [months, setMonths] = useState(6)
   const model = useMemo(() => {
     const gross = metrics.revenue - metrics.directCosts
     const preTax = gross - metrics.fixedCosts
     const avg = metrics.invoiceCount ? metrics.revenue / metrics.invoiceCount : 0
     const cac = metrics.wonLeads ? metrics.adSpend / metrics.wonLeads : 0
-    const targetRevenue =
-      (target / Math.max(0.01, 1 - taxRate / 100) + metrics.fixedCosts) /
-      Math.max(0.01, 1 - metrics.directCosts / Math.max(metrics.revenue, 1))
-    return { gross, preTax, avg, cac, targetRevenue, monthly: targetRevenue / Math.max(1, months) }
-  }, [metrics, taxRate, target, months])
+    return { gross, preTax, avg, cac }
+  }, [metrics])
   const eur = (v: number) => formatEUR(Math.round(v * 100) / 100)
   return (
     <section className="flex flex-col gap-4" aria-labelledby="command-center-title">
@@ -47,59 +40,6 @@ export function CommandCenter({ metrics }: { metrics: CommandCenterMetrics }) {
           </Card>
         ))}
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Qué tenemos que facturar para conseguir {eur(target)} netos en {months} meses
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-5 lg:grid-cols-[1fr_1fr]">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className="text-sm" htmlFor="command-center-tax">
-              Impuesto estimado %
-              <Input
-                id="command-center-tax"
-                type="number"
-                min="0"
-                value={taxRate}
-                onChange={(e) => setTaxRate(Number(e.target.value))}
-              />
-            </label>
-            <label className="text-sm" htmlFor="command-center-target">
-              Beneficio neto objetivo
-              <Input
-                id="command-center-target"
-                type="number"
-                min="0"
-                value={target}
-                onChange={(e) => setTarget(Number(e.target.value))}
-              />
-            </label>
-            <label className="text-sm" htmlFor="command-center-months">
-              Meses
-              <Input
-                id="command-center-months"
-                type="number"
-                min="1"
-                value={months}
-                onChange={(e) => setMonths(Number(e.target.value))}
-              />
-            </label>
-          </div>
-          <div className="rounded-lg bg-muted/40 p-4 text-sm">
-            <p>
-              Facturación total necesaria: <strong>{eur(model.targetRevenue)}</strong>
-            </p>
-            <p className="mt-1">
-              Ritmo mensual: <strong>{eur(model.monthly)}</strong>
-            </p>
-            <p className="mt-3 text-xs text-muted-foreground">
-              CAC = gasto Meta Ads / clientes ganados registrados. Si no hay atribución suficiente,
-              es una señal pendiente, no un dato fiable.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
       <p className="text-xs text-muted-foreground">
         Vista de gestión, no liquidación fiscal. Costes directos {eur(metrics.directCosts)} ·
         estructura {eur(metrics.fixedCosts)} · horas {metrics.hours.toFixed(1)} h · Ads{' '}

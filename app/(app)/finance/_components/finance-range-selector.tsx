@@ -15,8 +15,8 @@ export function FinanceRangeSelector({ current }: { current: FinanceRange }) {
 
   const onSelect = (next: FinanceRange) => {
     const params = new URLSearchParams(searchParams.toString())
-    // "month" is the default — omit the param to keep URLs clean
-    if (next === 'month') params.delete('range')
+    // "quarter" is the default — omit the param to keep URLs clean
+    if (next === 'quarter') params.delete('range')
     else params.set('range', next)
     const qs = params.toString()
     startTransition(() => {
