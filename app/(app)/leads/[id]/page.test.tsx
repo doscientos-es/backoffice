@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { DetailRow } from '@/components/layout/detail-grid'
 import { StatusBadge } from '@/components/ui/status-badge'
 
+import { LeadDeleteDangerZone } from './lead-delete-danger-zone'
+
 const { getLeadDetail, requireUser } = vi.hoisted(() => ({
   getLeadDetail: vi.fn(),
   requireUser: vi.fn(),
@@ -77,5 +79,32 @@ describe('LeadDetailPage', () => {
       expect(status.props.children.type).toBe(StatusBadge)
       expect(status.props.children.props.value).toBe('new')
     }
+    expect(elements(page).some((element) => element.type === LeadDeleteDangerZone)).toBe(false)
+  })
+
+  it('shows the delete danger zone to owners and admins', async () => {
+    requireUser.mockResolvedValue({ id: 'admin-1', name: 'Ana', role: 'admin' })
+    getLeadDetail.mockResolvedValue({
+      lead: {
+        id: 'lead-1',
+        name: 'María García',
+        status: 'new',
+        created_at: '2026-09-22',
+      },
+      interactions: [],
+      linkedClientId: null,
+      linkedClientName: null,
+      proposals: [],
+      projects: [],
+      invoices: [],
+      tasks: [],
+      reminders: [],
+      attachments: [],
+      discoveryQuestions: [],
+    })
+
+    const page = await LeadDetailPage({ params: Promise.resolve({ id: 'lead-1' }) })
+
+    expect(elements(page).some((element) => element.type === LeadDeleteDangerZone)).toBe(true)
   })
 })

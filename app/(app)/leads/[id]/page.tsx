@@ -33,6 +33,7 @@ import { LeadActivityFeed, countActivityEvents } from './lead-activity-feed'
 import { LeadAiPanel } from './lead-ai-panel'
 import { LeadCommercial } from './lead-commercial'
 import { LeadCompanyResearch } from './lead-company-research'
+import { LeadDeleteDangerZone } from './lead-delete-danger-zone'
 import {
   LeadAttachmentsSection,
   LeadConversionJourneySection,
@@ -698,6 +699,10 @@ export default async function LeadDetailPage({
           </div>
         </aside>
       </section>
+
+      {user.role === 'owner' || user.role === 'admin' ? (
+        <LeadDeleteDangerZone leadId={lead.id as string} leadName={displayName} />
+      ) : null}
     </div>
   )
 }
