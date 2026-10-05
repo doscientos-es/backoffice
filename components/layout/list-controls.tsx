@@ -101,7 +101,7 @@ export function ListControls({
 
   // Keep the latest router-related callbacks in a ref so the debounce effect
   // can depend only on `q` without re-creating the timeout on every render.
-  const commitRef = useRef<(value: string) => void>(() => {})
+  const commitRef = useRef<(value: string) => void>(() => undefined)
   commitRef.current = (value: string) => {
     navigate(updateParams(params, { [searchKey]: value, page: null }))
   }
@@ -219,7 +219,7 @@ export function ListControls({
             return (
               <div
                 key={filter.key}
-                className="flex h-9 shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-1.5 shadow-xs"
+                className="flex h-9 max-w-full min-w-0 items-center gap-1 overflow-x-auto rounded-lg border border-border bg-background px-1.5 shadow-xs"
               >
                 {filter.options.map((option) => {
                   const isSelected = selectedValue === option.value

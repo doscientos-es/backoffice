@@ -21,9 +21,9 @@ export function TaskQuickViewDialog({ taskId, children }: { taskId: string; chil
     <Dialog open onOpenChange={(open) => !open && router.back()}>
       <DialogContent
         showCloseButton={false}
-        className="h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden p-0 sm:h-[min(92dvh,56rem)] sm:max-w-6xl"
+        className="h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden p-0 sm:h-[min(92dvh,56rem)] sm:w-auto sm:max-w-6xl"
       >
-        <DialogHeader className="flex-row items-center justify-between gap-4 border-b px-4 py-3 sm:px-6">
+        <DialogHeader className="flex-row items-center justify-between gap-2 border-b px-3 py-3 sm:gap-4 sm:px-6">
           <div className="min-w-0">
             <DialogTitle>Detalle de tarea</DialogTitle>
             <DialogDescription>
@@ -45,7 +45,7 @@ export function TaskQuickViewDialog({ taskId, children }: { taskId: string; chil
             </DialogClose>
           </div>
         </DialogHeader>
-        <div className="min-h-0 overflow-y-auto p-4 sm:p-6">{children}</div>
+        <div className="min-h-0 overflow-y-auto p-3 sm:p-6">{children}</div>
       </DialogContent>
     </Dialog>
   )

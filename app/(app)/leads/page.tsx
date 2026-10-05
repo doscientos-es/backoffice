@@ -153,7 +153,7 @@ export default async function LeadsPage({
         emptyAction={<LeadCreateDialog />}
         searchKey="q"
         searchPlaceholder="Buscar por nombre, empresa o email…"
-        controlsPresentation="default"
+        controlsPresentation="panel"
         filters={[
           { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
           { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
@@ -197,7 +197,7 @@ export default async function LeadsPage({
       <ListControls
         searchKey="q"
         searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
-        presentation="default"
+        presentation="panel"
         filters={[
           { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
           { key: 'solution', label: 'Necesidad', options: SOLUTION_FILTER_OPTIONS },

@@ -94,20 +94,22 @@ export function CalendarHeader({
   return (
     <div className="flex flex-col border-b border-border">
       {/* ── Row 1: navigation + view controls ─────────────────── */}
-      <div className="flex items-center justify-between gap-3 px-4 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 sm:px-4">
         {/* Left: arrows + title */}
-        <div className="flex items-center gap-1">
+        <div className="flex min-w-0 flex-1 items-center gap-1 sm:flex-none">
           <Link
             href={navHref(sp, { date: prevAnchor })}
-            className="rounded p-1 transition-colors hover:bg-secondary"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-secondary"
             aria-label="Anterior"
           >
             <ChevronLeft className="h-4 w-4" />
           </Link>
-          <h1 className="w-36 text-center text-sm font-semibold capitalize">{title}</h1>
+          <h1 className="min-w-0 flex-1 truncate text-center text-sm font-semibold capitalize sm:w-36 sm:flex-none">
+            {title}
+          </h1>
           <Link
             href={navHref(sp, { date: nextAnchor })}
-            className="rounded p-1 transition-colors hover:bg-secondary"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-secondary"
             aria-label="Siguiente"
           >
             <ChevronRight className="h-4 w-4" />
@@ -115,43 +117,23 @@ export function CalendarHeader({
         </div>
 
         {/* Right: Nuevo + Google Calendar + Today + view selector */}
-        <div className="flex items-center gap-2">
+        <div className="flex w-full min-w-0 items-center justify-between gap-2 sm:w-auto sm:justify-end">
           <button
             type="button"
             onClick={() => openCreate()}
-            className="flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            aria-label="Nuevo evento"
+            className="inline-flex size-9 shrink-0 items-center justify-center gap-1.5 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:size-auto sm:py-1"
           >
             <Plus className="h-3.5 w-3.5" />
-            Nuevo
+            <span className="hidden sm:inline">Nuevo</span>
           </button>
-          {calendarToken && (
-            <button
-              type="button"
-              onClick={handleCopyIcal}
-              title="Copiar URL para Google Calendar / Apple Calendar"
-              className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-secondary"
-            >
-              {copied ? (
-                <Check className="h-3.5 w-3.5 text-green-500" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )}
-              {copied ? '¡Copiado!' : 'Suscribirse'}
-            </button>
-          )}
-          <Link
-            href={navHref(sp, { date: new Date().toISOString().slice(0, 10) })}
-            className="rounded-md border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-secondary"
-          >
-            Hoy
-          </Link>
           <div className="flex overflow-hidden rounded-md border border-border text-xs font-medium">
             {VIEWS.map(({ value, label }) => (
               <Link
                 key={value}
                 href={navHref(sp, { view: value })}
                 className={cn(
-                  'px-2.5 py-1 transition-colors',
+                  'px-2 py-2 transition-colors sm:px-2.5 sm:py-1',
                   view === value
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-secondary',
@@ -161,16 +143,40 @@ export function CalendarHeader({
               </Link>
             ))}
           </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {calendarToken && (
+              <button
+                type="button"
+                onClick={handleCopyIcal}
+                title="Copiar URL para Google Calendar / Apple Calendar"
+                aria-label={copied ? 'URL copiada' : 'Suscribirse al calendario'}
+                className="inline-flex size-9 items-center justify-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium transition-colors hover:bg-secondary sm:size-auto sm:py-1"
+              >
+                {copied ? (
+                  <Check className="h-3.5 w-3.5 text-green-500" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+                <span className="hidden sm:inline">{copied ? '¡Copiado!' : 'Suscribirse'}</span>
+              </button>
+            )}
+            <Link
+              href={navHref(sp, { date: new Date().toISOString().slice(0, 10) })}
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-border px-2.5 text-xs font-medium transition-colors hover:bg-secondary sm:h-auto sm:py-1"
+            >
+              Hoy
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* ── Row 2: layer filter dropdown + member avatars ──────── */}
-      <div className="flex items-center gap-2 bg-muted/30 px-4 py-1.5">
+      <div className="no-scrollbar flex min-w-0 items-center gap-2 overflow-x-auto bg-muted/30 px-3 py-1.5 sm:px-4">
         <LayersDropdown activeLayers={activeLayers} onToggleLayer={onToggleLayer} />
 
         {teamMembers.length > 1 && (
           <>
-            <span className="mx-1 h-3.5 w-px bg-border" />
+            <span className="mx-1 h-3.5 w-px shrink-0 bg-border" />
             {teamMembers.map((m) => {
               const active = activeMembers.has(m.id)
               const avatarSrc = memberAvatarUrl({
@@ -184,7 +190,7 @@ export function CalendarHeader({
                   onClick={() => onToggleMember(m.id)}
                   title={m.name}
                   className={cn(
-                    'shrink-0 rounded-full transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                    'inline-flex size-9 shrink-0 items-center justify-center rounded-full transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                     active
                       ? 'opacity-100 ring-2 ring-primary ring-offset-1 ring-offset-background'
                       : 'opacity-35 hover:opacity-60',
@@ -222,7 +228,7 @@ function LayersDropdown({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:h-auto sm:py-1"
         >
           <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
           Tipos

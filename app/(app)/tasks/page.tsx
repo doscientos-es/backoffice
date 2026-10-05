@@ -114,6 +114,7 @@ export default async function TasksPage({
                 searchable: true,
               },
             ]}
+            presentation="panel"
             className="border-b-0"
           />
         </div>

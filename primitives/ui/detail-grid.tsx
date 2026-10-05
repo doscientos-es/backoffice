@@ -6,7 +6,7 @@ export function DetailGrid({ children, className }: { children: ReactNode; class
   return (
     <dl
       className={cn(
-        'grid min-w-0 grid-cols-[140px_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-sm',
+        'grid min-w-0 grid-cols-1 gap-y-0.5 text-sm sm:grid-cols-[140px_minmax(0,1fr)] sm:gap-x-4 sm:gap-y-2.5',
         className,
       )}
     >
@@ -19,7 +19,7 @@ export function DetailRow({ label, children }: { label: string; children: ReactN
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 wrap-break-word text-primary">{children ?? '—'}</dd>
+      <dd className="min-w-0 pb-2.5 wrap-break-word text-primary sm:pb-0">{children ?? '—'}</dd>
     </>
   )
 }

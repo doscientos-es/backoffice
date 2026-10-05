@@ -67,7 +67,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         ]}
         actions={
           user.role !== 'viewer' ? (
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
               <Button asChild size="sm" variant="outline">
                 <Link href={`/document-templates/generate?client_id=${client.id as string}`}>
                   Crear documento
@@ -271,7 +271,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                 {tasks.map((task) => (
                   <li
                     key={task.id}
-                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                    className="flex flex-col items-start gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-2.5"
                   >
                     <Link
                       href={`/tasks/${task.id}`}
@@ -279,7 +279,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     >
                       {task.title}
                     </Link>
-                    <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:shrink-0 sm:gap-3">
                       <StatusBadge meta={TASK_STATUS} value={task.status as TaskStatus} />
                       {task.due_date ? <span>{formatDate(task.due_date)}</span> : null}
                     </div>
@@ -310,7 +310,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                 {projects.map((p) => (
                   <li
                     key={p.id as string}
-                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                    className="flex flex-col items-start gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-2.5"
                   >
                     <Link
                       href={`/projects/${p.id}`}
@@ -344,7 +344,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                 {proposals.map((p) => (
                   <li
                     key={p.id as string}
-                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                    className="flex flex-col items-start gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-2.5"
                   >
                     <Link
                       href={`/proposals/${p.id}`}
@@ -352,7 +352,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     >
                       {p.number as string}
                     </Link>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                       <StatusBadge meta={PROPOSAL_STATUS} value={p.status as ProposalStatus} />
                       {canSeeProposalPrices && p.total !== null ? (
                         <span className="text-xs text-muted-foreground tabular-nums">
@@ -380,7 +380,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                 {invoices.map((inv) => (
                   <li
                     key={inv.id as string}
-                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                    className="flex flex-col items-start gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-2.5"
                   >
                     <Link
                       href={`/invoices/${inv.id}`}
@@ -388,7 +388,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     >
                       {inv.full_number as string}
                     </Link>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                       <StatusBadge meta={INVOICE_STATUS} value={inv.status as InvoiceStatus} />
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {formatEUR(Number(inv.total ?? 0))}

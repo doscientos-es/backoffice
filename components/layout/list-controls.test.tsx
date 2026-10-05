@@ -90,6 +90,14 @@ describe('ListControls avatar filter', () => {
     expect(navigation.replace).toHaveBeenCalledWith('/leads', { scroll: false })
   })
 
+  it('keeps panel avatar filters horizontally scrollable on narrow screens', () => {
+    render(<ListControls filters={[FILTER]} presentation="panel" />)
+
+    const avatarFilter = screen.getByRole('button', { name: 'Filtrar por Ana Pérez' }).parentElement
+    expect(avatarFilter?.className).toContain('max-w-full')
+    expect(avatarFilter?.className).toContain('overflow-x-auto')
+  })
+
   it('saves, applies and deletes a browser-local view through URL filters', () => {
     navigation.params = new URLSearchParams('status=new&source=web&page=2')
     render(

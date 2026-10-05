@@ -118,14 +118,18 @@ export function TaskCreateDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-none p-4 sm:w-auto sm:max-w-2xl sm:p-6">
         <DialogHeader>
           <DialogTitle>Crear tarea</DialogTitle>
           <DialogDescription>
             Puedes crear una tarea personal y asociarla opcionalmente a un proyecto, lead o cliente.
           </DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={onSubmit} className="flex max-h-[70vh] flex-col">
+        <form
+          ref={formRef}
+          onSubmit={onSubmit}
+          className="flex max-h-[calc(100dvh-8rem)] flex-col sm:max-h-[70vh]"
+        >
           <div className="no-scrollbar flex min-h-0 flex-1 scroll-fade flex-col gap-5 overflow-y-auto pr-1">
             {projectId ? <input type="hidden" name="project_id" value={projectId} /> : null}
             {leadId ? <input type="hidden" name="lead_id" value={leadId} /> : null}
@@ -147,9 +151,13 @@ export function TaskCreateDialog({
               }}
             />
           </div>
-          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border pt-3">
+          <div className="-mx-4 flex shrink-0 flex-col-reverse gap-2 border-t border-border bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:mx-0 sm:flex-row sm:items-center sm:justify-end sm:bg-transparent sm:p-0 sm:pt-3 sm:backdrop-blur-none">
             <FormFeedback state={feedback.state} pendingLabel="Creando…" />
-            <SubmitButton loading={feedback.pending} pendingLabel="Creando…">
+            <SubmitButton
+              className="min-h-11 w-full sm:w-auto"
+              loading={feedback.pending}
+              pendingLabel="Creando…"
+            >
               Crear tarea
             </SubmitButton>
           </div>

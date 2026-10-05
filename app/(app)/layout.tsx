@@ -8,7 +8,6 @@ import { KeyboardShortcuts } from '@/components/layout/keyboard-shortcuts'
 import { MobileNav } from '@/components/layout/mobile-nav'
 import { MobileTabBar } from '@/components/layout/mobile-tab-bar'
 import { NavProgress } from '@/components/layout/nav-progress'
-import { QuickCreateButton } from '@/components/layout/quick-create-button'
 import { ShortcutsDialog } from '@/components/layout/shortcuts-dialog'
 import { Sidebar } from '@/components/layout/sidebar'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
@@ -41,7 +40,9 @@ export default async function AppLayout({
           </Link>
           <CommandPaletteTrigger variant="icon" className="ml-auto" />
         </header>
-        <main className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-24 md:px-6 md:py-6">
+          {children}
+        </main>
       </div>
       <MobileTabBar user={user} />
       {modal}
@@ -49,7 +50,6 @@ export default async function AppLayout({
       <CommandPalette role={user.role} />
       <KeyboardShortcuts />
       <ShortcutsDialog />
-      <QuickCreateButton />
       <CallReminderWatcher />
       <MfaSessionGate memberRole={user.role} mfaVerified={mfaVerified} />
       <PwaInstallPrompt />

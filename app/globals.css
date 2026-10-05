@@ -490,10 +490,6 @@ table,
     transform: scale(0.96);
   }
 
-  .app-mobile-quick-create {
-    bottom: calc(4rem + env(safe-area-inset-bottom) + 0.75rem);
-  }
-
   :where(button, a, [role='button']) {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;

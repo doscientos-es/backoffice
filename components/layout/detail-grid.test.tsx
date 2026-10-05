@@ -14,7 +14,8 @@ describe('DetailGrid', () => {
     )
 
     expect(container.querySelector('dl')?.className).toContain('min-w-0')
-    expect(container.querySelector('dl')?.className).toContain('grid-cols-[140px_minmax(0,1fr)]')
+    expect(container.querySelector('dl')?.className).toContain('grid-cols-1')
+    expect(container.querySelector('dl')?.className).toContain('sm:grid-cols-[140px_minmax(0,1fr)]')
     expect(
       screen.getByText('https://example.com/a-very-long-reference').closest('dd')?.className,
     ).toContain('wrap-break-word')
