@@ -154,8 +154,13 @@ export function ListTable<Data, Key extends string>({
           ) : null}
         </div>
       ) : null}
-      <div className={cn('overflow-x-auto', mobileRow && 'hidden sm:block')}>
-        <table className="w-full text-sm">
+      <div
+        className={cn(
+          'max-w-full overflow-x-auto overscroll-x-contain',
+          mobileRow && 'hidden sm:block',
+        )}
+      >
+        <table className="w-full min-w-max text-sm sm:min-w-full">
           <thead>
             <tr className="border-b border-border bg-muted/30">
               {bulkActions.length > 0 ? (

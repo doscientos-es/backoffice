@@ -168,12 +168,12 @@ export function SettingsNav({ canManageTeam }: { canManageTeam: boolean }) {
             <button
               type="button"
               aria-label="Cambiar sección de ajustes"
-              className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-left text-sm shadow-sm transition-colors hover:bg-secondary/60"
+              className="flex min-h-11 w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-sm shadow-sm transition-colors hover:bg-secondary/60"
             >
-              <span className="text-muted-foreground">Ajustes</span>
-              <span className="flex items-center gap-2 font-medium text-foreground">
-                {activeItem?.label ?? 'Secciones'}
-                <ChevronDown className="size-4 text-muted-foreground" aria-hidden />
+              <span className="shrink-0 text-muted-foreground">Ajustes</span>
+              <span className="flex min-w-0 items-center justify-end gap-2 font-medium text-foreground">
+                <span className="truncate">{activeItem?.label ?? 'Secciones'}</span>
+                <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
               </span>
             </button>
           }

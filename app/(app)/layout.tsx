@@ -40,7 +40,7 @@ export default async function AppLayout({
           </Link>
           <CommandPaletteTrigger variant="icon" className="ml-auto" />
         </header>
-        <main className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-24 md:px-6 md:py-6">
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 pt-4 pb-24 md:px-6 md:py-6">
           {children}
         </main>
       </div>

@@ -132,21 +132,21 @@ describe('SettingsNav – item visibility', () => {
 
 describe('SettingsNav – active state', () => {
   it('sets aria-current=page on the active route', () => {
-    ;(usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/settings/profile')
+    vi.mocked(usePathname).mockReturnValue('/settings/profile')
     const { container } = renderNav(false)
     const perfilLink = desktopNav(container).getByRole('link', { name: /perfil/i })
     expect(perfilLink.getAttribute('aria-current')).toBe('page')
   })
 
   it('does not set aria-current on inactive routes', () => {
-    ;(usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/settings/profile')
+    vi.mocked(usePathname).mockReturnValue('/settings/profile')
     const { container } = renderNav(false)
     const legalLink = desktopNav(container).getByRole('link', { name: /legal/i })
     expect(legalLink.getAttribute('aria-current')).toBeNull()
   })
 
   it('marks /settings/company as active when on that path (admin)', () => {
-    ;(usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/settings/company')
+    vi.mocked(usePathname).mockReturnValue('/settings/company')
     const { container } = renderNav(true)
     const nav = desktopNav(container)
     expect(nav.getByRole('link', { name: /empresa/i }).getAttribute('aria-current')).toBe('page')
@@ -176,6 +176,15 @@ describe('SettingsNav – responsive layout', () => {
   it('offers a compact mobile section picker', () => {
     renderNav(true)
     expect(screen.getByRole('button', { name: 'Cambiar sección de ajustes' })).toBeTruthy()
+  })
+
+  it('truncates long active section names while preserving the picker touch target', () => {
+    vi.mocked(usePathname).mockReturnValue('/settings/backups')
+    renderNav(true)
+    const picker = screen.getByRole('button', { name: 'Cambiar sección de ajustes' })
+
+    expect(picker.className).toContain('min-h-11')
+    expect(within(picker).getByText('Copias y exportaciones').className).toContain('truncate')
   })
 
   it('shows the application version in the settings navigation', () => {

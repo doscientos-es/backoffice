@@ -65,4 +65,21 @@ describe('ListPage', () => {
 
     expect(navigation.push).not.toHaveBeenCalled()
   })
+
+  it('keeps wide tables scrollable on small screens without compressing columns', () => {
+    const { container } = render(
+      <ListPage
+        title="Facturas"
+        empty="Sin facturas"
+        columns={[{ key: 'factura', label: 'Factura' }]}
+        rows={[{ id: 'invoice-1', cells: { factura: { content: 'FAC-001' } } }]}
+      />,
+    )
+    const table = container.querySelector('table')
+
+    expect(table?.className).toContain('min-w-max')
+    expect(table?.className).toContain('sm:min-w-full')
+    expect(table?.parentElement?.className).toContain('overflow-x-auto')
+    expect(table?.parentElement?.className).toContain('overscroll-x-contain')
+  })
 })
