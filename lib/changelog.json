@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.96",
+      "date": "2026-10-05",
+      "title": "v0.1.96",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add delete danger zone for lead management"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "36488eb3df6582b2a48f889e6d6802faff4f82e0",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add delete danger zone for lead management"
+        }
+      ]
+    },
+    {
       "version": "0.1.95",
       "date": "2026-10-05",
       "title": "v0.1.95",
