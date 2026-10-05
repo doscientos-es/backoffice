@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.101",
+      "date": "2026-10-05",
+      "title": "v0.1.101",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add alias and company fields to lead details and actions"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "0939c95644e5211eac8573ab9c949b377ff031bb",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add alias and company fields to lead details and actions"
+        }
+      ]
+    },
+    {
       "version": "0.1.100",
       "date": "2026-10-05",
       "title": "v0.1.100",

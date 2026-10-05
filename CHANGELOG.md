@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-05 — v0.1.101
+
+### Nuevas funciones
+
+- Add alias and company fields to lead details and actions
+
 ## 2026-10-05 — v0.1.100
 
 ### Nuevas funciones
