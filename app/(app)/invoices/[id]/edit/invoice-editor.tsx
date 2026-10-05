@@ -170,7 +170,7 @@ export function InvoiceEditor({
         </div>
 
         {/* Sticky action bar */}
-        <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-4 -mb-4 border-t border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70 md:bottom-0 md:-mx-6 md:-mb-6">
+        <div className="sticky bottom-[calc(4rem_+_env(safe-area-inset-bottom))] z-10 -mx-4 -mb-4 border-t border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70 md:bottom-0 md:-mx-6 md:-mb-6">
           <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 md:px-6">
             <div className="min-w-0 text-xs sm:text-sm">
               {error && <span className="text-destructive">{error}</span>}

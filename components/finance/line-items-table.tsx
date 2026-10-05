@@ -80,7 +80,7 @@ export function LineItemsTable({
     : 'md:grid-cols-[minmax(12rem,1fr)_5rem_8rem_6rem_8rem_5rem]'
 
   return (
-    <div className="overflow-hidden">
+    <div className="max-w-full overflow-x-auto overscroll-x-contain">
       <fieldset className="min-w-0 border-0 p-0">
         <legend className="sr-only">Líneas de factura</legend>
         <div

@@ -300,7 +300,7 @@ export function CalendarGrid({
       <CalendarCreateContext.Provider value={openCreate}>
         {sharedDialogs}
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className="flex h-full flex-col">
+          <div className="flex h-full min-h-0 flex-col">
             <CalendarHeader {...headerProps} />
             <div className="grid grid-cols-7 border-b border-border">
               {WEEK_DAYS.map((d) => (
@@ -312,7 +312,7 @@ export function CalendarGrid({
                 </div>
               ))}
             </div>
-            <div className="grid flex-1 grid-cols-7 grid-rows-[repeat(6,1fr)] divide-x divide-y divide-border overflow-hidden">
+            <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-[repeat(6,1fr)] divide-x divide-y divide-border overflow-x-hidden overflow-y-auto overscroll-y-contain">
               {weeks.flatMap((week) =>
                 week.map((d) => (
                   <DayCell
@@ -336,6 +336,8 @@ export function CalendarGrid({
 
 const HOUR_HEIGHT = 60 // px per hour (60 px = 1 min per px)
 const TIME_COL_W = 48 // px, left column for hour labels
+const MIN_DAY_COL_W = 96 // px, keeps event titles legible when the week is horizontally scrolled
+const MIN_WEEK_WIDTH = TIME_COL_W + 7 * MIN_DAY_COL_W
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const NIGHT_MORNING_END = 8 // hours 0–7 hidden by default
 const NIGHT_EVENING_START = 20 // hours 20–23 hidden by default
@@ -361,7 +363,7 @@ function NightBand({
     <button
       type="button"
       onClick={onToggle}
-      style={{ height: NIGHT_BAND_H }}
+      style={{ height: NIGHT_BAND_H, minWidth: MIN_WEEK_WIDTH }}
       className={cn(
         'flex w-full items-center justify-center gap-1.5 select-none',
         'text-[10px] text-muted-foreground transition-colors hover:bg-secondary/60',
@@ -409,17 +411,23 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
   const hasAnyAllDay = allDayByDay.some((g) => g.length > 0)
 
   return (
-    <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+    <div
+      ref={scrollRef}
+      className="min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-x-contain"
+    >
       {/* ── Day name headers (sticky) ──────────────────────────────────────── */}
       <div className="sticky top-0 z-30 flex border-b border-border bg-background">
-        <div style={{ width: TIME_COL_W }} className="shrink-0 border-r border-border" />
+        <div
+          style={{ width: TIME_COL_W }}
+          className="sticky left-0 z-40 shrink-0 border-r border-border bg-background"
+        />
         {days.map((d) => {
           const isCurrentDay = format(d, 'yyyy-MM-dd') === todayStr
           return (
             <div
               key={d.toISOString()}
               className={cn(
-                'flex-1 border-r border-border py-1.5 text-center select-none',
+                'min-w-24 flex-1 border-r border-border py-1.5 text-center select-none',
                 isCurrentDay ? 'text-primary' : 'text-muted-foreground',
               )}
             >
@@ -448,7 +456,7 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
       >
         <div
           style={{ width: TIME_COL_W }}
-          className="flex shrink-0 items-start justify-end border-r border-border pt-1 pr-1.5"
+          className="sticky left-0 z-30 flex shrink-0 items-start justify-end border-r border-border bg-background pt-1 pr-1.5"
         >
           <span className="text-right text-[9px] leading-tight text-muted-foreground">
             todo
@@ -459,7 +467,7 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
         {days.map((d, i) => (
           <div
             key={d.toISOString()}
-            className="flex min-h-[28px] flex-1 flex-col gap-0.5 border-r border-border px-0.5 py-0.5"
+            className="flex min-h-[28px] min-w-24 flex-1 flex-col gap-0.5 border-r border-border px-0.5 py-0.5"
           >
             {(allDayByDay[i] ?? []).map((e) => (
               <EventChip key={e.id} event={e} />
@@ -496,7 +504,7 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
           {/* Hour labels column */}
           <div
             style={{ width: TIME_COL_W }}
-            className="relative shrink-0 border-r border-border select-none"
+            className="sticky left-0 z-20 shrink-0 border-r border-border bg-background select-none"
           >
             {HOURS.map((h) => (
               <div
@@ -526,7 +534,7 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
               <div
                 key={d.toISOString()}
                 className={cn(
-                  'relative flex-1 border-r border-border',
+                  'relative min-w-24 flex-1 border-r border-border',
                   isCurrentDay && 'bg-primary/[0.02]',
                 )}
                 onClick={() => openCreate(dayStr)}

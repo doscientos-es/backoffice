@@ -23,6 +23,12 @@ const item = {
 }
 
 describe('invoice line item UI', () => {
+  it('keeps wide line-item grids horizontally scrollable', () => {
+    const { container } = render(<LineItemsTable items={[item]} onChange={vi.fn()} />)
+
+    expect(container.firstElementChild?.className).toContain('overflow-x-auto')
+  })
+
   it('duplicates an editable concept while preserving its values', () => {
     const onChange = vi.fn()
     render(<LineItemsTable items={[item]} onChange={onChange} />)
