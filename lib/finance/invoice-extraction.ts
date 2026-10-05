@@ -159,7 +159,7 @@ async function extractPdfVisually(
       suggestion: empty,
       source: 'rules',
       warning:
-        'El PDF supera el límite de 15 MB para la lectura visual con Gemini. Comprime el archivo o completa los datos manualmente.',
+        'El PDF supera el límite de 15 MB para la lectura visual con IA. Comprime el archivo o completa los datos manualmente.',
       sizeBytes,
       pageCount,
     }
@@ -169,8 +169,8 @@ async function extractPdfVisually(
       suggestion: empty,
       source: 'rules',
       warning: parserFailed
-        ? 'No se pudo leer el texto del PDF y Gemini no está configurado. La factura queda adjunta para completarla manualmente.'
-        : 'El PDF no tiene texto seleccionable y Gemini no está configurado. La factura queda adjunta para completarla manualmente.',
+        ? 'No se pudo leer el texto del PDF y IA no está configurado. La factura queda adjunta para completarla manualmente.'
+        : 'El PDF no tiene texto seleccionable y IA no está configurado. La factura queda adjunta para completarla manualmente.',
       sizeBytes,
       pageCount,
     }
@@ -198,7 +198,7 @@ async function extractPdfVisually(
     })
 
     const warning = !hasInvoiceData(suggestion)
-      ? 'Gemini no encontró datos suficientemente legibles en la factura. Revisa el PDF y completa los campos manualmente.'
+      ? 'La IA no encontró datos suficientemente legibles en la factura. Revisa el PDF y completa los campos manualmente.'
       : suggestion.confidence < 0.55
         ? 'La lectura visual tiene confianza limitada. Revisa los datos antes de aplicarlos.'
         : null
@@ -210,7 +210,7 @@ async function extractPdfVisually(
       suggestion: empty,
       source: 'rules',
       warning:
-        'Gemini no pudo leer visualmente este PDF. La factura queda adjunta para completarla manualmente.',
+        'La IA no pudo leer visualmente este PDF. La factura queda adjunta para completarla manualmente.',
       sizeBytes,
       pageCount,
     }
@@ -283,7 +283,7 @@ export async function extractExpenseInvoice(
         requiresConfirmation: true,
         source: 'rules',
         warning:
-          'No se pudo leer la capa de texto ni calcular las páginas. El análisis visual con Gemini puede consumir más recursos; confirma para continuar.',
+          'No se pudo leer la capa de texto ni calcular las páginas. El análisis visual con IA puede consumir más recursos; confirma para continuar.',
         sizeBytes,
         pageCount: null,
       }

@@ -123,8 +123,23 @@ describe('extractExpenseInvoice PDF visual fallback', () => {
     expect(filePart?.data).toEqual(new Uint8Array(bytes))
   })
 
+  it('keeps readable text PDFs on the existing single-pass extraction path', async () => {
+    extractPdfPages.mockResolvedValueOnce({
+      pageCount: 1,
+      pages: [{ pageNumber: 1, content: 'Factura digital con texto seleccionable' }],
+      truncated: false,
+    })
+    runAIObject.mockResolvedValueOnce(readableSuggestion)
+
+    const result = await extractExpenseInvoice(new ArrayBuffer(8))
+
+    expect(result).toMatchObject({ source: 'ai', suggestion: { vendor: 'Proveedor de prueba' } })
+    expect(runAIObject).toHaveBeenCalledTimes(1)
+    expect(runAIObject.mock.calls[0]?.[0].user).toContain('Texto de la factura:')
+  })
+
   it('asks for confirmation before visually analyzing a PDF the parser cannot inspect', async () => {
-    extractPdfPages.mockRejectedValueOnce(new Error('Invalid PDF'))
+    extractPdfPages.mockRejectedValue(new Error('Invalid PDF'))
     const bytes = new ArrayBuffer(16)
 
     const firstResult = await extractExpenseInvoice(bytes)
