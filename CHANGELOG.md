@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-05 — v0.1.95
+
+### Nuevas funciones
+
+- Add download option to signed URL generation
+
 ## 2026-10-05 — v0.1.94
 
 ### Nuevas funciones

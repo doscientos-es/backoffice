@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.95",
+      "date": "2026-10-05",
+      "title": "v0.1.95",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add download option to signed URL generation"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "425224dfca8046d52e257619a6b063afc2db97ae",
+          "type": "feat",
+          "scope": "preview",
+          "breaking": false,
+          "description": "Add download option to signed URL generation"
+        }
+      ]
+    },
+    {
       "version": "0.1.94",
       "date": "2026-10-05",
       "title": "v0.1.94",
