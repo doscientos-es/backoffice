@@ -19,5 +19,6 @@ export interface StorageProvider {
     bucket: StorageBucket,
     path: string,
     ttlSeconds: number,
+    options?: { download?: string | boolean },
   ): Promise<{ url: string | null; error: string | null }>
 }

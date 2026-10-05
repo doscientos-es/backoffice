@@ -49,6 +49,7 @@ export async function GET(
     'internal-docs',
     doc.storage_path as string,
     SIGNED_URL_TTL,
+    { download: true },
   )
 
   if (signError || !url) {

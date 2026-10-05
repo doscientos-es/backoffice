@@ -36,8 +36,9 @@ export class SupabaseStorageProvider implements StorageProvider {
     bucket: StorageBucket,
     path: string,
     ttlSeconds: number,
+    options?: { download?: string | boolean },
   ): Promise<{ url: string | null; error: string | null }> {
-    const { data, error } = await this.bucket(bucket).createSignedUrl(path, ttlSeconds)
+    const { data, error } = await this.bucket(bucket).createSignedUrl(path, ttlSeconds, options)
     return { url: data?.signedUrl ?? null, error: error?.message ?? null }
   }
 }
