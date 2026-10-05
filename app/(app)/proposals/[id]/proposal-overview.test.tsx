@@ -25,7 +25,6 @@ describe('ProposalOverview', () => {
         legalTerms={null}
         maintenanceOffer={null}
         maintenanceSelectedPlanId={null}
-        proposalId="proposal-1"
         attachments={[]}
         team={[]}
         sidebar={<div data-testid="proposal-sidebar">Consultas del cliente</div>}
@@ -58,7 +57,6 @@ describe('ProposalOverview', () => {
         legalTerms={null}
         maintenanceOffer={null}
         maintenanceSelectedPlanId={null}
-        proposalId="proposal-1"
         attachments={[]}
         team={[]}
       />,
@@ -122,7 +120,6 @@ describe('ProposalOverview', () => {
           ],
         }}
         maintenanceSelectedPlanId="growth"
-        proposalId="proposal-1"
         attachments={[
           {
             id: 'attachment-1',

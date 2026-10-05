@@ -1,7 +1,8 @@
+import { Download, ExternalLink, Eye } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
-import { AttachmentSection, type AttachmentItem } from '@/components/ui/attachment-section'
+import type { AttachmentItem } from '@/components/ui/attachment-section'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +26,13 @@ type Item = {
 
 type TeamMember = { id: string; name: string; job_title: string | null }
 
+function formatAttachmentSize(bytes: number | null): string | null {
+  if (!bytes) return null
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1_048_576) return `${Math.ceil(bytes / 1024)} KB`
+  return `${(bytes / 1_048_576).toFixed(1)} MB`
+}
+
 type Props = {
   canSeePrices?: boolean
   subtotal: number
@@ -45,7 +53,6 @@ type Props = {
   legalTerms: string | null
   maintenanceOffer: MaintenanceOffer | null
   maintenanceSelectedPlanId: string | null
-  proposalId: string
   attachments: AttachmentItem[]
   team: TeamMember[]
   mainContent?: ReactNode
@@ -74,7 +81,6 @@ export function ProposalOverview({
   legalTerms,
   maintenanceOffer,
   maintenanceSelectedPlanId,
-  proposalId,
   attachments,
   team,
   mainContent,
@@ -352,12 +358,68 @@ export function ProposalOverview({
           </Card>
         ) : null}
 
-        <AttachmentSection
-          entityType="proposal"
-          entityId={proposalId}
-          attachments={attachments}
-          canEdit={false}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle>Adjuntos</CardTitle>
+          </CardHeader>
+          <CardContent className="px-0">
+            {attachments.length > 0 ? (
+              <ul className="divide-y divide-border">
+                {attachments.map((attachment) => (
+                  <li key={attachment.id} className="flex items-center gap-3 px-6 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{attachment.name}</p>
+                      {formatAttachmentSize(attachment.size_bytes) ? (
+                        <p className="text-xs text-muted-foreground">
+                          {formatAttachmentSize(attachment.size_bytes)}
+                        </p>
+                      ) : null}
+                    </div>
+                    {attachment.source === 'drive' && attachment.web_view_link ? (
+                      <Link
+                        href={attachment.web_view_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                        title="Abrir en Drive"
+                      >
+                        <ExternalLink className="size-4" aria-hidden />
+                        <span className="sr-only">Abrir en Drive</span>
+                      </Link>
+                    ) : (
+                      <>
+                        {attachment.mime_type === 'application/pdf' ? (
+                          <Link
+                            href={`/api/documents/${attachment.id}/view`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                            title="Ver PDF"
+                          >
+                            <Eye className="size-4" aria-hidden />
+                            <span className="sr-only">Ver PDF</span>
+                          </Link>
+                        ) : null}
+                        <Link
+                          href={`/api/documents/${attachment.id}/download`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                          title="Descargar"
+                        >
+                          <Download className="size-4" aria-hidden />
+                          <span className="sr-only">Descargar</span>
+                        </Link>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin adjuntos.</p>
+            )}
+          </CardContent>
+        </Card>
         {mainContent}
       </div>
 

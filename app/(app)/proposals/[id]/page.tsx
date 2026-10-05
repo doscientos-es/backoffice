@@ -600,7 +600,6 @@ export default async function ProposalDetailPage({
           maintenanceSelectedPlanId={
             (proposal.maintenance_selected_plan_id as string | null) ?? null
           }
-          proposalId={id}
           attachments={proposalAttachments}
           team={visibleTeam}
           mainContent={
