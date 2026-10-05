@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.94",
+      "date": "2026-10-05",
+      "title": "v0.1.94",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add document download and preview functionality"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "54425e524be7bf386e4c1e1f6bde5dfb9725f5ec",
+          "type": "feat",
+          "scope": "internal-docs",
+          "breaking": false,
+          "description": "Add document download and preview functionality"
+        }
+      ]
+    },
+    {
       "version": "0.1.88",
       "date": "2026-10-04",
       "title": "v0.1.88",
