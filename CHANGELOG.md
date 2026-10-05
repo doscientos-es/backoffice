@@ -2,7 +2,7 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
-## 2026-10-05 — v0.1.88
+## 2026-10-04 — v0.1.88
 
 ### Nuevas funciones
 
