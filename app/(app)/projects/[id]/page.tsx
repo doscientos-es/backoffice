@@ -300,7 +300,7 @@ export default async function ProjectDetailPage({
 
       {canEdit || pendingReminders.length > 0 ? (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>Próximos avisos</CardTitle>
             {canEdit && (
               <ScheduleReminderDialog
@@ -325,9 +325,9 @@ export default async function ProjectDetailPage({
       ) : null}
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Tareas</CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end">
             <ProjectTasksViewToggle view={isBoard ? 'board' : 'list'} />
             <TaskCreateDialog
               projectId={id}
@@ -369,12 +369,17 @@ export default async function ProjectDetailPage({
               {tasks.map((t) => (
                 <li
                   key={t.id as string}
-                  className="flex items-center justify-between px-6 py-2.5 text-sm"
+                  className="flex flex-col items-start gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-2.5"
                 >
-                  <Link href={`/tasks/${t.id as string}`} className="font-medium hover:underline">
+                  <Link
+                    href={`/tasks/${t.id as string}`}
+                    className="w-full min-w-0 truncate font-medium hover:underline sm:w-auto"
+                  >
                     {t.title as string}
                   </Link>
-                  <span className="text-xs text-muted-foreground">{t.status as string}</span>
+                  <span className="text-xs text-muted-foreground sm:shrink-0">
+                    {t.status as string}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -510,9 +515,9 @@ export default async function ProjectDetailPage({
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Proposals */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>Propuestas</CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end">
               <LinkProposalButton
                 projectId={id}
                 unlinkdProposals={
