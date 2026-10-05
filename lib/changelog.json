@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.99",
+      "date": "2026-10-05",
+      "title": "v0.1.99",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Change default finance range to quarter and update tests"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "5f9b08ce3dab8ebd26ea8a0828760c9c0fa06c1c",
+          "type": "feat",
+          "scope": "finance",
+          "breaking": false,
+          "description": "Change default finance range to quarter and update tests"
+        }
+      ]
+    },
+    {
       "version": "0.1.98",
       "date": "2026-10-05",
       "title": "v0.1.98",

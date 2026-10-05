@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-05 — v0.1.99
+
+### Nuevas funciones
+
+- Change default finance range to quarter and update tests
+
 ## 2026-10-05 — v0.1.98
 
 ### Nuevas funciones
