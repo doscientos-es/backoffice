@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.98",
+      "date": "2026-10-05",
+      "title": "v0.1.98",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Allow panel controls to render without card frame"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "69bce07268a515926e35c6a51c0016267ef4031d",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Allow panel controls to render without card frame"
+        }
+      ]
+    },
+    {
       "version": "0.1.96",
       "date": "2026-10-05",
       "title": "v0.1.96",

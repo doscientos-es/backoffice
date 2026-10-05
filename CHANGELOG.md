@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-05 — v0.1.98
+
+### Nuevas funciones
+
+- Allow panel controls to render without card frame
+
 ## 2026-10-05 — v0.1.96
 
 ### Nuevas funciones
