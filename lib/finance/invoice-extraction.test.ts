@@ -1,4 +1,18 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const { extractPdfPages, isAIEnabled, runAIObject } = vi.hoisted(() => ({
+  extractPdfPages: vi.fn(),
+  isAIEnabled: vi.fn(() => true),
+  runAIObject: vi.fn(),
+}))
+
+vi.mock('@/lib/ai', () => ({
+  AI_MODELS: { summarizer: 'gemini-3.1-flash-lite' },
+  isAIEnabled,
+  runAIObject,
+}))
+vi.mock('@/lib/internal-documents/pdf-text', () => ({ extractPdfPages }))
+vi.mock('@/lib/logger', () => ({ scopedLogger: () => ({ warn: vi.fn() }) }))
 
 import {
   extractExpenseInvoice,
@@ -47,5 +61,117 @@ describe('extractExpenseInvoice review gate', () => {
       sizeBytes: INVOICE_OCR_LIMITS.automaticBytes + 1,
       pageCount: null,
     })
+  })
+})
+
+const emptySuggestion = {
+  vendor: null,
+  description: null,
+  expense_date: null,
+  due_date: null,
+  subtotal: null,
+  tax_rate: null,
+  total: null,
+  vendor_nif: null,
+  invoice_reference: null,
+  confidence: 0,
+}
+
+const readableSuggestion = {
+  ...emptySuggestion,
+  vendor: 'Proveedor de prueba',
+  expense_date: '2026-10-01',
+  subtotal: 100,
+  total: 121,
+  tax_rate: 21,
+  confidence: 0.92,
+}
+
+describe('extractExpenseInvoice PDF visual fallback', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    isAIEnabled.mockReturnValue(true)
+    extractPdfPages.mockResolvedValue({ pageCount: 1, pages: [], truncated: false })
+  })
+
+  it('sends a scanned PDF to the existing Gemini Flash-Lite model', async () => {
+    const bytes = new Uint8Array([1, 2, 3]).buffer
+    runAIObject.mockResolvedValueOnce(readableSuggestion)
+
+    const result = await extractExpenseInvoice(bytes)
+
+    expect(result).toMatchObject({
+      source: 'ai',
+      warning: null,
+      suggestion: { vendor: 'Proveedor de prueba', total: 121 },
+    })
+    expect(runAIObject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'gemini-3.1-flash-lite',
+        user: [
+          expect.objectContaining({
+            content: expect.arrayContaining([
+              expect.objectContaining({ type: 'file', mediaType: 'application/pdf' }),
+            ]),
+          }),
+        ],
+      }),
+    )
+    const aiInput = runAIObject.mock.calls[0]?.[0]
+    const filePart = aiInput?.user?.[0]?.content?.[1]
+    expect(filePart?.data).toBeInstanceOf(Uint8Array)
+    expect(filePart?.data).toEqual(new Uint8Array(bytes))
+  })
+
+  it('asks for confirmation before visually analyzing a PDF the parser cannot inspect', async () => {
+    extractPdfPages.mockRejectedValueOnce(new Error('Invalid PDF'))
+    const bytes = new ArrayBuffer(16)
+
+    const firstResult = await extractExpenseInvoice(bytes)
+
+    expect(firstResult).toMatchObject({ requiresConfirmation: true, pageCount: null })
+    expect(runAIObject).not.toHaveBeenCalled()
+
+    runAIObject.mockResolvedValueOnce(readableSuggestion)
+    const confirmedResult = await extractExpenseInvoice(bytes, 'application/pdf', {
+      confirmLarge: true,
+    })
+
+    expect(confirmedResult).toMatchObject({
+      source: 'ai',
+      suggestion: { vendor: 'Proveedor de prueba' },
+    })
+    expect(runAIObject).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses the PDF image when text-based extraction finds no invoice fields', async () => {
+    extractPdfPages.mockResolvedValueOnce({
+      pageCount: 1,
+      pages: [{ pageNumber: 1, content: 'Texto parcialmente reconocible, sin campos fiscales' }],
+      truncated: false,
+    })
+    runAIObject.mockResolvedValueOnce(emptySuggestion).mockResolvedValueOnce(readableSuggestion)
+
+    const result = await extractExpenseInvoice(new ArrayBuffer(8))
+
+    expect(result).toMatchObject({ source: 'ai', suggestion: { vendor: 'Proveedor de prueba' } })
+    expect(runAIObject).toHaveBeenCalledTimes(2)
+    expect(runAIObject.mock.calls[0]?.[0].user).toContain('Texto de la factura:')
+    expect(runAIObject.mock.calls[1]?.[0].user).toEqual(
+      expect.arrayContaining([expect.objectContaining({ role: 'user' })]),
+    )
+  })
+
+  it('does not send PDFs above the provider inline-file limit to Gemini', async () => {
+    extractPdfPages.mockResolvedValueOnce({ pageCount: 1, pages: [], truncated: false })
+
+    const result = await extractExpenseInvoice(
+      new ArrayBuffer(INVOICE_OCR_LIMITS.visualPdfBytes + 1),
+      'application/pdf',
+      { confirmLarge: true },
+    )
+
+    expect(result).toMatchObject({ source: 'rules', warning: expect.stringContaining('15 MB') })
+    expect(runAIObject).not.toHaveBeenCalled()
   })
 })
