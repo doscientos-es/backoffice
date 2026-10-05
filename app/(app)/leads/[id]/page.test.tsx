@@ -82,8 +82,8 @@ describe('LeadDetailPage', () => {
     expect(elements(page).some((element) => element.type === LeadDeleteDangerZone)).toBe(false)
   })
 
-  it('shows the delete danger zone to owners and admins', async () => {
-    requireUser.mockResolvedValue({ id: 'admin-1', name: 'Ana', role: 'admin' })
+  it.each(['owner', 'admin'])('shows the delete danger zone to %s users', async (role) => {
+    requireUser.mockResolvedValue({ id: 'admin-1', name: 'Ana', role })
     getLeadDetail.mockResolvedValue({
       lead: {
         id: 'lead-1',
