@@ -192,6 +192,7 @@ export default async function LeadsPage({
         searchKey="q"
         searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
         presentation="panel"
+        className="rounded-none border-0 bg-transparent shadow-none"
         filters={[
           { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
           { key: 'solution', label: 'Necesidad', options: SOLUTION_FILTER_OPTIONS },

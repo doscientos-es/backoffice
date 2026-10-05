@@ -78,6 +78,22 @@ describe('ListControls avatar filter', () => {
     expect(screen.getByPlaceholderText('Buscar facturas').className).toContain('pl-10!')
   })
 
+  it('allows panel controls to render without the card frame', () => {
+    const { container } = render(
+      <ListControls
+        filters={[FILTER]}
+        presentation="panel"
+        className="rounded-none border-0 bg-transparent shadow-none"
+      />,
+    )
+
+    const controls = container.firstElementChild as HTMLElement
+    expect(controls.className).toContain('bg-transparent')
+    expect(controls.className).not.toContain('bg-card')
+    expect(controls.className).toContain('border-0')
+    expect(controls.className).not.toContain('shadow-xs')
+  })
+
   it('moves secondary filters into a popover in panel mode', () => {
     navigation.params = new URLSearchParams('status=new')
     render(<ListControls filters={[FILTER, STATUS_FILTER]} presentation="panel" />)
