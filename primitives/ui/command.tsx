@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Command as CommandPrimitive } from 'cmdk'
 import { Check as CheckIcon, Search as SearchIcon } from 'lucide-react'
 import type * as React from 'react'
+import { useEffect, useRef } from 'react'
 
 import { cn } from '../lib/utils'
 
@@ -58,8 +59,15 @@ function CommandDialog({
 
 function CommandInput({
   className,
+  autoFocus = false,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus({ preventScroll: true })
+  }, [autoFocus])
+
   return (
     <div data-slot="command-border-wrapper" className="p-1.5 pb-0">
       <div className="relative">
@@ -68,9 +76,10 @@ function CommandInput({
           className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
         />
         <CommandPrimitive.Input
+          ref={inputRef}
           data-slot="command-border"
           className={cn(
-            'h-8 w-full rounded-lg border border-border bg-background py-1 pr-3 pl-8 text-sm text-foreground shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
+            'h-8 w-full rounded-lg border border-border bg-background py-1 pr-3 pl-8 text-sm text-foreground shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 max-sm:h-11 max-sm:text-base',
             className,
           )}
           {...props}

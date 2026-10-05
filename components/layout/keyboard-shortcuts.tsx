@@ -132,7 +132,7 @@ export function KeyboardShortcuts() {
   return (
     <output
       aria-live="polite"
-      className="pointer-events-none fixed bottom-4 left-4 z-50 flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground shadow-md"
+      className="pointer-events-none fixed bottom-[calc(4.5rem_+_env(safe-area-inset-bottom))] left-4 z-50 flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground shadow-md md:bottom-4"
     >
       <Icon className="h-3.5 w-3.5 text-primary" />
       <kbd className="rounded bg-secondary px-1 font-mono text-foreground uppercase">{armed}</kbd>

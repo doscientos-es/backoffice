@@ -170,8 +170,9 @@ function ChannelButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
+      aria-label={label}
       className={cn(
-        'flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium transition-colors',
+        'flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-md px-1 py-2 text-[10px] font-medium transition-colors sm:gap-1.5 sm:px-2 sm:text-sm',
         active ? 'bg-background shadow-sm' : 'text-muted-foreground',
         disabled && 'cursor-not-allowed opacity-40',
       )}

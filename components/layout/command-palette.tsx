@@ -41,7 +41,6 @@ import {
 } from '@/components/ui/command'
 import type { MemberRole } from '@/lib/auth'
 import { visibleCommandActions, type CommandAction } from '@/lib/navigation/command-actions'
-import { NAVIGATION_GROUPS } from '@/lib/navigation/navigation'
 import { visibleNavigationGroups } from '@/lib/navigation/navigation'
 import {
   CREATE_SHORTCUTS,
@@ -364,6 +363,7 @@ export function CommandPalette({ role }: { role: MemberRole }) {
         }}
       >
         <CommandInput
+          autoFocus={open}
           placeholder="Buscar clientes, proyectos, leads…"
           value={query}
           onValueChange={setQuery}
