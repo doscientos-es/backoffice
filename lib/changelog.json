@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.104",
+      "date": "2026-10-06",
+      "title": "v0.1.104",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Adjust BrandMark SVG size for better rendering"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "d658a1bb58f747a1335bcf29dda88e4820c18e8c",
+          "type": "fix",
+          "scope": "invoice",
+          "breaking": false,
+          "description": "Adjust BrandMark SVG size for better rendering"
+        }
+      ]
+    },
+    {
       "version": "0.1.103",
       "date": "2026-10-06",
       "title": "v0.1.103",
