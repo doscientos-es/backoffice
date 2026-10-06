@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-06 — v0.1.103
+
+### Nuevas funciones
+
+- Add fallback icon for unsupported social platforms
+
 ## 2026-10-06 — v0.1.102
 
 ### Nuevas funciones
