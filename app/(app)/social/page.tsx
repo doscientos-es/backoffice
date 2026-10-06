@@ -149,7 +149,9 @@ async function PostsList({
       </p>
       <div className="grid gap-3 lg:grid-cols-2">
         {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <SectionBoundary key={post.id} label="No se pudo mostrar esta publicación">
+            <PostCard post={post} />
+          </SectionBoundary>
         ))}
       </div>
     </div>

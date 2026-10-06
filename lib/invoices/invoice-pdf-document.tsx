@@ -131,7 +131,7 @@ function formatWorkLogHours(hours: number): string {
 /** Brand mark recreated with react-pdf SVG primitives (matches the green logo asset). */
 function BrandMark() {
   return (
-    <Svg width={14} height={14} viewBox="0 0 859 858">
+    <Svg width={26} height={26} viewBox="0 0 859 858">
       <Rect width="858.204" height="858" fill="#BDFF7B" />
       <Path
         d="M144.518 317.011C174.22 317.011 202.704 328.81 223.706 349.812C244.708 370.814 256.507 399.299 256.507 429C256.507 458.701 244.708 487.186 223.706 508.188C202.704 529.19 174.22 540.989 144.519 540.989H110.5V317.011L144.518 317.011Z"

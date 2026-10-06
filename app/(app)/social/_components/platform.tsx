@@ -1,4 +1,4 @@
-import { Globe2 as Facebook, Camera as Instagram } from 'lucide-react'
+import { Globe2 as Facebook, Camera as Instagram, Share2 } from 'lucide-react'
 import type { ComponentType } from 'react'
 
 import { PLATFORM_LABELS, type SocialPlatform } from '@/lib/social/core'
@@ -30,7 +30,8 @@ export function PlatformIcon({
   platform: SocialPlatform
   className?: string
 }) {
-  const Icon = ICONS[platform]
+  // La BD puede contener plataformas que ya no están en el tipo (p. ej. google_business_profile).
+  const Icon = ICONS[platform] ?? Share2
   return <Icon className={className} />
 }
 
@@ -51,7 +52,7 @@ export function PlatformChip({
       )}
     >
       <PlatformIcon platform={platform} className="size-3" />
-      {PLATFORM_LABELS[platform]}
+      {PLATFORM_LABELS[platform] ?? platform}
     </span>
   )
 }
