@@ -2,6 +2,15 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-06 — v0.1.102
+
+### Nuevas funciones
+
+- Add warning for missing call notes or outcome in interactions
+- Enhance proposal overview with attachment handling
+- Add detailed proposal narrative and maintenance options
+- Add next questions and validation status to Mom Test checklist
+
 ## 2026-10-05 — v0.1.101
 
 ### Nuevas funciones
