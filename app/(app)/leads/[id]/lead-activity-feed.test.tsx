@@ -89,6 +89,50 @@ describe('LeadActivityFeed', () => {
     expect(screen.getByText('Ayer')).toBeDefined()
   })
 
+  it('warns when a call is missing notes or its result, but not when both are recorded', () => {
+    render(
+      <LeadActivityFeed
+        {...props}
+        interactions={[
+          {
+            id: 'missing-notes',
+            type: 'call',
+            subject: 'Llamada sin notas',
+            body: null,
+            created_at: '2026-08-26T10:00:00.000Z',
+            performer: null,
+            payload: { outcome: 'connected' },
+            resend_email_id: null,
+          },
+          {
+            id: 'missing-outcome',
+            type: 'call',
+            subject: 'Llamada sin resultado',
+            body: 'Enviar propuesta.',
+            created_at: '2026-08-26T09:00:00.000Z',
+            performer: null,
+            payload: {},
+            resend_email_id: null,
+          },
+          {
+            id: 'complete',
+            type: 'call',
+            subject: 'Llamada completa',
+            body: 'Propuesta enviada.',
+            created_at: '2026-08-26T08:00:00.000Z',
+            performer: null,
+            payload: { outcome: 'connected' },
+            resend_email_id: null,
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText('Faltan las notas de la llamada.')).toBeDefined()
+    expect(screen.getByText('Falta el resultado de la llamada.')).toBeDefined()
+    expect(screen.getAllByRole('status')).toHaveLength(2)
+  })
+
   it('merges commercial milestones into the same chronological feed', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-08-26T12:00:00.000Z'))

@@ -26,7 +26,7 @@ import type {
 } from '@/lib/leads/types'
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 
-import { CallInteractionDetails } from './call-interaction-details'
+import { CallInteractionDetails, CallInteractionWarning } from './call-interaction-details'
 import { DeleteLeadInteractionButton } from './delete-lead-interaction-button'
 import { EmailDeliveryStatuses } from './email-delivery-statuses'
 import { LeadInteractionDetails } from './lead-interaction-details'
@@ -349,6 +349,7 @@ function InteractionRow({
               {snippet}
             </p>
           ) : null}
+          {type === 'call' ? <CallInteractionWarning interaction={interaction} /> : null}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-muted-foreground">
           <span className="tabular-nums">{relativeTime(event.date)}</span>

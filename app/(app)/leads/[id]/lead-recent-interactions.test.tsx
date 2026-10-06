@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 vi.mock('../lead-quick-action-dialogs', () => ({
   QCallDialog: () => <button type="button">Registrar llamada</button>,
   QEmailDialog: () => <button type="button">Registrar email</button>,
@@ -38,5 +39,27 @@ describe('LeadRecentInteractions', () => {
     expect(screen.queryByRole('button', { name: 'Añadir nota' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Registrar llamada' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Registrar email' })).toBeNull()
+  })
+
+  it('shows a warning in the recent history when a call has no result', () => {
+    render(
+      <LeadRecentInteractions
+        {...props}
+        interactions={[
+          {
+            id: 'call-1',
+            type: 'call',
+            subject: 'Llamada de seguimiento',
+            body: 'Llamar la próxima semana.',
+            created_at: '2026-08-26T10:00:00.000Z',
+            performer: null,
+            payload: {},
+            resend_email_id: null,
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText('Falta el resultado de la llamada.')).toBeDefined()
   })
 })

@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
-import { Eye, FileText, Pencil } from 'lucide-react'
+import { AlertTriangle, Eye, FileText, Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type FormEvent, useState } from 'react'
 
@@ -246,5 +246,32 @@ export function CallInteractionDetails({
         )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+export function CallInteractionWarning({ interaction }: { interaction: LeadDetailInteraction }) {
+  const details = getCallInteractionDetails(interaction.payload)
+  const missingNotes = !interaction.body?.trim()
+  const missingOutcome = !details.outcome?.trim()
+
+  if (!missingNotes && !missingOutcome) return null
+
+  let message: string
+  if (missingNotes && missingOutcome) {
+    message = 'Faltan las notas y el resultado de la llamada.'
+  } else if (missingNotes) {
+    message = 'Faltan las notas de la llamada.'
+  } else {
+    message = 'Falta el resultado de la llamada.'
+  }
+
+  return (
+    <p
+      role="status"
+      className="mt-1 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400"
+    >
+      <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+      {message}
+    </p>
   )
 }

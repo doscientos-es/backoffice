@@ -12,7 +12,7 @@ import type { LeadDetailInteraction } from '@/lib/leads/types'
 import { relativeTime } from '@/lib/utils'
 
 import { QCallDialog, QEmailDialog, QNoteDialog } from '../lead-quick-action-dialogs'
-import { CallInteractionDetails } from './call-interaction-details'
+import { CallInteractionDetails, CallInteractionWarning } from './call-interaction-details'
 import { LeadInteractionDetails } from './lead-interaction-details'
 
 const LABEL: Record<string, string> = {
@@ -138,6 +138,9 @@ export function LeadRecentInteractions({
                         <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground/90">
                           {snippet}
                         </p>
+                      ) : null}
+                      {interaction.type === 'call' ? (
+                        <CallInteractionWarning interaction={interaction} />
                       ) : null}
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-muted-foreground">
