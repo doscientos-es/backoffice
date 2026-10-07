@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-07 — v0.1.105
+
+### Nuevas funciones
+
+- Implement soft delete functionality for attachments
+
 ## 2026-10-06 — v0.1.104
 
 ### Correcciones

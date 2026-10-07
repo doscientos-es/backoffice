@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.105",
+      "date": "2026-10-07",
+      "title": "v0.1.105",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Implement soft delete functionality for attachments"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "14d5f5416f40840499963ca216afedaa74801496",
+          "type": "feat",
+          "scope": "attachments",
+          "breaking": false,
+          "description": "Implement soft delete functionality for attachments"
+        }
+      ]
+    },
+    {
       "version": "0.1.104",
       "date": "2026-10-06",
       "title": "v0.1.104",
