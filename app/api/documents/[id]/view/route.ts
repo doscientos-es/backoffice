@@ -6,9 +6,6 @@ import { createServerClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
-/** Signed URL TTL in seconds (2 minutes – enough to follow the redirect). */
-const SIGNED_URL_TTL = 120
-
 /** MIME types the browser can preview inline; anything else falls back to download. */
 const VIEWABLE_MIME_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'text/plain'])
 
@@ -43,22 +40,28 @@ export async function GET(
     return NextResponse.json({ error: 'Este documento no tiene archivo adjunto' }, { status: 400 })
   }
 
-  // Only inline-viewable types are allowed; anything else falls back to download.
-  const VIEWABLE_MIME_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'text/plain'])
-
   if (!VIEWABLE_MIME_TYPES.has(doc.mime_type ?? '')) {
     return NextResponse.redirect(new URL(`/api/documents/${id}/download`, req.url))
   }
 
-  const { url, error: signError } = await getStorage().createSignedUrl(
+  const { data, error: downloadError } = await getStorage().download(
     'documents',
     doc.storage_path as string,
-    SIGNED_URL_TTL,
   )
 
-  if (signError || !url) {
-    return NextResponse.json({ error: 'No se pudo generar la URL de vista' }, { status: 500 })
+  if (downloadError || !data) {
+    return NextResponse.json(
+      { error: 'No se pudo cargar el documento para su vista previa' },
+      { status: 500 },
+    )
   }
 
-  return NextResponse.redirect(url)
+  return new NextResponse(data, {
+    headers: {
+      'Content-Type': doc.mime_type as string,
+      'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(doc.name as string)}`,
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  })
 }

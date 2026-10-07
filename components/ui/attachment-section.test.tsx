@@ -15,6 +15,8 @@ vi.mock('next/link', () => ({
   ),
 }))
 
+const mockConfirm = vi.fn(() => true)
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 function makeFile(name: string, type = 'application/pdf') {
   return new File(['x'], name, { type })
@@ -30,7 +32,9 @@ const BASE_PROPS = {
 // ── setup / teardown ─────────────────────────────────────────────────────────
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn())
+  vi.stubGlobal('confirm', mockConfirm)
   mockRefresh.mockClear()
+  mockConfirm.mockClear()
 })
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -80,8 +84,32 @@ describe('attachment list', () => {
   it('renders attachment names with download links', () => {
     render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
     expect(screen.getByText('report.pdf')).toBeDefined()
+    expect(screen.getByRole('link', { name: /ver pdf/i }).getAttribute('href')).toBe(
+      '/api/documents/a1/view',
+    )
     const link = screen.getByRole('link', { name: /descargar/i })
     expect(link.getAttribute('href')).toBe('/api/documents/a1/download')
+  })
+
+  it('confirms and removes an attachment, then refreshes the detail page', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    })
+
+    render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
+    fireEvent.click(screen.getByRole('button', { name: /eliminar adjunto report.pdf/i }))
+
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
+    expect(mockConfirm).toHaveBeenCalledWith('¿Quitar «report.pdf» de este registro?')
+    expect(fetch).toHaveBeenCalledWith('/api/attachments/a1', { method: 'DELETE' })
+  })
+
+  it('does not call the delete endpoint when the user cancels', () => {
+    mockConfirm.mockReturnValue(false)
+    render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
+    fireEvent.click(screen.getByRole('button', { name: /eliminar adjunto report.pdf/i }))
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('renders drive attachments with an external link to web_view_link', () => {

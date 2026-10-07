@@ -16,6 +16,7 @@ import {
   Eye,
   LoaderCircle as Loader2,
   Paperclip,
+  Trash2,
   Upload as UploadCloud,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -102,6 +103,7 @@ export function AttachmentSection({
   // Tracks nested dragenter/dragleave so the overlay doesn't flicker over children.
   const dragDepth = useRef(0)
   const [uploading, setUploading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [errors, setErrors] = useState<string[]>([])
   const [dragActive, setDragActive] = useState(false)
@@ -220,6 +222,30 @@ export function AttachmentSection({
       setDriveError('Error de red')
     } finally {
       setDriveLinking(false)
+    }
+  }
+
+  async function removeAttachment(attachment: AttachmentItem) {
+    if (!canEdit || uploading || deletingId) return
+    const driveNote =
+      attachment.source === 'drive' ? ' El archivo original de Drive no se eliminará.' : ''
+    const confirmationMessage = `¿Quitar «${attachment.name}» de este registro?${driveNote}`
+    if (!window.confirm(confirmationMessage)) return
+
+    setErrors([])
+    setDeletingId(attachment.id)
+    try {
+      const res = await fetch(`/api/attachments/${attachment.id}`, { method: 'DELETE' })
+      const json = (await res.json()) as { error?: string }
+      if (!res.ok) {
+        setErrors([json.error ?? 'No se pudo eliminar el adjunto'])
+        return
+      }
+      router.refresh()
+    } catch {
+      setErrors(['Error de red al eliminar el adjunto'])
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -373,6 +399,24 @@ export function AttachmentSection({
                     </Button>
                   </>
                 )}
+                {canEdit ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 shrink-0"
+                    aria-label={`Eliminar adjunto ${a.name}`}
+                    title="Eliminar adjunto"
+                    disabled={uploading || deletingId !== null}
+                    onClick={() => void removeAttachment(a)}
+                  >
+                    {deletingId === a.id ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="size-3.5" />
+                    )}
+                  </Button>
+                ) : null}
               </li>
             ))}
           </ul>
