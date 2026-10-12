@@ -12,7 +12,7 @@ export function Wordmark({ className, ...props }: WordmarkProps) {
   return (
     <span
       className={cn(
-        'font-semibold tracking-tight text-[color:var(--text-primary,inherit)] select-none',
+        'font-semibold tracking-tight text-(--text-primary,inherit) select-none',
         className,
       )}
       {...props}
