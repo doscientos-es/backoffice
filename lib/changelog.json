@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.106",
+      "date": "2026-10-12",
+      "title": "v0.1.106",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add project options and team members for expense forms feat(leads): enhance lead search to include phone numbers feat(security): improve MFA session handling and dialog loading feat(calendar): implement event layout for overlapping events feat(calendar): add view preference management for calendar views"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "47fb1f53f335d539aa3c6b5991c982a18766d426",
+          "type": "feat",
+          "scope": "finance",
+          "breaking": false,
+          "description": "Add project options and team members for expense forms feat(leads): enhance lead search to include phone numbers feat(security): improve MFA session handling and dialog loading feat(calendar): implement event layout for overlapping events feat(calendar): add view preference management for calendar views"
+        }
+      ]
+    },
+    {
       "version": "0.1.105",
       "date": "2026-10-07",
       "title": "v0.1.105",

@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-12 — v0.1.106
+
+### Nuevas funciones
+
+- Add project options and team members for expense forms feat(leads): enhance lead search to include phone numbers feat(security): improve MFA session handling and dialog loading feat(calendar): implement event layout for overlapping events feat(calendar): add view preference management for calendar views
+
 ## 2026-10-07 — v0.1.105
 
 ### Nuevas funciones
