@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { CalendarEventKind, CalendarView } from '@/lib/calendar/types'
 import { ALL_LAYERS, CALENDAR_LAYER_COLORS, CALENDAR_LAYER_LABELS } from '@/lib/calendar/types'
+import { serializeCalendarViewCookie } from '@/lib/calendar/view-preference'
 import { cn, memberAvatarUrl } from '@/lib/utils'
 
 import type { TeamMember } from './calendar-grid'
@@ -132,6 +133,13 @@ export function CalendarHeader({
               <Link
                 key={value}
                 href={navHref(sp, { view: value })}
+                onClick={() => {
+                  // biome-ignore lint/suspicious/noDocumentCookie: persist this non-sensitive preference before navigation
+                  document.cookie = serializeCalendarViewCookie(
+                    value,
+                    window.location.protocol === 'https:',
+                  )
+                }}
                 className={cn(
                   'px-2 py-2 transition-colors sm:px-2.5 sm:py-1',
                   view === value

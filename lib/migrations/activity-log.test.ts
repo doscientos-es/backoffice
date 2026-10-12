@@ -33,4 +33,19 @@ describe('activity_log migration integrity', () => {
       'privacy_anonymized_at',
     )
   })
+
+  it('surfaces scoped audit metadata without exposing before/after snapshots', () => {
+    const auditTimeline = migration('20261009120000_surface_entity_audit_timeline.sql')
+    expect(auditTimeline).toContain("jsonb_build_object('changed_fields', changed_fields)")
+    expect(auditTimeline).toContain('public.can_access_lead(p_entity_id)')
+    expect(auditTimeline).toContain('public.can_access_client(p_entity_id)')
+    expect(auditTimeline).toContain('public.can_access_project(p_entity_id)')
+    expect(auditTimeline).toContain(
+      'revoke all on function public.list_entity_audit_timeline(text, uuid, integer) from public, anon, authenticated',
+    )
+    expect(auditTimeline).toContain(
+      'grant execute on function public.list_entity_audit_timeline(text, uuid, integer) to authenticated',
+    )
+    expect(auditTimeline).not.toContain('before_data jsonb,\n  after_data jsonb')
+  })
 })

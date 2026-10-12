@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Command as CommandPrimitive } from 'cmdk'
 import { Check as CheckIcon, Search as SearchIcon } from 'lucide-react'
 import type * as React from 'react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { cn } from '../lib/utils'
 
@@ -34,15 +34,38 @@ function CommandDialog({
   className?: string
   showCloseButton?: boolean
 }) {
+  const [viewportStyle, setViewportStyle] = useState<React.CSSProperties>()
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    if (!viewport) return
+
+    const updateViewport = () => {
+      setViewportStyle({
+        '--command-palette-height': `${Math.round(viewport.height)}px`,
+        '--command-palette-offset-top': `${Math.round(viewport.offsetTop)}px`,
+      } as React.CSSProperties)
+    }
+
+    updateViewport()
+    viewport.addEventListener('resize', updateViewport)
+    viewport.addEventListener('scroll', updateViewport)
+    window.addEventListener('resize', updateViewport)
+    return () => {
+      viewport.removeEventListener('resize', updateViewport)
+      viewport.removeEventListener('scroll', updateViewport)
+      window.removeEventListener('resize', updateViewport)
+    }
+  }, [])
+
   return (
     <Dialog {...props}>
       <DialogContent
+        style={viewportStyle}
         className={cn(
           'overflow-hidden rounded-xl! p-0',
-          // Mobile: pantalla completa. Altura fijada con svh (viewport más pequeño
-          // posible) en vez de dvh para que el diálogo NO cambie de tamaño cuando
-          // el teclado virtual aparece — evita el "salto" al enfocar el input.
-          'max-sm:top-0 max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:flex max-sm:h-svh max-sm:max-h-svh max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:flex-col max-sm:rounded-none!',
+          // En móvil ocupa el viewport visible, también cuando aparece el teclado.
+          'max-sm:fixed max-sm:inset-x-0 max-sm:top-[var(--command-palette-offset-top,0px)] max-sm:bottom-auto max-sm:flex max-sm:h-[var(--command-palette-height,100svh)] max-sm:max-h-[var(--command-palette-height,100svh)] max-sm:w-screen! max-sm:max-w-none! max-sm:translate-x-0 max-sm:translate-y-0 max-sm:flex-col max-sm:rounded-none!',
           className,
         )}
         showCloseButton={showCloseButton}

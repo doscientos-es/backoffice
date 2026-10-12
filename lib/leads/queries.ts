@@ -15,6 +15,7 @@ import {
   type LeadDetailInteraction,
   type LeadDiscoveryQuestion,
   type LeadDetailResult,
+  type EntityAuditTimelineEvent,
   type LeadInteraction,
   type LeadListItem,
   type LeadListParams,
@@ -359,6 +360,7 @@ export async function getLeadDetail(
     { data: tasks },
     { data: reminders },
     { data: attachments },
+    { data: auditRows, error: auditTimelineError },
   ] = await Promise.all([
     notDeleted(supabase.from('leads').select(DETAIL_COLUMNS).eq('id', id)).maybeSingle(),
     loadCompanyResearch(supabase, id),
@@ -401,6 +403,11 @@ export async function getLeadDetail(
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(LEAD_RELATED_LIMIT),
+    supabase.rpc('list_entity_audit_timeline', {
+      p_entity_type: 'leads',
+      p_entity_id: id,
+      p_limit: 50,
+    }),
   ])
 
   if (leadErr) {
@@ -414,6 +421,10 @@ export async function getLeadDetail(
       { leadId: id, err: discoveryQuestionsError.message },
       'lead_discovery_questions_query_failed',
     )
+  }
+
+  if (auditTimelineError) {
+    log.warn({ leadId: id, err: auditTimelineError.message }, 'lead_audit_timeline_query_failed')
   }
 
   const [campaignNames, marketingAdName] = await Promise.all([
@@ -488,6 +499,16 @@ export async function getLeadDetail(
     payload: i.payload ?? null,
     resend_email_id: (i.resend_email_id as string | null) ?? null,
   }))
+  const auditEvents: EntityAuditTimelineEvent[] = (auditRows ?? []).map((event) => ({
+    id: event.id,
+    entityType: 'leads',
+    occurredAt: event.occurred_at,
+    actorId: event.actor_id,
+    actorName: event.actor_name,
+    action: event.action,
+    changedFields: event.changed_fields,
+    origin: event.origin === 'system' ? 'system' : 'backoffice',
+  }))
 
   return {
     lead: {
@@ -499,6 +520,7 @@ export async function getLeadDetail(
     } as unknown as LeadDetailResult['lead'],
     companyResearchAvailable: companyResearch.available,
     interactions: detailInteractions,
+    auditEvents,
     discoveryQuestions: (discoveryQuestionRows ?? []) as LeadDiscoveryQuestion[],
     linkedClientId,
     linkedClientName,

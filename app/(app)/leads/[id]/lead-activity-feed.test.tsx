@@ -12,6 +12,7 @@ const props = {
   canEdit: true,
   aiEnabled: false,
   interactions: [],
+  auditEvents: [],
   proposals: [],
   invoices: [],
   tasks: [],
@@ -155,5 +156,47 @@ describe('LeadActivityFeed', () => {
     expect(screen.getByRole('link', { name: /F-2026-001/ }).getAttribute('href')).toBe(
       '/invoices/invoice-1',
     )
+  })
+
+  it('shows audit changes in chronological order without exposing changed values', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-09T12:00:00.000Z'))
+    render(
+      <LeadActivityFeed
+        {...props}
+        auditEvents={[
+          {
+            id: 'audit-1',
+            entityType: 'leads',
+            occurredAt: '2026-10-09T10:00:00.000Z',
+            actorId: 'member-1',
+            actorName: 'Aina',
+            action: 'update',
+            changedFields: ['estimated_value'],
+            origin: 'backoffice',
+          },
+        ]}
+        interactions={[
+          {
+            id: 'note-1',
+            type: 'note',
+            subject: 'Llamada posterior',
+            body: null,
+            created_at: '2026-10-09T11:00:00.000Z',
+            performer: null,
+            payload: {},
+            resend_email_id: null,
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText('Ficha actualizada')).toBeDefined()
+    expect(screen.getByText('valor estimado')).toBeDefined()
+    expect(screen.getByText('Por Aina')).toBeDefined()
+    expect(screen.queryByText(/1200|valor anterior/)).toBeNull()
+    const rows = screen.getAllByRole('listitem')
+    expect(rows[0]?.textContent).toContain('Llamada posterior')
+    expect(rows[1]?.textContent).toContain('Ficha actualizada')
   })
 })

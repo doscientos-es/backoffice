@@ -2,6 +2,7 @@ import {
   Calendar,
   SquareCheck as CheckSquare2,
   FileText as FileSignature,
+  History,
   Mail,
   MessageSquare,
   Phone,
@@ -12,6 +13,7 @@ import Link from 'next/link'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MemberLabel } from '@/components/ui/member-avatar'
+import { describeAuditEvent } from '@/lib/leads/audit-timeline'
 import {
   excerptInteractionBody,
   groupResendInteractions,
@@ -19,6 +21,7 @@ import {
   isLowValueInteraction,
 } from '@/lib/leads/interaction-utils'
 import type {
+  EntityAuditTimelineEvent,
   LeadDetailInteraction,
   LeadRelatedInvoice,
   LeadRelatedProposal,
@@ -72,7 +75,16 @@ type RecordEvent = {
   icon: typeof Mail
 }
 
-type ActivityEvent = InteractionEvent | RecordEvent
+type AuditEvent = {
+  kind: 'audit'
+  id: string
+  date: string
+  label: string
+  detail: string
+  actor: string
+}
+
+type ActivityEvent = InteractionEvent | RecordEvent | AuditEvent
 
 type LeadActivityFeedProps = {
   leadId: string
@@ -81,6 +93,7 @@ type LeadActivityFeedProps = {
   canEdit: boolean
   aiEnabled: boolean
   interactions: LeadDetailInteraction[]
+  auditEvents: EntityAuditTimelineEvent[]
   proposals: LeadRelatedProposal[]
   invoices: LeadRelatedInvoice[]
   tasks: LeadRelatedTask[]
@@ -127,12 +140,13 @@ function groupEventsByDay(events: ActivityEvent[]) {
 
 function buildEvents({
   interactions,
+  auditEvents,
   proposals,
   invoices,
   tasks,
 }: Pick<
   LeadActivityFeedProps,
-  'interactions' | 'proposals' | 'invoices' | 'tasks'
+  'interactions' | 'auditEvents' | 'proposals' | 'invoices' | 'tasks'
 >): ActivityEvent[] {
   const interactionEvents: ActivityEvent[] = groupResendInteractions(interactions).map(
     ({ interaction, latestInteraction, statuses }) => ({
@@ -205,9 +219,25 @@ function buildEvents({
     ]
   })
 
-  return [...interactionEvents, ...proposalEvents, ...invoiceEvents, ...taskEvents].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  )
+  const auditTimelineEvents: ActivityEvent[] = auditEvents.map((event) => {
+    const description = describeAuditEvent(event)
+    return {
+      kind: 'audit',
+      id: `audit-${event.id}`,
+      date: event.occurredAt,
+      label: description.title,
+      detail: description.detail,
+      actor: description.actor,
+    }
+  })
+
+  return [
+    ...interactionEvents,
+    ...proposalEvents,
+    ...invoiceEvents,
+    ...taskEvents,
+    ...auditTimelineEvents,
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
 /**
@@ -215,7 +245,10 @@ function buildEvents({
  * "view full history" link adds value elsewhere.
  */
 export function countActivityEvents(
-  props: Pick<LeadActivityFeedProps, 'interactions' | 'proposals' | 'invoices' | 'tasks'>,
+  props: Pick<
+    LeadActivityFeedProps,
+    'interactions' | 'auditEvents' | 'proposals' | 'invoices' | 'tasks'
+  >,
 ): number {
   return buildEvents(props).length
 }
@@ -228,11 +261,12 @@ export function LeadActivityFeed({
   canEdit,
   aiEnabled,
   interactions,
+  auditEvents,
   proposals,
   invoices,
   tasks,
 }: LeadActivityFeedProps) {
-  const events = buildEvents({ interactions, proposals, invoices, tasks })
+  const events = buildEvents({ interactions, auditEvents, proposals, invoices, tasks })
   const groups = groupEventsByDay(events)
 
   return (
@@ -241,7 +275,7 @@ export function LeadActivityFeed({
         <div>
           <CardTitle className="text-base">Actividad</CardTitle>
           <p className="mt-1 text-sm font-normal text-muted-foreground">
-            Interacciones y movimientos comerciales en orden cronológico.
+            Interacciones, cambios de ficha y movimientos comerciales en orden cronológico.
           </p>
         </div>
         {events[0] ? (
@@ -262,7 +296,9 @@ export function LeadActivityFeed({
                 </p>
                 <ol className="divide-y divide-border">
                   {group.events.map((event) =>
-                    event.kind === 'record' ? (
+                    event.kind === 'audit' ? (
+                      <AuditRow key={event.id} event={event} />
+                    ) : event.kind === 'record' ? (
                       <RecordRow key={event.id} event={event} />
                     ) : isLowValueInteraction(event.interaction.type) ? (
                       <CompactInteractionRow key={event.id} event={event} />
@@ -285,6 +321,26 @@ export function LeadActivityFeed({
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function AuditRow({ event }: { event: AuditEvent }) {
+  return (
+    <li className="py-2.5">
+      <article className="flex items-start gap-3">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          <History className="size-4" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">{event.label}</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{event.detail}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Por {event.actor}</p>
+        </div>
+        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+          {relativeTime(event.date)}
+        </span>
+      </article>
+    </li>
   )
 }
 

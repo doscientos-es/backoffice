@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 import { Logo } from '@/components/branding'
 import { CallReminderWatcher } from '@/components/layout/call-reminder-watcher'
-import { CommandPalette } from '@/components/layout/command-palette'
+import { CommandPaletteLoader } from '@/components/layout/command-palette-loader'
 import { CommandPaletteTrigger } from '@/components/layout/command-palette-trigger'
 import { KeyboardShortcuts } from '@/components/layout/keyboard-shortcuts'
 import { MobileNav } from '@/components/layout/mobile-nav'
@@ -47,7 +47,7 @@ export default async function AppLayout({
       <MobileTabBar user={user} />
       {modal}
       <NavProgress />
-      <CommandPalette role={user.role} />
+      <CommandPaletteLoader role={user.role} />
       <KeyboardShortcuts />
       <ShortcutsDialog />
       <CallReminderWatcher />

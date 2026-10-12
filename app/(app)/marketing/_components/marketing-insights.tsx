@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getInsightsBreakdownSeries } from '@/lib/marketing/queries'
 import type { MarketingView } from '@/lib/marketing/range'
 
-import { InsightsChart } from '../insights-chart'
+import { InsightsChartLazy } from '../insights-chart-lazy'
 
 export async function MarketingInsights({
   since,
@@ -24,7 +24,7 @@ export async function MarketingInsights({
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <InsightsChart breakdown={breakdown} />
+        <InsightsChartLazy breakdown={breakdown} />
       </CardContent>
     </Card>
   )

@@ -85,7 +85,11 @@ export function RecoveryList({ leads, aiEnabled = false, ...props }: RecoveryLis
       empresa: { content: l.company ?? '—', value: l.company ?? '' },
       motivo: {
         content: (
-          <span key="reason" className="text-muted-foreground">
+          <span
+            key="reason"
+            title={l.lost_reason ?? undefined}
+            className="block max-w-[12rem] truncate text-muted-foreground"
+          >
             {l.lost_reason ?? '—'}
           </span>
         ),

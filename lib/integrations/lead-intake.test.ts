@@ -19,8 +19,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // ── shared state ──────────────────────────────────────────────────────────────
 
-const { notifyNewLead, sendLeadConfirmation, store } = vi.hoisted(() => ({
+const { notifyNewLead, pushMetaConversion, sendLeadConfirmation, store } = vi.hoisted(() => ({
   notifyNewLead: vi.fn().mockResolvedValue(undefined),
+  pushMetaConversion: vi.fn().mockResolvedValue(undefined),
   sendLeadConfirmation: vi.fn().mockResolvedValue(undefined),
   store: {
     existingById: null as Record<string, unknown> | null,
@@ -51,6 +52,11 @@ vi.mock('@/lib/integrations/notify-new-lead', () => ({
 
 vi.mock('@/lib/integrations/send-lead-confirmation', () => ({
   sendLeadConfirmation,
+}))
+
+vi.mock('@/lib/integrations/meta-capi', () => ({
+  pushMetaConversion,
+  pushMetaQualifiedLeadStage: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/logger', () => ({
@@ -160,6 +166,7 @@ const calIntake = {
 
 beforeEach(() => {
   notifyNewLead.mockClear()
+  pushMetaConversion.mockClear()
   sendLeadConfirmation.mockClear()
   store.existingById = null
   store.existingByEmail = null
@@ -210,6 +217,34 @@ describe('ingestLead – new lead', () => {
     const result = await ingestLead({ name: '', source: 'landing' } as never)
     expect(result).toMatchObject({ ok: false })
     expect((result as { error: string }).error).toMatch(/name/i)
+  })
+
+  it('keeps raw IP and User-Agent transient while using them for consented Meta matching', async () => {
+    const intake = {
+      ...landingIntake,
+      externalSource: 'Landing',
+      context: {
+        marketingConsent: true,
+        ip: '203.0.113.10',
+        browser: 'Mozilla/5.0 Example Browser',
+        device: 'mobile',
+      },
+    }
+
+    await ingestLead(intake)
+
+    const insertedLead = store.insertedRows.find((row) => row.table === 'leads')
+    expect(insertedLead).toMatchObject({ device: 'mobile', marketing_consent: true })
+    expect(insertedLead).not.toHaveProperty('ip')
+    expect(insertedLead).not.toHaveProperty('browser')
+    await vi.waitFor(() =>
+      expect(pushMetaConversion).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clientIpAddress: '203.0.113.10',
+          clientUserAgent: 'Mozilla/5.0 Example Browser',
+        }),
+      ),
+    )
   })
 })
 

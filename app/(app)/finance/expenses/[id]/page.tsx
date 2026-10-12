@@ -14,7 +14,7 @@ import {
   EXPENSE_PAYMENT_SOURCE_LABELS,
   EXPENSE_RECURRENCE_LABELS,
 } from '@/lib/finance'
-import { getExpenseDetail } from '@/lib/finance/queries'
+import { getExpenseDetail, getExpenseTeamMembers } from '@/lib/finance/queries'
 import { EXPENSE_STATUS } from '@/lib/status'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR } from '@/lib/utils'
@@ -30,23 +30,21 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
   const user = await requirePagePermission('finance.read')
 
   const supabase = await createServerClient()
-  const [result, { data: teamMembersRaw }, { data: attachments, error: attachmentsError }] =
-    await Promise.all([
-      getExpenseDetail(id),
-      supabase.from('team_members').select('id, name').is('deleted_at', null).order('name'),
-      supabase
-        .from('attachments')
-        .select('id, name, mime_type, size_bytes, created_at, source, web_view_link')
-        .eq('expense_id', id)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false }),
-    ])
+  const [result, teamMembers, { data: attachments, error: attachmentsError }] = await Promise.all([
+    getExpenseDetail(id),
+    getExpenseTeamMembers(),
+    supabase
+      .from('attachments')
+      .select('id, name, mime_type, size_bytes, created_at, source, web_view_link')
+      .eq('expense_id', id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false }),
+  ])
 
   if (!result) notFound()
   if (attachmentsError) throw new Error(attachmentsError.message)
   const { expense, projectOptions } = result
   const project = expense.project
-  const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>
 
   const canDelete = user.role === 'owner' || user.role === 'admin'
   const canEdit = user.role !== 'viewer'

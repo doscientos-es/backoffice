@@ -6,7 +6,7 @@ import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/em
 import { getRevenueSeries } from '@/lib/dashboard/queries'
 import type { DashboardRange } from '@/lib/dashboard/types'
 
-import { RevenueChart } from '../revenue-chart'
+import { RevenueChartLazy } from '../revenue-chart-lazy'
 
 export async function RevenueWidget({ range }: { range: DashboardRange }) {
   const data = await getRevenueSeries(range)
@@ -21,7 +21,7 @@ export async function RevenueWidget({ range }: { range: DashboardRange }) {
       </CardHeader>
       <CardContent>
         {hasData ? (
-          <RevenueChart data={data} />
+          <RevenueChartLazy data={data} />
         ) : (
           <Empty className="h-56">
             <EmptyHeader>

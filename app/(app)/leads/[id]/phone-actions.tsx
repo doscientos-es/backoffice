@@ -10,7 +10,6 @@ import {
 } from '@doscientos/ui'
 import { CheckCircle2, Phone, PhoneOff } from 'lucide-react'
 import Image from 'next/image'
-import { toDataURL } from 'qrcode'
 import { useEffect, useState } from 'react'
 
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
@@ -272,7 +271,8 @@ function CallTrackingDialog({
     let cancelled = false
     setQr(null)
     const url = new URL(`/p/call/${session.mobileToken}`, window.location.origin).toString()
-    toDataURL(url, { width: 200, margin: 1 })
+    import('qrcode')
+      .then(({ toDataURL }) => toDataURL(url, { width: 200, margin: 1 }))
       .then((url) => {
         if (!cancelled) setQr(url)
       })

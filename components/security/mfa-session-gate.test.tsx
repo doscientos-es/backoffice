@@ -41,7 +41,7 @@ describe('MfaSessionGate', () => {
   it('keeps an administrator on the requested route and opens the MFA dialog', async () => {
     render(<MfaSessionGate memberRole="admin" mfaVerified={false} />)
 
-    expect(screen.getByTestId('mfa-dialog').dataset.open).toBe('true')
+    expect((await screen.findByTestId('mfa-dialog')).dataset.open).toBe('true')
     await waitFor(() => expect(mfa.getAuthenticatorAssuranceLevel).toHaveBeenCalledOnce())
   })
 
@@ -49,14 +49,21 @@ describe('MfaSessionGate', () => {
     navigation.pathname = '/settings/security'
     render(<MfaSessionGate memberRole="admin" mfaVerified={false} />)
 
-    expect(screen.getByTestId('mfa-dialog').dataset.open).toBe('false')
     await waitFor(() => expect(mfa.getAuthenticatorAssuranceLevel).not.toHaveBeenCalled())
+    expect(screen.queryByTestId('mfa-dialog')).toBeNull()
+  })
+
+  it('does not load the MFA dialog for verified sessions', async () => {
+    render(<MfaSessionGate memberRole="member" mfaVerified />)
+
+    await waitFor(() => expect(mfa.getAuthenticatorAssuranceLevel).not.toHaveBeenCalled())
+    expect(screen.queryByTestId('mfa-dialog')).toBeNull()
   })
 
   it('refreshes the current route after the modal verifies MFA', async () => {
     render(<MfaSessionGate memberRole="owner" mfaVerified={false} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Verificar' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Verificar' }))
     expect(navigation.refresh).toHaveBeenCalledOnce()
     await waitFor(() => expect(screen.getByTestId('mfa-dialog').dataset.open).toBe('false'))
   })
@@ -66,6 +73,6 @@ describe('MfaSessionGate', () => {
     render(<MfaSessionGate memberRole="admin" mfaVerified={false} />)
 
     await waitFor(() => expect(hasCurrentMfaAccess).toHaveBeenCalledOnce())
-    expect(screen.getByTestId('mfa-dialog').dataset.open).toBe('false')
+    await waitFor(() => expect(screen.getByTestId('mfa-dialog').dataset.open).toBe('false'))
   })
 })

@@ -21,6 +21,7 @@ import {
   bulkUpdateLeadStatus,
 } from './actions'
 import { LeadFastActions } from './lead-fast-actions'
+import { LeadNotesIndicator } from './lead-notes-indicator'
 import { LeadQuickView } from './lead-quick-view'
 import type { KanbanLead } from './leads-kanban'
 
@@ -67,6 +68,7 @@ export function LeadsList({
             <span className="max-w-40 truncate font-medium underline-offset-2 transition-colors group-hover/leadname:text-primary group-hover/leadname:underline">
               {leadDisplayName(l)}
             </span>
+            <LeadNotesIndicator notes={l.notes} />
             <ArrowRight className="size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover/leadname:translate-x-0 group-hover/leadname:opacity-60" />
           </Link>
         ),

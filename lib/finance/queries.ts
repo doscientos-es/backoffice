@@ -20,6 +20,8 @@ import {
   type ExpenseDetailResult,
   type ExpenseListParams,
   type ExpenseListResult,
+  type ExpenseProjectOption,
+  type ExpenseTeamMemberOption,
   type FinanceDetails,
   type FinanceKpis,
   type MemberContribution,
@@ -31,6 +33,45 @@ const log = scopedLogger('finance.queries')
 function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, (m) => `\\${m}`)
 }
+
+function singleReference<T>(value: T | T[] | null | undefined): T | null {
+  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null)
+}
+
+/** Active projects (with client name) offered in the expense forms. */
+export const getExpenseProjectOptions = cache(async (): Promise<ExpenseProjectOption[]> => {
+  const supabase = await createServerClient()
+  const { data, error } = await notDeleted(
+    supabase.from('projects').select('id, name, clients(name)'),
+  ).order('name')
+
+  if (error) log.error({ err: error.message }, 'expense_project_options_failed')
+
+  return (
+    (data ?? []) as unknown as Array<{
+      id: string
+      name: string
+      clients: { name: string } | { name: string }[] | null
+    }>
+  ).map((p) => ({ id: p.id, name: p.name, clientName: singleReference(p.clients)?.name ?? null }))
+})
+
+/** Active team members offered as payers in the expense forms. */
+export const getExpenseTeamMembers = cache(async (): Promise<ExpenseTeamMemberOption[]> => {
+  const supabase = await createServerClient()
+  const { data, error } = await notDeleted(
+    supabase.from('team_members').select('id, name, avatar_url, github_handle'),
+  ).order('name')
+
+  if (error) log.error({ err: error.message }, 'expense_team_members_failed')
+
+  return ((data ?? []) as ExpenseTeamMemberOption[]).map((m) => ({
+    id: m.id,
+    name: m.name,
+    avatar_url: m.avatar_url ?? null,
+    github_handle: m.github_handle ?? null,
+  }))
+})
 
 /**
  * Expense rows (total + category) for a given date range, shared by the KPIs
@@ -432,14 +473,19 @@ export async function getExpenseVendorSuggestions(): Promise<VendorSuggestion[]>
 export async function getExpenseDetail(id: string): Promise<ExpenseDetailResult | null> {
   const supabase = await createServerClient()
 
-  const { data: expense, error } = await notDeleted(
-    supabase
-      .from('expenses')
-      // `expenses` has two FKs to `team_members` (created_by + paid_by_member_id),
-      // so the embed must disambiguate or PostgREST errors out (→ null → 404).
-      .select('*, projects(id, name, clients(id, name)), team_members!paid_by_member_id(id, name)')
-      .eq('id', id),
-  ).maybeSingle()
+  const [{ data: expense, error }, projectOptions] = await Promise.all([
+    notDeleted(
+      supabase
+        .from('expenses')
+        // `expenses` has two FKs to `team_members` (created_by + paid_by_member_id),
+        // so the embed must disambiguate or PostgREST errors out (→ null → 404).
+        .select(
+          '*, projects(id, name, clients(id, name)), team_members!paid_by_member_id(id, name)',
+        )
+        .eq('id', id),
+    ).maybeSingle(),
+    getExpenseProjectOptions(),
+  ])
 
   if (error) log.error({ id, err: error.message }, 'expense_detail_failed')
   if (!expense) return null
@@ -453,28 +499,7 @@ export async function getExpenseDetail(id: string): Promise<ExpenseDetailResult 
       } | null
     }
   ).projects
-  const projectClient = rawProject
-    ? Array.isArray(rawProject.clients)
-      ? (rawProject.clients[0] ?? null)
-      : rawProject.clients
-    : null
-
-  const { data: projectsRaw, error: projectsErr } = await notDeleted(
-    supabase.from('projects').select('id, name, clients(name)'),
-  ).order('name')
-
-  if (projectsErr) log.error({ err: projectsErr.message }, 'expense_project_options_failed')
-
-  const projectOptions = (
-    (projectsRaw ?? []) as unknown as Array<{
-      id: string
-      name: string
-      clients: { name: string } | { name: string }[] | null
-    }>
-  ).map((p) => {
-    const client = Array.isArray(p.clients) ? (p.clients[0] ?? null) : p.clients
-    return { id: p.id, name: p.name, clientName: client?.name ?? null }
-  })
+  const projectClient = rawProject ? singleReference(rawProject.clients) : null
 
   return {
     expense: {

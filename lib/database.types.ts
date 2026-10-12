@@ -18,6 +18,18 @@ export type Database = {
     Functions: {
       current_member_role: { Args: never; Returns: Database['public']['Enums']['member_role'] }
       is_team_member: { Args: never; Returns: boolean }
+      list_entity_audit_timeline: {
+        Args: { p_entity_id: string; p_entity_type: string; p_limit?: number }
+        Returns: {
+          id: string
+          occurred_at: string
+          actor_id: string | null
+          actor_name: string | null
+          action: string
+          changed_fields: string[]
+          origin: string
+        }[]
+      }
     }
     Enums: {
       expense_category:

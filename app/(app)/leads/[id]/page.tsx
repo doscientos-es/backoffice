@@ -98,6 +98,7 @@ export default async function LeadDetailPage({
     lead,
     companyResearchAvailable,
     interactions,
+    auditEvents,
     linkedClientId,
     linkedClientName,
     proposals,
@@ -532,6 +533,7 @@ export default async function LeadDetailPage({
                 interactions={interactions ?? []}
                 totalActivityEvents={countActivityEvents({
                   interactions: interactions ?? [],
+                  auditEvents,
                   proposals,
                   invoices,
                   tasks,
@@ -549,6 +551,7 @@ export default async function LeadDetailPage({
                 canEdit={canEdit}
                 aiEnabled={aiEnabled}
                 interactions={interactions ?? []}
+                auditEvents={auditEvents}
                 proposals={proposals}
                 invoices={invoices}
                 tasks={tasks}

@@ -212,6 +212,17 @@ export type LeadDetailInteraction = LeadInteraction & {
   resend_email_id: string | null
 }
 
+export type EntityAuditTimelineEvent = {
+  id: string
+  entityType: 'leads' | 'clients' | 'projects'
+  occurredAt: string
+  actorId: string | null
+  actorName: string | null
+  action: string
+  changedFields: string[]
+  origin: 'backoffice' | 'system'
+}
+
 export type LeadDiscoveryQuestion = {
   id: string
   lead_id: string
@@ -280,6 +291,7 @@ export type LeadDetailResult = {
   /** False when the optional company-research schema is unavailable. */
   companyResearchAvailable: boolean
   interactions: LeadDetailInteraction[]
+  auditEvents: EntityAuditTimelineEvent[]
   discoveryQuestions: LeadDiscoveryQuestion[]
   linkedClientId: string | null
   linkedClientName: string | null

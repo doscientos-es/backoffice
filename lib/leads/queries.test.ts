@@ -12,6 +12,9 @@ const state = vi.hoisted(() => ({
   detailLeadError: null as string | null,
   companyResearch: null as Record<string, unknown> | null,
   companyResearchError: null as string | null,
+  auditRows: [] as Record<string, unknown>[],
+  auditTimelineError: null as string | null,
+  auditTimelineCalls: [] as Array<{ name: string; args: Record<string, unknown> }>,
   leadSelect: '',
   leadSelections: [] as string[],
   inCalls: [] as [string, unknown[]][],
@@ -19,6 +22,13 @@ const state = vi.hoisted(() => ({
 
 vi.mock('@/lib/supabase/server', () => ({
   createServerClient: async () => ({
+    rpc: (name: string, args: Record<string, unknown>) => {
+      state.auditTimelineCalls.push({ name, args })
+      return Promise.resolve({
+        data: state.auditRows,
+        error: state.auditTimelineError ? { message: state.auditTimelineError } : null,
+      })
+    },
     from: (table: string) => {
       let selection = ''
       if (table === 'proposal_prices') state.proposalPriceQueries += 1
@@ -101,6 +111,9 @@ describe('listLeads client avatar enrichment', () => {
     state.detailLeadError = null
     state.companyResearch = null
     state.companyResearchError = null
+    state.auditRows = []
+    state.auditTimelineError = null
+    state.auditTimelineCalls = []
     state.leadSelect = ''
     state.leadSelections = []
     state.inCalls = []
@@ -261,6 +274,9 @@ describe('getLeadDetail resilience', () => {
     state.detailLeadError = null
     state.companyResearch = null
     state.companyResearchError = null
+    state.auditRows = []
+    state.auditTimelineError = null
+    state.auditTimelineCalls = []
     state.leadSelect = ''
     state.leadSelections = []
     state.inCalls = []
@@ -274,6 +290,50 @@ describe('getLeadDetail resilience', () => {
     expect(result?.lead.id).toBe('lead-1')
     expect(result?.companyResearchAvailable).toBe(false)
     expect(result?.lead.company_research).toBeNull()
+  })
+
+  it('loads the scoped audit timeline into the typed lead detail read model', async () => {
+    state.auditRows = [
+      {
+        id: 'event-1',
+        occurred_at: '2026-10-09T10:00:00.000Z',
+        actor_id: 'member-1',
+        actor_name: 'Aina',
+        action: 'update',
+        changed_fields: ['estimated_value'],
+        origin: 'backoffice',
+      },
+    ]
+
+    const result = await getLeadDetail('lead-1')
+
+    expect(state.auditTimelineCalls).toEqual([
+      {
+        name: 'list_entity_audit_timeline',
+        args: { p_entity_type: 'leads', p_entity_id: 'lead-1', p_limit: 50 },
+      },
+    ])
+    expect(result?.auditEvents).toEqual([
+      {
+        id: 'event-1',
+        entityType: 'leads',
+        occurredAt: '2026-10-09T10:00:00.000Z',
+        actorId: 'member-1',
+        actorName: 'Aina',
+        action: 'update',
+        changedFields: ['estimated_value'],
+        origin: 'backoffice',
+      },
+    ])
+  })
+
+  it('keeps the lead detail available when the optional audit timeline RPC fails', async () => {
+    state.auditTimelineError = 'audit timeline unavailable'
+
+    const result = await getLeadDetail('lead-1')
+
+    expect(result?.lead.id).toBe('lead-1')
+    expect(result?.auditEvents).toEqual([])
   })
 
   it('does not query proposal prices unless the caller has enabled them', async () => {

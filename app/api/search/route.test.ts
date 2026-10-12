@@ -43,6 +43,7 @@ vi.mock('@/lib/supabase/server', () => ({
                   alias: 'Spinola',
                   company: 'Piscinas S.L.',
                   email: null,
+                  phone: '600 555 123',
                 },
               ]
             : [],
@@ -60,18 +61,24 @@ describe('GET /api/search', () => {
     const response = await GET(new NextRequest('http://localhost/api/search?q=Spinola'))
     const body = await response.json()
 
-    expect(state.leadSelect).toBe('id, name, alias, company, email')
+    expect(state.leadSelect).toBe('id, name, alias, company, email, phone')
     expect(state.leadOr).toBe(
-      'name.ilike.%Spinola%,alias.ilike.%Spinola%,company.ilike.%Spinola%,email.ilike.%Spinola%',
+      'name.ilike.%Spinola%,alias.ilike.%Spinola%,company.ilike.%Spinola%,email.ilike.%Spinola%,phone.ilike.%Spinola%',
     )
     expect(body.items).toEqual([
       {
         id: 'lead-lead-1',
         type: 'lead',
         label: 'Spinola',
-        sublabel: 'Juan García · Piscinas S.L.',
+        sublabel: 'Juan García · Piscinas S.L. · 600 555 123',
         href: '/leads/lead-1',
       },
     ])
+  })
+
+  it('matches formatted phone numbers when searching with digits only', async () => {
+    await GET(new NextRequest('http://localhost/api/search?q=600555123'))
+
+    expect(state.leadOr).toContain('phone.ilike.%6%0%0%5%5%5%1%2%3%')
   })
 })

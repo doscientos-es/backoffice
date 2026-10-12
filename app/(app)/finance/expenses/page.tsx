@@ -13,13 +13,14 @@ import {
   EXPENSE_STATUSES,
 } from '@/lib/finance'
 import {
+  getExpenseProjectOptions,
   getExpensesPage,
+  getExpenseTeamMembers,
   getExpenseVendorSuggestions,
   parseExpenseListSearchParams,
 } from '@/lib/finance/queries'
 import { EXPENSE_LIST_PAGE_SIZE } from '@/lib/finance/types'
 import { EXPENSE_STATUS } from '@/lib/status'
-import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR } from '@/lib/utils'
 
 import { ExpenseListActions } from './_components/expense-list-actions'
@@ -49,38 +50,14 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Sea
   const [sp, user] = await Promise.all([searchParams, requirePagePermission('finance.read')])
   const { params } = parseExpenseListSearchParams(sp)
 
-  const supabase = await createServerClient()
-  const [
-    { expenses, count, total, years, error },
-    { data: projectsRaw },
-    { data: teamMembersRaw },
-    vendorSuggestions,
-  ] = await Promise.all([
-    getExpensesPage(params),
-    supabase
-      .from('projects')
-      .select('id, name, clients(name)')
-      .is('deleted_at', null)
-      .order('name'),
-    supabase
-      .from('team_members')
-      .select('id, name, avatar_url, github_handle')
-      .is('deleted_at', null)
-      .order('name'),
-    getExpenseVendorSuggestions(),
-  ])
+  const [{ expenses, count, total, years, error }, projects, teamMembers, vendorSuggestions] =
+    await Promise.all([
+      getExpensesPage(params),
+      getExpenseProjectOptions(),
+      getExpenseTeamMembers(),
+      getExpenseVendorSuggestions(),
+    ])
 
-  const projects = (projectsRaw ?? []).map((p) => ({
-    id: p.id as string,
-    name: p.name as string,
-    clientName: (p.clients as unknown as { name: string } | null)?.name ?? null,
-  }))
-  const teamMembers = (teamMembersRaw ?? []) as Array<{
-    id: string
-    name: string
-    avatar_url: string | null
-    github_handle: string | null
-  }>
   const memberMap = new Map(teamMembers.map((m) => [m.id, m]))
 
   const canEdit = user.role !== 'viewer'

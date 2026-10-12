@@ -3,8 +3,12 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { requirePagePermission } from '@/lib/auth'
-import { getExpenseDetail, getExpenseVendorSuggestions } from '@/lib/finance/queries'
-import { createServerClient } from '@/lib/supabase/server'
+import {
+  getExpenseDetail,
+  getExpenseProjectOptions,
+  getExpenseTeamMembers,
+  getExpenseVendorSuggestions,
+} from '@/lib/finance/queries'
 
 import { NewExpenseForm } from './new-expense-form'
 
@@ -19,32 +23,12 @@ export default async function NewExpensePage({
   await requirePagePermission('finance.write')
   const { from } = await searchParams
 
-  const supabase = await createServerClient()
-
-  const [{ data: projectsRaw }, { data: teamMembersRaw }, sourceExpense, vendorSuggestions] =
-    await Promise.all([
-      supabase
-        .from('projects')
-        .select('id, name, clients(name)')
-        .is('deleted_at', null)
-        .order('name'),
-      supabase.from('team_members').select('id, name').is('deleted_at', null).order('name'),
-      from ? getExpenseDetail(from) : Promise.resolve(null),
-      getExpenseVendorSuggestions(),
-    ])
-
-  const projects = (
-    (projectsRaw ?? []) as unknown as Array<{
-      id: string
-      name: string
-      clients: { name: string } | { name: string }[] | null
-    }>
-  ).map((p) => {
-    const client = Array.isArray(p.clients) ? (p.clients[0] ?? null) : p.clients
-    return { id: p.id, name: p.name, clientName: client?.name ?? null }
-  })
-
-  const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>
+  const [projects, teamMembers, sourceExpense, vendorSuggestions] = await Promise.all([
+    getExpenseProjectOptions(),
+    getExpenseTeamMembers(),
+    from ? getExpenseDetail(from) : Promise.resolve(null),
+    getExpenseVendorSuggestions(),
+  ])
 
   const defaults = sourceExpense?.expense
     ? {

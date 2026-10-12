@@ -60,6 +60,7 @@ export type ListPageProps<Data = undefined, Key extends string = string> = {
   pagination?: ListControlsProps['pagination']
   savedViews?: ListControlsProps['savedViews']
   controlsPresentation?: ListControlsProps['presentation']
+  controlsMobileInline?: ListControlsProps['mobileInline']
   mobileRow?: (row: ListRow<Data, Key>) => ReactNode
   onRowClick?: (row: ListRow<Data, Key>) => void
   addHref?: string
@@ -85,6 +86,7 @@ export function ListPage<Data, Key extends string>({
   pagination,
   savedViews,
   controlsPresentation = 'panel',
+  controlsMobileInline,
   mobileRow,
   onRowClick,
   addHref,
@@ -138,6 +140,7 @@ export function ListPage<Data, Key extends string>({
               pagination={pagination}
               savedViews={savedViews}
               presentation={controlsPresentation}
+              mobileInline={controlsMobileInline}
               className={
                 controlsPresentation === 'panel'
                   ? 'rounded-none border-x-0 border-t-0 shadow-none'

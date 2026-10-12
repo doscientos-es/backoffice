@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getFinanceMonthlySeries } from '@/lib/finance/queries'
 
-import { FinanceChart } from '../finance-chart'
+import { FinanceChartLazy } from '../finance-charts-lazy'
 
 export async function FinanceOverviewChart() {
   const series = await getFinanceMonthlySeries()
@@ -19,7 +19,7 @@ export async function FinanceOverviewChart() {
         </div>
       </CardHeader>
       <CardContent>
-        <FinanceChart data={series} />
+        <FinanceChartLazy data={series} />
       </CardContent>
     </Card>
   )

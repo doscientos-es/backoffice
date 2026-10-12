@@ -156,9 +156,15 @@ function VaultResultItem({
   )
 }
 
-export function CommandPalette({ role }: { role: MemberRole }) {
+export function CommandPalette({
+  role,
+  initialOpen = false,
+}: {
+  role: MemberRole
+  initialOpen?: boolean
+}) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(initialOpen)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResultItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -364,7 +370,8 @@ export function CommandPalette({ role }: { role: MemberRole }) {
       >
         <CommandInput
           autoFocus={open}
-          placeholder="Buscar clientes, proyectos, leads…"
+          placeholder="Nombre, alias, teléfono o empresa…"
+          aria-label="Buscar globalmente; los leads se buscan por nombre, alias, teléfono o empresa"
           value={query}
           onValueChange={setQuery}
         />
@@ -417,10 +424,17 @@ export function CommandPalette({ role }: { role: MemberRole }) {
                       value={`${r.label} ${r.sublabel ?? ''} ${type}`}
                       onSelect={() => selectResult({ href: r.href, label: r.label, type })}
                     >
-                      <Icon className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{r.label}</span>
+                      <Icon className="size-4 shrink-0 text-muted-foreground max-sm:mt-0.5" />
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate">{r.label}</span>
+                        {r.sublabel ? (
+                          <span className="truncate text-xs text-muted-foreground sm:hidden">
+                            {r.sublabel}
+                          </span>
+                        ) : null}
+                      </span>
                       {r.sublabel ? (
-                        <span className="ml-auto max-w-[40%] shrink-0 truncate text-xs text-muted-foreground">
+                        <span className="ml-auto hidden max-w-[40%] shrink-0 truncate text-xs text-muted-foreground sm:inline">
                           {r.sublabel}
                         </span>
                       ) : null}

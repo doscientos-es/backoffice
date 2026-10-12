@@ -44,14 +44,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const supabase = await createServerClient()
   const pattern = `%${escapeIlike(q)}%`
+  const phoneDigits = q.replace(/\D/g, '')
+  const phonePattern = phoneDigits.length >= 3 ? `%${phoneDigits.split('').join('%')}%` : null
 
   const [leadsRes, clientsRes, projectsRes, invoicesRes, tasksRes, vaultRes] = await Promise.all([
     supabase
       .from('leads')
-      .select('id, name, alias, company, email')
+      .select('id, name, alias, company, email, phone')
       .is('deleted_at', null)
       .or(
-        `name.ilike.${pattern},alias.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern}`,
+        [
+          `name.ilike.${pattern}`,
+          `alias.ilike.${pattern}`,
+          `company.ilike.${pattern}`,
+          `email.ilike.${pattern}`,
+          `phone.ilike.${pattern}`,
+          ...(phonePattern && phonePattern !== pattern ? [`phone.ilike.${phonePattern}`] : []),
+        ].join(','),
       )
       .order('updated_at', { ascending: false })
       .limit(PER_GROUP),
@@ -105,6 +114,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           alias && alias !== r.name ? (r.name as string) : null,
           r.company as string | null,
           r.email as string | null,
+          r.phone as string | null,
         ]
           .filter(Boolean)
           .join(' · ') || null,

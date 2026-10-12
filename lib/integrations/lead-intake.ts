@@ -355,9 +355,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     utm_term: norm.utm?.term ?? null,
     utm_content: norm.utm?.content ?? null,
     referrer: norm.context?.referrer ?? null,
-    ip: norm.context?.ip ?? null,
     device: norm.context?.device ?? null,
-    browser: norm.context?.browser ?? null,
     language: norm.context?.language ?? null,
     event_id: norm.context?.eventId ?? null,
     conversion_step: norm.context?.conversionStep ?? null,
@@ -445,8 +443,10 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
         value: row.estimated_value,
         actionSource: 'website',
         eventSourceUrl: row.landing_path ? `https://doscientos.es${row.landing_path}` : undefined,
-        clientIpAddress: row.ip as string | null,
-        clientUserAgent: row.browser as string | null,
+        // Use these request attributes only for consented ad conversion matching;
+        // do not retain raw IP/User-Agent on the CRM lead record.
+        clientIpAddress: norm.context?.ip ?? null,
+        clientUserAgent: norm.context?.browser ?? null,
         fbc: norm.context.metaFbc,
         fbp: norm.context.metaFbp,
       }).catch((e) => log.error({ err: e, leadId }, 'meta capi lead push failed'))
@@ -613,7 +613,7 @@ async function enrichLead(
   const { data: existing, error } = await supabase
     .from('leads')
     .select(
-      'email, phone, company, notes, estimated_value, company_size, solution_type, urgency, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, ip, device, browser, language, event_id, conversion_step, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content',
+      'email, phone, company, notes, estimated_value, company_size, solution_type, urgency, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, device, language, event_id, conversion_step, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content',
     )
     .eq('id', leadId)
     .maybeSingle()
@@ -639,9 +639,7 @@ async function enrichLead(
   fillGap('utm_term', existing.utm_term, norm.utm?.term)
   fillGap('utm_content', existing.utm_content, norm.utm?.content)
   fillGap('referrer', existing.referrer, norm.context?.referrer)
-  fillGap('ip', existing.ip, norm.context?.ip)
   fillGap('device', existing.device, norm.context?.device)
-  fillGap('browser', existing.browser, norm.context?.browser)
   fillGap('language', existing.language, norm.context?.language)
   fillGap('event_id', existing.event_id, norm.context?.eventId)
   fillGap('conversion_step', existing.conversion_step, norm.context?.conversionStep)

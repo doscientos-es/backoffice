@@ -38,6 +38,12 @@ const STATUS_FILTER = {
   options: [{ value: 'new', label: 'Nuevo' }],
 }
 
+const ASSIGNEE_SELECT_FILTER = {
+  key: 'assignee',
+  label: 'Responsable',
+  options: [{ value: 'ana', label: 'Ana Pérez' }],
+}
+
 describe('ListControls avatar filter', () => {
   beforeEach(() => {
     navigation.params = new URLSearchParams()
@@ -78,6 +84,22 @@ describe('ListControls avatar filter', () => {
     expect(screen.getByPlaceholderText('Buscar facturas').className).toContain('pl-10!')
   })
 
+  it('keeps mobile search beside the filters button when inline mode is enabled', () => {
+    render(
+      <ListControls
+        filters={[STATUS_FILTER]}
+        presentation="panel"
+        mobileInline
+        searchPlaceholder="Buscar leads"
+      />,
+    )
+
+    const search = screen.getByPlaceholderText('Buscar leads')
+    expect(search.parentElement?.className).toContain('flex-1')
+    expect(search.parentElement?.className).not.toContain('w-full')
+    expect(screen.getByRole('button', { name: 'Filtros' })).toBeDefined()
+  })
+
   it('allows panel controls to render without the card frame', () => {
     const { container } = render(
       <ListControls
@@ -96,12 +118,13 @@ describe('ListControls avatar filter', () => {
 
   it('moves secondary filters into a popover in panel mode', () => {
     navigation.params = new URLSearchParams('status=new')
-    render(<ListControls filters={[FILTER, STATUS_FILTER]} presentation="panel" />)
+    render(<ListControls filters={[ASSIGNEE_SELECT_FILTER, STATUS_FILTER]} presentation="panel" />)
 
     fireEvent.click(screen.getByRole('button', { name: /filtros 1/i }))
 
     expect(screen.getByText('Filtrar el listado')).toBeDefined()
     expect(screen.getByRole('combobox', { name: 'Estado' })).toBeDefined()
+    expect(screen.getByRole('combobox', { name: 'Responsable' })).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
     expect(navigation.replace).toHaveBeenCalledWith('/leads', { scroll: false })
   })
@@ -109,7 +132,9 @@ describe('ListControls avatar filter', () => {
   it('keeps panel avatar filters horizontally scrollable on narrow screens', () => {
     render(<ListControls filters={[FILTER]} presentation="panel" />)
 
-    const avatarFilter = screen.getByRole('button', { name: 'Filtrar por Ana Pérez' }).parentElement
+    const avatarFilter = screen.getByRole('button', {
+      name: 'Filtrar por Ana Pérez',
+    }).parentElement
     expect(avatarFilter?.className).toContain('max-w-full')
     expect(avatarFilter?.className).toContain('overflow-x-auto')
   })

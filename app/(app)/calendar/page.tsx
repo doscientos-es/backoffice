@@ -1,9 +1,11 @@
 import { addMonths, endOfMonth, endOfWeek, startOfMonth, startOfWeek, subMonths } from 'date-fns'
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 
 import { requireUser } from '@/lib/auth'
 import { getCalendarEvents } from '@/lib/calendar/queries'
 import { ALL_LAYERS } from '@/lib/calendar/types'
+import { CALENDAR_VIEW_COOKIE, parseCalendarView } from '@/lib/calendar/view-preference'
 import { createServerClient } from '@/lib/supabase/server'
 
 import { CalendarGrid } from './_components/calendar-grid'
@@ -12,11 +14,6 @@ export const metadata: Metadata = { title: 'Agenda · doscientos' }
 export const dynamic = 'force-dynamic'
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
-
-function parseView(v: unknown): 'month' | 'week' | 'agenda' {
-  if (v === 'week' || v === 'agenda') return v
-  return 'month'
-}
 
 function parseDate(v: unknown): Date {
   if (typeof v === 'string') {
@@ -29,9 +26,10 @@ function parseDate(v: unknown): Date {
 export default async function CalendarPage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams
   const user = await requireUser()
+  const cookieStore = await cookies()
 
   const isAdminOrOwner = user.role === 'admin' || user.role === 'owner'
-  const view = parseView(sp.view)
+  const view = parseCalendarView(sp.view ?? cookieStore.get(CALENDAR_VIEW_COOKIE)?.value)
   const anchor = parseDate(sp.date)
 
   // Determine fetch window based on view

@@ -3,40 +3,33 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { requireUser } from '@/lib/auth'
 import { EXPENSE_CATEGORY_LABELS } from '@/lib/finance'
-import { getExpenseVendorSuggestions, getFinanceDetails } from '@/lib/finance/queries'
-import { createServerClient } from '@/lib/supabase/server'
+import {
+  getExpenseProjectOptions,
+  getExpenseTeamMembers,
+  getExpenseVendorSuggestions,
+  getFinanceDetails,
+} from '@/lib/finance/queries'
 import { formatDate, formatEUR } from '@/lib/utils'
 
 import { ExpenseListActions } from '../expenses/_components/expense-list-actions'
-import { FinanceCategoryChart } from '../finance-category-chart'
+import { FinanceCategoryChartLazy } from '../finance-charts-lazy'
 
 type Props = { since: string; until: string; rangeLabel: string }
 
 export async function FinanceDetails({ since, until, rangeLabel }: Props) {
   const user = await requireUser()
-  const supabase = await createServerClient()
   const [
     { topCategories, recentExpenses, recentInvoices, memberContributions },
-    { data: projectsRaw },
-    { data: teamMembersRaw },
+    projects,
+    teamMembers,
     vendorSuggestions,
   ] = await Promise.all([
     getFinanceDetails(since, until),
-    supabase
-      .from('projects')
-      .select('id, name, clients(name)')
-      .is('deleted_at', null)
-      .order('name'),
-    supabase.from('team_members').select('id, name').is('deleted_at', null).order('name'),
+    getExpenseProjectOptions(),
+    getExpenseTeamMembers(),
     getExpenseVendorSuggestions(),
   ])
 
-  const projects = (projectsRaw ?? []).map((p) => ({
-    id: p.id as string,
-    name: p.name as string,
-    clientName: (p.clients as unknown as { name: string } | null)?.name ?? null,
-  }))
-  const teamMembers = (teamMembersRaw ?? []) as Array<{ id: string; name: string }>
   const canEdit = user.role !== 'viewer'
   const canDelete = user.role === 'owner' || user.role === 'admin'
 
@@ -59,7 +52,7 @@ export async function FinanceDetails({ since, until, rangeLabel }: Props) {
             {categorySlices.length === 0 ? (
               <p className="px-6 py-2 text-sm text-muted-foreground">Sin gastos en este periodo.</p>
             ) : (
-              <FinanceCategoryChart data={categorySlices} />
+              <FinanceCategoryChartLazy data={categorySlices} />
             )}
           </CardContent>
         </Card>

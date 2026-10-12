@@ -26,6 +26,7 @@ import {
 
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { rescheduleEvent } from '@/lib/calendar/actions'
+import { layoutOverlappingEvents } from '@/lib/calendar/event-layout'
 import {
   ALL_LAYERS,
   CALENDAR_LAYER_COLORS,
@@ -528,6 +529,13 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
             const timedEvs = events.filter(
               (e) => !e.allDay && e.start.length > 10 && isSameDay(parseISO(e.start), d),
             )
+            const eventPositions = layoutOverlappingEvents(
+              timedEvs.map((event) => ({
+                id: event.id,
+                start: parseISO(event.start).getTime(),
+                end: parseISO(event.end).getTime(),
+              })),
+            )
 
             return (
               // biome-ignore lint/a11y/noStaticElementInteractions: mouse-only shortcut to create an event by clicking a time slot; the "Nuevo" button in the header provides a fully keyboard-accessible equivalent
@@ -592,12 +600,20 @@ function WeekTimeGrid({ days, events }: { days: Date[]; events: CalendarEvent[] 
                   const endMin = endDt.getHours() * 60 + endDt.getMinutes()
                   const top = (startMin / 60) * HOUR_HEIGHT
                   const height = Math.max((Math.max(endMin - startMin, 15) / 60) * HOUR_HEIGHT, 20)
+                  const position = eventPositions.get(e.id) ?? { column: 0, columnCount: 1 }
+                  const columnWidth = 100 / position.columnCount
                   const colors = CALENDAR_LAYER_COLORS[e.kind]
                   return (
                     <button
                       key={e.id}
                       type="button"
-                      style={{ top, height, position: 'absolute', left: 2, right: 2 }}
+                      style={{
+                        top,
+                        height,
+                        position: 'absolute',
+                        left: `calc(${columnWidth * position.column}% + 2px)`,
+                        width: `calc(${columnWidth}% - 4px)`,
+                      }}
                       onClick={(ev) => {
                         ev.stopPropagation()
                         openDialog(e)

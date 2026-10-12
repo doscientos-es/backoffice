@@ -70,6 +70,7 @@ import { ScheduleReminderDialog } from '../reminders/schedule-reminder-dialog'
 import { LeadCallLink } from './[id]/phone-actions'
 import { deleteLead, updateLeadStatus } from './actions'
 import { CloseReasonDialog, type CloseReasonVariant } from './close-reason-dialog'
+import { LeadNotesIndicator } from './lead-notes-indicator'
 import { LeadQuickView } from './lead-quick-view'
 import { QuotedSuggestionDialog } from './quoted-suggestion-dialog'
 import { ReopenConfirmDialog } from './reopen-confirm-dialog'
@@ -310,7 +311,10 @@ export function LeadsKanban({
         onDragCancel={() => setActiveId(null)}
       >
         <div className="flex h-full min-h-0 flex-col">
-          <div className="no-scrollbar flex min-h-0 flex-1 scroll-fade-x gap-4 overflow-x-auto overflow-y-hidden pb-2">
+          <section
+            aria-label="Etapas de leads. Desliza horizontalmente para ver las demás etapas."
+            className="no-scrollbar flex min-h-0 flex-1 scroll-fade-x snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden pb-2 sm:snap-none"
+          >
             {LEAD_KANBAN_COLUMNS.map((col) => (
               <Column
                 key={col.id}
@@ -327,7 +331,7 @@ export function LeadsKanban({
                 onToggleCompact={() => toggleColumnCompact(col.id)}
               />
             ))}
-          </div>
+          </section>
           <div className="flex h-5 shrink-0 items-center justify-between">
             <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
             <button
@@ -431,7 +435,7 @@ function Column({
       aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? '' : 's'}`}
       title={collapsed ? `${label} (${leads.length}) · pasa el cursor para expandir` : undefined}
       className={cn(
-        'relative flex h-full w-80 shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10',
+        'relative flex h-full w-[calc(100vw-2rem)] max-w-80 shrink-0 snap-start flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 sm:w-80',
         'transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none',
         collapsed && 'md:w-11 md:cursor-pointer md:bg-muted/30',
         isOver && 'bg-primary/5 ring-2 ring-primary/50',
@@ -525,7 +529,7 @@ function AddLeadCard() {
   return (
     <Link
       href="/leads/new"
-      className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+      className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
     >
       <Plus className="size-3.5 shrink-0" />
       Añadir lead
@@ -676,6 +680,7 @@ function Card({
               {formatEUR(lead.estimated_value)}
             </Badge>
           )}
+          {!isOverlay && <LeadNotesIndicator notes={lead.notes} />}
           {!isOverlay && requiresCyaProspectSoftwareCommission(lead.marketing_campaign_name) && (
             <Badge
               variant="warning"

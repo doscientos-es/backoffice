@@ -1,8 +1,9 @@
-import { TriangleAlert } from 'lucide-react'
+import { Plus, TriangleAlert } from 'lucide-react'
 import type { Metadata } from 'next'
 
 import { ListControls } from '@/components/layout/list-controls'
 import { PageHeader } from '@/components/layout/page-header'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
 import { isAIEnabled } from '@/lib/ai'
@@ -122,9 +123,21 @@ export default async function LeadsPage({
   const boardCapped = view === 'board' && enrichedLeads.length >= LEAD_BOARD_LIMIT
 
   const actions = (
-    <div className="flex items-center gap-2">
+    <div className="ml-auto flex min-w-0 items-center gap-2">
       <LeadsViewToggle view={view} />
-      <LeadCreateDialog />
+      <LeadCreateDialog
+        trigger={
+          <Button
+            size="sm"
+            aria-label="Nuevo lead"
+            title="Nuevo lead"
+            className="h-9 w-9 shrink-0 p-0 md:h-8 md:w-auto md:px-3"
+          >
+            <Plus className="size-4" aria-hidden />
+            <span className="hidden md:inline">Nuevo lead</span>
+          </Button>
+        }
+      />
     </div>
   )
 
@@ -150,8 +163,9 @@ export default async function LeadsPage({
         empty={hasFilters ? 'Sin coincidencias.' : 'Aún no hay leads.'}
         emptyAction={<LeadCreateDialog />}
         searchKey="q"
-        searchPlaceholder="Buscar por nombre, empresa o email…"
+        searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
         controlsPresentation="panel"
+        controlsMobileInline
         filters={[
           { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
           { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
@@ -160,7 +174,6 @@ export default async function LeadsPage({
             key: 'assignee',
             label: 'Responsable',
             options: ASSIGNEE_FILTER_OPTIONS,
-            display: 'avatars',
           },
           { key: 'attention', label: 'Atención', options: ATTENTION_FILTER_OPTIONS },
         ]}
@@ -185,13 +198,14 @@ export default async function LeadsPage({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-6">
       <PageHeader title="Leads" actions={actions} />
 
       <ListControls
         searchKey="q"
         searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
         presentation="panel"
+        mobileInline
         className="rounded-none border-0 bg-transparent shadow-none"
         filters={[
           { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
@@ -200,7 +214,6 @@ export default async function LeadsPage({
             key: 'assignee',
             label: 'Responsable',
             options: ASSIGNEE_FILTER_OPTIONS,
-            display: 'avatars',
           },
           { key: 'attention', label: 'Atención', options: ATTENTION_FILTER_OPTIONS },
         ]}

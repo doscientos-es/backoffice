@@ -98,6 +98,13 @@ export type ExpenseProjectOption = {
   clientName: string | null
 }
 
+export type ExpenseTeamMemberOption = {
+  id: string
+  name: string
+  avatar_url: string | null
+  github_handle: string | null
+}
+
 export type ExpenseDetailProject = {
   id: string
   name: string

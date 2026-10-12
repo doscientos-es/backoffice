@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -8,7 +9,10 @@ import { hasCurrentMfaAccess } from '@/lib/security/mfa-actions'
 import { userVerificationScope } from '@/lib/security/user-verification-scope'
 import { getBrowserClient } from '@/lib/supabase/browser'
 
-import { MfaChallengeDialog } from './mfa-challenge-dialog'
+const MfaChallengeDialog = dynamic(
+  () => import('./mfa-challenge-dialog').then((m) => m.MfaChallengeDialog),
+  { ssr: false },
+)
 
 type Props = { memberRole: MemberRole; mfaVerified: boolean }
 
@@ -22,6 +26,11 @@ export function MfaSessionGate({ memberRole, mfaVerified }: Props) {
   const requiresMfa =
     (memberRole === 'owner' || memberRole === 'admin') && pathname !== '/settings/security'
   const open = requiresMfa && !verified
+  const [dialogMounted, setDialogMounted] = useState(open)
+
+  useEffect(() => {
+    if (open) setDialogMounted(true)
+  }, [open])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname intentionally re-triggers the background MFA re-check on navigation
   useEffect(() => {
@@ -43,6 +52,8 @@ export function MfaSessionGate({ memberRole, mfaVerified }: Props) {
       active = false
     }
   }, [pathname, requiresMfa])
+
+  if (!dialogMounted) return null
 
   return (
     <MfaChallengeDialog

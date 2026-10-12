@@ -45,6 +45,8 @@ export type ListControlsProps = {
   className?: string
   /** Presentación visual del bloque de búsqueda y filtros. */
   presentation?: 'default' | 'panel'
+  /** Keeps the search field beside the filters button on narrow screens. */
+  mobileInline?: boolean
   /** Si se provee, muestra un botón "Exportar CSV" que llama este callback. */
   onExport?: () => void
   /** Optional browser-local saved filter views. */
@@ -70,6 +72,7 @@ export function ListControls({
   pagination,
   className,
   presentation = 'default',
+  mobileInline = false,
   onExport,
   savedViews: savedViewsConfig,
 }: ListControlsProps) {
@@ -187,7 +190,12 @@ export function ListControls({
       <div className={cn('rounded-xl border border-border bg-card shadow-xs', className)}>
         <div className="flex flex-wrap items-center gap-2 p-3 sm:p-4">
           {searchKey ? (
-            <div className="relative w-full min-w-0 sm:w-auto sm:max-w-sm sm:min-w-60 sm:flex-1">
+            <div
+              className={cn(
+                'relative min-w-0 sm:w-auto sm:max-w-sm sm:min-w-60 sm:flex-1',
+                mobileInline ? 'w-auto flex-1' : 'w-full',
+              )}
+            >
               <Search
                 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
@@ -344,7 +352,14 @@ export function ListControls({
 
           {savedViewsMenu}
 
-          <div className="ml-auto flex shrink-0 items-center gap-1">
+          <div
+            className={cn(
+              'ml-auto flex shrink-0 items-center gap-1',
+              mobileInline &&
+                (pagination || onExport) &&
+                'max-sm:ml-0 max-sm:basis-full max-sm:justify-end',
+            )}
+          >
             {hasActiveFilters ? (
               <Button
                 type="button"
