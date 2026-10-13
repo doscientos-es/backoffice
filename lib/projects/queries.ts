@@ -195,6 +195,7 @@ export async function getProjectWorkspace(
 
   const [
     { data: tasks },
+    { data: projectTeam },
     { data: proposals },
     { data: invoices },
     { data: members },
@@ -225,6 +226,7 @@ export async function getProjectWorkspace(
           .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(PROJECT_TASKS_LIMIT),
+    supabase.from('project_team_members').select('member_id').eq('project_id', id),
     supabase
       .from('proposals')
       .select('id, number, title, status')
@@ -321,6 +323,7 @@ export async function getProjectWorkspace(
     client,
     clients: clientsResult.data ?? [],
     tasks: tasks ?? [],
+    projectTeamMemberIds: (projectTeam ?? []).map((row) => row.member_id as string),
     proposals: (proposals ?? []).map((proposal) => ({
       ...proposal,
       total: proposalPriceMap.get(proposal.id as string) ?? null,

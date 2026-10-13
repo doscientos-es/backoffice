@@ -18,7 +18,7 @@ import { createServerClient } from '@/lib/supabase/server'
 export const addWorkLog = defineAction({
   name: 'work_logs.add',
   schema: AddWorkLogInput,
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin', 'member', 'delivery'],
   revalidate: (_payload, input) => [`/projects/${input.project_id}`],
   handler: async (input, { user }) => {
     const hours = input.hours ?? computeHoursFromRange(input.start_time!, input.end_time!)
@@ -46,7 +46,7 @@ export const addWorkLog = defineAction({
 export const updateWorkLog = defineAction({
   name: 'work_logs.update',
   schema: UpdateWorkLogInput,
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin', 'member', 'delivery'],
   revalidate: (_payload, input) => [`/projects/${input.project_id}`],
   handler: async (input) => {
     const supabase = await createServerClient()
@@ -73,7 +73,7 @@ export const updateWorkLog = defineAction({
 export const deleteWorkLog = defineAction({
   name: 'work_logs.delete',
   schema: DeleteWorkLogInput,
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin', 'member', 'delivery'],
   revalidate: (_payload, input) => [`/projects/${input.project_id}`],
   handler: async (input) => {
     const supabase = await createServerClient()

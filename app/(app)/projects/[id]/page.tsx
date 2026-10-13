@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
 import { StatusBadge } from '@/components/ui/status-badge'
-import { requireUser } from '@/lib/auth'
+import { requireUser, canViewFinance } from '@/lib/auth'
 import { githubDefaultInstallationId, isAIEnabled } from '@/lib/env'
 import { computeProjectProfitability } from '@/lib/finance'
 import { can } from '@/lib/permissions'
@@ -30,6 +30,7 @@ import { MonthlyInvoiceSection } from './monthly-invoice-section'
 import { ProjectEditDialog } from './project-edit-dialog'
 import { ProjectPortalSection } from './project-portal-section'
 import { ProjectTasksViewToggle } from './project-tasks-view-toggle'
+import { ProjectTeamSection } from './project-team-section'
 import { type KanbanTask, TasksKanban } from './tasks/tasks-kanban'
 import { type WorkLogRow, WorkLogSection } from './work-log-section'
 import { WorkspacePathsForm } from './workspace-paths-form'
@@ -49,6 +50,7 @@ export default async function ProjectDetailPage({
   const user = await requireUser()
   const canEdit = can(user.role, 'projects.write')
   const canSeeProposalPrices = can(user.role, 'proposals.prices')
+  const canSeeFinance = canViewFinance(user.role)
   const workspace = await getProjectWorkspace(id, {
     includeClients: canEdit,
     tasksView: isBoard ? 'board' : 'list',
@@ -71,6 +73,7 @@ export default async function ProjectDetailPage({
     unlinkedProposals,
     reminders,
     clientRequests,
+    projectTeamMemberIds,
   } = workspace
 
   const pendingReminders = ((reminders ?? []) as Array<Record<string, unknown>>).map((r) => ({
@@ -256,6 +259,14 @@ export default async function ProjectDetailPage({
         </CardContent>
       </Card>
 
+      {(user.role === 'owner' || user.role === 'admin') && (
+        <ProjectTeamSection
+          projectId={id}
+          members={(members ?? []) as Array<{ id: string; name: string }>}
+          assignedMemberIds={projectTeamMemberIds}
+        />
+      )}
+
       {(project.portal_token as string | null) ? (
         <ProjectPortalSection
           projectId={project.id as string}
@@ -324,68 +335,78 @@ export default async function ProjectDetailPage({
         </Card>
       ) : null}
 
-      <Card>
-        <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle>Tareas</CardTitle>
-          <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end">
-            <ProjectTasksViewToggle view={isBoard ? 'board' : 'list'} />
-            <TaskCreateDialog
-              projectId={id}
-              members={(members ?? []) as Array<{ id: string; name: string }>}
-              currentUserId={user.id}
-            />
-          </div>
-        </CardHeader>
-        <CardContent className={isBoard ? 'px-4 pt-0 pb-4' : 'px-0'}>
-          {!tasks || tasks.length === 0 ? (
-            <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
-          ) : isBoard ? (
-            <TasksKanban
-              projectId={id}
-              members={(members ?? []) as Array<{ id: string; name: string }>}
-              currentUserId={user.id}
-              tasks={(
-                tasks as unknown as Array<{
-                  id: string
-                  title: string
-                  status: KanbanTask['status']
-                  priority: KanbanTask['priority']
-                  due_date: string | null
-                  kanban_order: string
-                  team_members: { id: string; name: string } | null
-                }>
-              ).map((t) => ({
-                id: t.id,
-                title: t.title,
-                status: t.status,
-                priority: t.priority,
-                due_date: t.due_date,
-                kanban_order: t.kanban_order,
-                assignee: t.team_members,
-              }))}
-            />
-          ) : (
-            <ul className="divide-y divide-border">
-              {tasks.map((t) => (
-                <li
-                  key={t.id as string}
-                  className="flex flex-col items-start gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-2.5"
-                >
-                  <Link
-                    href={`/tasks/${t.id as string}`}
-                    className="w-full min-w-0 truncate font-medium hover:underline sm:w-auto"
+      {(user.role === 'owner' || user.role === 'admin') && (
+        <ProjectTeamSection
+          projectId={id}
+          members={(members ?? []) as Array<{ id: string; name: string }>}
+          assignedMemberIds={projectTeamMemberIds}
+        />
+      )}
+
+      {canSeeFinance ? (
+        <Card>
+          <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle>Tareas</CardTitle>
+            <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end">
+              <ProjectTasksViewToggle view={isBoard ? 'board' : 'list'} />
+              <TaskCreateDialog
+                projectId={id}
+                members={(members ?? []) as Array<{ id: string; name: string }>}
+                currentUserId={user.id}
+              />
+            </div>
+          </CardHeader>
+          <CardContent className={isBoard ? 'px-4 pt-0 pb-4' : 'px-0'}>
+            {!tasks || tasks.length === 0 ? (
+              <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
+            ) : isBoard ? (
+              <TasksKanban
+                projectId={id}
+                members={(members ?? []) as Array<{ id: string; name: string }>}
+                currentUserId={user.id}
+                tasks={(
+                  tasks as unknown as Array<{
+                    id: string
+                    title: string
+                    status: KanbanTask['status']
+                    priority: KanbanTask['priority']
+                    due_date: string | null
+                    kanban_order: string
+                    team_members: { id: string; name: string } | null
+                  }>
+                ).map((t) => ({
+                  id: t.id,
+                  title: t.title,
+                  status: t.status,
+                  priority: t.priority,
+                  due_date: t.due_date,
+                  kanban_order: t.kanban_order,
+                  assignee: t.team_members,
+                }))}
+              />
+            ) : (
+              <ul className="divide-y divide-border">
+                {tasks.map((t) => (
+                  <li
+                    key={t.id as string}
+                    className="flex flex-col items-start gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-2.5"
                   >
-                    {t.title as string}
-                  </Link>
-                  <span className="text-xs text-muted-foreground sm:shrink-0">
-                    {t.status as string}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+                    <Link
+                      href={`/tasks/${t.id as string}`}
+                      className="w-full min-w-0 truncate font-medium hover:underline sm:w-auto"
+                    >
+                      {t.title as string}
+                    </Link>
+                    <span className="text-xs text-muted-foreground sm:shrink-0">
+                      {t.status as string}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -432,10 +453,12 @@ export default async function ProjectDetailPage({
         invoicedTotal={invoicedTotal}
         billingType={(project.billing_type as 'fixed' | 'hourly' | null) ?? 'fixed'}
         hourlyRate={project.hourly_rate != null ? Number(project.hourly_rate) : null}
-        canEdit={canEdit}
+        canEdit={canEdit || projectTeamMemberIds.includes(user.id)}
       />
 
-      {canEdit && project.billing_type === 'hourly' && Number(project.hourly_rate ?? 0) > 0 ? (
+      {canSeeFinance &&
+      project.billing_type === 'hourly' &&
+      Number(project.hourly_rate ?? 0) > 0 ? (
         <MonthlyInvoiceSection
           projectId={id}
           hourlyRate={Number(project.hourly_rate)}
