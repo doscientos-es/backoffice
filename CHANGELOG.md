@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-13 — v0.1.113
+
+### Nuevas funciones
+
+- Omit admins from collaborators
+
 ## 2026-10-13 — v0.1.112
 
 ### Nuevas funciones

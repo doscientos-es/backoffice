@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.113",
+      "date": "2026-10-13",
+      "title": "v0.1.113",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Omit admins from collaborators"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "ab28c5a20d6e97539007a71829238469c375395a",
+          "type": "feat",
+          "scope": "project-team",
+          "breaking": false,
+          "description": "Omit admins from collaborators"
+        }
+      ]
+    },
+    {
       "version": "0.1.112",
       "date": "2026-10-13",
       "title": "v0.1.112",
