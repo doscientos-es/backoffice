@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.110",
+      "date": "2026-10-13",
+      "title": "v0.1.110",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Replace div with fieldset for better semantics",
+            "Allow generating future subscription invoices drafts"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "c31cce8d05addf7fd53c96747eed2208a2d07832",
+          "type": "feat",
+          "scope": "next-call-section",
+          "breaking": false,
+          "description": "Replace div with fieldset for better semantics"
+        },
+        {
+          "sha": "298b767003ab08bdadcc0f6e87edb92677526ca5",
+          "type": "feat",
+          "scope": "subscriptions",
+          "breaking": false,
+          "description": "Allow generating future subscription invoices drafts"
+        }
+      ]
+    },
+    {
       "version": "0.1.109",
       "date": "2026-10-13",
       "title": "v0.1.109",

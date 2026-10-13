@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-13 — v0.1.110
+
+### Nuevas funciones
+
+- Replace div with fieldset for better semantics
+- Allow generating future subscription invoices drafts
+
 ## 2026-10-13 — v0.1.109
 
 ### Nuevas funciones
