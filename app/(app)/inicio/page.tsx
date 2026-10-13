@@ -18,6 +18,7 @@ import { getGreeting, parseDashboardRange } from '@/lib/utils/date'
 
 import { AvisosWidget } from './_components/avisos-widget'
 import { EnablePushBanner } from './_components/enable-push-banner'
+import { GoalsWidget } from './_components/goals-widget'
 import { KpiGrid } from './_components/kpi-grid'
 import { getMyDayScope } from './_components/my-day-scope'
 import { MyDayScopeSelector } from './_components/my-day-scope-selector'
@@ -139,6 +140,10 @@ export default async function InicioPage({ searchParams }: PageProps) {
               showFinance={showFinance}
               showProposalPrices={showProposalPrices}
             />
+          </SectionBoundary>
+
+          <SectionBoundary pending={null} label="No se pudieron cargar las metas">
+            <GoalsWidget showFinance={showFinance} />
           </SectionBoundary>
 
           {showFinance ? (

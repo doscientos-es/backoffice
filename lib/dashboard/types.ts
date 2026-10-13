@@ -70,7 +70,7 @@ export type RevenueChartData = {
 // Company goals
 // ---------------------------------------------------------------------------
 
-export type GoalMetric = 'leads_new' | 'revenue' | 'conversion_rate'
+export type GoalMetric = 'leads_new' | 'revenue' | 'conversion_rate' | 'proposals_sent'
 
 /** Map of metric → raw numeric target. Only metrics with a set goal appear. */
 export type CompanyGoals = Partial<Record<GoalMetric, number>>

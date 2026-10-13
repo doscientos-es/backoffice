@@ -5,6 +5,7 @@ import { notDeleted } from '@/lib/supabase/filters'
 import { createServerClient } from '@/lib/supabase/server'
 import { resolveDateRange, shortMonthEs, toIsoDate } from '@/lib/utils/date'
 
+import { type GoalMonthRow, madridToday, monthKey, shiftMonth } from './goals'
 import type {
   AccountsReceivable,
   ActionLeadRow,
@@ -901,6 +902,36 @@ export async function getCompanyGoals(): Promise<CompanyGoals> {
     goals[row.metric as GoalMetric] = Number(row.target)
   }
   return goals
+}
+
+/**
+ * Month-by-month goal results (target in force vs actual), newest first.
+ * Index 0 is the current Madrid month. Backed by the goal_month_summary RPC.
+ */
+export async function getGoalMonths(
+  months: number,
+): Promise<Array<{ month: string; rows: GoalMonthRow[] }>> {
+  const supabase = await createServerClient()
+  const today = madridToday()
+  const current = monthKey(today.year, today.month)
+  const keys = Array.from({ length: months }, (_, i) => shiftMonth(current, -i))
+  const results = await Promise.all(
+    keys.map((key) => supabase.rpc('goal_month_summary', { p_month: `${key}-01` })),
+  )
+  return keys.map((month, i) => ({
+    month,
+    rows: (
+      (results[i]?.data ?? []) as Array<{
+        metric: GoalMetric
+        target: number | string | null
+        actual: number | string
+      }>
+    ).map((r) => ({
+      metric: r.metric,
+      target: r.target === null ? null : Number(r.target),
+      actual: Number(r.actual),
+    })),
+  }))
 }
 
 // ---------------------------------------------------------------------------

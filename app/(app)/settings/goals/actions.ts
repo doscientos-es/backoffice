@@ -12,6 +12,7 @@ const GoalsInput = z.object({
   leadsNew: z.coerce.number().positive().nullable(),
   revenue: z.coerce.number().positive().nullable(),
   conversionRate: z.coerce.number().min(1).max(100).nullable(),
+  proposalsSent: z.coerce.number().positive().nullable(),
 })
 
 export async function upsertCompanyGoals(input: unknown): Promise<ActionResult> {
@@ -22,10 +23,11 @@ export async function upsertCompanyGoals(input: unknown): Promise<ActionResult> 
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos no válidos' }
   }
 
-  const { leadsNew, revenue, conversionRate } = parsed.data
+  const { leadsNew, revenue, conversionRate, proposalsSent } = parsed.data
 
   const rows: { metric: string; target: number }[] = []
   if (leadsNew) rows.push({ metric: 'leads_new', target: leadsNew })
+  if (proposalsSent) rows.push({ metric: 'proposals_sent', target: proposalsSent })
   if (revenue) rows.push({ metric: 'revenue', target: revenue })
   // UI sends %; DB stores fraction 0..1
   if (conversionRate) rows.push({ metric: 'conversion_rate', target: conversionRate / 100 })
@@ -35,6 +37,7 @@ export async function upsertCompanyGoals(input: unknown): Promise<ActionResult> 
   // Delete metrics that were cleared (set to 0 / null)
   const clearedMetrics: string[] = []
   if (!leadsNew) clearedMetrics.push('leads_new')
+  if (!proposalsSent) clearedMetrics.push('proposals_sent')
   if (!revenue) clearedMetrics.push('revenue')
   if (!conversionRate) clearedMetrics.push('conversion_rate')
 

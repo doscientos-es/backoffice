@@ -18,6 +18,9 @@ export function GoalsForm({ goals }: { goals: CompanyGoals }) {
   const [conversionRate, setConversionRate] = useState(
     goals.conversion_rate ? String(Math.round(goals.conversion_rate * 100)) : '',
   )
+  const [proposalsSent, setProposalsSent] = useState(
+    goals.proposals_sent ? String(Math.round(goals.proposals_sent)) : '',
+  )
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -31,6 +34,7 @@ export function GoalsForm({ goals }: { goals: CompanyGoals }) {
         leadsNew: leadsNew ? Number(leadsNew) : null,
         revenue: revenue ? Number(revenue) : null,
         conversionRate: conversionRate ? Number(conversionRate) : null,
+        proposalsSent: proposalsSent ? Number(proposalsSent) : null,
       })
       if (result.ok) {
         setSaved(true)
@@ -42,7 +46,21 @@ export function GoalsForm({ goals }: { goals: CompanyGoals }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="proposals-sent">Propuestas enviadas / mes</Label>
+          <Input
+            id="proposals-sent"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="Ej. 8"
+            value={proposalsSent}
+            onChange={(e) => setProposalsSent(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">Propuestas enviadas al cliente al mes</p>
+        </div>
+
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="leads-new">Leads nuevos / mes</Label>
           <Input
@@ -98,7 +116,7 @@ export function GoalsForm({ goals }: { goals: CompanyGoals }) {
         <SubmitButton loading={isPending} pendingLabel="Guardando…">
           Guardar metas
         </SubmitButton>
-        {(leadsNew || revenue || conversionRate) && (
+        {(leadsNew || revenue || conversionRate || proposalsSent) && (
           <Button
             type="button"
             variant="ghost"
@@ -107,6 +125,7 @@ export function GoalsForm({ goals }: { goals: CompanyGoals }) {
               setLeadsNew('')
               setRevenue('')
               setConversionRate('')
+              setProposalsSent('')
             }}
           >
             Borrar todo
