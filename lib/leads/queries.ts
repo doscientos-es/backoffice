@@ -1,3 +1,4 @@
+import type { Database } from '@/lib/database.types'
 import { type LeadNextAction, statusFilterValues } from '@/lib/leads/pipeline'
 import { scopedLogger } from '@/lib/logger'
 import type { LeadStatus } from '@/lib/status'
@@ -499,7 +500,9 @@ export async function getLeadDetail(
     payload: i.payload ?? null,
     resend_email_id: (i.resend_email_id as string | null) ?? null,
   }))
-  const auditEvents: EntityAuditTimelineEvent[] = (auditRows ?? []).map((event) => ({
+  const auditEvents: EntityAuditTimelineEvent[] = (
+    (auditRows ?? []) as Database['public']['Functions']['list_entity_audit_timeline']['Returns']
+  ).map((event) => ({
     id: event.id,
     entityType: 'leads',
     occurredAt: event.occurred_at,
