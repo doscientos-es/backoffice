@@ -21,6 +21,7 @@ const { state } = vi.hoisted(() => ({
 
 vi.mock('@/lib/auth', () => ({
   requireRole: vi.fn(async () => ({ id: 'member-1', name: 'Pol', role: state.role })),
+  requirePermission: vi.fn(async () => ({ id: 'member-1', name: 'Pol', role: state.role })),
   requireUser: vi.fn(async () => ({
     id: 'member-1',
     name: 'Pol',
@@ -67,6 +68,8 @@ vi.mock('@/lib/supabase/server', () => ({
       const builder: Record<string, unknown> = {
         select: () => builder,
         in: () => builder,
+        eq: () => builder,
+        not: () => builder,
         is: () => builder,
         // biome-ignore lint/suspicious/noThenProperty: intentional Supabase builder mock
         then: (resolve: (value: unknown) => unknown) =>

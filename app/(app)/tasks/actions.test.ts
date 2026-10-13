@@ -9,6 +9,7 @@ const { eq, from, syncTaskStatusToGitHub, update } = vi.hoisted(() => ({
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/auth', () => ({
+  requireRole: async () => ({ id: 'user-1', email: 'member@example.test', role: 'member' }),
   requireUser: async () => ({ id: 'user-1', email: 'member@example.test', role: 'member' }),
 }))
 vi.mock('@/lib/integrations/github-sync', () => ({

@@ -7,7 +7,10 @@ const db = vi.hoisted(() => ({
   teamError: null as { message: string } | null,
   teamThrows: false,
 }))
-vi.mock('@/lib/auth', () => ({ requireUser: vi.fn(async () => ({ id: 'member' })) }))
+vi.mock('@/lib/auth', () => ({
+  requireUser: vi.fn(async () => ({ id: 'member' })),
+  requirePermission: vi.fn(async () => ({ id: 'member' })),
+}))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/supabase/server', () => ({
   createServerClient: vi.fn(async () => ({

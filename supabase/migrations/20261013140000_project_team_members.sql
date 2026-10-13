@@ -129,7 +129,7 @@ create policy attachments_delete on public.attachments for delete
 
 drop policy if exists generated_documents_select on public.generated_documents;
 create policy generated_documents_select on public.generated_documents for select
-  using (public.member_has_full_scope() and public.can_access_related(null, client_id, project_id, proposal_id));
+  using (public.member_has_full_scope() and public.can_access_related(null, client_id, project_id, null));
 drop policy if exists proposals_select on public.proposals;
 create policy proposals_select on public.proposals for select
   using (public.can_access_proposal(id) and public.member_has_full_scope());

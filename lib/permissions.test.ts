@@ -20,7 +20,7 @@ describe('role permissions', () => {
   })
 
   it('keeps delivery away from pricing and finance while granting operational delivery access', () => {
-    expect(can('delivery', 'projects.write')).toBe(false)
+    expect(can('delivery', 'projects.write')).toBe(true)
     expect(can('delivery', 'tasks.write')).toBe(true)
     expect(can('delivery', 'proposals.prices')).toBe(false)
     expect(can('delivery', 'finance.read')).toBe(false)

@@ -37,6 +37,7 @@ const { createProposalDraftInvoices, crm, sendProposalAcceptedEmail, state } = v
 
 vi.mock('@/lib/auth', () => ({
   requireRole: vi.fn(async () => ({ id: 'member-1', email: 'member@example.test' })),
+  requirePermission: vi.fn(async () => ({ id: 'member-1', email: 'member@example.test' })),
   requireUser: vi.fn(async () => ({ id: 'member-1' })),
 }))
 
@@ -66,6 +67,7 @@ vi.mock('@/lib/supabase/server', () => ({
         maybeSingle: async () => {
           if (table === 'proposals') return { data: state.proposal, error: null }
           if (table === 'leads') return { data: { status: state.leadStatus }, error: null }
+          if (table === 'proposal_prices') return { data: { payment_terms: null }, error: null }
           return { data: null, error: null }
         },
         // biome-ignore lint/suspicious/noThenProperty: intentional Supabase builder mock
