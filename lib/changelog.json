@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.109",
+      "date": "2026-10-13",
+      "title": "v0.1.109",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add goals history chart to visualize monthly progress"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "4107f9994a04ad7aa97c9e57e132503800865389",
+          "type": "feat",
+          "scope": "goals",
+          "breaking": false,
+          "description": "Add goals history chart to visualize monthly progress"
+        }
+      ]
+    },
+    {
       "version": "0.1.108",
       "date": "2026-10-13",
       "title": "v0.1.108",

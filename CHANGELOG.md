@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-13 — v0.1.109
+
+### Nuevas funciones
+
+- Add goals history chart to visualize monthly progress
+
 ## 2026-10-13 — v0.1.108
 
 ### Correcciones
