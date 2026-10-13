@@ -2,6 +2,16 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-13 — v0.1.107
+
+### Nuevas funciones
+
+- Add proposals sent metric and historical goals tracking
+
+### Correcciones
+
+- Correct text color syntax in Wordmark component
+
 ## 2026-10-12 — v0.1.106
 
 ### Nuevas funciones

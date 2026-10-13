@@ -1,6 +1,41 @@
 {
   "releases": [
     {
+      "version": "0.1.107",
+      "date": "2026-10-13",
+      "title": "v0.1.107",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add proposals sent metric and historical goals tracking"
+          ]
+        },
+        {
+          "title": "Correcciones",
+          "items": [
+            "Correct text color syntax in Wordmark component"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "7ee34aba6aec1fb96d075f3a96a81d5e80c5d264",
+          "type": "feat",
+          "scope": "goals",
+          "breaking": false,
+          "description": "Add proposals sent metric and historical goals tracking"
+        },
+        {
+          "sha": "e2490231eb5de7aa1aa35485bca9433230c10a16",
+          "type": "fix",
+          "scope": "branding",
+          "breaking": false,
+          "description": "Correct text color syntax in Wordmark component"
+        }
+      ]
+    },
+    {
       "version": "0.1.106",
       "date": "2026-10-12",
       "title": "v0.1.106",
