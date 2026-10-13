@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.115",
+      "date": "2026-10-13",
+      "title": "v0.1.115",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Restrict leads and clients selection for delivery role"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "e3208735019407689c4af803b0c2c144d97e2f3c",
+          "type": "feat",
+          "scope": "tasks",
+          "breaking": false,
+          "description": "Restrict leads and clients selection for delivery role"
+        }
+      ]
+    },
+    {
       "version": "0.1.114",
       "date": "2026-10-13",
       "title": "v0.1.114",

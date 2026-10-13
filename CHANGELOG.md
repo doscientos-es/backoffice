@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-13 — v0.1.115
+
+### Nuevas funciones
+
+- Restrict leads and clients selection for delivery role
+
 ## 2026-10-13 — v0.1.114
 
 ### Correcciones
