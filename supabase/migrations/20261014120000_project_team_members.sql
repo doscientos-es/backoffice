@@ -23,6 +23,47 @@ drop policy if exists project_team_members_delete on public.project_team_members
 create policy project_team_members_delete on public.project_team_members
   for delete using (public.has_permission('projects.write') and public.can_access_project(project_id));
 
+-- Limit collaborator writes to project-scoped work; they cannot change project records.
+drop policy if exists projects_update on public.projects;
+create policy projects_update on public.projects for update
+  using (public.can_access_project(id) and public.has_permission('projects.write')
+    and public.member_has_full_scope())
+  with check (public.has_permission('projects.write') and public.member_has_full_scope());
+
+drop policy if exists projects_insert on public.projects;
+create policy projects_insert on public.projects for insert
+  with check (public.has_permission('projects.write') and public.member_has_full_scope());
+
+drop policy if exists project_checklist_items_insert on public.project_checklist_items;
+create policy project_checklist_items_insert on public.project_checklist_items for insert
+  with check (public.has_permission('projects.write') and public.can_access_project(project_id));
+drop policy if exists project_checklist_items_update on public.project_checklist_items;
+create policy project_checklist_items_update on public.project_checklist_items for update
+  using (public.has_permission('projects.write') and public.can_access_project(project_id))
+  with check (public.has_permission('projects.write') and public.can_access_project(project_id));
+
+drop policy if exists project_requests_insert on public.project_requests;
+create policy project_requests_insert on public.project_requests for insert
+  with check (public.has_permission('projects.write') and public.can_access_project(project_id));
+drop policy if exists project_requests_update on public.project_requests;
+create policy project_requests_update on public.project_requests for update
+  using (public.has_permission('projects.write') and public.can_access_project(project_id))
+  with check (public.has_permission('projects.write') and public.can_access_project(project_id));
+
+drop policy if exists task_comments_insert on public.task_comments;
+create policy task_comments_insert on public.task_comments for insert
+  with check (public.has_permission('tasks.write') and public.can_access_task(task_id));
+drop policy if exists task_comments_update on public.task_comments;
+create policy task_comments_update on public.task_comments for update
+  using (public.has_permission('tasks.write') and public.can_access_task(task_id))
+  with check (public.has_permission('tasks.write') and public.can_access_task(task_id));
+drop policy if exists task_tag_assignments_insert on public.task_tag_assignments;
+create policy task_tag_assignments_insert on public.task_tag_assignments for insert
+  with check (public.has_permission('tasks.write') and public.can_access_task(task_id));
+drop policy if exists task_tag_assignments_delete on public.task_tag_assignments;
+create policy task_tag_assignments_delete on public.task_tag_assignments for delete
+  using (public.has_permission('tasks.write') and public.can_access_task(task_id));
+
 -- Extend the existing assignment model; task/proposal assignments keep working.
 create or replace function public.is_assigned_project(p_project_id uuid)
 returns boolean

@@ -18,8 +18,11 @@ export function ProjectTeamSection({
   projectId: string
   members: Member[]
   assignedMemberIds: string[]
+  memberRoles: Record<string, string>
 }) {
+  const eligibleMembers = members.filter((member) => memberRoles[member.id] === 'delivery')
   const [selected, setSelected] = useState(() => new Set(assignedMemberIds))
+  const [saved, setSaved] = useState(() => new Set(assignedMemberIds))
   const [pending, startTransition] = useTransition()
 
   function toggle(memberId: string) {
@@ -38,6 +41,7 @@ export function ProjectTeamSection({
         sileo.error({ title: result.error })
         return
       }
+      setSaved(new Set(selected))
       sileo.success({ title: 'Colaboradores del proyecto actualizados.' })
     })
   }
@@ -46,7 +50,13 @@ export function ProjectTeamSection({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-3">
         <CardTitle>Equipo del proyecto</CardTitle>
-        <Button size="sm" onClick={save} disabled={pending}>
+        <Button
+          size="sm"
+          onClick={save}
+          disabled={
+            pending || (selected.size === saved.size && [...selected].every((id) => saved.has(id)))
+          }
+        >
           {pending ? 'Guardando…' : 'Guardar equipo'}
         </Button>
       </CardHeader>
@@ -54,7 +64,7 @@ export function ProjectTeamSection({
         <p className="text-sm text-muted-foreground">
           Añade colaboradores para darles acceso a este proyecto y sus tareas.
         </p>
-        {members.map((member) => (
+        {eligibleMembers.map((member) => (
           <label key={member.id} className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -65,8 +75,8 @@ export function ProjectTeamSection({
             {member.name}
           </label>
         ))}
-        {members.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No hay miembros activos.</p>
+        {eligibleMembers.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No hay miembros de Entrega activos.</p>
         ) : null}
       </CardContent>
     </Card>

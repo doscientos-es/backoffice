@@ -241,7 +241,7 @@ export async function getProjectWorkspace(
       .is('deleted_at', null)
       .order('issue_date', { ascending: false })
       .limit(PROJECT_RELATED_LIMIT),
-    supabase.from('team_members').select('id, name').is('deleted_at', null).order('name'),
+    supabase.from('team_members').select('id, name, role').is('deleted_at', null).order('name'),
     supabase
       .from('attachments')
       .select('id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link')

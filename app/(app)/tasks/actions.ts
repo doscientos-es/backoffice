@@ -8,6 +8,7 @@ import { requireUser } from '@/lib/auth'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
 import { autoSyncTaskIssue, syncTaskStatusToGitHub } from '@/lib/integrations/github-sync'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
+import { can } from '@/lib/permissions'
 import {
   CreateTaskInput,
   MoveTaskInput,
@@ -24,6 +25,7 @@ export const createTask = defineAction<
 >({
   name: 'tasks.create',
   schema: CreateTaskInput,
+  roles: ['owner', 'admin', 'member', 'sales', 'delivery'],
   revalidate: (_payload, input) => [
     '/tasks',
     ...(input.project_id ? [`/projects/${input.project_id}`] : []),
@@ -31,6 +33,9 @@ export const createTask = defineAction<
     ...(input.client_id ? [`/clients/${input.client_id}`] : []),
   ],
   handler: async (input, { user }) => {
+    if (!can(user.role, 'tasks.write')) throw new Error('No tienes permisos para crear tareas.')
+    if (!input.project_id)
+      throw new Error('Solo puedes crear tareas dentro de un proyecto asignado.')
     const supabase = await createServerClient()
 
     const { member_ids = [], ...taskData } = input
@@ -97,8 +102,10 @@ export const createTask = defineAction<
 export const updateTask = defineAction({
   name: 'tasks.update',
   schema: UpdateTaskInput,
+  roles: ['owner', 'admin', 'member', 'sales', 'delivery'],
   revalidate: (_payload, input) => ['/tasks', `/tasks/${input.id}`],
   handler: async (input, { user }) => {
+    if (!can(user.role, 'tasks.write')) throw new Error('No tienes permisos para editar tareas.')
     const supabase = await createServerClient()
 
     const { id, expected_version, member_ids = [], ...rest } = input
@@ -165,8 +172,11 @@ export const updateTask = defineAction({
 export const updateTaskStatus = defineAction({
   name: 'tasks.updateStatus',
   schema: UpdateTaskStatusInput,
+  roles: ['owner', 'admin', 'member', 'sales', 'delivery'],
   revalidate: (_payload, input) => ['/tasks', `/tasks/${input.taskId}`],
-  handler: async (data) => {
+  handler: async (data, { user }) => {
+    if (!can(user.role, 'tasks.write'))
+      throw new Error('No tienes permisos para actualizar tareas.')
     const supabase = await createServerClient()
     const updates: Record<string, unknown> = { status: data.status }
     if (data.status === 'done') updates.completed_at = new Date().toISOString()

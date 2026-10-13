@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SectionBoundary } from '@/components/ui/error-boundary'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requireUser } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import { TASK_STATUS } from '@/lib/status'
 import { createServerClient } from '@/lib/supabase/server'
 import { mergeTaskMemberIds } from '@/lib/tasks/assignments'
@@ -86,7 +87,7 @@ export default async function TaskDetailPage({
 
   const backHref = project ? `/projects/${project.id}/tasks` : '/tasks'
   const backLabel = project ? `Volver a ${project.name}` : 'Volver a tareas'
-  const canEdit = user.role !== 'viewer'
+  const canEdit = can(user.role, 'tasks.write')
 
   return (
     <div className="flex flex-col gap-6">

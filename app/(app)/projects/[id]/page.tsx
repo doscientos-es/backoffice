@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
 import { StatusBadge } from '@/components/ui/status-badge'
-import { requireUser, canViewFinance } from '@/lib/auth'
+import { canViewFinance, requireUser } from '@/lib/auth'
 import { githubDefaultInstallationId, isAIEnabled } from '@/lib/env'
 import { computeProjectProfitability } from '@/lib/finance'
 import { can } from '@/lib/permissions'
@@ -263,6 +263,12 @@ export default async function ProjectDetailPage({
         <ProjectTeamSection
           projectId={id}
           members={(members ?? []) as Array<{ id: string; name: string }>}
+          memberRoles={Object.fromEntries(
+            ((members ?? []) as Array<{ id: string; role: string }>).map((member) => [
+              member.id,
+              member.role,
+            ]),
+          )}
           assignedMemberIds={projectTeamMemberIds}
         />
       )}
@@ -343,70 +349,68 @@ export default async function ProjectDetailPage({
         />
       )}
 
-      {canSeeFinance ? (
-        <Card>
-          <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>Tareas</CardTitle>
-            <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end">
-              <ProjectTasksViewToggle view={isBoard ? 'board' : 'list'} />
-              <TaskCreateDialog
-                projectId={id}
-                members={(members ?? []) as Array<{ id: string; name: string }>}
-                currentUserId={user.id}
-              />
-            </div>
-          </CardHeader>
-          <CardContent className={isBoard ? 'px-4 pt-0 pb-4' : 'px-0'}>
-            {!tasks || tasks.length === 0 ? (
-              <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
-            ) : isBoard ? (
-              <TasksKanban
-                projectId={id}
-                members={(members ?? []) as Array<{ id: string; name: string }>}
-                currentUserId={user.id}
-                tasks={(
-                  tasks as unknown as Array<{
-                    id: string
-                    title: string
-                    status: KanbanTask['status']
-                    priority: KanbanTask['priority']
-                    due_date: string | null
-                    kanban_order: string
-                    team_members: { id: string; name: string } | null
-                  }>
-                ).map((t) => ({
-                  id: t.id,
-                  title: t.title,
-                  status: t.status,
-                  priority: t.priority,
-                  due_date: t.due_date,
-                  kanban_order: t.kanban_order,
-                  assignee: t.team_members,
-                }))}
-              />
-            ) : (
-              <ul className="divide-y divide-border">
-                {tasks.map((t) => (
-                  <li
-                    key={t.id as string}
-                    className="flex flex-col items-start gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-2.5"
+      <Card>
+        <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle>Tareas</CardTitle>
+          <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end">
+            <ProjectTasksViewToggle view={isBoard ? 'board' : 'list'} />
+            <TaskCreateDialog
+              projectId={id}
+              members={(members ?? []) as Array<{ id: string; name: string }>}
+              currentUserId={user.id}
+            />
+          </div>
+        </CardHeader>
+        <CardContent className={isBoard ? 'px-4 pt-0 pb-4' : 'px-0'}>
+          {!tasks || tasks.length === 0 ? (
+            <p className="px-6 py-2 text-sm text-muted-foreground">Sin tareas.</p>
+          ) : isBoard ? (
+            <TasksKanban
+              projectId={id}
+              members={(members ?? []) as Array<{ id: string; name: string }>}
+              currentUserId={user.id}
+              tasks={(
+                tasks as unknown as Array<{
+                  id: string
+                  title: string
+                  status: KanbanTask['status']
+                  priority: KanbanTask['priority']
+                  due_date: string | null
+                  kanban_order: string
+                  team_members: { id: string; name: string } | null
+                }>
+              ).map((t) => ({
+                id: t.id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority,
+                due_date: t.due_date,
+                kanban_order: t.kanban_order,
+                assignee: t.team_members,
+              }))}
+            />
+          ) : (
+            <ul className="divide-y divide-border">
+              {tasks.map((t) => (
+                <li
+                  key={t.id as string}
+                  className="flex flex-col items-start gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-2.5"
+                >
+                  <Link
+                    href={`/tasks/${t.id as string}`}
+                    className="w-full min-w-0 truncate font-medium hover:underline sm:w-auto"
                   >
-                    <Link
-                      href={`/tasks/${t.id as string}`}
-                      className="w-full min-w-0 truncate font-medium hover:underline sm:w-auto"
-                    >
-                      {t.title as string}
-                    </Link>
-                    <span className="text-xs text-muted-foreground sm:shrink-0">
-                      {t.status as string}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
+                    {t.title as string}
+                  </Link>
+                  <span className="text-xs text-muted-foreground sm:shrink-0">
+                    {t.status as string}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -472,68 +476,70 @@ export default async function ProjectDetailPage({
         canEdit={canEdit}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Rentabilidad</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
-            <ProfitStat label="Ingresos" value={formatEUR(profitability.revenue)} />
-            <ProfitStat
-              label="Horas"
-              value={
-                Number.isInteger(profitability.hours)
-                  ? `${profitability.hours} h`
-                  : `${profitability.hours.toFixed(2)} h`
-              }
-            />
-            <ProfitStat label="Coste/h interno" value={formatEUR(profitability.hourlyCost)} />
-            <ProfitStat label="Coste horas" value={formatEUR(profitability.laborCost)} />
-            <ProfitStat label="Gastos" value={formatEUR(profitability.expenses)} />
-            <ProfitStat label="Coste total" value={formatEUR(profitability.totalCost)} />
-          </dl>
-          <div className="flex flex-wrap items-end justify-between gap-4 border-t border-border pt-4">
-            <div>
-              <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                Margen
-              </dt>
-              <dd
-                className={`mt-1 text-2xl font-semibold tabular-nums ${
-                  profitability.margin >= 0
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-red-600 dark:text-red-400'
-                }`}
-              >
-                {formatEUR(profitability.margin)}
-                {profitability.marginPct !== null ? (
-                  <span className="ml-2 text-sm font-medium text-muted-foreground">
-                    {profitability.marginPct}%
-                  </span>
-                ) : null}
-              </dd>
+      {canSeeFinance ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Rentabilidad</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+              <ProfitStat label="Ingresos" value={formatEUR(profitability.revenue)} />
+              <ProfitStat
+                label="Horas"
+                value={
+                  Number.isInteger(profitability.hours)
+                    ? `${profitability.hours} h`
+                    : `${profitability.hours.toFixed(2)} h`
+                }
+              />
+              <ProfitStat label="Coste/h interno" value={formatEUR(profitability.hourlyCost)} />
+              <ProfitStat label="Coste horas" value={formatEUR(profitability.laborCost)} />
+              <ProfitStat label="Gastos" value={formatEUR(profitability.expenses)} />
+              <ProfitStat label="Coste total" value={formatEUR(profitability.totalCost)} />
+            </dl>
+            <div className="flex flex-wrap items-end justify-between gap-4 border-t border-border pt-4">
+              <div>
+                <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  Margen
+                </dt>
+                <dd
+                  className={`mt-1 text-2xl font-semibold tabular-nums ${
+                    profitability.margin >= 0
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {formatEUR(profitability.margin)}
+                  {profitability.marginPct !== null ? (
+                    <span className="ml-2 text-sm font-medium text-muted-foreground">
+                      {profitability.marginPct}%
+                    </span>
+                  ) : null}
+                </dd>
+              </div>
+              <div className="text-right">
+                <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  €/h efectivo
+                </dt>
+                <dd className="mt-1 text-lg font-medium tabular-nums">
+                  {profitability.effectiveRate !== null
+                    ? `${formatEUR(profitability.effectiveRate)}/h`
+                    : '—'}
+                </dd>
+              </div>
             </div>
-            <div className="text-right">
-              <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                €/h efectivo
-              </dt>
-              <dd className="mt-1 text-lg font-medium tabular-nums">
-                {profitability.effectiveRate !== null
-                  ? `${formatEUR(profitability.effectiveRate)}/h`
-                  : '—'}
-              </dd>
-            </div>
-          </div>
-          {profitability.hourlyCost === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              Configura el{' '}
-              <Link href="/settings/company" className="text-primary hover:underline">
-                coste/hora interno
-              </Link>{' '}
-              para valorar las horas en el margen.
-            </p>
-          ) : null}
-        </CardContent>
-      </Card>
+            {profitability.hourlyCost === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Configura el{' '}
+                <Link href="/settings/company" className="text-primary hover:underline">
+                  coste/hora interno
+                </Link>{' '}
+                para valorar las horas en el margen.
+              </p>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Proposals */}
