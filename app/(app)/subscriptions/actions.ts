@@ -4,6 +4,10 @@ import { z } from 'zod'
 
 import { defineAction } from '@/lib/actions/define-action'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
+import {
+  generateNextSubscriptionInvoice,
+  generateSubscriptionInvoices,
+} from '@/lib/subscriptions/generate-invoices'
 import { createServerClient } from '@/lib/supabase/server'
 
 // ---------------------------------------------------------------------------
@@ -32,7 +36,10 @@ const subscriptionSchema = subscriptionFields.refine(
 )
 
 const updateSubscriptionSchema = subscriptionFields
-  .extend({ id: z.string().uuid(), expected_version: z.coerce.number().int().positive() })
+  .extend({
+    id: z.string().uuid(),
+    expected_version: z.coerce.number().int().positive(),
+  })
   .refine((d) => !d.end_date || d.end_date >= d.start_date, {
     message: 'La fecha de fin no puede ser anterior al inicio',
     path: ['end_date'],
@@ -100,6 +107,57 @@ export const updateSubscription = defineAction({
     if (error) throw new Error(error.message)
     if (!data) throw new VersionConflictError()
     return { version: Number(data.version) }
+  },
+})
+
+export const generateSubscriptionInvoicesNow = defineAction({
+  name: 'subscriptions.generate-invoices',
+  schema: z.object({ id: z.string().uuid() }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: (_, input) => ['/subscriptions', `/subscriptions/${input.id}`, '/invoices'],
+  async handler({ id }) {
+    // Verify the subscription is visible to the user before using the admin client.
+    const supabase = await createServerClient()
+    const { data: sub, error } = await supabase
+      .from('subscriptions')
+      .select('id, status')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!sub) throw new Error('Suscripción no encontrada')
+    if (sub.status !== 'active') {
+      throw new Error('Solo se pueden generar facturas de suscripciones activas')
+    }
+
+    const result = await generateSubscriptionInvoices(id)
+    if (result.failures.length > 0) throw new Error(result.failures[0]!.error)
+    return { generatedCount: result.generated.length }
+  },
+})
+
+export const generateNextSubscriptionInvoiceDraft = defineAction({
+  name: 'subscriptions.generate-next-invoice',
+  schema: z.object({ id: z.string().uuid() }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: (_, input) => ['/subscriptions', `/subscriptions/${input.id}`, '/invoices'],
+  async handler({ id }) {
+    const supabase = await createServerClient()
+    const { data: sub, error } = await supabase
+      .from('subscriptions')
+      .select('id, status')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!sub) throw new Error('Suscripción no encontrada')
+    if (sub.status !== 'active') {
+      throw new Error('Solo se pueden generar facturas de suscripciones activas')
+    }
+
+    const invoiceId = await generateNextSubscriptionInvoice(id)
+    if (!invoiceId) throw new Error('No hay ningún período pendiente de facturar')
+    return { invoiceId }
   },
 })
 

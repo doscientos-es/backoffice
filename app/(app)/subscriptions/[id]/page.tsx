@@ -10,12 +10,17 @@ import { SubmitButton } from '@/components/ui/submit-button'
 import { requireUser } from '@/lib/auth'
 import { computeLineTotals } from '@/lib/finance'
 import { SUBSCRIPTION_STATUS, type SubscriptionStatus } from '@/lib/status'
+import {
+  type BillingCycle,
+  buildSubscriptionPeriods,
+  type PeriodInvoice,
+} from '@/lib/subscriptions/billing-periods'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR } from '@/lib/utils'
 
 import { deleteSubscription } from '../actions'
 import { SubscriptionEditForm } from './subscription-edit-form'
-import { type SubscriptionInvoice, SubscriptionInvoices } from './subscription-invoices'
+import { SubscriptionPeriods } from './subscription-periods'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Suscripción · doscientos' }
@@ -40,22 +45,47 @@ export default async function SubscriptionDetailPage({
         .is('deleted_at', null)
         .maybeSingle(),
       supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
-      supabase.from('projects').select('id, name').is('deleted_at', null).order('name'),
+      supabase.from('projects').select('id, name, client_id').is('deleted_at', null).order('name'),
       supabase
         .from('invoices')
         .select('id, full_number, subscription_period_start, issue_date, total, status')
         .eq('subscription_id', id)
         .is('deleted_at', null)
-        .order('subscription_period_start', { ascending: false, nullsFirst: false }),
+        .order('subscription_period_start', {
+          ascending: false,
+          nullsFirst: false,
+        }),
     ])
 
   if (!sub) notFound()
 
   const clientsArr = (clients ?? []) as { id: string; name: string }[]
-  const projectsArr = (projects ?? []) as { id: string; name: string }[]
+  const projectsArr = (projects ?? []) as {
+    id: string
+    name: string
+    client_id: string
+  }[]
+
+  const today = new Date().toISOString().slice(0, 10)
+  const periodRows = buildSubscriptionPeriods({
+    startDate: sub.start_date as string,
+    endDate: (sub.end_date as string | null) ?? null,
+    billingCycle: sub.billing_cycle as BillingCycle,
+    nextInvoiceDate: (sub.next_invoice_date as string | null) ?? null,
+    status: sub.status as string,
+    today,
+    invoices: ((invoices ?? []) as unknown as PeriodInvoice[]).map((invoice) => ({
+      ...invoice,
+      total: Number(invoice.total),
+    })),
+  })
 
   const { total: totalWithVat } = computeLineTotals([
-    { quantity: 1, unit_price: Number(sub.amount), vat_rate: Number(sub.vat_rate) },
+    {
+      quantity: 1,
+      unit_price: Number(sub.amount),
+      vat_rate: Number(sub.vat_rate),
+    },
   ])
 
   return (
@@ -99,11 +129,12 @@ export default async function SubscriptionDetailPage({
         </Card>
       ) : null}
 
-      <SubscriptionInvoices
-        invoices={((invoices ?? []) as unknown as SubscriptionInvoice[]).map((invoice) => ({
-          ...invoice,
-          total: Number(invoice.total),
-        }))}
+      <SubscriptionPeriods
+        subscriptionId={id}
+        rows={periodRows}
+        canEdit={canEdit}
+        isActive={sub.status === 'active'}
+        overdueCount={periodRows.filter((row) => row.state === 'overdue').length}
       />
 
       {canEdit && user.role !== 'member' ? (

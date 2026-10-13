@@ -46,12 +46,7 @@ export function getSystemStatus(): SystemStatus {
     },
     { key: 'google', label: 'Google Workspace', configured: isGoogleEnabled() },
     { key: 'calendar', label: 'Google Calendar', configured: has(env.GOOGLE_CALENDAR_ID) },
-    {
-      key: 'ai',
-      label: 'IA (Gemini / Vertex)',
-      configured: aiEnabled,
-      detail: has(env.GEMINI_API_KEY) ? 'Gemini' : undefined,
-    },
+    { key: 'ai', label: 'IA (Vertex)', configured: aiEnabled },
     {
       key: 'github',
       label: 'GitHub App',

@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { SUBSCRIPTION_BILLING_CYCLE, SUBSCRIPTION_STATUS } from '@/lib/status'
 
 type ClientOption = { id: string; name: string }
-type ProjectOption = { id: string; name: string }
+type ProjectOption = { id: string; name: string; client_id: string }
 
 export type SubscriptionFormValues = {
   client_id: string
@@ -36,6 +36,15 @@ type Props = {
 export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
   const today = new Date().toISOString().slice(0, 10)
   const [projectId, setProjectId] = useState(defaults?.project_id ?? '')
+  const [clientId, setClientId] = useState(defaults?.client_id ?? '')
+  const clientProjects = clientId ? projects.filter((p) => p.client_id === clientId) : []
+
+  function changeClient(nextClientId: string) {
+    setClientId(nextClientId)
+    // Drop the selected project if it belongs to a different client.
+    const current = projects.find((p) => p.id === projectId)
+    if (current && current.client_id !== nextClientId) setProjectId('')
+  }
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -50,7 +59,13 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
       </FormRow>
 
       <FormRow label="Cliente" htmlFor="sub-client" required>
-        <Select id="sub-client" name="client_id" defaultValue={defaults?.client_id} required>
+        <Select
+          id="sub-client"
+          name="client_id"
+          value={clientId}
+          onChange={(e) => changeClient(e.target.value)}
+          required
+        >
           <option value="">— Selecciona cliente —</option>
           {clients.map((c) => (
             <option key={c.id} value={c.id}>
@@ -60,14 +75,26 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
         </Select>
       </FormRow>
 
-      <FormRow label="Proyecto" htmlFor="sub-project">
+      <FormRow
+        label="Proyecto"
+        htmlFor="sub-project"
+        hint={
+          !clientId
+            ? 'Selecciona primero un cliente.'
+            : clientProjects.length === 0
+              ? 'Este cliente no tiene proyectos.'
+              : undefined
+        }
+      >
         <EntityCombobox
+          key={clientId}
           id="sub-project"
           name="project_id"
-          items={projects.map((p) => ({ id: p.id, label: p.name }))}
+          items={clientProjects.map((p) => ({ id: p.id, label: p.name }))}
           value={projectId}
           onChange={setProjectId}
-          placeholder="Buscar proyecto…"
+          placeholder={clientId ? 'Buscar proyecto…' : 'Selecciona cliente primero'}
+          disabled={!clientId}
         />
       </FormRow>
 

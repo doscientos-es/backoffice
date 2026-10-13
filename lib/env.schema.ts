@@ -55,17 +55,10 @@ export const ServerSchema = PublicSchema.extend({
   RESEND_API_KEY: z.string().optional().default(''),
   RESEND_WEBHOOK_SECRET: z.string().optional().default(''),
   RESEND_FROM_DOMAIN: z.string().default('doscientos.es'),
-  // AI provider selection. Hoy solo está cableado "vertex" en lib/ai.ts.
-  //   "vertex"  → GOOGLE_CLOUD_PROJECT_ID + ADC (org policy, no key) [ACTIVO]
-  // El resto quedan reservados para reactivar en el futuro (añadir su branch
-  // en resolveModel() de lib/ai.ts):
-  //   "gemini"  → GEMINI_API_KEY (Google AI Studio, key required)
-  //   "openai"  → (sin clave por ahora; reservado para el futuro)
-  //   "deepseek"→ DEEPSEEK_API_KEY
+  // AI provider selection. Solo está cableado "vertex" en lib/ai.ts:
+  //   "vertex"  → GOOGLE_CLOUD_PROJECT_ID + ADC (org policy, no key)
   // Leave empty / unset to disable AI features.
-  AI_PROVIDER: z.enum(['gemini', 'vertex', 'openai', 'deepseek', '']).default(''),
-  GEMINI_API_KEY: z.string().optional().default(''),
-  DEEPSEEK_API_KEY: z.string().optional().default(''),
+  AI_PROVIDER: z.enum(['vertex', '']).default(''),
   GOOGLE_CLOUD_PROJECT_ID: z.string().optional().default(''),
   // Gemini 3.1 Flash-Lite usa la multirregión EU (no una región como europe-west1).
   GOOGLE_CLOUD_LOCATION: z.string().optional().default('eu'),
@@ -110,13 +103,6 @@ export const ServerSchema = PublicSchema.extend({
   FACEBOOK_PAGE_ID: z.string().optional().default(''),
   // Page id used by Meta Messenger Private Replies. Falls back to FACEBOOK_PAGE_ID.
   META_MESSAGING_PAGE_ID: z.string().optional().default(''),
-  // Safety switch: Meta comment automations are opt-in in every environment.
-  // Keep false until private replies have been explicitly reviewed and enabled.
-  META_SOCIAL_AUTOMATION_ENABLED: z
-    .string()
-    .optional()
-    .default('false')
-    .transform((value) => value === 'true' || value === 'on'),
   // GitHub App integration (bidirectional sync)
   GITHUB_APP_ID: z.string().optional().default(''),
   GITHUB_APP_PRIVATE_KEY_BASE64: z.string().optional().default(''), // RSA private key in base64

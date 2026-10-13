@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { GoalsHistoryChartLazy } from '@/components/goals/goals-history-chart-lazy'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { requirePageRole } from '@/lib/auth'
@@ -8,7 +9,6 @@ import { getCompanyGoals, getGoalMonths } from '@/lib/dashboard/queries'
 import { cn } from '@/lib/utils'
 
 import { GoalsForm } from './goals-form'
-import { GoalsHistoryChart } from './goals-history-chart'
 
 export const metadata: Metadata = { title: 'Metas · Ajustes · doscientos' }
 export const dynamic = 'force-dynamic'
@@ -46,7 +46,7 @@ export default async function GoalsSettingsPage() {
           <CardTitle>Evolución mensual</CardTitle>
         </CardHeader>
         <CardContent>
-          <GoalsHistoryChart series={series} />
+          <GoalsHistoryChartLazy series={series} />
         </CardContent>
       </Card>
       <Card>

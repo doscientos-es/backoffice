@@ -50,6 +50,7 @@ import { MomTestQuickDialog } from './[id]/mom-test-quick-dialog'
 import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from './actions'
 import { CallDateField } from './call-date-field'
 import { CallDigestDialog } from './call-digest-dialog'
+import { NextCallSection } from './next-call-section'
 import { WhatsAppComposer } from './whatsapp-composer'
 
 const CALL_NOTES_MAX_LENGTH = 8_000
@@ -611,12 +612,14 @@ function FollowUpSection({
   onEnabledChange,
   remindAt,
   onRemindAtChange,
+  label = 'Crear aviso de seguimiento',
 }: {
   idPrefix: string
   enabled: boolean
   onEnabledChange: (v: boolean) => void
   remindAt: string
   onRemindAtChange: (v: string) => void
+  label?: string
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-2.5">
@@ -625,7 +628,7 @@ function FollowUpSection({
         className="flex items-center gap-2 text-xs font-medium"
       >
         <Checkbox id={`${idPrefix}-followup`} isSelected={enabled} onChange={onEnabledChange} />
-        Crear aviso de seguimiento
+        {label}
       </label>
       {enabled && (
         <Input
@@ -683,6 +686,8 @@ export function QCallDialog({
   const [transcript, setTranscript] = useState('')
   const [followUpEnabled, setFollowUpEnabled] = useState(false)
   const [followUpAt, setFollowUpAt] = useState(defaultFollowUpDateTime)
+  const [nextCallEnabled, setNextCallEnabled] = useState(false)
+  const [nextCallAt, setNextCallAt] = useState(defaultFollowUpDateTime)
   // Meet notes import
   const [showImport, setShowImport] = useState(false)
   const [importUrl, setImportUrl] = useState('')
@@ -734,6 +739,10 @@ export function QCallDialog({
       )
       return
     }
+    if (nextCallEnabled && !(new Date(nextCallAt).getTime() > Date.now())) {
+      feedback.setError('Elige una fecha y hora futuras para la próxima llamada.')
+      return
+    }
     feedback.setPending()
     const res = await logLeadCall({
       leadId,
@@ -752,13 +761,30 @@ export function QCallDialog({
         remindAt: datetimeLocalToIso(followUpAt),
       })
     }
-    feedback.setSuccess('Llamada registrada')
+    let scheduleFailed = false
+    if (nextCallEnabled && nextCallAt) {
+      // action_type 'call' + future start_at is what places the lead in the
+      // "Reunión agendada" board column.
+      const scheduled = await createReminder({
+        leadId,
+        title: `Llamar a ${leadName}`,
+        actionType: 'call',
+        remindAt: datetimeLocalToIso(nextCallAt),
+      })
+      scheduleFailed = !scheduled.ok
+    }
+    feedback.setSuccess(
+      scheduleFailed
+        ? 'Llamada registrada, pero no se pudo agendar la próxima llamada'
+        : 'Llamada registrada',
+    )
     setNotes('')
     setTranscript('')
     setDuration(defaultDurationMinutes?.toString() ?? '')
     setOutcome(defaultOutcome)
     setCallDate(todayIsoLocal())
     setFollowUpEnabled(false)
+    setNextCallEnabled(false)
     setDigestKey((key) => key + 1)
     router.refresh()
     setOpen(false)
@@ -959,6 +985,13 @@ export function QCallDialog({
               onEnabledChange={setFollowUpEnabled}
               remindAt={followUpAt}
               onRemindAtChange={setFollowUpAt}
+            />
+            <NextCallSection
+              idPrefix={`qa-call-next-${leadId}`}
+              enabled={nextCallEnabled}
+              onEnabledChange={setNextCallEnabled}
+              value={nextCallAt}
+              onChange={setNextCallAt}
             />
             <div className="flex shrink-0 items-center justify-end gap-3">
               <FormFeedback state={feedback.state} pendingLabel="Guardando…" />

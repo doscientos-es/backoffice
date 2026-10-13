@@ -1,6 +1,7 @@
 import { Flame } from 'lucide-react'
 import Link from 'next/link'
 
+import { GoalsHistoryChartLazy } from '@/components/goals/goals-history-chart-lazy'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   achievedStreak,
@@ -81,6 +82,46 @@ export async function GoalsWidget({ showFinance }: { showFinance: boolean }) {
 
   if (items.length === 0) return null
 
+  const recent = months.slice(0, 6).reverse()
+  const series = items.map(({ metric }) => ({
+    metric,
+    points: recent.map(({ month, rows }, i) => {
+      const r = rows.find((x) => x.metric === metric)
+      const current = i === recent.length - 1
+      return {
+        month,
+        actual: r?.actual ?? 0,
+        target: r?.target ?? null,
+        current,
+        expected:
+          current && r?.target != null && metric !== 'conversion_rate'
+            ? (r.target * today.day) / totalDays
+            : null,
+      }
+    }),
+  }))
+
+  // With fewer than 2 closed months that had a goal there is nothing to compare yet,
+  // so show a plain summary of past results instead of mostly-empty charts.
+  const closedWithGoal = Math.max(
+    ...series.map((s) => s.points.filter((p) => !p.current && p.target !== null).length),
+  )
+  const showCharts = closedWithGoal >= 2
+  const pastSummary = items
+    .map(({ metric }) => {
+      const last3 = past
+        .slice(0, 3)
+        .map((p) => p.rows.find((r) => r.metric === metric)?.actual ?? 0)
+      const max = Math.max(
+        0,
+        ...past.map((p) => p.rows.find((r) => r.metric === metric)?.actual ?? 0),
+      )
+      if (max === 0) return null
+      const avg = last3.reduce((a, b) => a + b, 0) / last3.length
+      return `${GOAL_LABELS[metric]}: media ${formatValue(metric, avg)} (3 meses), máximo ${formatValue(metric, max)}`
+    })
+    .filter((s): s is string => s !== null)
+
   const achievedCount = items.filter((i) => i.evaluation.status === 'achieved').length
 
   return (
@@ -145,6 +186,21 @@ export async function GoalsWidget({ showFinance }: { showFinance: boolean }) {
             </div>
           )
         })}
+        {showCharts ? (
+          <div className="sm:col-span-2">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Últimos 6 meses</p>
+            <GoalsHistoryChartLazy series={series} />
+          </div>
+        ) : pastSummary.length > 0 ? (
+          <div className="flex flex-col gap-0.5 text-xs text-muted-foreground sm:col-span-2">
+            <p className="font-medium">Referencia de meses anteriores</p>
+            {pastSummary.map((line) => (
+              <p key={line} className="tabular-nums">
+                {line}
+              </p>
+            ))}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   )

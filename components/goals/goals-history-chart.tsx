@@ -12,6 +12,8 @@ export type GoalHistoryPoint = {
   actual: number
   target: number | null
   current: boolean
+  /** Value the month should have reached by today to be on pace (current month only). */
+  expected?: number | null
 }
 
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
@@ -35,6 +37,13 @@ function MetricChart({
     const neutral = dark ? '#8a8a8a' : '#a3a3a3'
     const ok = dark ? '#22c55e' : '#16a34a'
     const bad = dark ? '#ef4444' : '#dc2626'
+    const info = dark ? '#3b82f6' : '#2563eb'
+    const pace = dark ? '#fafafa' : '#171717'
+    let bestIndex = -1
+    points.forEach((p, i) => {
+      if (p.current || p.actual <= 0) return
+      if (bestIndex < 0 || p.actual > (points[bestIndex]?.actual ?? 0)) bestIndex = i
+    })
     return {
       grid: { left: 4, right: 8, top: 14, bottom: 0, containLabel: true },
       tooltip: {
@@ -51,6 +60,9 @@ function MetricChart({
             `${monthLabel(p.month)} ${p.month.slice(0, 4)}${p.current ? ' (en curso)' : ''}`,
           ]
           lines.push(`Logrado: ${formatGoalValue(metric, p.actual)}`)
+          if (p.current && p.expected != null)
+            lines.push(`Ritmo esperado hoy: ${formatGoalValue(metric, p.expected)}`)
+          if (!p.current && p.actual > 0 && points[bestIndex] === p) lines.push('Mejor mes')
           lines.push(
             p.target === null
               ? 'Sin meta ese mes'
@@ -80,14 +92,41 @@ function MetricChart({
         {
           type: 'bar',
           barMaxWidth: 26,
-          data: points.map((p) => ({
+          data: points.map((p, i) => ({
             value: p.actual,
+            label:
+              i === bestIndex
+                ? {
+                    show: true,
+                    position: 'top' as const,
+                    color: muted,
+                    fontSize: 10,
+                    formatter: () => `★ ${formatGoalValue(metric, p.actual)}`,
+                  }
+                : { show: false },
             itemStyle: {
               borderRadius: [4, 4, 0, 0],
-              opacity: p.current ? 0.55 : 1,
-              color: p.target === null ? neutral : p.actual >= p.target ? ok : bad,
+              // The current month is still in progress: blue until the goal is reached.
+              color: p.current
+                ? p.target !== null && p.actual >= p.target
+                  ? ok
+                  : info
+                : p.target === null
+                  ? neutral
+                  : p.actual >= p.target
+                    ? ok
+                    : bad,
             },
           })),
+        },
+        {
+          // Where the current month should be today to finish on target.
+          type: 'scatter',
+          symbol: 'rect',
+          symbolSize: [30, 3],
+          silent: true,
+          itemStyle: { color: pace },
+          data: points.map((p) => (p.current && p.expected != null ? p.expected : null)),
         },
         {
           type: 'line',
@@ -165,7 +204,8 @@ export function GoalsHistoryChart({
       </div>
       <p className="text-xs text-muted-foreground">
         Barras: lo logrado cada mes (verde = meta cumplida, rojo = no cumplida, gris = sin meta,
-        tenue = mes en curso). Línea discontinua: meta vigente.
+        azul = mes en curso). Línea discontinua: meta vigente. Marca negra: dónde deberías ir hoy
+        para llegar a la meta. ★ mejor mes.
       </p>
     </div>
   )
