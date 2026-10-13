@@ -70,7 +70,8 @@ export function NextCallSection({
       </label>
       {enabled ? (
         <>
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Fechas rápidas">
+          <fieldset className="m-0 flex min-w-0 flex-wrap gap-1.5 border-0 p-0">
+            <legend className="sr-only">Fechas rápidas</legend>
             {PRESETS.map((preset) => {
               const presetValue = nextCallPresetValue(preset.days)
               return (
@@ -90,7 +91,7 @@ export function NextCallSection({
                 </button>
               )
             })}
-          </div>
+          </fieldset>
           <Input
             id={`${idPrefix}-at`}
             type="datetime-local"
