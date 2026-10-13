@@ -75,6 +75,10 @@ export default async function ProjectDetailPage({
     clientRequests,
     projectTeamMemberIds,
   } = workspace
+  const assignableMembers =
+    user.role === 'delivery'
+      ? (members ?? []).filter((member) => projectTeamMemberIds.includes(member.id as string))
+      : (members ?? [])
 
   const pendingReminders = ((reminders ?? []) as Array<Record<string, unknown>>).map((r) => ({
     id: r.id as string,
@@ -223,7 +227,12 @@ export default async function ProjectDetailPage({
           <DetailGrid>
             <DetailRow label="Cliente">
               {client ? (
-                <Link href={`/clients/${client.id}`} className="hover:underline">
+                <Link
+                  href={`/clients/${client.id}`}
+                  className="hover:underline"
+                  aria-disabled={user.role === 'delivery'}
+                  onClick={user.role === 'delivery' ? (event) => event.preventDefault() : undefined}
+                >
                   {client.name}
                 </Link>
               ) : (
@@ -259,7 +268,7 @@ export default async function ProjectDetailPage({
         </CardContent>
       </Card>
 
-      {canEdit && (
+      {(user.role === 'owner' || user.role === 'admin') && (
         <Card>
           <CardHeader>
             <CardTitle>Equipo del proyecto</CardTitle>
@@ -267,14 +276,8 @@ export default async function ProjectDetailPage({
           <CardContent>
             <ProjectTeamSection
               projectId={id}
-              members={(members ?? []) as Array<{ id: string; name: string }>}
+              members={(members ?? []) as Array<{ id: string; name: string; role: string }>}
               assignedMemberIds={projectTeamMemberIds}
-              memberRoles={Object.fromEntries(
-                ((members ?? []) as Array<{ id: string; role: string }>).map((member) => [
-                  member.id,
-                  member.role,
-                ]),
-              )}
             />
           </CardContent>
         </Card>
@@ -295,23 +298,26 @@ export default async function ProjectDetailPage({
         />
       ) : null}
 
-      {canEdit ? <Card>
-        <CardHeader>
-          <CardTitle>Ubicación del código</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <WorkspacePathsForm
-            projectId={project.id as string}
-            version={Number(project.version)}
-            paths={
-              Array.isArray(project.workspace_paths) ? (project.workspace_paths as string[]) : []
-            }
-            canEdit={canEdit}
-          />
-        </CardContent>
-      </Card> : null}
+      {user.role === 'owner' || user.role === 'admin' ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ubicación del código</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <WorkspacePathsForm
+              projectId={project.id as string}
+              version={Number(project.version)}
+              paths={
+                Array.isArray(project.workspace_paths) ? (project.workspace_paths as string[]) : []
+              }
+              canEdit={canEdit}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
 
-      {canEdit && (proposals ?? []).some((proposal) => proposal.status === 'accepted') ? (
+      {(user.role === 'owner' || user.role === 'admin') &&
+      (proposals ?? []).some((proposal) => proposal.status === 'accepted') ? (
         <Card>
           <CardHeader>
             <CardTitle>Arranque asistido</CardTitle>
@@ -322,11 +328,11 @@ export default async function ProjectDetailPage({
         </Card>
       ) : null}
 
-      {canEdit || pendingReminders.length > 0 ? (
+      {user.role === 'owner' || user.role === 'admin' || pendingReminders.length > 0 ? (
         <Card>
           <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>Próximos avisos</CardTitle>
-            {canEdit && (
+            {(user.role === 'owner' || user.role === 'admin') && (
               <ScheduleReminderDialog
                 projectId={id}
                 members={(members ?? []) as Array<{ id: string; name: string }>}
@@ -353,11 +359,13 @@ export default async function ProjectDetailPage({
           <CardTitle>Tareas</CardTitle>
           <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end">
             <ProjectTasksViewToggle view={isBoard ? 'board' : 'list'} />
-            <TaskCreateDialog
-              projectId={id}
-              members={(members ?? []) as Array<{ id: string; name: string }>}
-              currentUserId={user.id}
-            />
+            {can(user.role, 'tasks.write') ? (
+              <TaskCreateDialog
+                projectId={id}
+                members={assignableMembers as Array<{ id: string; name: string }>}
+                currentUserId={user.id}
+              />
+            ) : null}
           </div>
         </CardHeader>
         <CardContent className={isBoard ? 'px-4 pt-0 pb-4' : 'px-0'}>
@@ -443,7 +451,7 @@ export default async function ProjectDetailPage({
         </Card>
       ) : null}
 
-      {canEdit ? (
+      {user.role === 'owner' || user.role === 'admin' ? (
         <Card>
           <CardHeader>
             <CardTitle>Update para cliente</CardTitle>
@@ -463,7 +471,7 @@ export default async function ProjectDetailPage({
         canEdit={canEdit || projectTeamMemberIds.includes(user.id)}
       />
 
-      {canSeeFinance &&
+      {(user.role === 'owner' || user.role === 'admin') &&
       project.billing_type === 'hourly' &&
       Number(project.hourly_rate ?? 0) > 0 ? (
         <MonthlyInvoiceSection
@@ -473,11 +481,13 @@ export default async function ProjectDetailPage({
         />
       ) : null}
 
-      {canEdit ? <ChecklistSection
-        projectId={id}
-        items={(checklistData as ChecklistItemRow[] | null) ?? []}
-        canEdit={canEdit}
-      /> : null}
+      {user.role === 'owner' || user.role === 'admin' ? (
+        <ChecklistSection
+          projectId={id}
+          items={(checklistData as ChecklistItemRow[] | null) ?? []}
+          canEdit={canEdit}
+        />
+      ) : null}
 
       {canSeeFinance ? (
         <Card>

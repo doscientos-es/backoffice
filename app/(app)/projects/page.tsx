@@ -59,7 +59,16 @@ export default async function ProjectsPage({
         rows={assignedProjects.map((project) => ({
           id: project.id,
           href: `/projects/${project.id}`,
-          data: { id: project.id, name: project.name },
+          data: {
+            id: project.id,
+            name: project.name,
+            client_name: project.client_name ?? '—',
+            status: project.status,
+            description: project.description,
+            updated_at: project.updated_at,
+            github_sync_mode: project.github_sync_mode as GitHubSyncMode | null,
+            github_repo: project.github_repo,
+          },
           cells: { nombre: { content: project.name, value: project.name } },
         }))}
       />

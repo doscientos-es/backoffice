@@ -50,6 +50,7 @@ function buildDbPayload(p: any) {
 export const createProject = defineAction({
   name: 'projects.create',
   schema: ProjectInput,
+  roles: ['owner', 'admin', 'member'],
   handler: async (input) => {
     const supabase = await createServerClient()
     const { data, error } = await supabase
@@ -87,6 +88,7 @@ export const createProject = defineAction({
 export const updateProject = defineAction({
   name: 'projects.update',
   schema: UpdateProjectInput,
+  roles: ['owner', 'admin', 'member'],
   revalidate: (_payload, input) => ['/projects', `/projects/${input.id}`],
   handler: async (input) => {
     const supabase = await createServerClient()
@@ -108,6 +110,7 @@ export const updateProject = defineAction({
 export const updateProjectWorkspacePaths = defineAction({
   name: 'projects.updateWorkspacePaths',
   schema: UpdateProjectWorkspacePathsInput,
+  roles: ['owner', 'admin', 'member'],
   revalidate: (_payload, input) => [`/projects/${input.id}`],
   handler: async (input) => {
     const supabase = await createServerClient()
@@ -134,6 +137,7 @@ export const updateProjectWorkspacePaths = defineAction({
 export const deleteProject = defineAction({
   name: 'projects.delete',
   schema: uuidIdInput,
+  roles: ['owner', 'admin'],
   revalidate: () => ['/projects'],
   handler: async (input) => {
     const supabase = await createServerClient()
@@ -153,6 +157,7 @@ export const deleteProject = defineAction({
 export const restoreProject = defineAction({
   name: 'projects.restore',
   schema: uuidIdInput,
+  roles: ['owner', 'admin'],
   revalidate: (_payload, input) => [`/projects/${input.id}`, '/projects'],
   handler: async (input) => {
     const supabase = await createServerClient()

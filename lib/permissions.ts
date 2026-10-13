@@ -113,7 +113,6 @@ export const ROLE_PERMISSIONS: Readonly<Record<MemberRole, readonly PermissionKe
     'clients.read',
     'proposals.read',
     'projects.read',
-    'projects.write',
     'tasks.read',
     'tasks.write',
     'workspace.write',

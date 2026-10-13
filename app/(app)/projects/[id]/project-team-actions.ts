@@ -1,8 +1,10 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { defineAction } from '@/lib/actions/define-action'
+import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { createServerClient } from '@/lib/supabase/server'
 
 const UpdateProjectTeamInput = z.object({
@@ -21,7 +23,7 @@ export const updateProjectTeam = defineAction({
     const supabase = await createServerClient()
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('id')
+      .select('id, name')
       .eq('id', projectId)
       .is('deleted_at', null)
       .maybeSingle()
@@ -29,12 +31,11 @@ export const updateProjectTeam = defineAction({
     const { data: eligibleMembers, error: memberError } = await supabase
       .from('team_members')
       .select('id')
-      .in('id', memberIds)
-      .eq('role', 'delivery')
       .is('deleted_at', null)
     if (memberError) throw new Error(memberError.message)
-    if ((eligibleMembers ?? []).length !== new Set(memberIds).size) {
-      throw new Error('Solo se pueden asignar miembros activos del equipo de Entrega.')
+    const validIds = new Set((eligibleMembers ?? []).map((member) => member.id as string))
+    if (memberIds.some((memberId) => !validIds.has(memberId))) {
+      throw new Error('Solo se pueden asignar miembros activos del equipo.')
     }
     const { data: currentRows, error: selectError } = await supabase
       .from('project_team_members')
@@ -59,6 +60,22 @@ export const updateProjectTeam = defineAction({
         .from('project_team_members')
         .insert(addedIds.map((memberId) => ({ project_id: projectId, member_id: memberId })))
       if (error) throw new Error(error.message)
+      try {
+        await dispatchNotifications({
+          recipientIds: addedIds,
+          actorId: user.id,
+          eventType: 'project_shared',
+          entityType: 'project',
+          entityId: projectId,
+          body: `Te han añadido como colaborador al proyecto «${project.name}».`,
+          link: `/projects/${projectId}`,
+        })
+      } catch {
+        // The share is already saved; notification delivery must not make the
+        // admin retry a successful change and accidentally miss the notice.
+      }
     }
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath('/projects')
   },
 })

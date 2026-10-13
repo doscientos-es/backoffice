@@ -122,7 +122,9 @@ export function TaskCreateDialog({
         <DialogHeader>
           <DialogTitle>Crear tarea</DialogTitle>
           <DialogDescription>
-            Puedes crear una tarea personal y asociarla opcionalmente a un proyecto, lead o cliente.
+            {projectId
+              ? 'Crea una tarea dentro de este proyecto y asígnala a sus colaboradores.'
+              : 'Puedes crear una tarea y asociarla a un proyecto, lead o cliente.'}
           </DialogDescription>
         </DialogHeader>
         <form

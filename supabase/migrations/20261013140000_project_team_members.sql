@@ -38,40 +38,6 @@ create or replace function public.can_access_project(p_project_id uuid)
 returns boolean language sql stable security definer set search_path = public, pg_temp
 as $$ select public.has_permission('projects.read') and (public.member_has_full_scope() or public.is_assigned_project(p_project_id)) $$;
 
-create or replace function public.is_assigned_project(p_project_id uuid)
-returns boolean
-language sql stable security definer
-set search_path = public, pg_temp
-as $$
-  select exists (
-      select 1 from public.projects pr
-      where pr.id = p_project_id and pr.created_by = auth.uid()
-    )
-    or exists (
-      select 1 from public.project_team_members m
-      where m.project_id = p_project_id and m.member_id = auth.uid()
-    )
-    or exists (
-      select 1 from public.tasks t
-      where t.project_id = p_project_id and t.deleted_at is null
-        and (t.assignee_id = auth.uid() or t.created_by = auth.uid()
-          or exists (select 1 from public.task_members m where m.task_id = t.id and m.member_id = auth.uid()))
-    )
-    or exists (
-      select 1 from public.proposals p
-      join public.proposal_team_members m on m.proposal_id = p.id
-      where p.project_id = p_project_id and p.deleted_at is null and m.member_id = auth.uid()
-    )
-    or exists (
-      select 1 from public.proposals p
-      where p.project_id = p_project_id and p.deleted_at is null and p.created_by = auth.uid()
-    );
-$$;
-
-create or replace function public.can_access_project(p_project_id uuid)
-returns boolean language sql stable security definer set search_path = public, pg_temp
-as $$ select public.has_permission('projects.read') and (public.member_has_full_scope() or public.is_assigned_project(p_project_id)) $$;
-
 drop policy if exists project_team_members_insert on public.project_team_members;
 create policy project_team_members_insert on public.project_team_members
   for insert with check (public.current_member_role() in ('owner','admin') and public.member_has_full_scope());
@@ -84,27 +50,49 @@ create policy project_team_members_delete on public.project_team_members
 drop policy if exists projects_update on public.projects;
 create policy projects_update on public.projects for update
   using (public.can_access_project(id) and public.has_permission('projects.write')
-    and public.member_has_full_scope())
-  with check (public.has_permission('projects.write') and public.member_has_full_scope());
+    and (public.current_member_role() <> 'delivery' or public.member_has_full_scope()))
+  with check (public.has_permission('projects.write')
+    and (public.current_member_role() <> 'delivery' or public.member_has_full_scope()));
+
+drop policy if exists leads_select on public.leads;
+create policy leads_select on public.leads for select
+  using (public.current_member_role() <> 'delivery' and public.can_access_lead(id));
+drop policy if exists leads_insert on public.leads;
+create policy leads_insert on public.leads for insert
+  with check (public.has_permission('leads.write'));
+drop policy if exists leads_update on public.leads;
+create policy leads_update on public.leads for update
+  using (public.can_access_lead(id) and public.has_permission('leads.write'))
+  with check (public.has_permission('leads.write'));
+drop policy if exists leads_delete on public.leads;
+create policy leads_delete on public.leads for delete
+  using (public.can_access_lead(id) and public.has_permission('leads.delete'));
 
 drop policy if exists projects_delete on public.projects;
-create policy projects_delete on public.projects for update
-  using (public.has_permission('projects.delete') and public.member_has_full_scope())
-  with check (public.has_permission('projects.delete') and public.member_has_full_scope());
+create policy projects_delete on public.projects for delete
+  using (public.has_permission('projects.delete')
+    and (public.current_member_role() <> 'delivery' or public.member_has_full_scope()));
 
 drop policy if exists projects_insert on public.projects;
 create policy projects_insert on public.projects for insert
-  with check (public.has_permission('projects.write') and public.member_has_full_scope());
+  with check (public.has_permission('projects.write')
+    and (public.current_member_role() <> 'delivery' or public.member_has_full_scope()));
 
 drop policy if exists tasks_insert on public.tasks;
 create policy tasks_insert on public.tasks for insert
   with check (public.has_permission('tasks.write') and
-    (public.member_has_full_scope() or public.can_access_project(project_id)));
+    (public.member_has_full_scope() or
+      (project_id is not null and public.is_assigned_project(project_id))));
 drop policy if exists tasks_update on public.tasks;
 create policy tasks_update on public.tasks for update
-  using (public.can_access_task(id) and public.has_permission('tasks.write'))
+  using (public.has_permission('tasks.write') and
+    (public.member_has_full_scope() or
+      (project_id is not null and public.is_assigned_project(project_id)) or
+      (lead_id is not null and public.is_assigned_lead(lead_id))))
   with check (public.has_permission('tasks.write') and
-    (public.member_has_full_scope() or public.can_access_project(project_id)));
+    (public.member_has_full_scope() or
+      (project_id is not null and public.is_assigned_project(project_id)) or
+      (lead_id is not null and public.is_assigned_lead(lead_id))));
 drop policy if exists tasks_delete on public.tasks;
 create policy tasks_delete on public.tasks for delete
   using (public.can_access_task(id) and public.has_permission('tasks.delete'));
@@ -112,6 +100,35 @@ create policy tasks_delete on public.tasks for delete
 drop policy if exists clients_select on public.clients;
 create policy clients_select on public.clients for select
   using (public.can_access_client(id) and public.member_has_full_scope());
+drop policy if exists proposals_insert on public.proposals;
+create policy proposals_insert on public.proposals for insert
+  with check (public.has_permission('proposals.write') and public.member_has_full_scope());
+drop policy if exists proposals_update on public.proposals;
+create policy proposals_update on public.proposals for update
+  using (public.has_permission('proposals.write') and public.member_has_full_scope()
+    and public.can_access_proposal(id))
+  with check (public.has_permission('proposals.write') and public.member_has_full_scope());
+drop policy if exists proposals_delete on public.proposals;
+create policy proposals_delete on public.proposals for delete
+  using (public.has_permission('proposals.delete') and public.member_has_full_scope());
+
+drop policy if exists attachments_select on public.attachments;
+create policy attachments_select on public.attachments for select
+  using (public.member_has_full_scope() and public.is_team_member());
+drop policy if exists attachments_insert on public.attachments;
+create policy attachments_insert on public.attachments for insert
+  with check (public.member_has_full_scope() and public.is_team_member());
+drop policy if exists attachments_update on public.attachments;
+create policy attachments_update on public.attachments for update
+  using (public.member_has_full_scope() and public.is_team_member())
+  with check (public.member_has_full_scope() and public.is_team_member());
+drop policy if exists attachments_delete on public.attachments;
+create policy attachments_delete on public.attachments for delete
+  using (public.member_has_full_scope() and public.is_team_member());
+
+drop policy if exists generated_documents_select on public.generated_documents;
+create policy generated_documents_select on public.generated_documents for select
+  using (public.member_has_full_scope() and public.can_access_related(null, client_id, project_id, proposal_id));
 drop policy if exists proposals_select on public.proposals;
 create policy proposals_select on public.proposals for select
   using (public.can_access_proposal(id) and public.member_has_full_scope());
@@ -163,11 +180,14 @@ create policy task_comments_insert on public.task_comments for insert
   with check (public.has_permission('tasks.write') and public.can_access_task(task_id));
 drop policy if exists task_comments_update on public.task_comments;
 create policy task_comments_update on public.task_comments for update
-  using (public.has_permission('tasks.write') and public.can_access_task(task_id))
-  with check (public.has_permission('tasks.write') and public.can_access_task(task_id));
+  using (public.has_permission('tasks.write') and public.member_has_full_scope()
+    and public.can_access_task(task_id))
+  with check (public.has_permission('tasks.write') and public.member_has_full_scope()
+    and public.can_access_task(task_id));
 drop policy if exists task_comments_delete on public.task_comments;
 create policy task_comments_delete on public.task_comments for delete
-  using (public.has_permission('tasks.write') and public.can_access_task(task_id));
+  using (public.has_permission('tasks.write') and public.member_has_full_scope()
+    and public.can_access_task(task_id));
 drop policy if exists task_comments_select on public.task_comments;
 create policy task_comments_select on public.task_comments for select
   using (public.can_access_task(task_id));
@@ -197,6 +217,4 @@ create policy work_logs_update on public.work_logs for update
 drop policy if exists work_logs_delete on public.work_logs;
 create policy work_logs_delete on public.work_logs for delete
   using ((member_id = auth.uid() or public.current_member_role() in ('owner','admin'))
-    and public.can_access_project(project_id))
-  with check ((member_id = auth.uid() or public.current_member_role() in ('owner','admin'))
     and public.can_access_project(project_id));

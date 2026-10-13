@@ -4,24 +4,26 @@ import { useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { ROLE_OPTIONS } from '@/lib/permissions'
 
 import { updateProjectTeam } from './project-team-actions'
 
-type Member = { id: string; name: string }
+type Member = { id: string; name: string; role: string }
 
 export function ProjectTeamSection({
   projectId,
   members,
   assignedMemberIds,
-  memberRoles,
 }: {
   projectId: string
   members: Member[]
   assignedMemberIds: string[]
-  memberRoles: Record<string, string>
 }) {
-  const eligibleMembers = members.filter((member) => memberRoles[member.id] === 'delivery')
+  const [query, setQuery] = useState('')
+  const eligibleMembers = members.filter((member) =>
+    member.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  )
   const [selected, setSelected] = useState(() => new Set(assignedMemberIds))
   const [saved, setSaved] = useState(() => new Set(assignedMemberIds))
   const [pending, startTransition] = useTransition()
@@ -48,9 +50,11 @@ export function ProjectTeamSection({
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-3">
-        <CardTitle>Equipo del proyecto</CardTitle>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Añade colaboradores para darles acceso a este proyecto y sus tareas.
+        </p>
         <Button
           size="sm"
           onClick={save}
@@ -60,26 +64,35 @@ export function ProjectTeamSection({
         >
           {pending ? 'Guardando…' : 'Guardar equipo'}
         </Button>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
-        <p className="text-sm text-muted-foreground">
-          Añade colaboradores para darles acceso a este proyecto y sus tareas.
-        </p>
-        {eligibleMembers.map((member) => (
-          <label key={member.id} className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={selected.has(member.id)}
-              onChange={() => toggle(member.id)}
-              className="size-4 accent-primary"
-            />
-            {member.name}
-          </label>
-        ))}
-        {eligibleMembers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No hay miembros de Entrega activos.</p>
-        ) : null}
-      </CardContent>
-    </Card>
+      </div>
+      <Input
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Buscar miembro del equipo…"
+        aria-label="Buscar miembro del equipo"
+      />
+      {eligibleMembers.map((member) => (
+        <label
+          key={member.id}
+          className="flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-sm"
+        >
+          <input
+            type="checkbox"
+            checked={selected.has(member.id)}
+            onChange={() => toggle(member.id)}
+            className="size-4 accent-primary"
+          />
+          <span className="min-w-0 flex-1 truncate">{member.name}</span>
+          <span className="text-xs text-muted-foreground">
+            {ROLE_OPTIONS.find((role) => role.value === member.role)?.label ?? member.role}
+          </span>
+        </label>
+      ))}
+      {members.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No hay miembros activos.</p>
+      ) : eligibleMembers.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No hay miembros con ese nombre.</p>
+      ) : null}
+    </div>
   )
 }

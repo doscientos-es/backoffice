@@ -25,10 +25,14 @@ export default async function NewTaskPage({
   const [{ data: projects }, { data: leads }, { data: clients }, { data: members }] =
     await Promise.all([
       supabase.from('projects').select('id, name').is('deleted_at', null).order('name'),
-      supabase.from('leads').select('id, name').is('deleted_at', null).order('created_at', {
-        ascending: false,
-      }),
-      supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
+      user.role === 'delivery'
+        ? Promise.resolve({ data: [] })
+        : supabase.from('leads').select('id, name').is('deleted_at', null).order('created_at', {
+            ascending: false,
+          }),
+      user.role === 'delivery'
+        ? Promise.resolve({ data: [] })
+        : supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
       supabase.from('team_members').select('id, name').is('deleted_at', null).order('name'),
     ])
 
@@ -46,7 +50,9 @@ export default async function NewTaskPage({
             projects={(projects ?? []) as Array<{ id: string; name: string }>}
             leads={(leads ?? []) as Array<{ id: string; name: string }>}
             clients={(clients ?? []) as Array<{ id: string; name: string }>}
-            members={(members ?? []) as Array<{ id: string; name: string }>}
+            members={((members ?? []) as Array<{ id: string; name: string }>).filter(
+              (member) => user.role !== 'delivery' || member.id === user.id,
+            )}
             defaults={{ project_id: presetProject, lead_id: presetLead, client_id: presetClient }}
             currentUserId={user.id}
           />

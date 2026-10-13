@@ -88,6 +88,7 @@ export default async function TaskDetailPage({
   const backHref = project ? `/projects/${project.id}/tasks` : '/tasks'
   const backLabel = project ? `Volver a ${project.name}` : 'Volver a tareas'
   const canEdit = can(user.role, 'tasks.write')
+  const canAdministerTask = can(user.role, 'tasks.delete')
 
   return (
     <div className="flex flex-col gap-6">
@@ -120,7 +121,7 @@ export default async function TaskDetailPage({
                 members={(members ?? []) as Array<{ id: string; name: string }>}
               />
             ) : null}
-            {canEdit ? <DeleteTaskButton taskId={id} /> : null}
+            {canAdministerTask ? <DeleteTaskButton taskId={id} /> : null}
           </div>
         }
       />

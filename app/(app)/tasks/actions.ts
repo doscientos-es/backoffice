@@ -19,6 +19,20 @@ import { createServerClient } from '@/lib/supabase/server'
 import { normalizeTaskMemberIds } from '@/lib/tasks/assignments'
 import { rankAfter, rankBetween } from '@/lib/utils/ranking'
 
+async function isProjectTeamMember(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  projectId: string,
+  memberId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from('project_team_members')
+    .select('member_id')
+    .eq('project_id', projectId)
+    .eq('member_id', memberId)
+    .maybeSingle()
+  return Boolean(data)
+}
+
 export const createTask = defineAction<
   typeof CreateTaskInput,
   { id: string; projectId: string | null }
@@ -34,9 +48,24 @@ export const createTask = defineAction<
   ],
   handler: async (input, { user }) => {
     if (!can(user.role, 'tasks.write')) throw new Error('No tienes permisos para crear tareas.')
-    if (!input.project_id && (input.lead_id || input.client_id))
+    if (user.role === 'delivery' && !input.project_id)
       throw new Error('Este rol solo puede crear tareas en proyectos asignados.')
     const supabase = await createServerClient()
+    if (user.role === 'delivery') {
+      if (!input.project_id || !(await isProjectTeamMember(supabase, input.project_id, user.id))) {
+        throw new Error('Solo puedes crear tareas en proyectos donde colaboras.')
+      }
+      const { data: projectMembers } = await supabase
+        .from('project_team_members')
+        .select('member_id')
+        .eq('project_id', input.project_id)
+      const allowedAssignees = new Set(
+        (projectMembers ?? []).map((item) => item.member_id as string),
+      )
+      if (input.member_ids.some((memberId) => !allowedAssignees.has(memberId))) {
+        throw new Error('Las tareas solo se pueden asignar a colaboradores del proyecto.')
+      }
+    }
 
     const { member_ids = [], ...taskData } = input
     // The creator is the primary assignee by default. Selecting any members
@@ -109,6 +138,29 @@ export const updateTask = defineAction({
     const supabase = await createServerClient()
 
     const { id, expected_version, member_ids = [], ...rest } = input
+    if (user.role === 'delivery') {
+      const { data: currentTask } = await supabase
+        .from('tasks')
+        .select('project_id')
+        .eq('id', id)
+        .maybeSingle()
+      if (
+        !currentTask?.project_id ||
+        !(await isProjectTeamMember(supabase, currentTask.project_id as string, user.id))
+      ) {
+        throw new Error('Solo puedes editar tareas de proyectos donde colaboras.')
+      }
+      const { data: projectMembers } = await supabase
+        .from('project_team_members')
+        .select('member_id')
+        .eq('project_id', currentTask.project_id as string)
+      const allowedAssignees = new Set(
+        (projectMembers ?? []).map((item) => item.member_id as string),
+      )
+      if (member_ids.some((memberId) => !allowedAssignees.has(memberId))) {
+        throw new Error('Las tareas solo se pueden asignar a colaboradores del proyecto.')
+      }
+    }
     const assigneeId = member_ids[0] ?? null
 
     const { data: previousMembers } = await supabase
@@ -178,6 +230,19 @@ export const updateTaskStatus = defineAction({
     if (!can(user.role, 'tasks.write'))
       throw new Error('No tienes permisos para actualizar tareas.')
     const supabase = await createServerClient()
+    if (user.role === 'delivery') {
+      const { data: currentTask } = await supabase
+        .from('tasks')
+        .select('project_id')
+        .eq('id', data.taskId)
+        .maybeSingle()
+      if (
+        !currentTask?.project_id ||
+        !(await isProjectTeamMember(supabase, currentTask.project_id as string, user.id))
+      ) {
+        throw new Error('Solo puedes actualizar tareas de proyectos donde colaboras.')
+      }
+    }
     const updates: Record<string, unknown> = { status: data.status }
     if (data.status === 'done') updates.completed_at = new Date().toISOString()
     if (data.status === 'in_progress') updates.started_at = new Date().toISOString()
@@ -209,11 +274,26 @@ export const bulkCompleteTasks = defineAction({
 export async function moveTask(
   input: unknown,
 ): Promise<{ ok: true; kanbanOrder: string } | { ok: false; error: string }> {
-  await requireUser()
+  const user = await requireUser()
+  if (!can(user.role, 'tasks.write'))
+    return { ok: false, error: 'No tienes permiso para editar tareas.' }
   const parsed = MoveTaskInput.safeParse(input)
   if (!parsed.success) return { ok: false, error: 'Movimiento no válido' }
 
   const supabase = await createServerClient()
+  if (user.role === 'delivery') {
+    const { data: task } = await supabase
+      .from('tasks')
+      .select('project_id')
+      .eq('id', parsed.data.taskId)
+      .maybeSingle()
+    if (
+      !task?.project_id ||
+      !(await isProjectTeamMember(supabase, task.project_id as string, user.id))
+    ) {
+      return { ok: false, error: 'Solo puedes mover tareas de proyectos donde colaboras.' }
+    }
+  }
 
   const ids = [parsed.data.beforeId, parsed.data.afterId].filter(
     (v): v is string => typeof v === 'string' && v.length > 0,
@@ -281,7 +361,9 @@ export async function syncTaskToGithub(formData: FormData): Promise<void> {
 export async function deleteTask(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireUser()
+  const user = await requireUser()
+  if (!can(user.role, 'tasks.delete'))
+    return { ok: false, error: 'No tienes permiso para eliminar tareas.' }
   const parsed = z.object({ taskId: z.string().uuid() }).safeParse(input)
   if (!parsed.success) return { ok: false, error: 'ID inválido' }
 

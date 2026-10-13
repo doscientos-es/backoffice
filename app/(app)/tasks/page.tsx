@@ -5,6 +5,7 @@ import { ListControls } from '@/components/layout/list-controls'
 import { PageHeader } from '@/components/layout/page-header'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requireUser } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import { TASK_PRIORITY, TASK_STATUS, type TaskPriority, type TaskStatus } from '@/lib/status'
 import { createServerClient } from '@/lib/supabase/server'
 import { listTasksBoard, listTasksList } from '@/lib/tasks/queries'
@@ -38,6 +39,7 @@ export default async function TasksPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const user = await requireUser()
+  const canCreate = can(user.role, 'tasks.write')
   const sp = await searchParams
   const view: 'board' | 'list' = parseStringParam(sp, 'view') === 'list' ? 'list' : 'board'
   const q = parseStringParam(sp, 'q')
@@ -53,17 +55,23 @@ export default async function TasksPage({
   const [{ data: projects }, { data: leads }, { data: clients }, { data: members }] =
     await Promise.all([
       supabase.from('projects').select('id, name').is('deleted_at', null).order('name'),
-      supabase.from('leads').select('id, name').is('deleted_at', null).order('created_at', {
-        ascending: false,
-      }),
-      supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
+      user.role === 'delivery'
+        ? Promise.resolve({ data: [] })
+        : supabase.from('leads').select('id, name').is('deleted_at', null).order('created_at', {
+            ascending: false,
+          }),
+      user.role === 'delivery'
+        ? Promise.resolve({ data: [] })
+        : supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
       supabase.from('team_members').select('id, name').is('deleted_at', null).order('name'),
     ])
 
   const projectsList = (projects ?? []) as Array<{ id: string; name: string }>
   const leadsList = (leads ?? []) as Array<{ id: string; name: string }>
   const clientsList = (clients ?? []) as Array<{ id: string; name: string }>
-  const membersList = (members ?? []) as Array<{ id: string; name: string }>
+  const membersList = ((members ?? []) as Array<{ id: string; name: string }>).filter(
+    (member) => user.role !== 'delivery' || member.id === user.id,
+  )
 
   const PROJECT_OPTIONS = projectsList.map((p) => ({ value: p.id, label: p.name }))
   const ASSIGNEE_OPTIONS = membersList.map((member) => ({ value: member.id, label: member.name }))
@@ -90,13 +98,15 @@ export default async function TasksPage({
           actions={
             <div className="flex items-center gap-2">
               <TasksViewToggle view={view} />
-              <TaskCreateDialog
-                projects={projectsList}
-                leads={leadsList}
-                clients={clientsList}
-                members={membersList}
-                currentUserId={user.id}
-              />
+              {canCreate ? (
+                <TaskCreateDialog
+                  projects={projectsList}
+                  leads={leadsList}
+                  clients={clientsList}
+                  members={membersList}
+                  currentUserId={user.id}
+                />
+              ) : null}
             </div>
           }
         />
@@ -215,6 +225,19 @@ export default async function TasksPage({
       actions={
         <div className="flex items-center gap-2">
           <TasksViewToggle view={view} />
+          {canCreate ? (
+            <TaskCreateDialog
+              projects={projectsList}
+              leads={leadsList}
+              clients={clientsList}
+              members={membersList}
+              currentUserId={user.id}
+            />
+          ) : null}
+        </div>
+      }
+      emptyAction={
+        canCreate ? (
           <TaskCreateDialog
             projects={projectsList}
             leads={leadsList}
@@ -222,19 +245,10 @@ export default async function TasksPage({
             members={membersList}
             currentUserId={user.id}
           />
-        </div>
+        ) : null
       }
-      emptyAction={
-        <TaskCreateDialog
-          projects={projectsList}
-          leads={leadsList}
-          clients={clientsList}
-          members={membersList}
-          currentUserId={user.id}
-        />
-      }
-      addHref="/tasks/new"
-      addLabel="Nueva tarea"
+      addHref={canCreate ? '/tasks/new' : undefined}
+      addLabel={canCreate ? 'Nueva tarea' : undefined}
       columns={[
         { key: 'titulo', label: 'Título', sortKey: 'title' },
         { key: 'contexto', label: 'Contexto' },
