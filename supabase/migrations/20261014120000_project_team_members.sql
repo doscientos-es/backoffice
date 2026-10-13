@@ -20,6 +20,29 @@ returns boolean
 language sql stable security definer
 set search_path = public, pg_temp
 as $$
+  select exists (select 1 from public.projects pr where pr.id = p_project_id and pr.created_by = auth.uid())
+    or exists (select 1 from public.project_team_members m where m.project_id = p_project_id and m.member_id = auth.uid())
+    or exists (
+      select 1 from public.tasks t where t.project_id = p_project_id and t.deleted_at is null
+        and (t.assignee_id = auth.uid() or t.created_by = auth.uid()
+          or exists (select 1 from public.task_members m where m.task_id = t.id and m.member_id = auth.uid()))
+    )
+    or exists (
+      select 1 from public.proposals p join public.proposal_team_members m on m.proposal_id = p.id
+      where p.project_id = p_project_id and p.deleted_at is null and m.member_id = auth.uid()
+    )
+    or exists (select 1 from public.proposals p where p.project_id = p_project_id and p.deleted_at is null and p.created_by = auth.uid());
+$$;
+
+create or replace function public.can_access_project(p_project_id uuid)
+returns boolean language sql stable security definer set search_path = public, pg_temp
+as $$ select public.has_permission('projects.read') and (public.member_has_full_scope() or public.is_assigned_project(p_project_id)) $$;
+
+create or replace function public.is_assigned_project(p_project_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = public, pg_temp
+as $$
   select exists (
       select 1 from public.projects pr
       where pr.id = p_project_id and pr.created_by = auth.uid()
@@ -51,11 +74,11 @@ as $$ select public.has_permission('projects.read') and (public.member_has_full_
 
 drop policy if exists project_team_members_insert on public.project_team_members;
 create policy project_team_members_insert on public.project_team_members
-  for insert with check (public.has_permission('projects.write') and public.member_has_full_scope());
+  for insert with check (public.current_member_role() in ('owner','admin') and public.member_has_full_scope());
 
 drop policy if exists project_team_members_delete on public.project_team_members;
 create policy project_team_members_delete on public.project_team_members
-  for delete using (public.has_permission('projects.write') and public.member_has_full_scope());
+  for delete using (public.current_member_role() in ('owner','admin') and public.member_has_full_scope());
 
 -- Limit collaborator writes to project-scoped work; they cannot change project records.
 drop policy if exists projects_update on public.projects;
@@ -112,6 +135,10 @@ drop policy if exists project_requests_select on public.project_requests;
 create policy project_requests_select on public.project_requests for select
   using (public.can_access_project(project_id) and public.member_has_full_scope());
 
+drop policy if exists project_checklist_items_delete on public.project_checklist_items;
+create policy project_checklist_items_delete on public.project_checklist_items for delete
+  using (public.has_permission('projects.write') and public.can_access_project(project_id));
+
 drop policy if exists project_checklist_items_insert on public.project_checklist_items;
 create policy project_checklist_items_insert on public.project_checklist_items for insert
   with check (public.has_permission('projects.write') and public.can_access_project(project_id));
@@ -141,12 +168,18 @@ create policy task_comments_update on public.task_comments for update
 drop policy if exists task_comments_delete on public.task_comments;
 create policy task_comments_delete on public.task_comments for delete
   using (public.has_permission('tasks.write') and public.can_access_task(task_id));
+drop policy if exists task_comments_select on public.task_comments;
+create policy task_comments_select on public.task_comments for select
+  using (public.can_access_task(task_id));
 drop policy if exists task_tag_assignments_insert on public.task_tag_assignments;
 create policy task_tag_assignments_insert on public.task_tag_assignments for insert
   with check (public.has_permission('tasks.write') and public.can_access_task(task_id));
 drop policy if exists task_tag_assignments_delete on public.task_tag_assignments;
 create policy task_tag_assignments_delete on public.task_tag_assignments for delete
   using (public.has_permission('tasks.write') and public.can_access_task(task_id));
+
+drop policy if exists task_tags_select on public.task_tags;
+create policy task_tags_select on public.task_tags for select using (public.is_team_member());
 
 -- Delivery members can record hours only for projects they can access.
 drop policy if exists work_logs_insert on public.work_logs;
@@ -156,11 +189,13 @@ create policy work_logs_insert on public.work_logs for insert
 
 drop policy if exists work_logs_update on public.work_logs;
 create policy work_logs_update on public.work_logs for update
-  using (member_id = auth.uid() or public.current_member_role() in ('owner','admin'))
-  with check (member_id = auth.uid() or public.current_member_role() in ('owner','admin'));
+  using ((member_id = auth.uid() or public.current_member_role() in ('owner','admin'))
+    and public.can_access_project(project_id))
+  with check ((member_id = auth.uid() or public.current_member_role() in ('owner','admin'))
+    and public.can_access_project(project_id));
 
 drop policy if exists work_logs_delete on public.work_logs;
-create policy work_logs_delete on public.work_logs for update
+create policy work_logs_delete on public.work_logs for delete
   using ((member_id = auth.uid() or public.current_member_role() in ('owner','admin'))
     and public.can_access_project(project_id))
   with check ((member_id = auth.uid() or public.current_member_role() in ('owner','admin'))

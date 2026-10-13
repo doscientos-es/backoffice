@@ -67,6 +67,18 @@ export async function listProjects(params: ProjectListParams): Promise<ProjectLi
   }
 }
 
+export async function listAccessibleProjects(params: { q?: string; page: number }) {
+  const supabase = await createServerClient()
+  const from = (params.page - 1) * PROJECT_LIST_PAGE_SIZE
+  let query = notDeleted(supabase.from('projects').select('id, name', { count: 'exact' }))
+  if (params.q) query = query.ilike('name', `%${escapeIlike(params.q)}%`)
+  const { data, count, error } = await query
+    .order('name')
+    .range(from, from + PROJECT_LIST_PAGE_SIZE - 1)
+  if (error) log.error({ err: error.message }, 'list_accessible_projects_failed')
+  return { data: (data ?? []) as Array<{ id: string; name: string }>, count: count ?? 0 }
+}
+
 export async function getProjectDetail(
   id: string,
   options: { includeClients?: boolean } = {},

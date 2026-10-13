@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import { requireUser } from '@/lib/auth'
-import { listProjects } from '@/lib/projects/queries'
+import { listAccessibleProjects, listProjects } from '@/lib/projects/queries'
 import { PROJECT_LIST_PAGE_SIZE, PROJECT_SORT_COLUMNS } from '@/lib/projects/types'
 import { parsePage, parseSortParam, parseStringParam } from '@/lib/utils/search-params'
 
@@ -36,6 +36,35 @@ export default async function ProjectsPage({
   const leadId = parseStringParam(sp, 'lead')
   const page = parsePage(sp)
   const { sort, dir } = parseSortParam(sp, PROJECT_SORT_COLUMNS, 'updated_at', 'desc')
+
+  if (user.role === 'delivery') {
+    const { data: assignedProjects, count: assignedCount } = await listAccessibleProjects({
+      q,
+      page,
+    })
+    return (
+      <ProjectsList
+        canEdit={false}
+        title="Proyectos asignados"
+        empty="Aún no tienes proyectos asignados."
+        error={undefined}
+        searchKey="q"
+        searchPlaceholder="Buscar por nombre…"
+        filters={[]}
+        pagination={{ page, pageSize: PROJECT_LIST_PAGE_SIZE, total: assignedCount }}
+        addHref=""
+        addLabel=""
+        columns={[{ key: 'nombre', label: 'Nombre' }]}
+        exportFilename="proyectos-asignados"
+        rows={assignedProjects.map((project) => ({
+          id: project.id,
+          href: `/projects/${project.id}`,
+          data: { id: project.id, name: project.name },
+          cells: { nombre: { content: project.name, value: project.name } },
+        }))}
+      />
+    )
+  }
 
   const { data, count } = await listProjects({ q, status, leadId, page, sort, dir })
 

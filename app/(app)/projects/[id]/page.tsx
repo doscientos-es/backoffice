@@ -280,21 +280,7 @@ export default async function ProjectDetailPage({
         </Card>
       )}
 
-      {(user.role === 'owner' || user.role === 'admin') && (
-        <ProjectTeamSection
-          projectId={id}
-          members={(members ?? []) as Array<{ id: string; name: string }>}
-          memberRoles={Object.fromEntries(
-            ((members ?? []) as Array<{ id: string; role: string }>).map((member) => [
-              member.id,
-              member.role,
-            ]),
-          )}
-          assignedMemberIds={projectTeamMemberIds}
-        />
-      )}
-
-      {(project.portal_token as string | null) ? (
+      {(project.portal_token as string | null) && canEdit ? (
         <ProjectPortalSection
           projectId={project.id as string}
           projectName={project.name as string}
@@ -309,7 +295,7 @@ export default async function ProjectDetailPage({
         />
       ) : null}
 
-      <Card>
+      {canEdit ? <Card>
         <CardHeader>
           <CardTitle>Ubicación del código</CardTitle>
         </CardHeader>
@@ -323,7 +309,7 @@ export default async function ProjectDetailPage({
             canEdit={canEdit}
           />
         </CardContent>
-      </Card>
+      </Card> : null}
 
       {canEdit && (proposals ?? []).some((proposal) => proposal.status === 'accepted') ? (
         <Card>
@@ -425,49 +411,53 @@ export default async function ProjectDetailPage({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Solicitudes del cliente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!clientRequests || clientRequests.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sin solicitudes recibidas.</p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {clientRequests.map((request) => (
-                <li key={request.id as string} className="py-3 first:pt-0 last:pb-0">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-medium">{request.subject as string}</p>
-                    <span className="text-xs text-muted-foreground">
-                      {request.status as string} · {formatDate(request.created_at as string)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm whitespace-pre-wrap text-muted-foreground">
-                    {request.body as string}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {request.requester_name as string} · {request.category as string}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      {user.role === 'owner' || user.role === 'admin' ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Solicitudes del cliente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!clientRequests || clientRequests.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sin solicitudes recibidas.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {clientRequests.map((request) => (
+                  <li key={request.id as string} className="py-3 first:pt-0 last:pb-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-medium">{request.subject as string}</p>
+                      <span className="text-xs text-muted-foreground">
+                        {request.status as string} · {formatDate(request.created_at as string)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm whitespace-pre-wrap text-muted-foreground">
+                      {request.body as string}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {request.requester_name as string} · {request.category as string}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Update para cliente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ClientUpdatePanel projectId={id} aiEnabled={isAIEnabled()} />
-        </CardContent>
-      </Card>
+      {canEdit ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Update para cliente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ClientUpdatePanel projectId={id} aiEnabled={isAIEnabled()} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <WorkLogSection
         projectId={id}
         logs={workLogs}
-        invoicedTotal={invoicedTotal}
+        invoicedTotal={canSeeFinance ? invoicedTotal : 0}
         billingType={(project.billing_type as 'fixed' | 'hourly' | null) ?? 'fixed'}
         hourlyRate={project.hourly_rate != null ? Number(project.hourly_rate) : null}
         canEdit={canEdit || projectTeamMemberIds.includes(user.id)}
@@ -483,11 +473,11 @@ export default async function ProjectDetailPage({
         />
       ) : null}
 
-      <ChecklistSection
+      {canEdit ? <ChecklistSection
         projectId={id}
         items={(checklistData as ChecklistItemRow[] | null) ?? []}
         canEdit={canEdit}
-      />
+      /> : null}
 
       {canSeeFinance ? (
         <Card>
