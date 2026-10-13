@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.114",
+      "date": "2026-10-13",
+      "title": "v0.1.114",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Expose collaborator table through data api"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "a9492ca6e5fc8d8cd2910ac7ea02e49cecb77e77",
+          "type": "fix",
+          "scope": "project-team",
+          "breaking": false,
+          "description": "Expose collaborator table through data api"
+        }
+      ]
+    },
+    {
       "version": "0.1.113",
       "date": "2026-10-13",
       "title": "v0.1.113",
