@@ -1,6 +1,60 @@
 {
   "releases": [
     {
+      "version": "0.1.112",
+      "date": "2026-10-13",
+      "title": "v0.1.112",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Simplify collaboration and notify members",
+            "Implement project access control for team members",
+            "Enhance project access control and permissions",
+            "Enhance project permissions for collaborators",
+            "Add project team management section and actions"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "22f9cba9749d6698a571ca986670a788137299d8",
+          "type": "feat",
+          "scope": "project-team",
+          "breaking": false,
+          "description": "Simplify collaboration and notify members"
+        },
+        {
+          "sha": "0934f3ffc2734eef2ae6385e67dfb0287d0a46fe",
+          "type": "feat",
+          "scope": "project-team",
+          "breaking": false,
+          "description": "Implement project access control for team members"
+        },
+        {
+          "sha": "170fc27b5a8832595f39dd241c8b5ef0d1df4775",
+          "type": "feat",
+          "scope": "project-team",
+          "breaking": false,
+          "description": "Enhance project access control and permissions"
+        },
+        {
+          "sha": "71485f6a80f35d723a79cbdd34a52c4a8ff02ca7",
+          "type": "feat",
+          "scope": "project-team",
+          "breaking": false,
+          "description": "Enhance project permissions for collaborators"
+        },
+        {
+          "sha": "20d1d7519b7857dcc4db5778fb1dbd3193c94bf9",
+          "type": "feat",
+          "scope": "project-team",
+          "breaking": false,
+          "description": "Add project team management section and actions"
+        }
+      ]
+    },
+    {
       "version": "0.1.111",
       "date": "2026-10-13",
       "title": "v0.1.111",

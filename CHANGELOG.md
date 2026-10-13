@@ -2,6 +2,16 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-13 — v0.1.112
+
+### Nuevas funciones
+
+- Simplify collaboration and notify members
+- Implement project access control for team members
+- Enhance project access control and permissions
+- Enhance project permissions for collaborators
+- Add project team management section and actions
+
 ## 2026-10-13 — v0.1.111
 
 ### Nuevas funciones
