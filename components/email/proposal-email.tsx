@@ -19,8 +19,8 @@ export type ProposalEmailProps = {
   proposalTitle: string
   /** Proposal number, e.g. "P-2026-007" */
   proposalNumber: string
-  /** Formatted total string, e.g. "8.500,00 €" */
-  total: string
+  /** Formatted amount before VAT (B2B), e.g. "8.500,00 €". Never pass the VAT-inclusive total. */
+  subtotal: string
   /** Formatted valid-until date, e.g. "30 de junio de 2026". Optional. */
   validUntil?: string
   /** Absolute URL to the public portal proposal page */
@@ -47,7 +47,7 @@ export function ProposalEmail({
   clientName,
   proposalTitle,
   proposalNumber,
-  total,
+  subtotal,
   validUntil,
   portalUrl,
   deckUrl,
@@ -60,7 +60,7 @@ export function ProposalEmail({
   const copy = language === 'ca' ? CA : language === 'en' ? EN : ES
   return (
     <EmailLayout
-      preview={`${copy.proposal} ${proposalNumber} · ${proposalTitle} · ${total}`}
+      preview={`${copy.proposal} ${proposalNumber} · ${proposalTitle} · ${subtotal} ${copy.vatExcluded}`}
       appUrl={appUrl}
     >
       {/* Greeting */}
@@ -87,8 +87,10 @@ export function ProposalEmail({
         <Text style={{ ...valueStyle, marginBottom: 12 }}>{proposalTitle}</Text>
         <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.reference}</Text>
         <Text style={{ ...valueStyle, marginBottom: 12 }}>{proposalNumber}</Text>
-        <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.total}</Text>
-        <Text style={{ ...valueStyle, marginBottom: validUntil ? 12 : 0 }}>{total}</Text>
+        <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.subtotal}</Text>
+        <Text style={{ ...valueStyle, marginBottom: validUntil ? 12 : 0 }}>
+          {subtotal} <span style={{ fontWeight: 400, color: '#71717a' }}>{copy.vatExcluded}</span>
+        </Text>
         {validUntil ? (
           <>
             <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.validUntil}</Text>
@@ -186,7 +188,8 @@ const ES = {
   intro: 'Te enviamos nuestra propuesta',
   details: 'Puedes revisarla, hacer preguntas y aceptarla o rechazarla desde el siguiente enlace.',
   reference: 'Referencia',
-  total: 'Importe total',
+  subtotal: 'Importe',
+  vatExcluded: '(IVA no incluido)',
   validUntil: 'Válida hasta',
   viewProposal: 'Ver propuesta',
   deck: 'Ver presentación',
@@ -201,7 +204,8 @@ const CA = {
   intro: 'T’enviem la nostra proposta',
   details: 'Pots revisar-la, fer preguntes i acceptar-la o rebutjar-la des de l’enllaç següent.',
   reference: 'Referència',
-  total: 'Import total',
+  subtotal: 'Import',
+  vatExcluded: '(IVA no inclòs)',
   validUntil: 'Vàlida fins al',
   viewProposal: 'Veure proposta',
   deck: 'Veure presentació',
@@ -216,7 +220,8 @@ const EN = {
   intro: 'We are sending you our proposal',
   details: 'You can review it, ask questions, and accept or decline it using the link below.',
   reference: 'Reference',
-  total: 'Total',
+  subtotal: 'Amount',
+  vatExcluded: '(VAT not included)',
   validUntil: 'Valid until',
   viewProposal: 'View proposal',
   deck: 'View presentation',

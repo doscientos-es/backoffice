@@ -645,7 +645,8 @@ type ProposalEmailData = {
   id: string
   number: string | null
   title: string
-  total: number
+  /** Amount before VAT. Client-facing copy must show this, not the VAT-inclusive total. */
+  subtotal: number
   valid_until: string | null
   portal_token: string | null
   clients: {
@@ -699,7 +700,7 @@ async function renderProposalPreview(
       clientName: proposal.clients?.name ?? proposal.leads?.name ?? 'Hola',
       proposalTitle: proposal.title,
       proposalNumber,
-      total: formatEUR(proposal.total),
+      subtotal: formatEUR(proposal.subtotal),
       validUntil: proposal.valid_until ? formatDate(proposal.valid_until) : undefined,
       portalUrl,
       // The presentation deck is still Spanish-only. Keep it out of CA/EN
@@ -749,13 +750,13 @@ export async function previewProposalEmail(input: unknown): Promise<ProposalEmai
 
   const { data: prices } = await supabase
     .from('proposal_prices')
-    .select('total')
+    .select('subtotal')
     .eq('proposal_id', parsed.data.id)
     .maybeSingle()
   if (!prices) return { ok: false, error: 'No se pudo cargar el importe de la propuesta' }
   const proposalEmailData = {
     ...proposal,
-    total: Number(prices.total),
+    subtotal: Number(prices.subtotal),
   } as unknown as ProposalEmailData
 
   const rendered = await renderProposalPreview(supabase, proposalEmailData, parsed.data.message)
@@ -801,7 +802,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
 
   const { data: prices } = await supabase
     .from('proposal_prices')
-    .select('total')
+    .select('subtotal')
     .eq('proposal_id', id)
     .maybeSingle()
   if (!prices) return { ok: false, error: 'No se pudo cargar el importe de la propuesta' }
@@ -811,7 +812,7 @@ export async function sendPreviewLink(input: unknown): Promise<SendPreviewResult
   // lead that hasn't yet been upgraded to a client.
   const proposalEmailData = {
     ...proposal,
-    total: Number(prices.total),
+    subtotal: Number(prices.subtotal),
   } as unknown as ProposalEmailData
   const client = proposalEmailData.clients
   const lead = proposalEmailData.leads
