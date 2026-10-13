@@ -259,6 +259,27 @@ export default async function ProjectDetailPage({
         </CardContent>
       </Card>
 
+      {canEdit && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Equipo del proyecto</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProjectTeamSection
+              projectId={id}
+              members={(members ?? []) as Array<{ id: string; name: string }>}
+              assignedMemberIds={projectTeamMemberIds}
+              memberRoles={Object.fromEntries(
+                ((members ?? []) as Array<{ id: string; role: string }>).map((member) => [
+                  member.id,
+                  member.role,
+                ]),
+              )}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {(user.role === 'owner' || user.role === 'admin') && (
         <ProjectTeamSection
           projectId={id}
@@ -340,14 +361,6 @@ export default async function ProjectDetailPage({
           </CardContent>
         </Card>
       ) : null}
-
-      {(user.role === 'owner' || user.role === 'admin') && (
-        <ProjectTeamSection
-          projectId={id}
-          members={(members ?? []) as Array<{ id: string; name: string }>}
-          assignedMemberIds={projectTeamMemberIds}
-        />
-      )}
 
       <Card>
         <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -543,91 +556,97 @@ export default async function ProjectDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Proposals */}
-        <Card>
-          <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>Propuestas</CardTitle>
-            <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end">
-              <LinkProposalButton
-                projectId={id}
-                unlinkdProposals={
-                  (unlinkedProposals ?? []) as {
-                    id: string
-                    number: string | null
-                    title: string | null
-                  }[]
-                }
-              />
-              {client ? (
-                <Button asChild size="sm">
-                  <Link href={`/proposals/new?client_id=${client.id}&project_id=${id}`}>Nueva</Link>
-                </Button>
-              ) : null}
-            </div>
-          </CardHeader>
-          <CardContent className="px-0">
-            {!proposals || proposals.length === 0 ? (
-              <p className="px-6 py-2 text-sm text-muted-foreground">Sin propuestas.</p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {proposals.map((p) => (
-                  <li
-                    key={p.id as string}
-                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
-                  >
-                    <Link
-                      href={`/proposals/${p.id}`}
-                      className="truncate font-medium hover:underline"
-                    >
-                      {p.number as string}
+        {canSeeFinance && (
+          <Card>
+            <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle>Propuestas</CardTitle>
+              <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                <LinkProposalButton
+                  projectId={id}
+                  unlinkdProposals={
+                    (unlinkedProposals ?? []) as {
+                      id: string
+                      number: string | null
+                      title: string | null
+                    }[]
+                  }
+                />
+                {client ? (
+                  <Button asChild size="sm">
+                    <Link href={`/proposals/new?client_id=${client.id}&project_id=${id}`}>
+                      Nueva
                     </Link>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge meta={PROPOSAL_STATUS} value={p.status as string} />
-                      {canSeeProposalPrices && p.total !== null ? (
-                        <span className="text-xs text-muted-foreground tabular-nums">
-                          {formatEUR(Number(p.total))}
-                        </span>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+                  </Button>
+                ) : null}
+              </div>
+            </CardHeader>
+            <CardContent className="px-0">
+              {!proposals || proposals.length === 0 ? (
+                <p className="px-6 py-2 text-sm text-muted-foreground">Sin propuestas.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {proposals.map((p) => (
+                    <li
+                      key={p.id as string}
+                      className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
+                    >
+                      <Link
+                        href={`/proposals/${p.id}`}
+                        className="truncate font-medium hover:underline"
+                      >
+                        {p.number as string}
+                      </Link>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <StatusBadge meta={PROPOSAL_STATUS} value={p.status as string} />
+                        {canSeeProposalPrices && p.total !== null ? (
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {formatEUR(Number(p.total))}
+                          </span>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Invoices */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Facturas</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0">
-            {!invoices || invoices.length === 0 ? (
-              <p className="px-6 py-2 text-sm text-muted-foreground">Sin facturas.</p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {invoices.map((inv) => (
-                  <li
-                    key={inv.id as string}
-                    className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
-                  >
-                    <Link
-                      href={`/invoices/${inv.id}`}
-                      className="truncate font-medium hover:underline"
+        {canSeeFinance && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Facturas</CardTitle>
+            </CardHeader>
+            <CardContent className="px-0">
+              {!invoices || invoices.length === 0 ? (
+                <p className="px-6 py-2 text-sm text-muted-foreground">Sin facturas.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {invoices.map((inv) => (
+                    <li
+                      key={inv.id as string}
+                      className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
                     >
-                      {inv.full_number as string}
-                    </Link>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge meta={INVOICE_STATUS} value={inv.status as string} />
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {formatEUR(Number(inv.total ?? 0))}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+                      <Link
+                        href={`/invoices/${inv.id}`}
+                        className="truncate font-medium hover:underline"
+                      >
+                        {inv.full_number as string}
+                      </Link>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <StatusBadge meta={INVOICE_STATUS} value={inv.status as string} />
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {formatEUR(Number(inv.total ?? 0))}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <AttachmentSection
           entityType="project"

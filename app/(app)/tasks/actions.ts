@@ -34,8 +34,8 @@ export const createTask = defineAction<
   ],
   handler: async (input, { user }) => {
     if (!can(user.role, 'tasks.write')) throw new Error('No tienes permisos para crear tareas.')
-    if (!input.project_id)
-      throw new Error('Solo puedes crear tareas dentro de un proyecto asignado.')
+    if (!input.project_id && (input.lead_id || input.client_id))
+      throw new Error('Este rol solo puede crear tareas en proyectos asignados.')
     const supabase = await createServerClient()
 
     const { member_ids = [], ...taskData } = input

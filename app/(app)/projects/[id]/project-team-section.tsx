@@ -14,6 +14,7 @@ export function ProjectTeamSection({
   projectId,
   members,
   assignedMemberIds,
+  memberRoles,
 }: {
   projectId: string
   members: Member[]
