@@ -21,11 +21,32 @@ export function ProjectTeamSection({
   assignedMemberIds: string[]
 }) {
   const [query, setQuery] = useState('')
-  const eligibleMembers = members.filter((member) =>
-    member.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  const eligibleMembers = members.filter(
+    (member) =>
+      member.role !== 'owner' &&
+      member.role !== 'admin' &&
+      member.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
   )
-  const [selected, setSelected] = useState(() => new Set(assignedMemberIds))
-  const [saved, setSaved] = useState(() => new Set(assignedMemberIds))
+  const [selected, setSelected] = useState(
+    () =>
+      new Set(
+        assignedMemberIds.filter((id) =>
+          members.some(
+            (member) => member.id === id && member.role !== 'owner' && member.role !== 'admin',
+          ),
+        ),
+      ),
+  )
+  const [saved, setSaved] = useState(
+    () =>
+      new Set(
+        assignedMemberIds.filter((id) =>
+          members.some(
+            (member) => member.id === id && member.role !== 'owner' && member.role !== 'admin',
+          ),
+        ),
+      ),
+  )
   const [pending, startTransition] = useTransition()
 
   function toggle(memberId: string) {
@@ -88,8 +109,10 @@ export function ProjectTeamSection({
           </span>
         </label>
       ))}
-      {members.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No hay miembros activos.</p>
+      {eligibleMembers.length === 0 && !query.trim() ? (
+        <p className="text-sm text-muted-foreground">
+          No hay colaboradores para añadir. Propietarios y administradores ya tienen acceso global.
+        </p>
       ) : eligibleMembers.length === 0 ? (
         <p className="text-sm text-muted-foreground">No hay miembros con ese nombre.</p>
       ) : null}

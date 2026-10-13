@@ -30,12 +30,16 @@ export const updateProjectTeam = defineAction({
     if (projectError || !project) throw new Error('No se encontró el proyecto.')
     const { data: eligibleMembers, error: memberError } = await supabase
       .from('team_members')
-      .select('id')
+      .select('id, role')
       .is('deleted_at', null)
     if (memberError) throw new Error(memberError.message)
-    const validIds = new Set((eligibleMembers ?? []).map((member) => member.id as string))
+    const validIds = new Set(
+      (eligibleMembers ?? [])
+        .filter((member) => member.role !== 'owner' && member.role !== 'admin')
+        .map((member) => member.id as string),
+    )
     if (memberIds.some((memberId) => !validIds.has(memberId))) {
-      throw new Error('Solo se pueden asignar miembros activos del equipo.')
+      throw new Error('Propietarios y administradores ya tienen acceso global al proyecto.')
     }
     const { data: currentRows, error: selectError } = await supabase
       .from('project_team_members')
