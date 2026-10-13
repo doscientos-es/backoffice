@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-13 — v0.1.111
+
+### Nuevas funciones
+
+- Update proposal email to use subtotal instead of total
+
 ## 2026-10-13 — v0.1.110
 
 ### Nuevas funciones

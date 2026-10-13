@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.111",
+      "date": "2026-10-13",
+      "title": "v0.1.111",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Update proposal email to use subtotal instead of total"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "76760796e7ec9442a3ebb4bacb690d68846c2dcb",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Update proposal email to use subtotal instead of total"
+        }
+      ]
+    },
+    {
       "version": "0.1.110",
       "date": "2026-10-13",
       "title": "v0.1.110",
