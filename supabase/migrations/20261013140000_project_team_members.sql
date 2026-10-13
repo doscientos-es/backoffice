@@ -10,6 +10,7 @@ create index if not exists project_team_members_member_idx
   on public.project_team_members(member_id, project_id);
 
 alter table public.project_team_members enable row level security;
+grant select, insert, delete on public.project_team_members to authenticated;
 
 drop policy if exists project_team_members_select on public.project_team_members;
 create policy project_team_members_select on public.project_team_members
@@ -218,3 +219,5 @@ drop policy if exists work_logs_delete on public.work_logs;
 create policy work_logs_delete on public.work_logs for delete
   using ((member_id = auth.uid() or public.current_member_role() in ('owner','admin'))
     and public.can_access_project(project_id));
+
+notify pgrst, 'reload schema';
