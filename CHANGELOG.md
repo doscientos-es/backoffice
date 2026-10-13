@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-13 — v0.1.108
+
+### Correcciones
+
+- Cast auditRows to correct return type for audit events
+
 ## 2026-10-13 — v0.1.107
 
 ### Nuevas funciones

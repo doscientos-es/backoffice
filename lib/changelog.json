@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.108",
+      "date": "2026-10-13",
+      "title": "v0.1.108",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Cast auditRows to correct return type for audit events"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "294bf86f19adfcb8c1b27831040c73f7f41bf036",
+          "type": "fix",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Cast auditRows to correct return type for audit events"
+        }
+      ]
+    },
+    {
       "version": "0.1.107",
       "date": "2026-10-13",
       "title": "v0.1.107",
