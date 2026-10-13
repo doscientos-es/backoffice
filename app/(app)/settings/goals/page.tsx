@@ -8,6 +8,7 @@ import { getCompanyGoals, getGoalMonths } from '@/lib/dashboard/queries'
 import { cn } from '@/lib/utils'
 
 import { GoalsForm } from './goals-form'
+import { GoalsHistoryChart } from './goals-history-chart'
 
 export const metadata: Metadata = { title: 'Metas · Ajustes · doscientos' }
 export const dynamic = 'force-dynamic'
@@ -16,6 +17,18 @@ export default async function GoalsSettingsPage() {
   await requirePageRole(['owner', 'admin'])
   const [goals, months] = await Promise.all([getCompanyGoals(), getGoalMonths(7)])
   const [, ...past] = months // completed months only, newest first
+  const series = GOAL_METRICS.map((metric) => ({
+    metric,
+    points: [...months].reverse().map(({ month, rows }, i, all) => {
+      const row = rows.find((r) => r.metric === metric)
+      return {
+        month,
+        actual: row?.actual ?? 0,
+        target: row?.target ?? null,
+        current: i === all.length - 1,
+      }
+    }),
+  }))
 
   return (
     <div className="flex flex-col gap-6">
@@ -26,6 +39,14 @@ export default async function GoalsSettingsPage() {
       <Card>
         <CardContent className="pt-6">
           <GoalsForm goals={goals} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Evolución mensual</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <GoalsHistoryChart series={series} />
         </CardContent>
       </Card>
       <Card>
@@ -50,10 +71,18 @@ export default async function GoalsSettingsPage() {
                   <td className="py-2 pr-4 tabular-nums">{month}</td>
                   {GOAL_METRICS.map((metric) => {
                     const row = rows.find((r) => r.metric === metric)
-                    if (!row || row.target === null) {
+                    if (!row) {
                       return (
                         <td key={metric} className="py-2 pr-4 text-muted-foreground">
-                          Sin meta
+                          –
+                        </td>
+                      )
+                    }
+                    if (row.target === null) {
+                      return (
+                        <td key={metric} className="py-2 pr-4 text-muted-foreground tabular-nums">
+                          {formatGoalValue(metric, row.actual)}{' '}
+                          <span className="text-xs">(sin meta)</span>
                         </td>
                       )
                     }
