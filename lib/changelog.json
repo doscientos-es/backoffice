@@ -1,6 +1,44 @@
 {
   "releases": [
     {
+      "version": "0.1.121",
+      "date": "2026-10-14",
+      "title": "v0.1.121",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add delivery role to project repository linking action",
+            "Improve form submission handling in task and repository tests",
+            "Add tests for task blocker and repository link functionalities"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "428f4fac5589f1e69feaa759eb39aa68b3e64a1b",
+          "type": "feat",
+          "scope": "tasks",
+          "breaking": false,
+          "description": "Add delivery role to project repository linking action"
+        },
+        {
+          "sha": "0d3c37076025cd2ad20f1e69ed4583b6671991bb",
+          "type": "feat",
+          "scope": "tests",
+          "breaking": false,
+          "description": "Improve form submission handling in task and repository tests"
+        },
+        {
+          "sha": "1d67005f2f299633c113bdf03da66eb50e49516f",
+          "type": "feat",
+          "scope": "tests",
+          "breaking": false,
+          "description": "Add tests for task blocker and repository link functionalities"
+        }
+      ]
+    },
+    {
       "version": "0.1.120",
       "date": "2026-10-14",
       "title": "v0.1.120",

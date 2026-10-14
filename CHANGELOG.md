@@ -2,6 +2,14 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-14 — v0.1.121
+
+### Nuevas funciones
+
+- Add delivery role to project repository linking action
+- Improve form submission handling in task and repository tests
+- Add tests for task blocker and repository link functionalities
+
 ## 2026-10-14 — v0.1.120
 
 ### Nuevas funciones
