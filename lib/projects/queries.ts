@@ -248,14 +248,14 @@ export async function getProjectWorkspace(
       ? supabase
           .from('tasks')
           .select(
-            'id, title, status, priority, due_date, kanban_order, team_members:assignee_id(id, name)',
+            'id, title, status, priority, due_date, kanban_order, blocked_reason, team_members:assignee_id(id, name)',
           )
           .eq('project_id', id)
           .is('deleted_at', null)
           .order('kanban_order', { ascending: true })
       : supabase
           .from('tasks')
-          .select('id, title, status')
+          .select('id, title, status, blocked_reason')
           .eq('project_id', id)
           .is('deleted_at', null)
           .order('created_at', { ascending: false })

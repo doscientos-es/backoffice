@@ -23,6 +23,7 @@ type TaskRow = {
   status: string
   priority: string
   due_date: string | null
+  blocked_reason: string | null
   projects: { id: string; name: string } | null
   leads: { id: string; name: string } | null
   clients: { id: string; name: string } | null
@@ -36,7 +37,7 @@ export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoard
     supabase
       .from('tasks')
       .select(
-        'id, title, status, due_date, priority, projects(id, name), leads(id, name), clients(id, name), team_members:assignee_id(id, name)',
+        'id, title, status, due_date, priority, blocked_reason, projects(id, name), leads(id, name), clients(id, name), team_members:assignee_id(id, name)',
       ),
   ).eq('kind', 'task')
 
@@ -44,6 +45,7 @@ export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoard
   if (params.priority) query = query.eq('priority', params.priority)
   if (params.projectId) query = query.eq('project_id', params.projectId)
   if (params.assigneeId) query = query.eq('assignee_id', params.assigneeId)
+  if (params.blockedOnly) query = query.not('blocked_reason', 'is', null)
 
   const { data, error } = await query
     .order('kanban_order', { ascending: true, nullsFirst: false })
@@ -58,6 +60,7 @@ export async function listTasksBoard(params: TaskBoardParams): Promise<TaskBoard
     status: t.status,
     priority: t.priority,
     due_date: t.due_date,
+    blocked_reason: t.blocked_reason ?? null,
     project: t.projects ? { id: t.projects.id, name: t.projects.name } : null,
     lead: t.leads ? { id: t.leads.id, name: t.leads.name } : null,
     client: t.clients ? { id: t.clients.id, name: t.clients.name } : null,
@@ -77,7 +80,7 @@ export async function listTasksList(params: TaskListParams): Promise<TaskListRes
     supabase
       .from('tasks')
       .select(
-        'id, title, status, due_date, priority, projects(id, name), leads(id, name), clients(id, name), team_members:assignee_id(id, name)',
+        'id, title, status, due_date, priority, blocked_reason, projects(id, name), leads(id, name), clients(id, name), team_members:assignee_id(id, name)',
         { count: 'exact' },
       ),
   ).eq('kind', 'task')
@@ -87,6 +90,7 @@ export async function listTasksList(params: TaskListParams): Promise<TaskListRes
   if (params.priority) query = query.eq('priority', params.priority)
   if (params.projectId) query = query.eq('project_id', params.projectId)
   if (params.assigneeId) query = query.eq('assignee_id', params.assigneeId)
+  if (params.blockedOnly) query = query.not('blocked_reason', 'is', null)
 
   const sortCol = params.sort ?? 'priority'
   const ascending = params.sort ? params.dir !== 'desc' : sortCol !== 'priority'

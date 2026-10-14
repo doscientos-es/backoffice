@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { RemindersSection } from '@/app/(app)/inicio/_components/reminders-section'
 import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
 import { PageHeader } from '@/components/layout/page-header'
+import { BlockerBadge } from '@/components/tasks/blocker-badge'
 import { AttachmentSection } from '@/components/ui/attachment-section'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,6 +32,7 @@ import { ProjectEditDialog } from './project-edit-dialog'
 import { ProjectPortalSection } from './project-portal-section'
 import { ProjectTasksViewToggle } from './project-tasks-view-toggle'
 import { ProjectTeamSection } from './project-team-section'
+import { RepositoryLinkPanel } from './repository-link-panel'
 import { type KanbanTask, TasksKanban } from './tasks/tasks-kanban'
 import { type WorkLogRow, WorkLogSection } from './work-log-section'
 import { WorkspacePathsForm } from './workspace-paths-form'
@@ -298,23 +300,29 @@ export default async function ProjectDetailPage({
         />
       ) : null}
 
-      {user.role === 'owner' || user.role === 'admin' ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Ubicación del código</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <WorkspacePathsForm
-              projectId={project.id as string}
-              version={Number(project.version)}
-              paths={
-                Array.isArray(project.workspace_paths) ? (project.workspace_paths as string[]) : []
-              }
-              canEdit={canEdit}
-            />
-          </CardContent>
-        </Card>
-      ) : null}
+      <Card>
+        <CardHeader>
+          <CardTitle>Código y GitHub</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-5">
+          <RepositoryLinkPanel
+            key={Number(project.version)}
+            projectId={id}
+            version={Number(project.version)}
+            repository={(project.github_repo as string | null) ?? null}
+            syncMode={(project.github_sync_mode as string | null) ?? 'none'}
+            canEdit={canEdit}
+          />
+          <WorkspacePathsForm
+            projectId={project.id as string}
+            version={Number(project.version)}
+            paths={
+              Array.isArray(project.workspace_paths) ? (project.workspace_paths as string[]) : []
+            }
+            canEdit={canEdit}
+          />
+        </CardContent>
+      </Card>
 
       {(user.role === 'owner' || user.role === 'admin') &&
       (proposals ?? []).some((proposal) => proposal.status === 'accepted') ? (
@@ -382,6 +390,7 @@ export default async function ProjectDetailPage({
                   title: string
                   status: KanbanTask['status']
                   priority: KanbanTask['priority']
+                  blocked_reason: string | null
                   due_date: string | null
                   kanban_order: string
                   team_members: { id: string; name: string } | null
@@ -391,6 +400,7 @@ export default async function ProjectDetailPage({
                 title: t.title,
                 status: t.status,
                 priority: t.priority,
+                blocked_reason: t.blocked_reason,
                 due_date: t.due_date,
                 kanban_order: t.kanban_order,
                 assignee: t.team_members,
@@ -409,6 +419,7 @@ export default async function ProjectDetailPage({
                   >
                     {t.title as string}
                   </Link>
+                  <BlockerBadge reason={(t.blocked_reason as string | null) ?? null} />
                   <span className="text-xs text-muted-foreground sm:shrink-0">
                     {t.status as string}
                   </span>

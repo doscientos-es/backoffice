@@ -30,6 +30,7 @@ export type TaskStatus = 'todo' | 'in_progress' | 'in_review' | 'done' | 'cancel
 
 export type KanbanTask = {
   id: string
+  blocked_reason?: string | null
   title: string
   status: TaskStatus
   priority: TaskPriority
@@ -269,6 +270,7 @@ function TaskCard({ task, isOverlay = false }: { task: KanbanTask; isOverlay?: b
         </Link>
         <StatusBadge meta={TASK_PRIORITY} value={task.priority} className="shrink-0" />
       </div>
+      <BlockerBadge reason={task.blocked_reason} />
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span className="truncate">{task.assignee?.name ?? 'Sin asignar'}</span>
         {task.due_date ? <span className="tabular-nums">{task.due_date}</span> : null}

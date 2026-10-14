@@ -3,6 +3,7 @@ import Link from 'next/link'
 
 import { ListControls } from '@/components/layout/list-controls'
 import { PageHeader } from '@/components/layout/page-header'
+import { BlockerBadge } from '@/components/tasks/blocker-badge'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requireUser } from '@/lib/auth'
 import { can } from '@/lib/permissions'
@@ -45,6 +46,7 @@ export default async function TasksPage({
   const q = parseStringParam(sp, 'q')
   const status = parseStringParam(sp, 'status')
   const priority = parseStringParam(sp, 'priority')
+  const blockedOnly = parseStringParam(sp, 'blocked') === 'yes'
   const projectId = parseStringParam(sp, 'project')
   const assigneeParam = parseStringParam(sp, 'assignee')
   const page = parsePage(sp)
@@ -87,6 +89,7 @@ export default async function TasksPage({
       priority,
       projectId,
       assigneeId,
+      blockedOnly,
     })
     const tasks = items as KanbanTask[]
 
@@ -117,6 +120,11 @@ export default async function TasksPage({
             filters={[
               { key: 'project', label: 'Proyecto', options: PROJECT_OPTIONS, searchable: true },
               { key: 'priority', label: 'Prioridad', options: PRIORITY_OPTIONS },
+              {
+                key: 'blocked',
+                label: 'Bloqueos',
+                options: [{ value: 'yes', label: 'Solo bloqueadas' }],
+              },
               {
                 key: 'assignee',
                 label: 'Responsable',
@@ -151,6 +159,7 @@ export default async function TasksPage({
     priority,
     projectId,
     assigneeId,
+    blockedOnly,
     page,
     sort,
     dir,
@@ -161,7 +170,15 @@ export default async function TasksPage({
     href: `/tasks/${t.id}`,
 
     cells: {
-      titulo: { content: t.title, value: t.title },
+      titulo: {
+        content: (
+          <span className="flex flex-wrap items-center gap-2">
+            {t.title}
+            <BlockerBadge reason={t.blocked_reason} />
+          </span>
+        ),
+        value: t.title,
+      },
       contexto: {
         content:
           t.projects || t.leads || t.clients ? (
@@ -208,7 +225,7 @@ export default async function TasksPage({
       title="Tareas"
       description="Organiza el trabajo del equipo y relaciónalo opcionalmente con proyectos, leads o clientes."
       empty={
-        q || status || priority || projectId || assigneeId
+        q || status || priority || projectId || assigneeId || blockedOnly
           ? 'Sin coincidencias.'
           : 'Aún no hay tareas.'
       }
@@ -219,6 +236,11 @@ export default async function TasksPage({
         { key: 'project', label: 'Proyecto', options: PROJECT_OPTIONS },
         { key: 'status', label: 'Estado', options: STATUS_OPTIONS },
         { key: 'priority', label: 'Prioridad', options: PRIORITY_OPTIONS },
+        {
+          key: 'blocked',
+          label: 'Bloqueos',
+          options: [{ value: 'yes', label: 'Solo bloqueadas' }],
+        },
         { key: 'assignee', label: 'Responsable', options: ASSIGNEE_OPTIONS, searchable: true },
       ]}
       pagination={{ page, pageSize: TASK_LIST_PAGE_SIZE, total: count }}

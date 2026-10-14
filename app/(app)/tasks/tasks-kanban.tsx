@@ -30,6 +30,7 @@ type TaskPriority = SharedTaskPriority
 
 export type KanbanTask = {
   id: string
+  blocked_reason?: string | null
   title: string
   status: TaskStatus
   priority: TaskPriority
@@ -269,6 +270,10 @@ function TaskCard({ task, isOverlay = false }: { task: KanbanTask; isOverlay?: b
       ) : (
         <div className="mt-1.5 text-[11px] text-muted-foreground">Personal</div>
       )}
+
+      <div className="mt-1.5">
+        <BlockerBadge reason={task.blocked_reason} />
+      </div>
 
       <div className="mt-2 flex items-center justify-between gap-2 text-[11px]">
         <span className="truncate text-muted-foreground">

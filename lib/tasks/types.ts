@@ -13,6 +13,7 @@ export type TaskBoardItem = {
   status: string
   priority: string
   due_date: string | null
+  blocked_reason?: string | null
   project: { id: string; name: string } | null
   lead: { id: string; name: string } | null
   client: { id: string; name: string } | null
@@ -24,6 +25,7 @@ export type TaskBoardParams = {
   priority?: string
   projectId?: string
   assigneeId?: string
+  blockedOnly?: boolean
 }
 
 export type TaskBoardResult = {
@@ -40,6 +42,7 @@ export type TaskListItem = {
   status: string
   priority: string
   due_date: string | null
+  blocked_reason?: string | null
   projects: { id: string; name: string } | null
   leads: { id: string; name: string } | null
   clients: { id: string; name: string } | null
@@ -54,6 +57,7 @@ export type TaskListParams = {
   priority?: string
   projectId?: string
   assigneeId?: string
+  blockedOnly?: boolean
   page?: number
   sort?: string
   dir?: 'asc' | 'desc'

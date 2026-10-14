@@ -21,6 +21,7 @@ import type { GitHubSyncMode } from '../../projects/github-sync-section'
 import { syncTaskToGithub } from '../actions'
 import { BranchCommand } from './branch-command'
 import { DeleteTaskButton } from './delete-task-button'
+import { TaskBlockerPanel } from './task-blocker-panel'
 import { type CommentItem, TaskComments } from './task-comments'
 import { TaskEditDialog } from './task-edit-dialog'
 import { TaskStatusSelect } from './task-status-select'
@@ -124,6 +125,19 @@ export default async function TaskDetailPage({
             {canAdministerTask ? <DeleteTaskButton taskId={id} /> : null}
           </div>
         }
+      />
+
+      <TaskBlockerPanel
+        key={Number(task.version)}
+        taskId={id}
+        version={Number(task.version)}
+        reason={(task.blocked_reason as string | null) ?? null}
+        blockedAt={(task.blocked_at as string | null) ?? null}
+        ownerId={(task.blocker_owner_id as string | null) ?? null}
+        reviewOn={(task.blocker_review_on as string | null) ?? null}
+        members={(members ?? []) as Array<{ id: string; name: string }>}
+        canEdit={canEdit}
+        closed={task.status === 'done' || task.status === 'cancelled'}
       />
 
       <div className="grid gap-6">
