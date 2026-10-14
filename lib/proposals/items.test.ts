@@ -14,7 +14,13 @@ const items: ProposalItemInput[] = [
 describe('proposal item helpers', () => {
   it('keeps line ordering and recomputes totals on the server', () => {
     expect(buildProposalItemRows(items, 'proposal-1')).toEqual([
-      { ...items[0], proposal_id: 'proposal-1', position: 0 },
+      {
+        ...items[0],
+        discount_percent: 0,
+        discount_reason: null,
+        proposal_id: 'proposal-1',
+        position: 0,
+      },
     ])
     expect(buildProposalTotalsPatch(items)).toEqual({ subtotal: 200, tax_amount: 42, total: 242 })
   })
