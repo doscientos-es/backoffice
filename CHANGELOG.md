@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-14 — v0.1.118
+
+### Nuevas funciones
+
+- Add commercial performance metrics and calculations
+- Implement follow-up functionality for proposals
+
 ## 2026-10-14 — v0.1.117
 
 ### Nuevas funciones

@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.118",
+      "date": "2026-10-14",
+      "title": "v0.1.118",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add commercial performance metrics and calculations",
+            "Implement follow-up functionality for proposals"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "922d67379a097ddeb184a03ee0b85aea58094ea4",
+          "type": "feat",
+          "scope": "performance",
+          "breaking": false,
+          "description": "Add commercial performance metrics and calculations"
+        },
+        {
+          "sha": "cf48155cab3aab21de58a22a2e67036dbb06adae",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Implement follow-up functionality for proposals"
+        }
+      ]
+    },
+    {
       "version": "0.1.117",
       "date": "2026-10-14",
       "title": "v0.1.117",
