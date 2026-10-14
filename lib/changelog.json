@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.119",
+      "date": "2026-10-14",
+      "title": "v0.1.119",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add commercial performance panel and related tests"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "9d2e68250c0ba2ebb90698862a6e5130a783f30b",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add commercial performance panel and related tests"
+        }
+      ]
+    },
+    {
       "version": "0.1.118",
       "date": "2026-10-14",
       "title": "v0.1.118",

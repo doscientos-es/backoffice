@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-14 — v0.1.119
+
+### Nuevas funciones
+
+- Add commercial performance panel and related tests
+
 ## 2026-10-14 — v0.1.118
 
 ### Nuevas funciones
