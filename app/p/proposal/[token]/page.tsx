@@ -475,7 +475,7 @@ export default async function PortalProposalPage({
     maintenanceOffer,
     (proposal.maintenance_selected_plan_id as string | null) ?? null,
   )
-  const safeItems = maintenancePlan
+  const safeItems: ProposalItem[] = maintenancePlan
     ? [
         ...displayBaseItems,
         maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle),

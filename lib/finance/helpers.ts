@@ -338,10 +338,10 @@ export function netOneTimeAmounts(
   const target = Math.round(roundCurrency(before - global) * 100)
   const diff = target - cents.reduce((a, b) => a + b, 0)
   if (diff !== 0) {
-    const last = cents.reduce((acc, c, i) => (lineNets[i] > 0 ? i : acc), -1)
-    if (last >= 0) cents[last] = Math.max(0, cents[last] + diff)
+    const last = cents.reduce((acc, c, i) => ((lineNets[i] ?? 0) > 0 ? i : acc), -1)
+    if (last >= 0) cents[last] = Math.max(0, (cents[last] ?? 0) + diff)
   }
-  return items.map((it, i) => (isOneTime(it) ? cents[i] / 100 : null))
+  return items.map((it, i) => (isOneTime(it) ? (cents[i] ?? 0) / 100 : null))
 }
 
 /** Row in a VAT breakdown table (one entry per distinct rate). */
