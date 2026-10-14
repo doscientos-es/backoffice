@@ -45,7 +45,7 @@ declare
   v_task public.tasks%rowtype;
   v_before public.tasks%rowtype;
   v_reason text := nullif(btrim(p_reason), '');
-  v_mcp boolean := public.has_valid_mcp_access_token();
+  v_mcp boolean := coalesce(public.has_valid_mcp_access_token(), false);
 begin
   if not v_mcp and not (public.has_permission('tasks.write') and public.can_access_task(p_task_id)) then
     raise exception 'No tienes permisos para modificar este bloqueo.' using errcode = '42501';
@@ -94,7 +94,7 @@ declare
   v_repository text := regexp_replace(btrim(p_repository), '/$', '');
   v_owner text;
   v_name text;
-  v_mcp boolean := public.has_valid_mcp_access_token();
+  v_mcp boolean := coalesce(public.has_valid_mcp_access_token(), false);
 begin
   if not v_mcp and not (public.has_permission('projects.write') and public.can_access_project(p_project_id)) then
     raise exception 'No tienes permisos para enlazar este repositorio.' using errcode = '42501';

@@ -5,7 +5,10 @@ import { VersionConflictError } from '@/lib/concurrency/version-conflict'
 import { SetTaskBlockerInput } from '@/lib/schemas/developer-workflow'
 import { createServerClient } from '@/lib/supabase/server'
 
-export const setTaskBlocker = defineAction({
+export const setTaskBlocker = defineAction<
+  typeof SetTaskBlockerInput,
+  { version: number; projectId: string | null }
+>({
   name: 'tasks.setBlocker',
   schema: SetTaskBlockerInput,
   roles: ['owner', 'admin', 'member', 'sales', 'delivery'],
