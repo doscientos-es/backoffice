@@ -1,6 +1,49 @@
 {
   "releases": [
     {
+      "version": "0.1.117",
+      "date": "2026-10-14",
+      "title": "v0.1.117",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add discount details to proposal acceptance and display",
+            "Calculate net amounts for one-time invoice items"
+          ]
+        },
+        {
+          "title": "Correcciones",
+          "items": [
+            "Ensure discount values are correctly initialized"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "5eaa9d5483c3a86f84357eacded68e2b8970c016",
+          "type": "fix",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Ensure discount values are correctly initialized"
+        },
+        {
+          "sha": "c3bd4591579ecca119caec94406ef2c338d6624a",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Add discount details to proposal acceptance and display"
+        },
+        {
+          "sha": "2f6ce437533bfa62b5776012cee3be9d2c10b86b",
+          "type": "feat",
+          "scope": "proposal-drafts",
+          "breaking": false,
+          "description": "Calculate net amounts for one-time invoice items"
+        }
+      ]
+    },
+    {
       "version": "0.1.116",
       "date": "2026-10-14",
       "title": "v0.1.116",

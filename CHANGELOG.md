@@ -2,6 +2,17 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-14 — v0.1.117
+
+### Nuevas funciones
+
+- Add discount details to proposal acceptance and display
+- Calculate net amounts for one-time invoice items
+
+### Correcciones
+
+- Ensure discount values are correctly initialized
+
 ## 2026-10-14 — v0.1.116
 
 ### Nuevas funciones
