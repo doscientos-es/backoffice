@@ -4,14 +4,16 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
-import { requireUser } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
 import { getLeadJourneyAnalytics } from '@/lib/leads/analytics'
 import { leadAnalyticsRangeToDates, parseLeadAnalyticsRange } from '@/lib/leads/analytics-range'
+import { getCommercialPerformance } from '@/lib/leads/commercial-performance-queries'
 import { formatEUR } from '@/lib/utils'
 
 import { LeadCreateDialog } from '../lead-create-dialog'
 import { LeadsViewToggle } from '../view-toggle'
 import { AnalyticsRangeSelector } from './analytics-range-selector'
+import { CommercialPerformancePanel } from './commercial-performance-panel'
 import { LeadAnalyticsCharts } from './lead-analytics-charts'
 
 export const metadata: Metadata = { title: 'Análisis de leads · doscientos' }
@@ -22,10 +24,13 @@ export default async function LeadAnalyticsPage({
 }: {
   searchParams: Promise<{ range?: string | string[] }>
 }) {
-  await requireUser()
+  await requirePagePermission('leads.read')
   const range = parseLeadAnalyticsRange((await searchParams).range)
   const dates = leadAnalyticsRangeToDates(range)
-  const { analytics, error } = await getLeadJourneyAnalytics(dates)
+  const [{ analytics, error }, commercial] = await Promise.all([
+    getLeadJourneyAnalytics(dates),
+    getCommercialPerformance(dates),
+  ])
   const actions = (
     <div className="flex items-center gap-2">
       <LeadsViewToggle view="analytics" />
@@ -44,6 +49,19 @@ export default async function LeadAnalyticsPage({
       <div className="flex justify-end">
         <AnalyticsRangeSelector current={range} />
       </div>
+
+      {commercial.error ? (
+        <Card>
+          <CardContent className="py-6 text-sm text-destructive">{commercial.error}</CardContent>
+        </Card>
+      ) : commercial.performance ? (
+        <CommercialPerformancePanel
+          performance={commercial.performance}
+          canSeePrices={commercial.canSeePrices}
+          since={dates.since}
+          until={dates.until}
+        />
+      ) : null}
 
       {error ? (
         <Card>

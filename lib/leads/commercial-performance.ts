@@ -25,7 +25,7 @@ export type PerformanceInteraction = {
   performed_by: string | null
   type: string
   created_at: string
-  payload: unknown
+  payload?: unknown
 }
 export type PerformanceReminder = {
   lead_id: string | null
@@ -69,10 +69,10 @@ export function summarizeDurations(pairs: DurationPair[], now: Date): DurationSu
     meanHours: count ? hours.reduce((sum, value) => sum + value, 0) / count : null,
     medianHours: count
       ? count % 2
-        ? hours[middle]
-        : (hours[middle - 1] + hours[middle]) / 2
+        ? (hours[middle] ?? null)
+        : ((hours[middle - 1] ?? 0) + (hours[middle] ?? 0)) / 2
       : null,
-    p90Hours: count ? hours[Math.ceil(count * 0.9) - 1] : null,
+    p90Hours: count ? (hours[Math.ceil(count * 0.9) - 1] ?? null) : null,
   }
 }
 
@@ -190,6 +190,7 @@ export function buildCommercialPerformance(input: {
     rows.some((row) => row.total !== null)
       ? rows.reduce((sum, row) => sum + (row.total ?? 0), 0)
       : null
+  const pricedAccepted = accepted.filter((row) => row.total !== null)
   const names = new Map(input.members.map((row) => [row.id, row.name]))
   const memberIds = new Set([
     ...leads.map((row) => row.assigned_to),
@@ -256,8 +257,10 @@ export function buildCommercialPerformance(input: {
     decidedAcceptanceRate: percent(acceptedSent, acceptedSent + rejectedSent),
     acceptedValue: amount(accepted),
     pendingValue: amount(pending),
-    averageAcceptedValue:
-      accepted.length && amount(accepted) !== null ? amount(accepted)! / accepted.length : null,
+    pricedAccepted: pricedAccepted.length,
+    averageAcceptedValue: pricedAccepted.length
+      ? (amount(pricedAccepted) ?? 0) / pricedAccepted.length
+      : null,
     manualAcceptances: accepted.filter((row) => !row.sent_at).length,
     active: active.length,
     covered: covered.length,

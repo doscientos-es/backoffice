@@ -184,14 +184,15 @@ function nextMove({
     const scheduled = scheduledReminders
       .filter((reminder) => new Date(reminder.remind_at) >= now)
       .sort((a, b) => a.remind_at.localeCompare(b.remind_at))[0]
-    return {
-      label: 'Preparar el seguimiento acordado',
-      hint: `“${scheduled.title}” ${relativeTime(scheduled.remind_at)}. Respeta la fecha acordada con el cliente.`,
-      href: leadFeedbackHref(leadId, 'schedule'),
-      cta: 'Revisar seguimiento',
-      icon: CalendarClock,
-      tone: 'border-primary/20 bg-primary/[0.06] text-primary',
-    }
+    if (scheduled)
+      return {
+        label: 'Preparar el seguimiento acordado',
+        hint: `“${scheduled.title}” ${relativeTime(scheduled.remind_at)}. Respeta la fecha acordada con el cliente.`,
+        href: leadFeedbackHref(leadId, 'schedule'),
+        cta: 'Revisar seguimiento',
+        icon: CalendarClock,
+        tone: 'border-primary/20 bg-primary/[0.06] text-primary',
+      }
   }
 
   return {

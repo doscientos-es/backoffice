@@ -88,4 +88,45 @@ describe('LeadNextMove', () => {
       '/leads/lead-1?feedback=call',
     )
   })
+
+  it('offers a direct action to resolve questions for a viewed proposal', () => {
+    render(
+      <LeadNextMove
+        {...props}
+        proposals={[
+          {
+            id: 'viewed',
+            number: 'P-1',
+            title: 'Proyecto',
+            status: 'viewed',
+            total: 1000,
+            valid_until: null,
+            sent_at: '2026-08-01T00:00:00Z',
+            viewed_at: '2026-08-02T00:00:00Z',
+            responded_at: null,
+            notes: null,
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByText('Resolver dudas y acordar decisión')).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Registrar llamada' }).getAttribute('href')).toBe(
+      '/leads/lead-1?feedback=call',
+    )
+  })
+
+  it('respects a future follow-up instead of suggesting a new opportunity', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-20T00:00:00Z'))
+    render(
+      <LeadNextMove
+        {...props}
+        reminders={[{ id: 'next', title: 'Revisar dudas', remind_at: '2026-08-21T00:00:00Z' }]}
+      />,
+    )
+    expect(screen.getByText('Preparar el seguimiento acordado')).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Revisar seguimiento' }).getAttribute('href')).toBe(
+      '/leads/lead-1?feedback=schedule',
+    )
+  })
 })
