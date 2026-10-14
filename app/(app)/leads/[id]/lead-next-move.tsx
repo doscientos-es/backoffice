@@ -4,7 +4,7 @@ import {
   CalendarClock,
   CircleDollarSign,
   FileText as FileSignature,
-  Mail,
+  type Mail,
   Phone,
   Receipt as ReceiptText,
 } from 'lucide-react'
@@ -19,6 +19,7 @@ import type {
   LeadRelatedProject,
   LeadRelatedProposal,
 } from '@/lib/leads/types'
+import { proposalFollowUp } from '@/lib/proposals/follow-up'
 import { relativeTime } from '@/lib/utils'
 
 type NextMove = {
@@ -121,12 +122,13 @@ function nextMove({
   }
 
   const openProposal = proposals.find((item) => ['sent', 'viewed'].includes(item.status ?? ''))
-  if (openProposal) {
+  if (openProposal && !hasFutureReminder && isActiveLeadStatus(leadStatus)) {
+    const followUp = proposalFollowUp(openProposal, now)
     return {
-      label: 'Hacer seguimiento de la propuesta',
-      hint: `${openProposal.number ?? 'La propuesta'} está en circulación.`,
-      href: `/proposals/${openProposal.id}`,
-      cta: 'Abrir propuesta',
+      label: followUp?.label ?? 'Hacer seguimiento de la propuesta',
+      hint: followUp?.hint ?? 'Acordar un siguiente paso con fecha.',
+      href: contactHref,
+      cta: contactCta,
       icon: FileSignature,
       tone: 'border-violet-500/20 bg-violet-500/[0.06] text-violet-700 dark:text-violet-300',
     }
@@ -173,6 +175,20 @@ function nextMove({
       hint: 'No hay ningún seguimiento programado para mantener viva la oportunidad.',
       href: leadFeedbackHref(leadId, 'schedule'),
       cta: 'Agendar seguimiento',
+      icon: CalendarClock,
+      tone: 'border-primary/20 bg-primary/[0.06] text-primary',
+    }
+  }
+
+  if (hasFutureReminder && isActiveLeadStatus(leadStatus)) {
+    const scheduled = scheduledReminders
+      .filter((reminder) => new Date(reminder.remind_at) >= now)
+      .sort((a, b) => a.remind_at.localeCompare(b.remind_at))[0]
+    return {
+      label: 'Preparar el seguimiento acordado',
+      hint: `“${scheduled.title}” ${relativeTime(scheduled.remind_at)}. Respeta la fecha acordada con el cliente.`,
+      href: leadFeedbackHref(leadId, 'schedule'),
+      cta: 'Revisar seguimiento',
       icon: CalendarClock,
       tone: 'border-primary/20 bg-primary/[0.06] text-primary',
     }

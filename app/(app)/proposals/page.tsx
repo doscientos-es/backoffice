@@ -9,6 +9,7 @@ import { ClientAvatar } from '@/components/ui/client-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requirePagePermission } from '@/lib/auth'
 import { can } from '@/lib/permissions'
+import { proposalFollowUp } from '@/lib/proposals/follow-up'
 import { PROPOSAL_STATUS, type ProposalStatus } from '@/lib/status'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
@@ -19,7 +20,14 @@ export const dynamic = 'force-dynamic'
 
 const PAGE_SIZE = 25
 
-const PROPOSAL_SORT_COLUMNS = ['number', 'title', 'status', 'total', 'valid_until'] as const
+const PROPOSAL_SORT_COLUMNS = [
+  'number',
+  'title',
+  'status',
+  'total',
+  'valid_until',
+  'sent_at',
+] as const
 
 const STATUS_FILTER_OPTIONS = (Object.keys(PROPOSAL_STATUS) as ProposalStatus[]).map((value) => ({
   value,
@@ -32,7 +40,12 @@ const EXPIRY_FILTER_OPTIONS = [
   { value: 'expired', label: 'Vencidas' },
 ]
 
-const FOLLOW_UP_FILTER_OPTIONS = [{ value: 'waiting_72', label: 'Esperando +72 h' }]
+const FOLLOW_UP_FILTER_OPTIONS = [
+  { value: 'pending', label: 'Todas las pendientes' },
+  { value: 'waiting_72', label: 'Esperando +72 h' },
+  { value: 'viewed', label: 'Vistas · sin respuesta' },
+  { value: 'not_viewed', label: 'Sin apertura registrada' },
+]
 const FOLLOW_UP_CUTOFF_MS = 72 * 60 * 60 * 1000
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -55,7 +68,12 @@ export default async function ProposalsPage({
   const sortColumns = canSeePrices
     ? PROPOSAL_SORT_COLUMNS
     : PROPOSAL_SORT_COLUMNS.filter((column) => column !== 'total')
-  const { sort, dir } = parseSortParam(sp, sortColumns, 'created_at', 'desc')
+  const { sort, dir } = parseSortParam(
+    sp,
+    sortColumns,
+    followUp ? 'sent_at' : 'created_at',
+    followUp ? 'asc' : 'desc',
+  )
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
@@ -78,7 +96,7 @@ export default async function ProposalsPage({
   let query = supabase
     .from('proposals')
     .select(
-      'id, number, title, status, delivered_at, valid_until, sent_at, client_id, clients(name, logo_url), lead_id, leads(name), project_id, projects(name)',
+      'id, number, title, status, delivered_at, valid_until, sent_at, viewed_at, client_id, clients(name, logo_url), lead_id, leads(name), project_id, projects(name)',
       { count: 'exact' },
     )
     .is('deleted_at', null)
@@ -106,6 +124,11 @@ export default async function ProposalsPage({
     const in30 = new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10)
     query = query.gte('valid_until', today).lte('valid_until', in30)
   }
+  if (FOLLOW_UP_FILTER_OPTIONS.some((option) => option.value === followUp)) {
+    query = query.in('status', ['sent', 'viewed']).is('responded_at', null)
+  }
+  if (followUp === 'viewed') query = query.eq('status', 'viewed')
+  if (followUp === 'not_viewed') query = query.eq('status', 'sent').is('viewed_at', null)
   if (followUp === 'waiting_72') {
     query = query
       .in('status', ['sent', 'viewed'])
@@ -141,13 +164,21 @@ export default async function ProposalsPage({
   )
 
   const hasFilters = !!(q || status || clientId || leadId || expiry || followUp)
+  const actions = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button asChild size="sm" variant="outline">
+        <Link href="/proposals?followup=waiting_72">Revisar seguimientos</Link>
+      </Button>
+      {canWriteProposals ? newAction : null}
+    </div>
+  )
 
   return (
     <ListPage
       title="Propuestas"
       empty={hasFilters ? 'Sin coincidencias.' : 'Aún no hay propuestas.'}
       error={error?.message}
-      actions={canWriteProposals ? newAction : undefined}
+      actions={actions}
       emptyAction={canWriteProposals ? newAction : undefined}
       addHref={canWriteProposals ? '/proposals/new' : undefined}
       addLabel={canWriteProposals ? 'Nueva propuesta' : undefined}
@@ -166,7 +197,7 @@ export default async function ProposalsPage({
         { key: 'cliente_lead', label: 'Cliente / Lead', minWidth: '13rem' },
         { key: 'proyecto', label: 'Proyecto', minWidth: '10rem' },
         { key: 'estado', label: 'Estado', sortKey: 'status', minWidth: '7rem' },
-        { key: 'seguimiento', label: 'Seguimiento', minWidth: '7.5rem' },
+        { key: 'seguimiento', label: 'Siguiente paso', sortKey: 'sent_at', minWidth: '16rem' },
         ...(canSeePrices
           ? [
               {
@@ -200,6 +231,7 @@ export default async function ProposalsPage({
             </span>
           )
           const total = pricesByProposal.get(p.id as string)
+          const followUpInfo = proposalFollowUp(p)
           return {
             id: p.id as string,
             href: `/proposals/${p.id}`,
@@ -221,8 +253,21 @@ export default async function ProposalsPage({
                 value: p.delivered_at ? `${p.status as string} (terminada)` : (p.status as string),
               },
               seguimiento: {
-                content: p.sent_at ? relativeTime(p.sent_at as string) : 'Sin enviar',
-                value: (p.sent_at as string | null) ?? '',
+                content: followUpInfo ? (
+                  <span className="flex flex-col gap-1">
+                    <span className={followUpInfo.overdue ? 'text-warning' : undefined}>
+                      {followUpInfo.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{followUpInfo.hint}</span>
+                  </span>
+                ) : p.sent_at ? (
+                  relativeTime(p.sent_at as string)
+                ) : (
+                  'Sin enviar'
+                ),
+                value: followUpInfo
+                  ? `${followUpInfo.label} · ${followUpInfo.hint}`
+                  : ((p.sent_at as string | null) ?? ''),
               },
               ...(canSeePrices
                 ? { importe: { content: formatEUR(total ?? 0), value: total ?? 0 } }

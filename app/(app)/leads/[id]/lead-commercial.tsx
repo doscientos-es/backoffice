@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/status-badge'
 import type { LeadRelatedInvoice, LeadRelatedProject, LeadRelatedProposal } from '@/lib/leads/types'
+import { proposalFollowUp } from '@/lib/proposals/follow-up'
 import {
   INVOICE_STATUS,
   type InvoiceStatus,
@@ -34,21 +35,6 @@ function ClientRequiredHint() {
 
 function relationshipSummary(count: number, singular: string, plural: string) {
   return `${count} ${count === 1 ? singular : plural}`
-}
-
-function proposalFollowUpHint(proposal: LeadRelatedProposal): string | null {
-  if (proposal.status !== 'sent' && proposal.status !== 'viewed') return null
-  if (proposal.valid_until && new Date(`${proposal.valid_until}T23:59:59`) < new Date()) {
-    return 'Vigencia vencida · confirmar si sigue interesado'
-  }
-  if (!proposal.sent_at) return 'Enviada · confirmar recepción'
-  const elapsedHours = (Date.now() - new Date(proposal.sent_at).getTime()) / 3_600_000
-  if (elapsedHours >= 72) {
-    const elapsedDays = Math.floor(elapsedHours / 24)
-    return `Enviada hace ${elapsedDays} ${elapsedDays === 1 ? 'día' : 'días'} · confirmar respuesta`
-  }
-  if (proposal.viewed_at) return 'Vista · resolver dudas y acordar siguiente paso'
-  return null
 }
 
 function MobileRelationshipRow({
@@ -134,9 +120,9 @@ export function LeadCommercial({
                         ) : null}
                       </span>
                     </span>
-                    {proposalFollowUpHint(proposal) ? (
+                    {proposalFollowUp(proposal) ? (
                       <span className="text-[11px] leading-snug text-warning">
-                        {proposalFollowUpHint(proposal)}
+                        {proposalFollowUp(proposal)?.label}
                       </span>
                     ) : null}
                   </Link>
