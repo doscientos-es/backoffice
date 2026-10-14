@@ -8,7 +8,7 @@ import { createServerClient } from '@/lib/supabase/server'
 export const linkProjectRepository = defineAction({
   name: 'projects.linkRepository',
   schema: LinkProjectRepositoryInput,
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin', 'member', 'delivery'],
   revalidate: (_payload, input) => ['/projects', `/projects/${input.projectId}`],
   handler: async (input) => {
     const supabase = await createServerClient()
