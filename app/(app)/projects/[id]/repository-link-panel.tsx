@@ -93,7 +93,11 @@ export function RepositoryLinkPanel({
           : 'Solo un enlace: no crea issues, ramas ni activa la sincronización con GitHub.'}
       </p>
       {editing && canEdit && syncMode !== 'bidirectional' ? (
-        <form onSubmit={save} className="grid gap-3">
+        <form
+          aria-label="Enlazar repositorio de GitHub"
+          onSubmit={(event) => void save(event)}
+          className="grid gap-3"
+        >
           <div className="grid gap-1.5">
             <label htmlFor={prefix} className="text-sm font-medium">
               URL del repositorio de GitHub

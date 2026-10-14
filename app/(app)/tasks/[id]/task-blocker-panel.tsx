@@ -42,10 +42,12 @@ export function TaskBlockerPanel({
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const fields = new FormData(event.currentTarget)
+    const nextOwner = fields.get('ownerId')
+    const nextReview = fields.get('reviewOn')
     await update(
       value.trim(),
-      fields.get('ownerId')?.toString() || null,
-      fields.get('reviewOn')?.toString() || null,
+      typeof nextOwner === 'string' ? nextOwner || null : null,
+      typeof nextReview === 'string' ? nextReview || null : null,
     )
   }
 
@@ -124,7 +126,11 @@ export function TaskBlockerPanel({
           <summary className="w-fit cursor-pointer rounded text-sm font-medium text-primary focus-visible:outline-2 focus-visible:outline-offset-4">
             {reason ? 'Editar bloqueo' : 'Bloquear tarea'}
           </summary>
-          <form onSubmit={save} className="mt-3 grid gap-3">
+          <form
+            aria-label="Editar bloqueo de la tarea"
+            onSubmit={(event) => void save(event)}
+            className="mt-3 grid gap-3"
+          >
             <p id={`${prefix}-help`} className="text-xs text-muted-foreground">
               Es interno y no cambia el estado de la tarea. No incluyas contraseñas ni credenciales.
             </p>

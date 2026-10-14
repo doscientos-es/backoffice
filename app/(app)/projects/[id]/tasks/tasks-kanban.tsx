@@ -14,8 +14,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
-import type React from 'react'
-import { useOptimistic, useState, useTransition } from 'react'
+import { type ReactNode, useOptimistic, useState, useTransition } from 'react'
 
 import { BlockerBadge } from '@/components/tasks/blocker-badge'
 import { Badge } from '@/components/ui/badge'
@@ -201,7 +200,7 @@ function Column({
   label: string
   tone: string
   tasks: KanbanTask[]
-  addButton?: React.ReactNode
+  addButton?: ReactNode
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
   return (

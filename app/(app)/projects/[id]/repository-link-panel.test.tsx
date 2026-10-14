@@ -30,7 +30,7 @@ describe('RepositoryLinkPanel', () => {
     fireEvent.change(screen.getByLabelText('URL del repositorio de GitHub'), {
       target: { value: 'https://github.com/example/project' },
     })
-    fireEvent.submit(screen.getByRole('button', { name: 'Enlazar repositorio' }).closest('form')!)
+    fireEvent.submit(screen.getByRole('form', { name: 'Enlazar repositorio de GitHub' }))
     await waitFor(() =>
       expect(action).toHaveBeenCalledWith({
         projectId: 'project-1',
@@ -58,7 +58,7 @@ describe('RepositoryLinkPanel', () => {
   it('keeps the form open on a failed write', async () => {
     action.mockResolvedValue({ ok: false, error: 'Version changed' })
     render(<RepositoryLinkPanel {...props} />)
-    fireEvent.submit(screen.getByRole('button', { name: 'Enlazar repositorio' }).closest('form')!)
+    fireEvent.submit(screen.getByRole('form', { name: 'Enlazar repositorio de GitHub' }))
     await waitFor(() => expect(screen.getByText('Version changed')).toBeTruthy())
     expect(screen.getByLabelText('URL del repositorio de GitHub')).toBeTruthy()
     expect(refresh).not.toHaveBeenCalled()

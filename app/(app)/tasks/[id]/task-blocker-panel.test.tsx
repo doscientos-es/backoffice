@@ -35,7 +35,7 @@ describe('TaskBlockerPanel', () => {
       target: { value: 'member-1' },
     })
     fireEvent.change(screen.getByLabelText(/Revisar el/), { target: { value: '2026-10-20' } })
-    fireEvent.submit(screen.getByRole('button', { name: 'Guardar bloqueo' }).closest('form')!)
+    fireEvent.submit(screen.getByRole('form', { name: 'Editar bloqueo de la tarea' }))
     await waitFor(() =>
       expect(action).toHaveBeenCalledWith({
         taskId: 'task-1',

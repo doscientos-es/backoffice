@@ -5,7 +5,7 @@ import { RemindersSection } from '@/app/(app)/inicio/_components/reminders-secti
 import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
 import { PageHeader } from '@/components/layout/page-header'
 import { BlockerBadge } from '@/components/tasks/blocker-badge'
-import { AttachmentSection } from '@/components/ui/attachment-section'
+import { type AttachmentItem, AttachmentSection } from '@/components/ui/attachment-section'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
@@ -304,23 +304,25 @@ export default async function ProjectDetailPage({
         <CardHeader>
           <CardTitle>Código y GitHub</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-5">
-          <RepositoryLinkPanel
-            key={Number(project.version)}
-            projectId={id}
-            version={Number(project.version)}
-            repository={(project.github_repo as string | null) ?? null}
-            syncMode={(project.github_sync_mode as string | null) ?? 'none'}
-            canEdit={canEdit}
-          />
-          <WorkspacePathsForm
-            projectId={project.id as string}
-            version={Number(project.version)}
-            paths={
-              Array.isArray(project.workspace_paths) ? (project.workspace_paths as string[]) : []
-            }
-            canEdit={canEdit}
-          />
+        <CardContent>
+          <div className="grid gap-5">
+            <RepositoryLinkPanel
+              key={Number(project.version)}
+              projectId={id}
+              version={Number(project.version)}
+              repository={(project.github_repo as string | null) ?? null}
+              syncMode={(project.github_sync_mode as string | null) ?? 'none'}
+              canEdit={canEdit}
+            />
+            <WorkspacePathsForm
+              projectId={project.id as string}
+              version={Number(project.version)}
+              paths={
+                Array.isArray(project.workspace_paths) ? (project.workspace_paths as string[]) : []
+              }
+              canEdit={canEdit}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -662,9 +664,7 @@ export default async function ProjectDetailPage({
         <AttachmentSection
           entityType="project"
           entityId={id}
-          attachments={
-            (attachments ?? []) as import('@/components/ui/attachment-section').AttachmentItem[]
-          }
+          attachments={(attachments ?? []) as AttachmentItem[]}
           canEdit={canEdit}
         />
       </div>

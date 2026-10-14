@@ -107,7 +107,7 @@ export default async function TaskDetailPage({
             {canEdit ? (
               <TaskEditDialog
                 task={{
-                  id: id,
+                  id,
                   title: task.title as string,
                   description: (task.description as string | null) ?? null,
                   client_title: (task.client_title as string | null) ?? null,

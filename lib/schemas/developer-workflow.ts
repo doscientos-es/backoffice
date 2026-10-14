@@ -25,8 +25,8 @@ export const LinkProjectRepositoryInput = z.object({
           url
             .replace(/\/$/, '')
             .split('/')
-            .at(-1)!
-            .replace(/\.git$/, ''),
+            .at(-1)
+            ?.replace(/\.git$/, '') ?? '',
         ),
       'Nombre de repositorio inválido',
     ),
