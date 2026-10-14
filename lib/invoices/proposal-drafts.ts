@@ -1,5 +1,10 @@
 import 'server-only'
-import { computeLineTotals } from '@/lib/finance'
+import {
+  computeLineTotals,
+  netOneTimeAmounts,
+  type BillingCycle,
+  type DiscountType,
+} from '@/lib/finance'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { effectivePaymentPlan, splitItemsForPaymentPlan } from '@/lib/proposals/scope'
 import type { createAdminClient } from '@/lib/supabase/admin'
@@ -17,7 +22,9 @@ export async function createProposalDraftInvoices(
 ): Promise<{ ids: string[]; created: number }> {
   const { data: proposal, error: proposalError } = await supabase
     .from('proposals')
-    .select('id, client_id, project_id, status, notes, payment_schedule, payment_plan')
+    .select(
+      'id, client_id, project_id, status, notes, payment_schedule, payment_plan, discount_type, discount_value',
+    )
     .eq('id', proposalId)
     .is('deleted_at', null)
     .maybeSingle()
@@ -32,7 +39,7 @@ export async function createProposalDraftInvoices(
   const [itemsResult, clientResult, settingsResult, existingResult] = await Promise.all([
     supabase
       .from('proposal_items')
-      .select('description, quantity, unit_price, vat_rate, billing_cycle')
+      .select('description, quantity, unit_price, vat_rate, billing_cycle, discount_percent')
       .eq('proposal_id', proposalId)
       .order('position'),
     supabase
@@ -53,15 +60,34 @@ export async function createProposalDraftInvoices(
   if (itemsResult.error) throw new Error(itemsResult.error.message)
   if (existingResult.error) throw new Error(existingResult.error.message)
 
-  const items = (itemsResult.data ?? [])
-    .map((item) => ({
-      description: (item.description as string | null) ?? null,
-      quantity: Number(item.quantity ?? 0),
-      unit_price: Number(item.unit_price ?? 0),
-      vat_rate: Number(item.vat_rate ?? 0),
-      billing_cycle: (item.billing_cycle as string | null) ?? null,
-    }))
-    .filter((item) => (item.billing_cycle ?? 'none') === 'none')
+  const rawItems = (itemsResult.data ?? []).map((item) => ({
+    description: (item.description as string | null) ?? null,
+    quantity: Number(item.quantity ?? 0),
+    unit_price: Number(item.unit_price ?? 0),
+    vat_rate: Number(item.vat_rate ?? 0),
+    billing_cycle: ((item.billing_cycle as string | null) ?? 'none') as BillingCycle,
+    discount_percent: Number(item.discount_percent ?? 0),
+  }))
+  // Invoices carry the NET amount (line + proposal discounts already applied),
+  // so they always add up to the accepted proposal total.
+  const netAmounts = netOneTimeAmounts(rawItems, {
+    type: ((proposal.discount_type as string | null) ?? 'none') as DiscountType,
+    value: Number(proposal.discount_value ?? 0),
+  })
+  const items = rawItems.flatMap((item, index) => {
+    const net = netAmounts[index]
+    if (net === null || net === undefined) return []
+    const discounted = item.discount_percent > 0 || Number(proposal.discount_value ?? 0) > 0
+    return [
+      {
+        description: item.description,
+        quantity: discounted ? 1 : item.quantity,
+        unit_price: discounted ? net : item.unit_price,
+        vat_rate: item.vat_rate,
+        billing_cycle: item.billing_cycle,
+      },
+    ]
+  })
   if (items.length === 0) throw new Error('La propuesta no tiene líneas puntuales para facturar')
 
   const alreadyInvoiced = new Set(

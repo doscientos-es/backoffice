@@ -302,6 +302,48 @@ export function computeProposalTotals(
   }
 }
 
+/**
+ * Net (after line + whole-proposal discounts) amount of each one-time item, in
+ * the same order as the input. Cent-exact: the amounts add up to
+ * `computeProposalTotals(...).oneTime.subtotal`. Recurring items are skipped
+ * (returned as `null`) because the global discount never applies to them.
+ */
+export function netOneTimeAmounts(
+  items: ReadonlyArray<
+    Pick<LineItem, 'quantity' | 'unit_price'> & {
+      billing_cycle?: BillingCycle | null
+      discount_percent?: number | string | null
+    }
+  >,
+  discount?: ProposalDiscount | null,
+): Array<number | null> {
+  const isOneTime = (it: { billing_cycle?: BillingCycle | null }) =>
+    !it.billing_cycle || it.billing_cycle === 'none'
+  const lineNets = items.map((it) =>
+    isOneTime(it)
+      ? (Number(it.quantity) || 0) *
+        (Number(it.unit_price) || 0) *
+        (1 - normalizeDiscountPercent(it.discount_percent) / 100)
+      : 0,
+  )
+  const before = lineNets.reduce((a, b) => a + b, 0)
+  let global = 0
+  if (discount && before > 0) {
+    const value = Math.max(0, Number(discount.value) || 0)
+    if (discount.type === 'percent') global = (before * Math.min(value, 100)) / 100
+    else if (discount.type === 'amount') global = Math.min(value, before)
+  }
+  const factor = before > 0 ? (before - global) / before : 1
+  const cents = lineNets.map((n) => Math.round(roundCurrency(n * factor) * 100))
+  const target = Math.round(roundCurrency(before - global) * 100)
+  const diff = target - cents.reduce((a, b) => a + b, 0)
+  if (diff !== 0) {
+    const last = cents.reduce((acc, c, i) => (lineNets[i] > 0 ? i : acc), -1)
+    if (last >= 0) cents[last] = Math.max(0, cents[last] + diff)
+  }
+  return items.map((it, i) => (isOneTime(it) ? cents[i] / 100 : null))
+}
+
 /** Row in a VAT breakdown table (one entry per distinct rate). */
 export type VatBreakdownRow = { rate: number; base: number; tax: number }
 
