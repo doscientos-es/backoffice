@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.116",
+      "date": "2026-10-14",
+      "title": "v0.1.116",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add discount functionality for proposals and line items"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "462e20b0c0390ea8a30db4fdac9bbdc1b5685caa",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Add discount functionality for proposals and line items"
+        }
+      ]
+    },
+    {
       "version": "0.1.115",
       "date": "2026-10-13",
       "title": "v0.1.115",

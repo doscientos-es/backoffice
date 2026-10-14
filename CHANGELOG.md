@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-14 — v0.1.116
+
+### Nuevas funciones
+
+- Add discount functionality for proposals and line items
+
 ## 2026-10-13 — v0.1.115
 
 ### Nuevas funciones
