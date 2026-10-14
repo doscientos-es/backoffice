@@ -71,7 +71,7 @@ export async function getCommercialPerformance(input: { since: string; until: st
       readPerformancePages<PerformanceInteraction>((from, to) =>
         supabase
           .from('lead_interactions')
-          .select('id, lead_id, performed_by, type, created_at, payload, leads!inner(deleted_at)')
+          .select('id, lead_id, performed_by, type, created_at, leads!inner(deleted_at)')
           .is('leads.deleted_at', null)
           .gte('created_at', start)
           .lte('created_at', end)
@@ -161,7 +161,7 @@ export async function getCommercialPerformance(input: { since: string; until: st
     // selecting total from proposals or by bypassing RLS with an admin client.
     if (canSeePrices) {
       for (const ids of batches(cohortProposals.map((row) => row.id))) {
-        const rows = await readPerformancePages<{ proposal_id: string; total: number }>(
+        const rows = await readPerformancePages<{ proposal_id: string; total: number | null }>(
           (from, to) =>
             supabase
               .from('proposal_prices')
@@ -171,6 +171,7 @@ export async function getCommercialPerformance(input: { since: string; until: st
               .range(from, to),
         )
         for (const row of rows) {
+          if (row.total === null) continue
           const value = Number(row.total)
           if (Number.isFinite(value)) prices.set(row.proposal_id, value)
         }

@@ -164,7 +164,7 @@ export function CommercialPerformancePanel({
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map(([label, value]) => (
           <Card key={label}>
-            <CardContent className="py-4">
+            <CardContent>
               <p className="text-xs text-muted-foreground">{label}</p>
               <p className="mt-1 text-xl font-semibold tabular-nums">{value}</p>
             </CardContent>
@@ -242,7 +242,9 @@ export function CommercialPerformancePanel({
             <TableBody>
               {p.byMember.map((member) => (
                 <TableRow key={member.id ?? 'unassigned'}>
-                  <TableCell className="font-medium">{member.name}</TableCell>
+                  <TableCell>
+                    <span className="font-medium">{member.name}</span>
+                  </TableCell>
                   <TableCell>
                     {member.leads} / {member.won}
                   </TableCell>

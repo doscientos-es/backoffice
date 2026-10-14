@@ -18,6 +18,7 @@ function mockTables(rows: Record<string, unknown[]>, failedTable?: string) {
     const builder: Record<string, unknown> = {}
     for (const method of ['select', 'is', 'gte', 'lte', 'in', 'eq', 'order', 'range'])
       builder[method] = vi.fn(() => builder)
+    // oxlint-disable-next-line unicorn/no-thenable -- Supabase query builders are intentionally awaitable.
     builder.then = (resolve: (result: unknown) => unknown) =>
       Promise.resolve({
         data: rows[table] ?? [],
@@ -87,6 +88,13 @@ describe('getCommercialPerformance', () => {
     expect(mocks.from.mock.calls.map(([table]) => table)).not.toContain('proposal_prices')
     expect(result.performance?.acceptedValue).toBeNull()
     expect(result.performance?.byMember[0]?.acceptedValue).toBeNull()
+  })
+
+  it('does not turn a missing projection price into a zero-value acceptance', async () => {
+    mockTables({ proposals: [proposal], proposal_prices: [{ proposal_id: 'p-1', total: null }] })
+    const result = await getCommercialPerformance(range)
+    expect(result.performance?.acceptedValue).toBeNull()
+    expect(result.performance?.pricedAccepted).toBe(0)
   })
   it('joins converted-client proposals back to the originating lead', async () => {
     mockTables({

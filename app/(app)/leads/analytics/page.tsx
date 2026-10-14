@@ -52,7 +52,9 @@ export default async function LeadAnalyticsPage({
 
       {commercial.error ? (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">{commercial.error}</CardContent>
+          <CardContent>
+            <p className="text-sm text-destructive">{commercial.error}</p>
+          </CardContent>
         </Card>
       ) : commercial.performance ? (
         <CommercialPerformancePanel

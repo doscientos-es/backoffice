@@ -21,6 +21,7 @@ beforeEach(() => {
     const builder: Record<string, ReturnType<typeof vi.fn>> = {}
     for (const method of ['select', 'is', 'in', 'eq', 'lt', 'order', 'range'])
       builder[method] = vi.fn(() => builder)
+    // oxlint-disable-next-line unicorn/no-thenable -- Match the awaitable Supabase query-builder contract.
     builder.then = vi.fn((resolve: (result: unknown) => unknown) =>
       Promise.resolve({ data: [], error: null, count: 0 }).then(resolve),
     )
