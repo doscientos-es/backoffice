@@ -16,6 +16,7 @@ import Link from 'next/link'
 import type React from 'react'
 import { useOptimistic, useState, useTransition } from 'react'
 
+import { BlockerBadge } from '@/components/tasks/blocker-badge'
 import { Badge } from '@/components/ui/badge'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { StatusBadge } from '@/components/ui/status-badge'
