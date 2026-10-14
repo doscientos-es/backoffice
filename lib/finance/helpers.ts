@@ -119,6 +119,10 @@ export type LineItem = {
    * current behavior.
    */
   billing_cycle?: BillingCycle
+  /** Per-line discount, 0..100 (%). Missing means no discount. */
+  discount_percent?: number
+  /** Optional motive shown next to the discounted line. */
+  discount_reason?: string | null
 }
 
 /** Sensible default line used when adding rows in editors. */
@@ -128,6 +132,21 @@ export const EMPTY_LINE_ITEM: Omit<LineItem, 'id'> = {
   unit_price: 0,
   vat_rate: 21,
   billing_cycle: 'none',
+  discount_percent: 0,
+  discount_reason: null,
+}
+
+export const DISCOUNT_TYPES = ['none', 'percent', 'amount'] as const
+export type DiscountType = (typeof DISCOUNT_TYPES)[number]
+
+/** Whole-proposal discount. Applies to one-time lines only. */
+export type ProposalDiscount = { type: DiscountType; value: number }
+
+/** Clamp a per-line discount to 0..100. */
+export function normalizeDiscountPercent(x: unknown): number {
+  const n = Number(x)
+  if (!Number.isFinite(n)) return 0
+  return Math.min(100, Math.max(0, n))
 }
 
 /** Per-line subtotal (quantity × unit price), rounded to 2 decimals. */
@@ -173,6 +192,13 @@ export type ProposalTotals = {
   yearly: ProposalBucket
   /** Sum across all cadences — useful as a single headline figure. */
   grand: ProposalBucket
+  /**
+   * One-time discount breakdown. `gross` is before any discount, so
+   * gross − lineDiscount − globalDiscount === oneTime.subtotal.
+   */
+  discounts: { gross: number; lineDiscount: number; globalDiscount: number }
+  /** Per-line discount (all cadences) — informational for recurring buckets. */
+  recurringLineDiscount: number
 }
 
 const emptyBucket = (): ProposalBucket => ({ subtotal: 0, taxAmount: 0, total: 0 })
@@ -184,8 +210,12 @@ const emptyBucket = (): ProposalBucket => ({ subtotal: 0, taxAmount: 0, total: 0
  */
 export function computeProposalTotals(
   items: ReadonlyArray<
-    Pick<LineItem, 'quantity' | 'unit_price' | 'vat_rate'> & { billing_cycle?: BillingCycle | null }
+    Pick<LineItem, 'quantity' | 'unit_price' | 'vat_rate'> & {
+      billing_cycle?: BillingCycle | null
+      discount_percent?: number | string | null
+    }
   >,
+  discount?: ProposalDiscount | null,
 ): ProposalTotals {
   const buckets: Record<BillingCycle, ProposalBucket> = {
     none: emptyBucket(),
@@ -194,11 +224,15 @@ export function computeProposalTotals(
     yearly: emptyBucket(),
   }
 
+  let oneTimeGross = 0
+  let oneTimeLineDiscount = 0
+  let recurringLineDiscount = 0
   for (const it of items) {
     const q = Number(it.quantity) || 0
     const up = Number(it.unit_price) || 0
     const vat = Number(it.vat_rate) || 0
-    const base = q * up
+    const gross = q * up
+    const base = gross * (1 - normalizeDiscountPercent(it.discount_percent) / 100)
     const cycle: BillingCycle =
       it.billing_cycle && (BILLING_CYCLES as readonly string[]).includes(it.billing_cycle)
         ? (it.billing_cycle as BillingCycle)
@@ -206,6 +240,27 @@ export function computeProposalTotals(
     const bucket = buckets[cycle]
     bucket.subtotal += base
     bucket.taxAmount += base * (vat / 100)
+    if (cycle === 'none') {
+      oneTimeGross += gross
+      oneTimeLineDiscount += gross - base
+    } else {
+      recurringLineDiscount += gross - base
+    }
+  }
+
+  // Whole-proposal discount: one-time lines only, applied proportionally so VAT
+  // stays correct when lines have different rates.
+  const netBeforeGlobal = buckets.none.subtotal
+  let globalDiscount = 0
+  if (discount && netBeforeGlobal > 0) {
+    const value = Math.max(0, Number(discount.value) || 0)
+    if (discount.type === 'percent') globalDiscount = (netBeforeGlobal * Math.min(value, 100)) / 100
+    else if (discount.type === 'amount') globalDiscount = Math.min(value, netBeforeGlobal)
+  }
+  if (globalDiscount > 0) {
+    const factor = (netBeforeGlobal - globalDiscount) / netBeforeGlobal
+    buckets.none.subtotal = netBeforeGlobal - globalDiscount
+    buckets.none.taxAmount *= factor
   }
 
   const finalize = (b: ProposalBucket): ProposalBucket => {
@@ -215,6 +270,14 @@ export function computeProposalTotals(
   }
 
   const oneTime = finalize(buckets.none)
+  const grossRounded = roundCurrency(oneTimeGross)
+  const discounts = {
+    gross: grossRounded,
+    lineDiscount: roundCurrency(oneTimeLineDiscount),
+    globalDiscount: roundCurrency(
+      grossRounded - roundCurrency(oneTimeLineDiscount) - oneTime.subtotal,
+    ),
+  }
   const monthly = finalize(buckets.monthly)
   const quarterly = finalize(buckets.quarterly)
   const yearly = finalize(buckets.yearly)
@@ -228,7 +291,15 @@ export function computeProposalTotals(
     total: roundCurrency(oneTime.total + monthly.total + quarterly.total + yearly.total),
   }
 
-  return { oneTime, monthly, quarterly, yearly, grand }
+  return {
+    oneTime,
+    monthly,
+    quarterly,
+    yearly,
+    grand,
+    discounts,
+    recurringLineDiscount: roundCurrency(recurringLineDiscount),
+  }
 }
 
 /** Row in a VAT breakdown table (one entry per distinct rate). */

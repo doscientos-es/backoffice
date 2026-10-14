@@ -12,8 +12,11 @@ import {
   computeLineSubtotal,
   computeLineTotals,
   computeProposalTotals,
+  type DiscountType,
   EMPTY_LINE_ITEM,
   type LineItem,
+  normalizeDiscountPercent,
+  roundCurrency,
 } from '@/lib/finance'
 import { formatEUR } from '@/lib/utils'
 
@@ -28,6 +31,9 @@ export type LineItemsTableProps = {
    * one-shot layout.
    */
   showBillingCycle?: boolean
+  /** Whole-proposal discount (proposals only; requires `onDiscountChange`). */
+  discount?: { type: DiscountType; value: number; reason: string }
+  onDiscountChange?: (next: { type: DiscountType; value: number; reason: string }) => void
 }
 
 const RECURRING_CYCLES: ReadonlyArray<Exclude<BillingCycle, 'none'>> = [
@@ -47,9 +53,21 @@ export function LineItemsTable({
   onChange,
   locked = false,
   showBillingCycle = false,
+  discount,
+  onDiscountChange,
 }: LineItemsTableProps) {
-  const flat = computeLineTotals(items)
-  const bucketed = computeProposalTotals(items)
+  const flatRaw = computeLineTotals(items)
+  const bucketed = computeProposalTotals(
+    items,
+    discount ? { type: discount.type, value: discount.value } : null,
+  )
+  const lineNet = (it: LineItem) =>
+    roundCurrency(
+      computeLineSubtotal(it) * (1 - normalizeDiscountPercent(it.discount_percent) / 100),
+    )
+  const showDiscounts = showBillingCycle
+  // Proposals: totals must reflect discounts, so use the bucketed grand total.
+  const flat = showBillingCycle ? bucketed.grand : flatRaw
   const recurringRows = showBillingCycle
     ? RECURRING_CYCLES.filter((c) => bucketed[c].total > 0)
     : []
@@ -76,7 +94,7 @@ export function LineItemsTable({
     onChange(items.length === 1 ? items : items.filter((_, idx) => idx !== i))
 
   const columns = showBillingCycle
-    ? 'md:grid-cols-[minmax(12rem,1fr)_8rem_5rem_8rem_6rem_8rem_5rem]'
+    ? 'md:grid-cols-[minmax(12rem,1fr)_8rem_5rem_8rem_5rem_6rem_8rem_5rem]'
     : 'md:grid-cols-[minmax(12rem,1fr)_5rem_8rem_6rem_8rem_5rem]'
 
   return (
@@ -90,6 +108,7 @@ export function LineItemsTable({
           {showBillingCycle && <span>Cadencia</span>}
           <span className="text-right">Cantidad</span>
           <span className="text-right">Precio unitario</span>
+          {showDiscounts && <span className="text-right">Dto.</span>}
           <span className="text-right">IVA</span>
           <span className="text-right">Importe</span>
           <span className="sr-only">Acciones</span>
@@ -187,6 +206,36 @@ export function LineItemsTable({
                 </div>
               </div>
 
+              {showDiscounts && (
+                <div>
+                  <span className="mb-1 block text-xs font-medium text-muted-foreground md:hidden">
+                    Descuento
+                  </span>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.5"
+                      min="0"
+                      max="100"
+                      value={it.discount_percent || ''}
+                      onChange={(e) =>
+                        update(i, { discount_percent: normalizeDiscountPercent(e.target.value) })
+                      }
+                      disabled={locked}
+                      className="pr-8 text-right tabular-nums"
+                      aria-label={`Descuento línea ${i + 1}`}
+                    />
+                    <span
+                      className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground"
+                      aria-hidden="true"
+                    >
+                      %
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <span className="mb-1 block text-xs font-medium text-muted-foreground md:hidden">
                   IVA
@@ -218,8 +267,13 @@ export function LineItemsTable({
                 <span className="mb-1 text-xs font-medium text-muted-foreground md:hidden">
                   Importe
                 </span>
-                <span className="flex h-9 items-center font-semibold tabular-nums">
-                  {formatEUR(computeLineSubtotal(it))}
+                <span className="flex h-9 items-center gap-2 font-semibold tabular-nums">
+                  {showDiscounts && normalizeDiscountPercent(it.discount_percent) > 0 && (
+                    <span className="text-xs font-normal text-muted-foreground line-through">
+                      {formatEUR(computeLineSubtotal(it))}
+                    </span>
+                  )}
+                  {formatEUR(showDiscounts ? lineNet(it) : computeLineSubtotal(it))}
                 </span>
               </div>
 
@@ -243,6 +297,19 @@ export function LineItemsTable({
                   <Trash2 className="size-4" aria-hidden="true" />
                 </button>
               </div>
+
+              {showDiscounts && normalizeDiscountPercent(it.discount_percent) > 0 && (
+                <div className="col-span-2 md:col-span-full">
+                  <Input
+                    value={it.discount_reason ?? ''}
+                    onChange={(e) => update(i, { discount_reason: e.target.value || null })}
+                    disabled={locked}
+                    maxLength={200}
+                    placeholder="Motivo del descuento (opcional)"
+                    aria-label={`Motivo del descuento línea ${i + 1}`}
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -266,6 +333,29 @@ export function LineItemsTable({
         </button>
 
         <dl className="flex w-full flex-col gap-2 text-sm sm:max-w-xs">
+          {showDiscounts &&
+            (bucketed.discounts.lineDiscount > 0 || bucketed.discounts.globalDiscount > 0) && (
+              <>
+                <div className="flex justify-between gap-4 text-muted-foreground">
+                  <dt>Importe bruto</dt>
+                  <dd className="tabular-nums">{formatEUR(bucketed.discounts.gross)}</dd>
+                </div>
+                {bucketed.discounts.lineDiscount > 0 && (
+                  <div className="flex justify-between gap-4 text-emerald-600">
+                    <dt>Descuentos en partidas</dt>
+                    <dd className="tabular-nums">−{formatEUR(bucketed.discounts.lineDiscount)}</dd>
+                  </div>
+                )}
+                {bucketed.discounts.globalDiscount > 0 && (
+                  <div className="flex justify-between gap-4 text-emerald-600">
+                    <dt>Descuento global</dt>
+                    <dd className="tabular-nums">
+                      −{formatEUR(bucketed.discounts.globalDiscount)}
+                    </dd>
+                  </div>
+                )}
+              </>
+            )}
           {showBillingCycle && recurringRows.length > 0 ? (
             <>
               <div className="flex justify-between gap-4 text-muted-foreground">
@@ -298,6 +388,57 @@ export function LineItemsTable({
                 <dd className="text-lg tabular-nums">{formatEUR(flat.total)}</dd>
               </div>
             </>
+          )}
+          {showDiscounts && onDiscountChange && discount && (
+            <div className="mt-2 flex flex-col gap-2 border-t border-border pt-3">
+              <span className="text-xs font-medium text-muted-foreground">
+                Descuento global (solo pagos únicos)
+              </span>
+              <div className="flex gap-2">
+                <Select
+                  value={discount.type}
+                  onChange={(e) =>
+                    onDiscountChange({
+                      ...discount,
+                      type: e.target.value as DiscountType,
+                      value: e.target.value === 'none' ? 0 : discount.value,
+                    })
+                  }
+                  disabled={locked}
+                  aria-label="Tipo de descuento global"
+                >
+                  <option value="none">Sin descuento</option>
+                  <option value="percent">Porcentaje (%)</option>
+                  <option value="amount">Importe (€)</option>
+                </Select>
+                {discount.type !== 'none' && (
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    max={discount.type === 'percent' ? 100 : undefined}
+                    value={discount.value || ''}
+                    onChange={(e) =>
+                      onDiscountChange({ ...discount, value: Number(e.target.value) || 0 })
+                    }
+                    disabled={locked}
+                    className="text-right tabular-nums"
+                    aria-label="Valor del descuento global"
+                  />
+                )}
+              </div>
+              {discount.type !== 'none' && (
+                <Input
+                  value={discount.reason}
+                  onChange={(e) => onDiscountChange({ ...discount, reason: e.target.value })}
+                  disabled={locked}
+                  maxLength={200}
+                  placeholder="Motivo del descuento (opcional)"
+                  aria-label="Motivo del descuento global"
+                />
+              )}
+            </div>
           )}
         </dl>
       </div>

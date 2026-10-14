@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Markdown } from '@/components/ui/markdown'
-import { BILLING_CYCLE_LABELS, type BillingCycle } from '@/lib/finance'
+import { BILLING_CYCLE_LABELS, type BillingCycle, type DiscountType } from '@/lib/finance'
 import type { EditablePair } from '@/lib/proposals/key-points'
 import type { MaintenanceOffer } from '@/lib/proposals/maintenance'
 import { recurringAmount } from '@/lib/proposals/recurring'
@@ -22,6 +22,8 @@ type Item = {
   vat_rate: number
   subtotal: number
   billing_cycle: string | null
+  discount_percent?: number | null
+  discount_reason?: string | null
 }
 
 type TeamMember = { id: string; name: string; job_title: string | null }
@@ -38,6 +40,9 @@ type Props = {
   subtotal: number
   taxAmount: number
   total: number
+  discountType?: DiscountType
+  discountValue?: number
+  discountReason?: string | null
   validUntil: string | null
   paymentPlan: PaymentPlanItem[]
   paymentTerms: string | null
@@ -66,6 +71,9 @@ export function ProposalOverview({
   subtotal,
   taxAmount,
   total,
+  discountType = 'none',
+  discountValue = 0,
+  discountReason = null,
   validUntil,
   paymentPlan,
   paymentTerms,
@@ -100,6 +108,13 @@ export function ProposalOverview({
                 <div className="rounded-lg bg-muted/40 p-4">
                   <p className="text-xs text-muted-foreground">Inversión inicial · antes de IVA</p>
                   <p className="mt-1 text-2xl font-semibold tabular-nums">{formatEUR(subtotal)}</p>
+                  {discountType !== 'none' && discountValue > 0 ? (
+                    <p className="mt-1 text-xs text-emerald-600">
+                      Descuento global:{' '}
+                      {discountType === 'percent' ? `${discountValue} %` : formatEUR(discountValue)}
+                      {discountReason ? ` · ${discountReason}` : ''}
+                    </p>
+                  ) : null}
                   <div className="mt-3 flex justify-between gap-3 text-xs text-muted-foreground">
                     <span>IVA aplicable</span>
                     <span className="tabular-nums">{formatEUR(taxAmount)}</span>
@@ -168,8 +183,21 @@ export function ProposalOverview({
                           ? ` · ${BILLING_CYCLE_LABELS[item.billing_cycle as BillingCycle] ?? item.billing_cycle}`
                           : ''}
                       </p>
+                      {Number(item.discount_percent) > 0 ? (
+                        <p className="mt-1 text-xs text-emerald-600">
+                          Descuento {item.discount_percent} %
+                          {item.discount_reason ? ` · ${item.discount_reason}` : ''}
+                        </p>
+                      ) : null}
                     </div>
-                    <span className="font-medium tabular-nums">{formatEUR(item.subtotal)}</span>
+                    <span className="text-right font-medium tabular-nums">
+                      {Number(item.discount_percent) > 0 ? (
+                        <span className="mr-2 text-xs font-normal text-muted-foreground line-through">
+                          {formatEUR(item.subtotal)}
+                        </span>
+                      ) : null}
+                      {formatEUR(item.subtotal * (1 - (Number(item.discount_percent) || 0) / 100))}
+                    </span>
                   </li>
                 ))}
               </ul>

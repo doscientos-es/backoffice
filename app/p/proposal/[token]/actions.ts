@@ -23,7 +23,10 @@ import {
 } from '@/lib/integrations/redsys'
 import { sendProposalAcceptedEmail } from '@/lib/integrations/send-proposal-accepted-email'
 import { createDepositInvoice } from '@/lib/invoices/create-deposit-invoice'
-import { createProposalDraftInvoices } from '@/lib/invoices/proposal-drafts'
+import {
+  createProposalDraftInvoices,
+  notifyInvoiceDraftsReady,
+} from '@/lib/invoices/proposal-drafts'
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { isPortalUnlocked, unlockPortalResource } from '@/lib/portal/access'
@@ -328,6 +331,7 @@ async function acceptWithFiscal(
       { proposalId: proposal.id, created: result.created },
       'proposal_invoice_drafts_created',
     )
+    await notifyInvoiceDraftsReady(admin, proposal.id as string, result.ids)
   } catch (err) {
     log.warn({ err, proposalId: proposal.id }, 'proposal_invoice_drafts_failed')
   }

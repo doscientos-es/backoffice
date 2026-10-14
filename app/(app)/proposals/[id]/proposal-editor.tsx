@@ -143,7 +143,10 @@ export function ProposalEditor(props: ProposalEditorProps) {
     saveFeedback.state.status === 'error'
       ? saveFeedback.state.message.split('\n').filter(Boolean)
       : []
-  const proposalTotals = useMemo(() => computeProposalTotals(items), [items])
+  const proposalTotals = useMemo(
+    () => computeProposalTotals(items, { type: draft.discountType, value: draft.discountValue }),
+    [items, draft.discountType, draft.discountValue],
+  )
   const selectedMaintenance = selectedMaintenancePlan(maintenanceOptions, maintenanceSelectedPlanId)
   const stepComplete = [
     Boolean(title.trim() && validUntil),

@@ -1,5 +1,5 @@
 import type { AttachmentItem } from '@/components/ui/attachment-section'
-import type { LineItem as EditableItem } from '@/lib/finance'
+import type { DiscountType, LineItem as EditableItem } from '@/lib/finance'
 import type { EditableKeyPoint } from '@/lib/proposals/key-points'
 import type { MaintenanceOffer } from '@/lib/proposals/maintenance'
 import type { PaymentPlanItem, PaymentSchedule, ScopeModule } from '@/lib/proposals/scope'
@@ -28,6 +28,9 @@ export type ProposalEditorProps = {
   teamMembers: ProposalTeamMember[]
   initialTeamMemberIds: string[]
   initialItems: EditableItem[]
+  initialDiscountType: DiscountType
+  initialDiscountValue: number
+  initialDiscountReason: string | null
   initialCreatedAt?: string | null
   initialAttachments: AttachmentItem[]
   /** Optimistic-concurrency token captured with the record. */

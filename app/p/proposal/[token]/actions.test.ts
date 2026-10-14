@@ -6,6 +6,7 @@ const {
   assertRedsysConfigured,
   createDepositInvoice,
   createProposalDraftInvoices,
+  notifyInvoiceDraftsReady,
   createRedsysPayment,
   isPortalUnlocked,
   sendProposalAcceptedEmail,
@@ -16,7 +17,8 @@ const {
       { ok: true; invoiceId: string; total: number; status: string } | { ok: false; error: string }
     > => ({ ok: true, invoiceId: 'inv-1', total: 500, status: 'draft' }),
   ),
-  createProposalDraftInvoices: vi.fn(async () => ({ ids: [], created: 0 })),
+  createProposalDraftInvoices: vi.fn(async () => ({ ids: [] as string[], created: 0 })),
+  notifyInvoiceDraftsReady: vi.fn(async () => undefined),
   createRedsysPayment: vi.fn(() => ({
     Ds_SignatureVersion: 'HMAC_SHA256_V1',
     Ds_MerchantParameters: 'params',
@@ -40,7 +42,10 @@ vi.mock('@/lib/env', () => ({
     REDSYS_CURRENCY: '978',
   }),
 }))
-vi.mock('@/lib/invoices/proposal-drafts', () => ({ createProposalDraftInvoices }))
+vi.mock('@/lib/invoices/proposal-drafts', () => ({
+  createProposalDraftInvoices,
+  notifyInvoiceDraftsReady,
+}))
 vi.mock('@/lib/invoices/create-deposit-invoice', () => ({ createDepositInvoice }))
 vi.mock('@/lib/integrations/send-proposal-accepted-email', () => ({ sendProposalAcceptedEmail }))
 vi.mock('@/lib/integrations/redsys', () => ({
@@ -300,6 +305,7 @@ describe('portal proposal actions', () => {
     })
     expect(state.lastRpc?.args.p_consent_text).not.toContain('consumidor')
     expect(createProposalDraftInvoices).toHaveBeenCalledWith(expect.anything(), 'p1', null)
+    expect(notifyInvoiceDraftsReady).toHaveBeenCalledWith(expect.anything(), 'p1', [])
     expect(revalidatePath).toHaveBeenCalledWith(`/p/proposal/${VALID_TOKEN}`)
   })
 

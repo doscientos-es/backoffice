@@ -27,6 +27,7 @@ import { StatusBadge } from '@/components/ui/status-badge'
 import { requirePagePermission } from '@/lib/auth'
 import { hasCompleteFiscalData } from '@/lib/crm/conversion'
 import { isAIEnabled } from '@/lib/env'
+import type { DiscountType } from '@/lib/finance'
 import { can } from '@/lib/permissions'
 import { parseKeyPoints, toEditableKeyPoints, zipKeyPoints } from '@/lib/proposals/key-points'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
@@ -210,7 +211,9 @@ export default async function ProposalDetailPage({
     canSeePrices
       ? supabase
           .from('proposal_prices')
-          .select('subtotal, tax_amount, total, maintenance_options, payment_terms')
+          .select(
+            'subtotal, tax_amount, total, maintenance_options, payment_terms, discount_type, discount_value, discount_reason',
+          )
           .eq('proposal_id', id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -218,7 +221,7 @@ export default async function ProposalDetailPage({
       ? supabase
           .from('proposal_items')
           .select(
-            'id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle',
+            'id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle, discount_percent, discount_reason',
           )
           .eq('proposal_id', id)
           .order('position')
@@ -419,6 +422,8 @@ export default async function ProposalDetailPage({
     unit_price: Number(it.unit_price) || 0,
     vat_rate: Number(it.vat_rate) || 0,
     billing_cycle: it.billing_cycle ?? 'none',
+    discount_percent: Number(it.discount_percent) || 0,
+    discount_reason: it.discount_reason ?? null,
   }))
 
   const viewRows = (views ?? []) as unknown as ProposalViewRow[]
@@ -560,6 +565,11 @@ export default async function ProposalDetailPage({
             teamMembers={(teamMembers ?? []) as Parameters<typeof ProposalEditor>[0]['teamMembers']}
             initialTeamMemberIds={selectedTeamIds}
             initialItems={editableItems}
+            initialDiscountType={
+              (priceSummary?.discount_type as DiscountType | undefined) ?? 'none'
+            }
+            initialDiscountValue={Number(priceSummary?.discount_value ?? 0)}
+            initialDiscountReason={(priceSummary?.discount_reason as string | null) ?? null}
             initialCreatedAt={(proposal.created_at as string | null) ?? null}
             initialAttachments={proposalAttachments}
             aiEnabled={isAIEnabled()}
@@ -574,6 +584,9 @@ export default async function ProposalDetailPage({
           subtotal={Number(priceSummary?.subtotal ?? 0)}
           taxAmount={Number(priceSummary?.tax_amount ?? 0)}
           total={proposalTotal}
+          discountType={(priceSummary?.discount_type as DiscountType | undefined) ?? 'none'}
+          discountValue={Number(priceSummary?.discount_value ?? 0)}
+          discountReason={(priceSummary?.discount_reason as string | null) ?? null}
           validUntil={(proposal.valid_until as string | null) ?? null}
           paymentPlan={paymentPlan}
           paymentTerms={(priceSummary?.payment_terms as string | null) ?? null}

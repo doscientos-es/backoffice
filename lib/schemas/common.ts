@@ -81,5 +81,13 @@ export const lineItemInput = z.object({
    * accept the field for shape parity but ignore it on write.
    */
   billing_cycle: z.enum(BILLING_CYCLES).default('none'),
+  /** Per-line discount in percent (0..100). Optional motive shown to the client. */
+  discount_percent: z.coerce.number().min(0).max(100).default(0),
+  discount_reason: z
+    .string()
+    .trim()
+    .max(200)
+    .nullish()
+    .transform((v) => v || null),
 })
 export type LineItemInputType = z.infer<typeof lineItemInput>

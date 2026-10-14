@@ -296,6 +296,16 @@ export function ProposalPriceSection({
             onChange={handleItemsChange}
             locked={locked}
             showBillingCycle
+            discount={{
+              type: draft.discountType,
+              value: draft.discountValue,
+              reason: draft.discountReason,
+            }}
+            onDiscountChange={(next) => {
+              setField('discountType')(next.type)
+              setField('discountValue')(next.value)
+              setField('discountReason')(next.reason)
+            }}
           />
         </div>
       </section>

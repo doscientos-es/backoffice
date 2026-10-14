@@ -1,4 +1,4 @@
-import { EMPTY_LINE_ITEM, type LineItem } from '@/lib/finance'
+import { type DiscountType, EMPTY_LINE_ITEM, type LineItem } from '@/lib/finance'
 import { serializeKeyPoints, unzipPairs, zipKeyPoints } from '@/lib/proposals/key-points'
 import { DEFAULT_MAINTENANCE_OFFER, type MaintenanceOffer } from '@/lib/proposals/maintenance'
 import { DEFAULT_PROPOSAL_LEGAL_TERMS } from '@/lib/proposals/proposal-acceptance'
@@ -34,6 +34,9 @@ export type InitialProposalDraft = Pick<
   | 'initialMaintenanceSelectedPlanId'
   | 'initialTeamMemberIds'
   | 'initialItems'
+  | 'initialDiscountType'
+  | 'initialDiscountValue'
+  | 'initialDiscountReason'
   | 'initialCreatedAt'
 >
 
@@ -57,6 +60,9 @@ export function createProposalDraft({
   initialMaintenanceSelectedPlanId,
   initialTeamMemberIds,
   initialItems,
+  initialDiscountType,
+  initialDiscountValue,
+  initialDiscountReason,
   initialCreatedAt,
 }: InitialProposalDraft): ProposalDraft {
   const initialBillingItems = ensureCalendarYearProration(initialItems, initialCreatedAt)
@@ -102,6 +108,9 @@ export function createProposalDraft({
     maintenanceOptions: initialMaintenanceOptions ?? DEFAULT_MAINTENANCE_OFFER,
     maintenanceSelectedPlanId: initialMaintenanceSelectedPlanId,
     teamMemberIds: initialTeamMemberIds,
+    discountType: initialDiscountType,
+    discountValue: initialDiscountValue,
+    discountReason: initialDiscountReason ?? '',
     items:
       initialBillingItems.length > 0
         ? initialBillingItems.map((it) => ({ ...it, id: it.id || crypto.randomUUID() }))
@@ -128,6 +137,9 @@ export type ProposalDraft = {
   maintenanceOptions: MaintenanceOffer
   maintenanceSelectedPlanId: string | null
   teamMemberIds: string[]
+  discountType: DiscountType
+  discountValue: number
+  discountReason: string
   items: LineItem[]
 }
 
@@ -150,6 +162,9 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
     maintenanceOptions,
     maintenanceSelectedPlanId,
     teamMemberIds,
+    discountType,
+    discountValue,
+    discountReason,
     items,
   } = draft
   const { problems, solutions } = unzipPairs(pairs)
@@ -173,6 +188,9 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
     legal_terms: legalTerms || null,
     maintenance_options: maintenanceOptions,
     maintenance_selected_plan_id: maintenanceSelectedPlanId,
+    discount_type: discountType,
+    discount_value: discountType === 'none' ? 0 : discountValue,
+    discount_reason: discountType === 'none' ? null : discountReason || null,
     items,
     team_member_ids: teamMemberIds,
   }

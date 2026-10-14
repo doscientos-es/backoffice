@@ -17,6 +17,7 @@ export type NotificationEvent =
   | 'invoice_paid'
   | 'invoice_payment'
   | 'invoice_requested'
+  | 'invoice_draft_ready'
   | 'proposal_accepted'
   | 'proposal_rejected'
   | 'proposal_question'
@@ -39,6 +40,7 @@ const TITLES: Record<NotificationEvent, string> = {
   invoice_paid: '💰 Factura cobrada',
   invoice_payment: '💰 Pago recibido',
   invoice_requested: '🧾 Solicitud de facturación',
+  invoice_draft_ready: '🧾 Factura lista para emitir',
   proposal_accepted: '✅ Propuesta aceptada',
   proposal_rejected: '❌ Propuesta rechazada',
   proposal_question: '💬 Consulta sobre propuesta',

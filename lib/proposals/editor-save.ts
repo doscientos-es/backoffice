@@ -90,6 +90,9 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
     patch.change_management_terms = rest.change_management_terms
   }
   if (rest.legal_terms !== undefined) patch.legal_terms = rest.legal_terms
+  if (rest.discount_type !== undefined) patch.discount_type = rest.discount_type
+  if (rest.discount_value !== undefined) patch.discount_value = rest.discount_value
+  if (rest.discount_reason !== undefined) patch.discount_reason = rest.discount_reason
   if (rest.maintenance_options !== undefined) patch.maintenance_options = rest.maintenance_options
   if (rest.maintenance_selected_plan_id !== undefined) {
     patch.maintenance_selected_plan_id = rest.maintenance_selected_plan_id

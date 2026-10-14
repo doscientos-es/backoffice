@@ -45,6 +45,9 @@ const props = {
   teamMembers: [],
   initialTeamMemberIds: [],
   initialItems: [],
+  initialDiscountType: 'none',
+  initialDiscountValue: 0,
+  initialDiscountReason: null,
   initialAttachments: [
     {
       id: 'attachment-1',

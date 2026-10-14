@@ -117,6 +117,14 @@ export const UpdateProposalInput = z.object({
   legal_terms: proposalLegalTermsField,
   maintenance_options: maintenanceOfferInput.nullable().optional(),
   maintenance_selected_plan_id: z.string().min(1).max(64).nullable().optional(),
+  discount_type: z.enum(['none', 'percent', 'amount']).optional(),
+  discount_value: z.coerce.number().min(0).max(100_000_000).optional(),
+  discount_reason: z
+    .string()
+    .trim()
+    .max(200)
+    .nullish()
+    .transform((v) => (v === undefined ? undefined : v || null)),
   items: z.array(lineItemInput).min(1).optional(),
 })
 export type UpdateProposalInputType = z.infer<typeof UpdateProposalInput>

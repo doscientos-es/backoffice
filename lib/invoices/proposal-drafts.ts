@@ -1,5 +1,6 @@
 import 'server-only'
 import { computeLineTotals } from '@/lib/finance'
+import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { effectivePaymentPlan, splitItemsForPaymentPlan } from '@/lib/proposals/scope'
 import type { createAdminClient } from '@/lib/supabase/admin'
 
@@ -116,4 +117,59 @@ export async function createProposalDraftInvoices(
   }
 
   return { ids, created: ids.length }
+}
+
+/**
+ * Tells the lead owner that the first invoice draft of a signed proposal is
+ * ready to be issued. Falls back to owners/admins when the proposal has no
+ * linked lead owner. Best-effort: never throws.
+ */
+export async function notifyInvoiceDraftsReady(
+  supabase: AdminClient,
+  proposalId: string,
+  invoiceIds: string[],
+): Promise<void> {
+  if (!invoiceIds.length) return
+  try {
+    const { data: proposal } = await supabase
+      .from('proposals')
+      .select('title, lead_id, client_id, clients(name, lead_id)')
+      .eq('id', proposalId)
+      .maybeSingle()
+    if (!proposal) return
+
+    const client = (
+      proposal as unknown as { clients?: { name?: string | null; lead_id?: string | null } | null }
+    ).clients
+    const leadId = (proposal.lead_id as string | null) ?? client?.lead_id ?? null
+    let recipientIds: string[] = []
+    if (leadId) {
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('assigned_to')
+        .eq('id', leadId)
+        .maybeSingle()
+      if (lead?.assigned_to) recipientIds = [lead.assigned_to as string]
+    }
+    if (!recipientIds.length) {
+      const { data: admins } = await supabase
+        .from('team_members')
+        .select('id')
+        .in('role', ['owner', 'admin'])
+        .is('deleted_at', null)
+      recipientIds = (admins ?? []).map((m) => m.id as string)
+    }
+
+    const label = [proposal.title as string | null, client?.name].filter(Boolean).join(' · ')
+    await dispatchNotifications({
+      recipientIds,
+      eventType: 'invoice_draft_ready',
+      entityType: 'invoice',
+      entityId: invoiceIds[0] as string,
+      body: `${label || 'Propuesta firmada'}: factura en borrador lista para emitir.`,
+      link: `/invoices/${invoiceIds[0]}`,
+    })
+  } catch {
+    // Notification failures must never affect the signed proposal.
+  }
 }
