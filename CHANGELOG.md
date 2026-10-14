@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-14 — v0.1.120
+
+### Nuevas funciones
+
+- Add blocker badge component to task kanban
+- Add task blocker functionality and repository linking
+
 ## 2026-10-14 — v0.1.119
 
 ### Nuevas funciones

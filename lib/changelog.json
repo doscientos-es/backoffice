@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.120",
+      "date": "2026-10-14",
+      "title": "v0.1.120",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add blocker badge component to task kanban",
+            "Add task blocker functionality and repository linking"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "bcae20f843e6ba6959ed5c9481c582472edb7333",
+          "type": "feat",
+          "scope": "tasks",
+          "breaking": false,
+          "description": "Add blocker badge component to task kanban"
+        },
+        {
+          "sha": "5a7e4d33ef5ecc54e91c6c340d4d66a5765c5351",
+          "type": "feat",
+          "scope": "tasks",
+          "breaking": false,
+          "description": "Add task blocker functionality and repository linking"
+        }
+      ]
+    },
+    {
       "version": "0.1.119",
       "date": "2026-10-14",
       "title": "v0.1.119",
