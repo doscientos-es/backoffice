@@ -25,6 +25,8 @@ import {
   type BillingCycle,
   computeLineSubtotal,
   computeProposalTotals,
+  type DiscountType,
+  roundCurrency,
 } from '@/lib/finance'
 import { scopedLogger } from '@/lib/logger'
 import { isPortalUnlocked } from '@/lib/portal/access'
@@ -70,6 +72,8 @@ type ProposalItem = {
   vat_rate: number
   subtotal: number
   billing_cycle: BillingCycle | null
+  discount_percent?: number | null
+  discount_reason?: string | null
 }
 
 function ScopeBullets({
@@ -261,7 +265,9 @@ export default async function PortalProposalPage({
   ] = await Promise.all([
     admin
       .from('proposal_items')
-      .select('id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle')
+      .select(
+        'id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle, discount_percent, discount_reason',
+      )
       .eq('proposal_id', proposal.id as string)
       .order('position'),
     admin
@@ -485,8 +491,14 @@ export default async function PortalProposalPage({
       unit_price: it.unit_price,
       vat_rate: it.vat_rate,
       billing_cycle: it.billing_cycle ?? 'none',
+      discount_percent: it.discount_percent ?? 0,
     })),
+    {
+      type: ((proposal.discount_type as string | null) ?? 'none') as DiscountType,
+      value: Number(proposal.discount_value ?? 0),
+    },
   )
+  const globalDiscountReason = ((proposal.discount_reason as string | null) ?? '').trim() || null
   const hasRecurring =
     totals.monthly.total > 0 || totals.quarterly.total > 0 || totals.yearly.total > 0
   const recurringBuckets = [
@@ -785,7 +797,25 @@ export default async function PortalProposalPage({
                           {item.vat_rate}%
                         </td>
                         <td className="px-8 py-3.5 text-right font-medium text-zinc-900 tabular-nums dark:text-zinc-100">
-                          {formatPortalEUR(item.subtotal, portalLanguage)}
+                          {Number(item.discount_percent ?? 0) > 0 ? (
+                            <>
+                              <span className="block text-xs font-normal text-zinc-400 line-through dark:text-zinc-600">
+                                {formatPortalEUR(item.subtotal, portalLanguage)}
+                              </span>
+                              {formatPortalEUR(
+                                roundCurrency(
+                                  item.subtotal * (1 - Number(item.discount_percent) / 100),
+                                ),
+                                portalLanguage,
+                              )}
+                              <span className="block text-[10px] font-normal text-emerald-700 dark:text-emerald-400">
+                                −{Number(item.discount_percent)}%
+                                {item.discount_reason ? ` · ${item.discount_reason}` : ''}
+                              </span>
+                            </>
+                          ) : (
+                            formatPortalEUR(item.subtotal, portalLanguage)
+                          )}
                         </td>
                       </tr>
                     )
@@ -804,6 +834,7 @@ export default async function PortalProposalPage({
                 taxAmount={totals.oneTime.taxAmount}
                 total={totals.oneTime.total}
                 language={portalLanguage}
+                discounts={{ ...totals.discounts, globalReason: globalDiscountReason }}
               />
 
               {hasRecurring ? (

@@ -225,6 +225,8 @@ export type ProposalPdfItem = {
   vatRate: number
   subtotal: number
   billingCycle: string | null
+  discountPercent?: number
+  discountReason?: string | null
 }
 
 export type ProposalPdfData = {
@@ -249,6 +251,13 @@ export type ProposalPdfData = {
   subtotal: number
   taxAmount: number
   total: number
+  /** One-time discount breakdown; omitted/zero when the proposal has no discounts. */
+  discounts?: {
+    gross: number
+    lineDiscount: number
+    globalDiscount: number
+    globalReason?: string | null
+  }
   items: ProposalPdfItem[]
   maintenanceOffer: MaintenanceOffer
   maintenanceSelectedPlanId: string | null
@@ -467,6 +476,9 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
       : en
         ? 'Estimated initial total incl. VAT'
         : 'Total inicial previsto con IVA',
+    gross: ca ? 'Import brut' : en ? 'Gross amount' : 'Importe bruto',
+    lineDiscount: ca ? 'Descomptes en partides' : en ? 'Line discounts' : 'Descuentos en partidas',
+    globalDiscount: ca ? 'Descompte' : en ? 'Discount' : 'Descuento',
     payment: ca ? 'Pagament' : en ? 'Payment' : 'Pago',
     notes: ca ? 'Notes' : en ? 'Notes' : 'Notas',
     maintenance: ca ? 'Manteniment' : en ? 'Maintenance' : 'Mantenimiento',
@@ -679,8 +691,19 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
                   <Text
                     style={styles.itemMeta}
                   >{`${item.quantity} × ${money(item.unitPrice)} · IVA ${item.vatRate}% · ${cycleLabel(item.billingCycle, language)}`}</Text>
+                  {item.discountPercent && item.discountPercent > 0 ? (
+                    <Text style={styles.itemMeta}>
+                      {`−${item.discountPercent}%${item.discountReason ? ` · ${item.discountReason}` : ''}`}
+                    </Text>
+                  ) : null}
                 </View>
-                <Text style={[styles.amount, { width: '30%' }]}>{money(item.subtotal)}</Text>
+                <Text style={[styles.amount, { width: '30%' }]}>
+                  {money(
+                    item.discountPercent && item.discountPercent > 0
+                      ? Math.round(item.subtotal * (1 - item.discountPercent / 100) * 100) / 100
+                      : item.subtotal,
+                  )}
+                </Text>
               </View>
             ))}
           </View>
@@ -689,6 +712,31 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
               Las líneas recurrentes se muestran con su cadencia correspondiente y no forman parte
               de la inversión inicial.
             </Text>
+          ) : null}
+          {data.discounts &&
+          (data.discounts.lineDiscount > 0 || data.discounts.globalDiscount > 0) ? (
+            <>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>{copy.gross}</Text>
+                <Text style={styles.totalValue}>{money(data.discounts.gross)}</Text>
+              </View>
+              {data.discounts.lineDiscount > 0 ? (
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>{copy.lineDiscount}</Text>
+                  <Text style={styles.totalValue}>{`−${money(data.discounts.lineDiscount)}`}</Text>
+                </View>
+              ) : null}
+              {data.discounts.globalDiscount > 0 ? (
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>
+                    {`${copy.globalDiscount}${data.discounts.globalReason ? ` · ${data.discounts.globalReason}` : ''}`}
+                  </Text>
+                  <Text
+                    style={styles.totalValue}
+                  >{`−${money(data.discounts.globalDiscount)}`}</Text>
+                </View>
+              ) : null}
+            </>
           ) : null}
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>{copy.total}</Text>

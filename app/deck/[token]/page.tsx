@@ -29,6 +29,8 @@ export type DeckProposalItem = {
   vat_rate: number
   subtotal: number
   billing_cycle: BillingCycle | null
+  discount_percent?: number | null
+  discount_reason?: string | null
 }
 
 export type DeckTeamMember = {
@@ -56,6 +58,9 @@ export type DeckProposal = {
   subtotal: number
   tax_amount: number
   total: number
+  discount_type: 'none' | 'percent' | 'amount'
+  discount_value: number
+  discount_reason: string | null
   valid_until: string | null
   created_at: string | null
   client_name: string | null
@@ -117,7 +122,9 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
   const [{ data: items }, { data: proposalTeam }] = await Promise.all([
     admin
       .from('proposal_items')
-      .select('id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle')
+      .select(
+        'id, position, description, quantity, unit_price, vat_rate, subtotal, billing_cycle, discount_percent, discount_reason',
+      )
       .eq('proposal_id', proposal.id as string)
       .order('position'),
     admin
@@ -205,6 +212,9 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
     subtotal: proposal.subtotal as number,
     tax_amount: proposal.tax_amount as number,
     total: proposal.total as number,
+    discount_type: (proposal.discount_type as DeckProposal['discount_type'] | null) ?? 'none',
+    discount_value: Number(proposal.discount_value ?? 0),
+    discount_reason: (proposal.discount_reason as string | null) ?? null,
     valid_until: (proposal.valid_until as string | null) ?? null,
     created_at: (proposal.created_at as string | null) ?? null,
     client_name: client?.name ?? null,

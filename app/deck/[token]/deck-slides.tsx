@@ -19,15 +19,23 @@ import { formatDate, formatEUR } from '@/lib/utils'
 
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from './page'
 
-function buildTotals(items: DeckProposalItem[]): ProposalTotals {
+function buildTotals(items: DeckProposalItem[], proposal: DeckProposal): ProposalTotals {
   return computeProposalTotals(
     items.map((it) => ({
       quantity: it.quantity,
       unit_price: it.unit_price,
       vat_rate: it.vat_rate,
       billing_cycle: it.billing_cycle ?? 'none',
+      discount_percent: it.discount_percent ?? 0,
     })),
+    { type: proposal.discount_type, value: proposal.discount_value },
   )
+}
+
+/** Line amount after its own discount (the stored subtotal is gross). */
+function netLineAmount(item: DeckProposalItem): number {
+  const pct = Number(item.discount_percent ?? 0)
+  return pct > 0 ? Math.round(item.subtotal * (1 - pct / 100) * 100) / 100 : item.subtotal
 }
 
 function hasRecurring(totals: ProposalTotals): boolean {
@@ -341,7 +349,14 @@ function DeliverySlide({ proposal }: { proposal: DeckProposal }) {
   )
 }
 
-function PricingTotals({ totals }: { totals: ProposalTotals }) {
+function PricingTotals({
+  totals,
+  globalReason,
+}: {
+  totals: ProposalTotals
+  globalReason?: string | null
+}) {
+  const { gross, lineDiscount, globalDiscount } = totals.discounts
   const recurring = hasRecurring(totals)
   const recurringBuckets = [
     { label: 'Mensual', bucket: totals.monthly },
@@ -355,6 +370,26 @@ function PricingTotals({ totals }: { totals: ProposalTotals }) {
           <p className="text-[10px] font-semibold tracking-[0.25em] text-zinc-400 uppercase sm:text-xs">
             Inversión inicial
           </p>
+        ) : null}
+        {lineDiscount > 0 || globalDiscount > 0 ? (
+          <div className="flex flex-col items-end gap-1 text-xs text-zinc-500 sm:text-sm">
+            <div className="flex gap-6 sm:gap-12">
+              <span>Importe bruto</span>
+              <span className="tabular-nums">{formatEUR(gross)}</span>
+            </div>
+            {lineDiscount > 0 ? (
+              <div className="flex gap-6 text-emerald-700 sm:gap-12">
+                <span>Descuentos en partidas</span>
+                <span className="tabular-nums">−{formatEUR(lineDiscount)}</span>
+              </div>
+            ) : null}
+            {globalDiscount > 0 ? (
+              <div className="flex gap-6 text-emerald-700 sm:gap-12">
+                <span>Descuento{globalReason ? ` · ${globalReason}` : ''}</span>
+                <span className="tabular-nums">−{formatEUR(globalDiscount)}</span>
+              </div>
+            ) : null}
+          </div>
         ) : null}
         <div className="flex items-baseline gap-6 text-xl font-semibold text-zinc-900 sm:gap-12 sm:text-2xl">
           <span>Importe antes de IVA</span>
@@ -393,8 +428,8 @@ function PricingTotals({ totals }: { totals: ProposalTotals }) {
   )
 }
 
-function PricingSlide({ items }: { proposal: DeckProposal; items: DeckProposalItem[] }) {
-  const totals = buildTotals(items)
+function PricingSlide({ proposal, items }: { proposal: DeckProposal; items: DeckProposalItem[] }) {
+  const totals = buildTotals(items, proposal)
   return (
     <SectionSlide label="Inversión" title="Detalle económico">
       <div className="w-full max-w-3xl">
@@ -439,14 +474,27 @@ function PricingSlide({ items }: { proposal: DeckProposal; items: DeckProposalIt
                     {formatEUR(item.unit_price)}
                   </td>
                   <td className="py-3 text-right font-medium whitespace-nowrap tabular-nums sm:py-4">
-                    {formatEUR(item.subtotal)}
+                    {Number(item.discount_percent ?? 0) > 0 ? (
+                      <>
+                        <span className="block text-xs font-normal text-zinc-400 line-through">
+                          {formatEUR(item.subtotal)}
+                        </span>
+                        {formatEUR(netLineAmount(item))}
+                        <span className="block text-[10px] font-normal text-emerald-700">
+                          −{Number(item.discount_percent)}%
+                          {item.discount_reason ? ` · ${item.discount_reason}` : ''}
+                        </span>
+                      </>
+                    ) : (
+                      formatEUR(item.subtotal)
+                    )}
                   </td>
                 </tr>
               )
             })}
           </tbody>
         </table>
-        <PricingTotals totals={totals} />
+        <PricingTotals totals={totals} globalReason={proposal.discount_reason} />
       </div>
     </SectionSlide>
   )
@@ -489,9 +537,15 @@ function TeamSlide({ team }: { team: DeckTeamMember[] }) {
   )
 }
 
-function PricingBarChart({ items }: { proposal: DeckProposal; items: DeckProposalItem[] }) {
+function PricingBarChart({
+  proposal,
+  items,
+}: {
+  proposal: DeckProposal
+  items: DeckProposalItem[]
+}) {
   const maxVal = Math.max(...items.map((i) => i.subtotal), 1)
-  const totals = buildTotals(items)
+  const totals = buildTotals(items, proposal)
   return (
     <SectionSlide label="Inversión" title="Detalle económico">
       <div className="w-full max-w-3xl">
@@ -508,7 +562,7 @@ function PricingBarChart({ items }: { proposal: DeckProposal; items: DeckProposa
                     <CadenceBadge cycle={cycle} />
                   </div>
                   <span className="text-xs font-semibold whitespace-nowrap text-zinc-900 tabular-nums sm:text-sm">
-                    {formatEUR(item.subtotal)}
+                    {formatEUR(netLineAmount(item))}
                   </span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 sm:h-2">
@@ -522,7 +576,7 @@ function PricingBarChart({ items }: { proposal: DeckProposal; items: DeckProposa
           })}
         </div>
         <div className="border-t border-zinc-200 pt-4">
-          <PricingTotals totals={totals} />
+          <PricingTotals totals={totals} globalReason={proposal.discount_reason} />
         </div>
       </div>
     </SectionSlide>

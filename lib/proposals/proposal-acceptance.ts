@@ -84,6 +84,8 @@ type ProposalAcceptanceItem = {
   vat_rate: number
   subtotal: number
   billing_cycle: string | null
+  discount_percent?: number | null
+  discount_reason?: string | null
 }
 
 export function effectiveProposalTerms(terms: string | null, legalTerms?: string | null): string {
@@ -128,6 +130,15 @@ export function proposalAcceptanceSnapshot(
       terms: proposal.terms ?? null,
       legal_terms: (proposal.legal_terms as string | null) ?? DEFAULT_PROPOSAL_LEGAL_TERMS,
       notes: proposal.notes ?? null,
+      // Only present when a whole-proposal discount exists, so snapshots (and
+      // their hashes) of undiscounted proposals stay unchanged.
+      ...(proposal.discount_type && proposal.discount_type !== 'none'
+        ? {
+            discount_type: proposal.discount_type,
+            discount_value: proposal.discount_value ?? 0,
+            discount_reason: proposal.discount_reason ?? null,
+          }
+        : {}),
       items,
     },
     fiscal_data: fiscalData ?? null,

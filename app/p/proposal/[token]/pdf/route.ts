@@ -3,7 +3,12 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv } from '@/lib/env'
-import { computeLineSubtotal, computeProposalTotals, type BillingCycle } from '@/lib/finance'
+import {
+  computeLineSubtotal,
+  computeProposalTotals,
+  type BillingCycle,
+  type DiscountType,
+} from '@/lib/finance'
 import { isPortalUnlocked } from '@/lib/portal/access'
 import { resolvePortalLanguage } from '@/lib/portal/language'
 import { parseKeyPoints } from '@/lib/proposals/key-points'
@@ -69,7 +74,9 @@ export async function GET(
 
   const { data: items, error: itemsError } = await admin
     .from('proposal_items')
-    .select('id, description, quantity, unit_price, vat_rate, subtotal, billing_cycle')
+    .select(
+      'id, description, quantity, unit_price, vat_rate, subtotal, billing_cycle, discount_percent, discount_reason',
+    )
     .eq('proposal_id', proposal.id as string)
     .order('position')
   if (itemsError) return NextResponse.json({ error: 'No se pudo generar el PDF' }, { status: 500 })
@@ -142,6 +149,8 @@ export async function GET(
         unit_price: Number(item.unit_price ?? 0),
       }),
       billingCycle: (item.billing_cycle as string | null) ?? null,
+      discountPercent: Number(item.discount_percent ?? 0),
+      discountReason: (item.discount_reason as string | null) ?? null,
     }),
   )
   if (maintenancePlan) {
@@ -162,7 +171,12 @@ export async function GET(
       unit_price: item.unitPrice,
       vat_rate: item.vatRate,
       billing_cycle: (item.billingCycle as BillingCycle | null) ?? 'none',
+      discount_percent: item.discountPercent ?? 0,
     })),
+    {
+      type: ((documentSource.discount_type as string | null) ?? 'none') as DiscountType,
+      value: Number(documentSource.discount_value ?? 0),
+    },
   )
   const automaticPaymentTerms = recurringPaymentTerms(
     pdfItems.map((item) => ({
@@ -214,6 +228,10 @@ export async function GET(
     subtotal: pdfSubtotal,
     taxAmount: pdfTaxAmount,
     total: pdfTotal,
+    discounts: {
+      ...calculatedTotals.discounts,
+      globalReason: ((documentSource.discount_reason as string | null) ?? '').trim() || null,
+    },
     items: pdfItems,
     maintenanceOffer,
     maintenanceSelectedPlanId,
