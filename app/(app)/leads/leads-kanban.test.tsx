@@ -116,7 +116,12 @@ describe('lead kanban responsive columns', () => {
     const toolbar = navigation.parentElement
 
     expect(columns.length).toBeGreaterThan(1)
-    expect(toolbar && getComputedStyle(toolbar).display).toBe('flex')
+    expect(toolbar && getComputedStyle(toolbar).display).toBe('grid')
+    expect(toolbar && getComputedStyle(toolbar).position).toBe('sticky')
+    expect(getComputedStyle(navigation).overflowX).toBe('auto')
+    expect(
+      navigation.firstElementChild && getComputedStyle(navigation.firstElementChild).flexWrap,
+    ).toBe('nowrap')
     expect(getComputedStyle(board).scrollSnapType).toContain('mandatory')
     for (const column of columns) {
       expect(getComputedStyle(column).width).toBe('100%')
@@ -158,15 +163,18 @@ describe('lead kanban responsive columns', () => {
     for (const [index, shortcut] of shortcuts.entries()) {
       expect(shortcut.getAttribute('aria-controls')).toBe(columns[index]?.id)
       expect(shortcut.getAttribute('aria-label')).toContain('0 leads')
+      expect(shortcut.getAttribute('aria-current')).toBe(index === 0 ? 'location' : null)
     }
   })
 
-  it('limits the stage shortcuts to mobile so desktop keeps its full board height', () => {
+  it('places stage shortcuts below the board on mobile', () => {
     const board = renderBoard()
     const navigation = getNavigation()
+    const toolbar = navigation.parentElement
 
-    expect(navigation.parentElement?.classList.contains('leads-kanban-mobile-toolbar')).toBe(true)
-    expect(navigation.parentElement?.nextElementSibling).toBe(board)
+    expect(toolbar?.classList.contains('leads-kanban-mobile-toolbar')).toBe(true)
+    expect(toolbar?.previousElementSibling).toBe(board.nextElementSibling)
+    expect(toolbar?.nextElementSibling).toBeNull()
   })
 
   it('expands compact desktop stages on hover and collapses them again on leave', () => {
@@ -257,6 +265,14 @@ describe('lead kanban responsive columns', () => {
         }),
       )
 
+      expect(
+        within(getNavigation())
+          .getByRole('button', {
+            name: 'Ir a Reunión agendada: 0 leads',
+            hidden: true,
+          })
+          .getAttribute('aria-current'),
+      ).toBe('location')
       expect(scrollTo).toHaveBeenCalledWith({
         left: 520,
         behavior: reducedMotion ? 'instant' : 'smooth',
@@ -266,16 +282,45 @@ describe('lead kanban responsive columns', () => {
     },
   )
 
-  it('keeps touch refresh above the mobile board and desktop refresh in the footer', () => {
+  it('tracks the selected stage when the board is swiped horizontally', () => {
     const board = renderBoard()
-    const [mobileRefresh, desktopRefresh] = document.querySelectorAll<HTMLButtonElement>(
-      'button[aria-label^="Actualizar leads"]',
+    const columns = within(board).getAllByRole('region')
+    const target = columns.find((column) => column.dataset.stage === 'meeting')
+    if (!target) throw new Error('No se encontró la etapa de reunión')
+
+    vi.spyOn(board, 'getBoundingClientRect').mockReturnValue({ left: 20 } as DOMRect)
+    for (const column of columns) {
+      vi.spyOn(column, 'getBoundingClientRect').mockReturnValue({
+        left: column === target ? 20 : 500,
+      } as DOMRect)
+    }
+
+    fireEvent.scroll(board)
+
+    expect(
+      within(getNavigation())
+        .getByRole('button', {
+          name: 'Ir a Reunión agendada: 0 leads',
+          hidden: true,
+        })
+        .getAttribute('aria-current'),
+    ).toBe('location')
+  })
+
+  it('keeps touch refresh in the bottom dock and desktop refresh in the footer', () => {
+    const board = renderBoard()
+    const mobileRefresh = document.querySelector<HTMLButtonElement>(
+      'button.leads-kanban-mobile-refresh',
+    )
+    const desktopRefresh = document.querySelector<HTMLButtonElement>(
+      'button.leads-kanban-desktop-refresh',
     )
 
-    expect(mobileRefresh?.classList.contains('size-11')).toBe(true)
+    expect(mobileRefresh && getComputedStyle(mobileRefresh).width).toBe('40px')
     expect(mobileRefresh?.parentElement?.classList.contains('leads-kanban-mobile-toolbar')).toBe(
       true,
     )
+    expect(mobileRefresh?.parentElement?.previousElementSibling).toBe(board.nextElementSibling)
     expect(desktopRefresh?.classList.contains('leads-kanban-desktop-refresh')).toBe(true)
     expect(desktopRefresh?.parentElement).toBe(board.nextElementSibling)
     setViewport(1280)
