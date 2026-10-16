@@ -523,7 +523,7 @@ function Column({
               }}
               title={compact ? 'Mantener siempre visible' : 'Colapsar cuando no esté en uso'}
               aria-label={compact ? 'Mantener siempre visible' : 'Colapsar cuando no esté en uso'}
-              className="leads-kanban-compact-toggle size-7 shrink-0 items-center justify-center rounded text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+              className="leads-kanban-compact-toggle size-7 shrink-0 items-center justify-center rounded p-0 text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               {compact ? <Maximize2 className="size-3" /> : <Minimize2 className="size-3" />}
             </button>

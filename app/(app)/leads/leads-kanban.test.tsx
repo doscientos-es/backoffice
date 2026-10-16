@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 
+import type * as DndKitCore from '@dnd-kit/core'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -8,6 +9,10 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/leads',
   useSearchParams: () => new URLSearchParams(),
 }))
+vi.mock('@dnd-kit/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof DndKitCore>()
+  return { ...actual, DragOverlay: () => null }
+})
 vi.mock('./actions', () => ({ deleteLead: vi.fn(), updateLeadStatus: vi.fn() }))
 vi.mock('./close-reason-dialog', () => ({ CloseReasonDialog: () => null }))
 vi.mock('./reopen-confirm-dialog', () => ({ ReopenConfirmDialog: () => null }))
@@ -185,46 +190,24 @@ describe('lead kanban responsive columns', () => {
     }
   })
 
-  it('keeps every desktop stage expanded while dragging a card', () => {
+  it('reserves the pin control space so it does not shift the header on hover', () => {
     setViewport(1280)
-    const board = renderBoard([DRAGGABLE_LEAD])
-    const columns = within(board).getAllByRole('region')
-    const compactColumns = columns.filter((column) => column.dataset.collapsed === 'true')
-    const dragHandle = within(board).getByRole('button', { name: 'Arrastrar Lead de prueba' })
+    const board = renderBoard()
+    const [column] = within(board).getAllByRole('region')
+    if (!column) throw new Error('No se encontró una etapa del kanban')
+    const toggle = getCompactToggle(column, 'Colapsar cuando no esté en uso')
 
-    expect(compactColumns.length).toBeGreaterThan(0)
-    act(() => {
-      fireEvent.pointerDown(dragHandle, {
-        button: 0,
-        pointerId: 1,
-        isPrimary: true,
-        pointerType: 'mouse',
-        clientX: 0,
-        clientY: 0,
-      })
-      fireEvent.pointerMove(document, {
-        pointerId: 1,
-        pointerType: 'mouse',
-        clientX: 10,
-        clientY: 0,
-      })
-    })
+    expect(getComputedStyle(toggle).display).toBe('inline-flex')
+    expect(getComputedStyle(toggle).visibility).toBe('hidden')
+    expect(toggle.classList.contains('p-0')).toBe(true)
 
-    for (const column of columns) {
-      expect(column.dataset.collapsed).toBe('false')
-    }
+    fireEvent.pointerEnter(column)
+    expect(column.dataset.hovered).toBe('true')
+    expect(getComputedStyle(toggle).display).toBe('inline-flex')
 
-    act(() => {
-      fireEvent.pointerCancel(document, {
-        pointerId: 1,
-        pointerType: 'mouse',
-        clientX: 10,
-        clientY: 0,
-      })
-    })
-    for (const column of compactColumns) {
-      expect(column.dataset.collapsed).toBe('true')
-    }
+    fireEvent.pointerLeave(column)
+    expect(column.dataset.hovered).toBe('false')
+    expect(getComputedStyle(toggle).display).toBe('inline-flex')
   })
 
   it('keeps a stage expanded when pinned and saves the desktop preference', () => {
@@ -299,5 +282,47 @@ describe('lead kanban responsive columns', () => {
     const mobileToolbar = mobileRefresh?.parentElement
     expect(mobileToolbar && getComputedStyle(mobileToolbar).display).toBe('none')
     expect(desktopRefresh && getComputedStyle(desktopRefresh).display).toBe('flex')
+  })
+
+  it('keeps every desktop stage expanded while dragging a card', () => {
+    setViewport(1280)
+    const board = renderBoard([DRAGGABLE_LEAD])
+    const columns = within(board).getAllByRole('region')
+    const compactColumns = columns.filter((column) => column.dataset.collapsed === 'true')
+    const dragHandle = within(board).getByRole('button', { name: 'Arrastrar Lead de prueba' })
+
+    expect(compactColumns.length).toBeGreaterThan(0)
+    act(() => {
+      fireEvent.pointerDown(dragHandle, {
+        button: 0,
+        pointerId: 1,
+        isPrimary: true,
+        pointerType: 'mouse',
+        clientX: 0,
+        clientY: 0,
+      })
+      fireEvent.pointerMove(document, {
+        pointerId: 1,
+        pointerType: 'mouse',
+        clientX: 10,
+        clientY: 0,
+      })
+    })
+
+    for (const column of columns) {
+      expect(column.dataset.collapsed).toBe('false')
+    }
+
+    act(() => {
+      fireEvent.pointerCancel(document, {
+        pointerId: 1,
+        pointerType: 'mouse',
+        clientX: 10,
+        clientY: 0,
+      })
+    })
+    for (const column of compactColumns) {
+      expect(column.dataset.collapsed).toBe('true')
+    }
   })
 })

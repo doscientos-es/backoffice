@@ -50,8 +50,17 @@
     display: flex;
   }
 
-  .leads-kanban-column[data-hovered='true'] .leads-kanban-compact-toggle {
+  .leads-kanban .leads-kanban-compact-toggle {
     display: inline-flex;
+    visibility: hidden;
+  }
+
+  .leads-kanban-column[data-collapsed='true'] .leads-kanban-compact-toggle {
+    display: none;
+  }
+
+  .leads-kanban-column[data-hovered='true'] .leads-kanban-compact-toggle {
+    visibility: visible;
   }
 
   .leads-kanban-board > .leads-kanban-column[data-collapsed='true'] {

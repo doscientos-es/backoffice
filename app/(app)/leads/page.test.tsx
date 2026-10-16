@@ -25,15 +25,20 @@ vi.mock('./lead-form-fields', () => ({
 }))
 
 import { ListControls } from '@/components/layout/list-controls'
+import { PageHeader } from '@/components/layout/page-header'
 import { EmptyTitle } from '@/components/ui/empty-state'
 import { LEAD_BOARD_LIMIT } from '@/lib/leads/types'
 import type { MemberOption } from '@/lib/members/queries'
 
+import { LeadCreateDialog } from './lead-create-dialog'
 import LeadsPage from './page'
 
 type Props = {
+  actions?: ReactNode
   children?: ReactNode
+  description?: string
   href?: string
+  trigger?: ReactNode
   columns?: { key: string; label: string }[]
   filters?: { key: string }[]
 }
@@ -112,6 +117,22 @@ describe('leads search experience', () => {
     const page = await LeadsPage({ searchParams: Promise.resolve({ status: 'new' }) })
     const controls = elements(page).find((node) => node.type === ListControls)
     expect(controls?.props.filters).toContainEqual(expect.objectContaining({ key: 'status' }))
+  })
+
+  it('keeps the leads header compact and gives the mobile create action a label', async () => {
+    listLeads.mockResolvedValue({ leads: [{ id: 'lead-1' }], count: 1, error: null })
+    const boardPage = await LeadsPage({ searchParams: Promise.resolve({}) })
+    const header = elements(boardPage).find((node) => node.type === PageHeader)
+
+    expect(header?.props.description).toBeUndefined()
+    const dialog = elements(header?.props.actions).find((node) => node.type === LeadCreateDialog)
+    const trigger = dialog?.props.trigger as ReactElement<Props> | undefined
+    const labels = elements(trigger?.props.children).map((node) => node.props.children)
+    expect(labels).toContain('Nuevo')
+    expect(labels).toContain('Nuevo lead')
+
+    const listPage = await LeadsPage({ searchParams: Promise.resolve({ view: 'list' }) })
+    expect((listPage.props as Props).description).toBeUndefined()
   })
 
   it('includes the phone in list results and preserves the complete search query', async () => {

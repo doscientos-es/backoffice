@@ -44,8 +44,6 @@ const STATUS_FILTER_OPTIONS = SELECTABLE_LEAD_STATUSES.map((value) => ({
 
 const SOURCE_FILTER_OPTIONS = LEAD_SOURCES.map((s) => ({ value: s, label: s }))
 const SOLUTION_FILTER_OPTIONS = SOLUTION_TYPES.map((s) => ({ value: s, label: s }))
-const SEARCH_HINT =
-  'Combina palabras en cualquier orden, sin preocuparte por tildes, espacios del teléfono o +34.'
 
 const ATTENTION_FILTER_OPTIONS: { value: LeadAttentionFilter; label: string }[] = [
   { value: 'stale', label: 'Estancados' },
@@ -150,10 +148,11 @@ export default async function LeadsPage({
             size="sm"
             aria-label="Nuevo lead"
             title="Nuevo lead"
-            className="h-9 w-9 shrink-0 p-0 md:h-8 md:w-auto md:px-3"
+            className="h-9 shrink-0 gap-1.5 px-2.5 md:h-8 md:px-3"
           >
             <Plus className="size-4" aria-hidden />
-            <span className="hidden md:inline">Nuevo lead</span>
+            <span className="sm:hidden">Nuevo</span>
+            <span className="hidden sm:inline">Nuevo lead</span>
           </Button>
         }
       />
@@ -169,7 +168,6 @@ export default async function LeadsPage({
         members={members}
         senderName={user.name}
         title={leadIds.length ? 'Leads pendientes del aviso' : 'Leads'}
-        description={SEARCH_HINT}
         actions={actions}
         error={error ?? undefined}
         empty={hasFilters ? 'Sin coincidencias.' : 'Aún no hay leads.'}
@@ -213,7 +211,7 @@ export default async function LeadsPage({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-6">
-      <PageHeader title="Leads" description={SEARCH_HINT} actions={actions} />
+      <PageHeader title="Leads" actions={actions} />
 
       <ListControls
         searchKey="q"
