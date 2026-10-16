@@ -79,19 +79,21 @@ export default async function ProposalsPage({
 
   const supabase = await createServerClient()
 
-  const [{ data: clients }, { data: leadClient }] = await Promise.all([
-    supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
-    leadId && UUID_PATTERN.test(leadId)
-      ? supabase
-          .from('clients')
-          .select('id')
-          .eq('lead_id', leadId)
-          .is('deleted_at', null)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-  ])
-
-  const CLIENT_FILTER_OPTIONS = (clients ?? []).map((c) => ({ value: c.id, label: c.name }))
+  const clientsQuery = supabase
+    .from('clients')
+    .select('id, name')
+    .is('deleted_at', null)
+    .order('name')
+  // Only the selected lead's client is needed to build the proposals query.
+  const leadClientQuery = (() => {
+    if (!leadId || !UUID_PATTERN.test(leadId)) return Promise.resolve({ data: null })
+    return supabase
+      .from('clients')
+      .select('id')
+      .eq('lead_id', leadId)
+      .is('deleted_at', null)
+      .maybeSingle()
+  })()
 
   let query = supabase
     .from('proposals')
@@ -107,12 +109,6 @@ export default async function ProposalsPage({
   }
   if (status) query = query.eq('status', status)
   if (clientId) query = query.eq('client_id', clientId)
-  if (leadId && UUID_PATTERN.test(leadId)) {
-    query = leadClient
-      ? query.or(`lead_id.eq.${leadId},client_id.eq.${leadClient.id}`)
-      : query.eq('lead_id', leadId)
-  }
-
   if (expiry === 'expired') {
     query = query.lt('valid_until', new Date().toISOString().slice(0, 10))
   } else if (expiry === 'expiring_7') {
@@ -136,9 +132,20 @@ export default async function ProposalsPage({
   }
 
   const ascending = sort !== 'created_at' ? dir !== 'desc' : false
-  const { data, error, count } = await query
-    .order(sort, { ascending, nullsFirst: false })
-    .range(from, to)
+  const [{ data: clients }, { data, error, count }] = await Promise.all([
+    clientsQuery,
+    (async () => {
+      const { data: leadClient } = await leadClientQuery
+      let listQuery = query
+      if (leadId && UUID_PATTERN.test(leadId)) {
+        listQuery = leadClient
+          ? listQuery.or(`lead_id.eq.${leadId},client_id.eq.${leadClient.id}`)
+          : listQuery.eq('lead_id', leadId)
+      }
+      return listQuery.order(sort, { ascending, nullsFirst: false }).range(from, to)
+    })(),
+  ])
+  const CLIENT_FILTER_OPTIONS = (clients ?? []).map((c) => ({ value: c.id, label: c.name }))
 
   const pricesByProposal = new Map<string, number>()
   if (canSeePrices && data?.length) {
@@ -164,6 +171,13 @@ export default async function ProposalsPage({
   )
 
   const hasFilters = !!(q || status || clientId || leadId || expiry || followUp)
+  const priceColumn = {
+    key: 'importe',
+    label: 'Importe',
+    align: 'right' as const,
+    sortKey: 'total',
+    minWidth: '7rem',
+  }
   const actions = (
     <div className="flex flex-wrap items-center gap-2">
       <Button asChild size="sm" variant="outline">
@@ -198,17 +212,7 @@ export default async function ProposalsPage({
         { key: 'proyecto', label: 'Proyecto', minWidth: '10rem' },
         { key: 'estado', label: 'Estado', sortKey: 'status', minWidth: '7rem' },
         { key: 'seguimiento', label: 'Siguiente paso', sortKey: 'sent_at', minWidth: '16rem' },
-        ...(canSeePrices
-          ? [
-              {
-                key: 'importe',
-                label: 'Importe',
-                align: 'right' as const,
-                sortKey: 'total',
-                minWidth: '7rem',
-              },
-            ]
-          : []),
+        ...(canSeePrices ? [priceColumn] : []),
         { key: 'valida_hasta', label: 'Válida hasta', sortKey: 'valid_until', minWidth: '7.5rem' },
       ]}
 

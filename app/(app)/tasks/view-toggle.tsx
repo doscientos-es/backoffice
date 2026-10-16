@@ -3,40 +3,27 @@
 import { ButtonGroup } from '@doscientos/ui'
 import { LayoutGrid, List, LoaderCircle as Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useTransition } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 /** Params that are meaningful in both views. */
-const SHARED_PARAMS = ['q', 'project', 'priority'] as const
+const SHARED_PARAMS = ['q', 'project', 'priority', 'assignee', 'blocked'] as const
 /** Params only meaningful in list view. */
 const LIST_ONLY_PARAMS = ['status'] as const
 
 export function TasksViewToggle({ view }: { view: 'board' | 'list' }) {
   const router = useRouter()
   const params = useSearchParams()
-  const [, startTransition] = useTransition()
-  const [pending, setPending] = useState<'board' | 'list' | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   function buildHref(target: 'board' | 'list'): string {
-    const next = new URLSearchParams()
-
-    // Preserve filters that work in both views.
-    for (const key of SHARED_PARAMS) {
-      const v = params.get(key)
-      if (v) next.set(key, v)
-    }
-
-    // Preserve list-only filters only when staying/switching to list.
-    if (target === 'list') {
-      for (const key of LIST_ONLY_PARAMS) {
-        const v = params.get(key)
-        if (v) next.set(key, v)
-      }
-    }
-
-    if (target === 'board') next.set('view', 'board')
+    const next = new URLSearchParams(params.toString())
+    next.delete('page')
+    // The board shows every status; retain list filters and ordering for the return trip.
+    if (target === 'board') next.delete('view')
+    else next.set('view', 'list')
 
     const qs = next.toString()
     return qs ? `/tasks?${qs}` : '/tasks'
@@ -44,10 +31,8 @@ export function TasksViewToggle({ view }: { view: 'board' | 'list' }) {
 
   const navigate = (target: 'board' | 'list') => {
     if (target === view) return
-    setPending(target)
     startTransition(() => {
       router.push(buildHref(target))
-      setPending(null)
     })
   }
 
@@ -70,10 +55,11 @@ export function TasksViewToggle({ view }: { view: 'board' | 'list' }) {
           size="sm"
           variant={view === 'board' ? 'secondary' : 'ghost'}
           className={view !== 'board' ? 'text-muted-foreground hover:text-foreground' : ''}
-          disabled={pending !== null}
+          aria-pressed={view === 'board'}
+          disabled={isPending}
           onClick={() => navigate('board')}
         >
-          {pending === 'board' ? (
+          {isPending && view === 'list' ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <LayoutGrid className="size-3.5" />
@@ -84,10 +70,11 @@ export function TasksViewToggle({ view }: { view: 'board' | 'list' }) {
           size="sm"
           variant={view === 'list' ? 'secondary' : 'ghost'}
           className={view !== 'list' ? 'text-muted-foreground hover:text-foreground' : ''}
-          disabled={pending !== null}
+          aria-pressed={view === 'list'}
+          disabled={isPending}
           onClick={() => navigate('list')}
         >
-          {pending === 'list' ? (
+          {isPending && view === 'board' ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <List className="size-3.5" />

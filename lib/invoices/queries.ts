@@ -54,14 +54,14 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
-  const { data: leadClient } = params.leadId
-    ? await notDeleted(
-        supabase.from('clients').select('id').eq('lead_id', params.leadId),
-      ).maybeSingle()
-    : { data: null }
-
   const [listRes, pendingRes, overdueRes, paidMonthRes, verifactuKoRes] = await Promise.all([
-    (() => {
+    (async () => {
+      // Summary queries do not depend on the lead-to-client lookup.
+      const { data: leadClient } = params.leadId
+        ? await notDeleted(
+            supabase.from('clients').select('id').eq('lead_id', params.leadId),
+          ).maybeSingle()
+        : { data: null }
       let query = notDeleted(
         supabase
           .from('invoices')
@@ -839,10 +839,10 @@ export async function insertRectificationWithItems(
   const supabase = await createServerClient()
   // Cast to `any` because the generated DB types don't include the new
   // rectification columns until the schema types are regenerated.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: invoice, error: invoiceError } = await supabase
     .from('invoices')
     // biome-ignore lint/suspicious/noExplicitAny: new columns not yet in generated types
+    // oxlint-disable-next-line typescript/no-explicit-any -- DB types lack rectification columns.
     .insert(invoiceData as any)
     .select('id')
     .single()

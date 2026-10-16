@@ -54,43 +54,56 @@ export default async function TasksPage({
 
   const supabase = await createServerClient()
 
-  const [{ data: projects }, { data: leads }, { data: clients }, { data: members }] =
+  const membersPromise = Promise.resolve(
+    supabase.from('team_members').select('id, name').is('deleted_at', null).order('name'),
+  ).then(({ data }) =>
+    ((data ?? []) as Array<{ id: string; name: string }>).filter(
+      (member) => user.role !== 'delivery' || member.id === user.id,
+    ),
+  )
+  const tasksPromise = (async () => {
+    // Without an owner filter, tasks can load before the options finish.
+    const members = assigneeParam ? await membersPromise : []
+    const assigneeId = members.some((member) => member.id === assigneeParam) ? assigneeParam : ''
+    const params = { q, priority, projectId, assigneeId, blockedOnly }
+    if (view === 'board') {
+      return { view: 'board' as const, ...(await listTasksBoard(params)) }
+    }
+    return {
+      view: 'list' as const,
+      ...(await listTasksList({ ...params, status, page, sort, dir })),
+    }
+  })()
+
+  const leadsQuery = (() => {
+    if (user.role === 'delivery') return Promise.resolve({ data: [] })
+    return supabase
+      .from('leads')
+      .select('id, name')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+  })()
+
+  const [{ data: projects }, { data: leads }, { data: clients }, membersList, taskResult] =
     await Promise.all([
       supabase.from('projects').select('id, name').is('deleted_at', null).order('name'),
-      user.role === 'delivery'
-        ? Promise.resolve({ data: [] })
-        : supabase.from('leads').select('id, name').is('deleted_at', null).order('created_at', {
-            ascending: false,
-          }),
+      leadsQuery,
       user.role === 'delivery'
         ? Promise.resolve({ data: [] })
         : supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
-      supabase.from('team_members').select('id, name').is('deleted_at', null).order('name'),
+      membersPromise,
+      tasksPromise,
     ])
 
   const projectsList = (projects ?? []) as Array<{ id: string; name: string }>
   const leadsList = (leads ?? []) as Array<{ id: string; name: string }>
   const clientsList = (clients ?? []) as Array<{ id: string; name: string }>
-  const membersList = ((members ?? []) as Array<{ id: string; name: string }>).filter(
-    (member) => user.role !== 'delivery' || member.id === user.id,
-  )
-
   const PROJECT_OPTIONS = projectsList.map((p) => ({ value: p.id, label: p.name }))
   const ASSIGNEE_OPTIONS = membersList.map((member) => ({ value: member.id, label: member.name }))
   const assigneeId = membersList.some((member) => member.id === assigneeParam) ? assigneeParam : ''
 
-  if (view === 'board') {
-    const {
-      items,
-      capped,
-      error: boardErr,
-    } = await listTasksBoard({
-      q,
-      priority,
-      projectId,
-      assigneeId,
-      blockedOnly,
-    })
+  if (taskResult.view === 'board') {
+    const { items, capped, error: boardErr } = taskResult
     const tasks = items as KanbanTask[]
 
     return (
@@ -153,17 +166,7 @@ export default async function TasksPage({
     )
   }
 
-  const { data, count, error } = await listTasksList({
-    q,
-    status,
-    priority,
-    projectId,
-    assigneeId,
-    blockedOnly,
-    page,
-    sort,
-    dir,
-  })
+  const { data, count, error } = taskResult
 
   const rows = data.map((t) => ({
     id: t.id,

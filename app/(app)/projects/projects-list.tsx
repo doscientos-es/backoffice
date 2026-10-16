@@ -1,13 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { lazy, useState } from 'react'
 
 import { ListPage, type ListPageProps } from '@/components/layout/list-page'
-import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { DeferredContent } from '@/components/ui/deferred-content'
 import { useOptimisticRemoval } from '@/lib/hooks/use-optimistic-removal'
 
 import { deleteProject } from './actions'
-import { ProjectQuickView, type QuickProject } from './project-quick-view'
+import type { QuickProject } from './project-quick-view'
+
+const ProjectQuickView = lazy(() =>
+  import('./project-quick-view').then((module) => ({ default: module.ProjectQuickView })),
+)
 
 export function ProjectsList({
   canEdit = false,
@@ -28,14 +32,14 @@ export function ProjectsList({
   return (
     <>
       <ListPage {...props} rows={rows} onRowClick={(row) => setSelectedProject(row.data ?? null)} />
-      <ErrorBoundary>
+      <DeferredContent active={selectedProject !== null}>
         <ProjectQuickView
           project={selectedProject}
           canEdit={canEdit}
           onDeleteAction={handleDelete}
           onCloseAction={() => setSelectedProject(null)}
         />
-      </ErrorBoundary>
+      </DeferredContent>
     </>
   )
 }

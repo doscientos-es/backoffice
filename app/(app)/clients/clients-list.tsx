@@ -1,15 +1,20 @@
 'use client'
 
 import { ChevronRight, Mail, Phone } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { lazy, type ReactNode, useState } from 'react'
 
 import { ListPage, type ListPageProps } from '@/components/layout/list-page'
+import { DeferredContent } from '@/components/ui/deferred-content'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { useOptimisticRemoval } from '@/lib/hooks/use-optimistic-removal'
 import { cn } from '@/lib/utils'
 
 import { deleteClient } from './actions'
-import { ClientQuickView, type QuickClient } from './client-quick-view'
+import type { QuickClient } from './client-quick-view'
+
+const ClientQuickView = lazy(() =>
+  import('./client-quick-view').then((module) => ({ default: module.ClientQuickView })),
+)
 
 export function ClientsList({
   canEdit = false,
@@ -39,12 +44,14 @@ export function ClientsList({
         }
         onRowClick={(row) => setSelectedClient(row.data ?? null)}
       />
-      <ClientQuickView
-        client={selectedClient}
-        canEdit={canEdit}
-        onDeleteAction={handleDelete}
-        onCloseAction={() => setSelectedClient(null)}
-      />
+      <DeferredContent active={selectedClient !== null}>
+        <ClientQuickView
+          client={selectedClient}
+          canEdit={canEdit}
+          onDeleteAction={handleDelete}
+          onCloseAction={() => setSelectedClient(null)}
+        />
+      </DeferredContent>
     </>
   )
 }
