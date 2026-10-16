@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('next/navigation', () => ({
@@ -16,7 +16,47 @@ vi.mock('./lazy-lead-quick-view', () => ({ LeadQuickView: () => null }))
 vi.mock('./[id]/phone-actions', () => ({ LeadCallLink: () => null }))
 vi.mock('../reminders/schedule-reminder-dialog', () => ({ ScheduleReminderDialog: () => null }))
 
-import { LeadsKanban } from './leads-kanban'
+import { LeadsKanban, type KanbanLead } from './leads-kanban'
+
+const DRAGGABLE_LEAD: KanbanLead = {
+  id: 'lead-drag-test',
+  version: 1,
+  name: 'Lead de prueba',
+  alias: null,
+  company: null,
+  email: null,
+  phone: null,
+  source: null,
+  notes: null,
+  status: 'new',
+  created_at: '2025-01-01T00:00:00.000Z',
+  updated_at: '2025-01-01T00:00:00.000Z',
+  estimated_value: null,
+  score: null,
+  company_size: null,
+  solution_type: null,
+  urgency: null,
+  first_contacted_at: null,
+  landing_path: null,
+  landing_ref: null,
+  landing_subject: null,
+  conversion_step: null,
+  first_landing_path: null,
+  utm_campaign: null,
+  marketing_campaign_name: null,
+  last_utm_source: null,
+  last_utm_campaign: null,
+  ai_summary: null,
+  ai_updated_at: null,
+  lost_reason: null,
+  lost_at: null,
+  client: null,
+  assignee: null,
+  recent_interactions: [],
+  next_action: null,
+  scheduled_meeting_at: null,
+  scheduled_meeting_duration_minutes: null,
+}
 
 type HappyDOMWindow = Window & {
   happyDOM: { setViewport: (viewport: { width: number; height: number }) => void }
@@ -43,8 +83,8 @@ describe('lead kanban responsive columns', () => {
     vi.restoreAllMocks()
   })
 
-  function renderBoard() {
-    render(<LeadsKanban leads={[]} />)
+  function renderBoard(leads: KanbanLead[] = []) {
+    render(<LeadsKanban leads={leads} canEdit={leads.length > 0} />)
     return screen.getByRole('region', {
       name: 'Etapas de leads. Desliza horizontalmente para ver las demás etapas.',
     })
@@ -142,6 +182,48 @@ describe('lead kanban responsive columns', () => {
       fireEvent.pointerLeave(column)
       expect(column.dataset.collapsed).toBe('true')
       expect(column.dataset.hovered).toBe('false')
+    }
+  })
+
+  it('keeps every desktop stage expanded while dragging a card', () => {
+    setViewport(1280)
+    const board = renderBoard([DRAGGABLE_LEAD])
+    const columns = within(board).getAllByRole('region')
+    const compactColumns = columns.filter((column) => column.dataset.collapsed === 'true')
+    const dragHandle = within(board).getByRole('button', { name: 'Arrastrar Lead de prueba' })
+
+    expect(compactColumns.length).toBeGreaterThan(0)
+    act(() => {
+      fireEvent.pointerDown(dragHandle, {
+        button: 0,
+        pointerId: 1,
+        isPrimary: true,
+        pointerType: 'mouse',
+        clientX: 0,
+        clientY: 0,
+      })
+      fireEvent.pointerMove(document, {
+        pointerId: 1,
+        pointerType: 'mouse',
+        clientX: 10,
+        clientY: 0,
+      })
+    })
+
+    for (const column of columns) {
+      expect(column.dataset.collapsed).toBe('false')
+    }
+
+    act(() => {
+      fireEvent.pointerCancel(document, {
+        pointerId: 1,
+        pointerType: 'mouse',
+        clientX: 10,
+        clientY: 0,
+      })
+    })
+    for (const column of compactColumns) {
+      expect(column.dataset.collapsed).toBe('true')
     }
   })
 

@@ -470,7 +470,7 @@ function Column({
   const [isHovered, setIsHovered] = useState(false)
   const total = sumLeadEstimatedValue(leads)
   const attention = countLeadsNeedingAttention(leads)
-  const collapsed = compact && !isOver && !isHovered
+  const collapsed = compact && !isDragging && !isOver && !isHovered
   return (
     <section
       id={id}
