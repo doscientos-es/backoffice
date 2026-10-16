@@ -14,7 +14,10 @@ const { getLeadDetail, requireUser } = vi.hoisted(() => ({
 vi.mock('@/lib/auth', () => ({ requireUser }))
 vi.mock('@/lib/leads/queries', () => ({ getLeadDetail }))
 vi.mock('@/lib/leads/ai-context', () => ({ formatLeadBriefingForAI: () => '' }))
-vi.mock('@/lib/ai', () => ({ isAIEnabled: () => false }))
+vi.mock('@/lib/env', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/env')>()),
+  isAIEnabled: () => false,
+}))
 
 import LeadDetailPage from './page'
 

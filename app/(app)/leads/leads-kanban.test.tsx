@@ -10,7 +10,7 @@ vi.mock('./actions', () => ({ deleteLead: vi.fn(), updateLeadStatus: vi.fn() }))
 vi.mock('./close-reason-dialog', () => ({ CloseReasonDialog: () => null }))
 vi.mock('./reopen-confirm-dialog', () => ({ ReopenConfirmDialog: () => null }))
 vi.mock('./quoted-suggestion-dialog', () => ({ QuotedSuggestionDialog: () => null }))
-vi.mock('./lead-quick-view', () => ({ LeadQuickView: () => null }))
+vi.mock('./lazy-lead-quick-view', () => ({ LeadQuickView: () => null }))
 vi.mock('./[id]/phone-actions', () => ({ LeadCallLink: () => null }))
 vi.mock('../reminders/schedule-reminder-dialog', () => ({ ScheduleReminderDialog: () => null }))
 

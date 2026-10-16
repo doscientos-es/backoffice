@@ -17,7 +17,7 @@ vi.mock('./actions', () => ({
 }))
 vi.mock('./lead-fast-actions', () => ({ LeadFastActions: () => null }))
 vi.mock('./[id]/phone-actions', () => ({ LeadCallLink: () => null }))
-vi.mock('./lead-quick-view', () => ({
+vi.mock('./lazy-lead-quick-view', () => ({
   LeadQuickView: ({ lead }: { lead: LeadListItem | null }) => (
     <output aria-label="Lead seleccionado">{lead?.id ?? ''}</output>
   ),

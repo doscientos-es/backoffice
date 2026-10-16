@@ -182,6 +182,58 @@ describe('listLeads client avatar enrichment', () => {
     ])
   })
 
+  it.each(['board', 'list'] as const)(
+    'only selects fields consumed by the %s read model',
+    async (view) => {
+      await listLeads({
+        view,
+        q: '',
+        status: null,
+        source: null,
+        solutionType: null,
+        assignee: null,
+        attention: null,
+        page: 1,
+      })
+
+      for (const column of [
+        'company_size',
+        'solution_type',
+        'urgency',
+        'first_contacted_at',
+        'landing_path',
+        'landing_ref',
+        'landing_subject',
+        'conversion_step',
+        'utm_campaign',
+        'first_landing_path',
+        'last_utm_source',
+        'last_utm_campaign',
+      ]) {
+        expect(state.leadSelect.split(', ')).toContain(column)
+      }
+      for (const column of [
+        'calculator_cost',
+        'calculator_hours',
+        'event_id',
+        'utm_content',
+        'first_referrer',
+        'first_utm_source',
+        'first_utm_medium',
+        'first_utm_campaign',
+        'first_utm_term',
+        'first_utm_content',
+        'last_landing_path',
+        'last_referrer',
+        'last_utm_medium',
+        'last_utm_term',
+        'last_utm_content',
+      ]) {
+        expect(state.leadSelect.split(', ')).not.toContain(column)
+      }
+    },
+  )
+
   it('maps the linked client logo and keeps unconverted leads without a client', async () => {
     state.rows = [
       {

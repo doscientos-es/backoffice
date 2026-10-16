@@ -13,9 +13,8 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from '@/components/ui/empty-state'
-import { isAIEnabled } from '@/lib/ai'
 import { requireUser } from '@/lib/auth'
-import { isGoogleEnabled } from '@/lib/env'
+import { isAIEnabled, isGoogleEnabled } from '@/lib/env'
 import { SELECTABLE_LEAD_STATUSES } from '@/lib/leads/pipeline'
 import { listLeads } from '@/lib/leads/queries'
 import {
@@ -94,30 +93,33 @@ export default async function LeadsPage({
   const googleEnabled = isGoogleEnabled()
   const canEdit = user.role !== 'viewer'
 
-  const members = await listActiveMembers()
-  const memberIds = new Set(members.map((m) => m.id))
-  const assignee = memberIds.has(sp.assignee ?? '') ? (sp.assignee as string) : null
+  const membersPromise = listActiveMembers()
+  // Only a selected owner needs the members query before the leads query.
+  let assignee: string | null = null
+  if (sp.assignee) {
+    const members = await membersPromise
+    if (members.some((member) => member.id === sp.assignee)) assignee = sp.assignee
+  }
   const attention = ATTENTION_FILTER_OPTIONS.some((option) => option.value === sp.attention)
     ? (sp.attention as LeadAttentionFilter)
     : null
 
-  const {
-    leads: enrichedLeads,
-    count,
-    error,
-  } = await listLeads({
-    view,
-    ids: leadIds,
-    q,
-    status,
-    source,
-    solutionType,
-    assignee,
-    attention,
-    page,
-    sort,
-    dir,
-  })
+  const [members, { leads: enrichedLeads, count, error }] = await Promise.all([
+    membersPromise,
+    listLeads({
+      view,
+      ids: leadIds,
+      q,
+      status,
+      source,
+      solutionType,
+      assignee,
+      attention,
+      page,
+      sort,
+      dir,
+    }),
+  ])
 
   const ASSIGNEE_FILTER_OPTIONS = members.map((m) => ({
     value: m.id,

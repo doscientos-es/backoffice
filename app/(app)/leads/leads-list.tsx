@@ -21,11 +21,11 @@ import {
   bulkScheduleLeadReminders,
   bulkUpdateLeadStatus,
 } from './actions'
+import { LeadQuickView } from './lazy-lead-quick-view'
 import { LeadFastActions } from './lead-fast-actions'
 import { LeadMobileCard } from './lead-mobile-card'
 import { LeadNextAction } from './lead-next-action'
 import { LeadNotesIndicator } from './lead-notes-indicator'
-import { LeadQuickView } from './lead-quick-view'
 import type { KanbanLead } from './leads-kanban'
 
 type LeadsListProps = Omit<ListPageProps<KanbanLead>, 'rows'> & {

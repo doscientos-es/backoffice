@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
-import { isAIEnabled } from '@/lib/ai'
 import { requireUser } from '@/lib/auth'
+import { isAIEnabled } from '@/lib/env'
 import { listActiveMembers } from '@/lib/members/queries'
 import { getRecoveryKpis, listLostLeads } from '@/lib/recovery/queries'
 import {

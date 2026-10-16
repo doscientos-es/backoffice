@@ -1,15 +1,17 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { listLeads } = vi.hoisted(() => ({ listLeads: vi.fn() }))
+const { listLeads, listActiveMembers } = vi.hoisted(() => ({
+  listLeads: vi.fn(),
+  listActiveMembers: vi.fn(),
+}))
 
 vi.mock('@/lib/leads/queries', () => ({ listLeads }))
 vi.mock('@/lib/auth', () => ({
   requireUser: async () => ({ id: 'member-1', name: 'Ana', role: 'viewer' }),
 }))
-vi.mock('@/lib/members/queries', () => ({ listActiveMembers: async () => [] }))
-vi.mock('@/lib/ai', () => ({ isAIEnabled: () => false }))
-vi.mock('@/lib/env', () => ({ isGoogleEnabled: () => false }))
+vi.mock('@/lib/members/queries', () => ({ listActiveMembers }))
+vi.mock('@/lib/env', () => ({ isAIEnabled: () => false, isGoogleEnabled: () => false }))
 vi.mock('@/components/layout/list-controls', () => ({ ListControls: () => null }))
 vi.mock('@/components/layout/page-header', () => ({ PageHeader: () => null }))
 vi.mock('@/components/ui/button', () => ({ Button: () => null }))
@@ -25,6 +27,7 @@ vi.mock('./lead-form-fields', () => ({
 import { ListControls } from '@/components/layout/list-controls'
 import { EmptyTitle } from '@/components/ui/empty-state'
 import { LEAD_BOARD_LIMIT } from '@/lib/leads/types'
+import type { MemberOption } from '@/lib/members/queries'
 
 import LeadsPage from './page'
 
@@ -48,6 +51,36 @@ function elements(node: ReactNode): ReactElement<Props>[] {
 describe('leads search experience', () => {
   beforeEach(() => {
     listLeads.mockReset().mockResolvedValue({ leads: [], count: 0, error: null })
+    listActiveMembers.mockReset().mockResolvedValue([])
+  })
+
+  it('starts the leads query without waiting for the owner options when no owner is selected', async () => {
+    let resolveMembers!: (members: MemberOption[]) => void
+    listActiveMembers.mockReturnValueOnce(
+      new Promise<MemberOption[]>((resolve) => {
+        resolveMembers = resolve
+      }),
+    )
+
+    const page = LeadsPage({ searchParams: Promise.resolve({}) })
+    try {
+      await vi.waitFor(() => expect(listLeads).toHaveBeenCalledTimes(1))
+      expect(listLeads).toHaveBeenCalledWith(expect.objectContaining({ assignee: null }))
+    } finally {
+      resolveMembers([])
+    }
+    await page
+  })
+
+  it.each([
+    ['member-1', 'member-1'],
+    ['unknown-member', null],
+  ])('still validates the requested owner %s before querying', async (requested, expected) => {
+    listActiveMembers.mockResolvedValue([
+      { id: 'member-1', name: 'Ana', avatar_url: null, github_handle: null },
+    ])
+    await LeadsPage({ searchParams: Promise.resolve({ assignee: requested }) })
+    expect(listLeads).toHaveBeenCalledWith(expect.objectContaining({ assignee: expected }))
   })
 
   it.each([{ q: '671 171 525' }, { status: 'new' }, { source: 'Landing' }])(

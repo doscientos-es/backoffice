@@ -38,13 +38,17 @@ const PERFORMER_EMBED = 'performer:performed_by(id, name, avatar_url, github_han
 const QUALIFICATION_COLUMNS =
   'company_size, solution_type, urgency, first_contacted_at, landing_path, landing_ref, landing_subject, calculator_cost, calculator_hours, event_id, conversion_step, utm_campaign, utm_content, first_landing_path, first_referrer, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_term, first_utm_content, last_landing_path, last_referrer, last_utm_source, last_utm_medium, last_utm_campaign, last_utm_term, last_utm_content'
 
+/** Keep detail-only calculator and attribution fields out of the 500-card board query. */
+const LIST_QUALIFICATION_COLUMNS =
+  'company_size, solution_type, urgency, first_contacted_at, landing_path, landing_ref, landing_subject, conversion_step, utm_campaign, first_landing_path, last_utm_source, last_utm_campaign'
+
 /** Mom Test qualification checklist — only needed on the lead detail view. */
 const MOM_TEST_COLUMNS =
   'mom_test_real_problem, mom_test_aware_problem, mom_test_tried_solutions, mom_test_decision_power_or_budget, mom_test_accessible, mom_test_comparing_other_companies'
 
 const COMPANY_RESEARCH_COLUMNS = 'company_research, company_researched_at'
 
-const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, language, notes, status, created_at, updated_at, estimated_value, score, ${QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
+const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, language, notes, status, created_at, updated_at, estimated_value, score, ${LIST_QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
 
 const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, language, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
 
