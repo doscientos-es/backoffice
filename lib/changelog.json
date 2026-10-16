@@ -1,6 +1,57 @@
 {
   "releases": [
     {
+      "version": "0.1.122",
+      "date": "2026-10-16",
+      "title": "v0.1.122",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add tests for leads search experience and filters",
+            "Implement lead search normalization and filtering logic"
+          ]
+        },
+        {
+          "title": "Correcciones",
+          "items": [
+            "Simplify output message assertion in leads search tests",
+            "Change status message to output for accessibility"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "09e16e6546d68f96aaf393b9f73e86df205a5b3c",
+          "type": "fix",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Simplify output message assertion in leads search tests"
+        },
+        {
+          "sha": "771dd2220fdbfc204e90da36035a679cee3bbe68",
+          "type": "fix",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Change status message to output for accessibility"
+        },
+        {
+          "sha": "256a40562493d7d6fef8b71c1a302d066b1bc847",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add tests for leads search experience and filters"
+        },
+        {
+          "sha": "c7c6a0d40761170765d0bff033be13a6a3d8f84b",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Implement lead search normalization and filtering logic"
+        }
+      ]
+    },
+    {
       "version": "0.1.121",
       "date": "2026-10-14",
       "title": "v0.1.121",

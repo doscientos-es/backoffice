@@ -2,6 +2,18 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-16 — v0.1.122
+
+### Nuevas funciones
+
+- Add tests for leads search experience and filters
+- Implement lead search normalization and filtering logic
+
+### Correcciones
+
+- Simplify output message assertion in leads search tests
+- Change status message to output for accessibility
+
 ## 2026-10-14 — v0.1.121
 
 ### Nuevas funciones
