@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.129",
+      "date": "2026-10-16",
+      "title": "v0.1.129",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add vCard download and QR code generation for contacts"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "ec9b268945a976272f961d17c6d1efaa5f617167",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add vCard download and QR code generation for contacts"
+        }
+      ]
+    },
+    {
       "version": "0.1.127",
       "date": "2026-10-16",
       "title": "v0.1.127",
