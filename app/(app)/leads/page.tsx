@@ -232,9 +232,9 @@ export default async function LeadsPage({
       />
 
       {!error && hasFilters ? (
-        <p role="status" className="shrink-0 text-sm text-muted-foreground">
+        <output aria-live="polite" className="shrink-0 text-sm text-muted-foreground">
           {count === 1 ? '1 lead encontrado' : `${count} leads encontrados`}
-        </p>
+        </output>
       ) : null}
 
       {error ? (
