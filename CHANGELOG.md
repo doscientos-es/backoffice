@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-16 — v0.1.126
+
+### Nuevas funciones
+
+- Implement deferred content loading
+
 ## 2026-10-16 — v0.1.122
 
 ### Nuevas funciones

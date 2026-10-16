@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.126",
+      "date": "2026-10-16",
+      "title": "v0.1.126",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Implement deferred content loading"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "0002cfe75c7f6d7655196d34055c7442bd51203b",
+          "type": "feat",
+          "scope": "clients, projects, proposals, tasks",
+          "breaking": false,
+          "description": "Implement deferred content loading"
+        }
+      ]
+    },
+    {
       "version": "0.1.122",
       "date": "2026-10-16",
       "title": "v0.1.122",
