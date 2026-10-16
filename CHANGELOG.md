@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-16 — v0.1.127
+
+### Nuevas funciones
+
+- Add mobile navigation for lead kanban stages
+
 ## 2026-10-16 — v0.1.126
 
 ### Nuevas funciones

@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.127",
+      "date": "2026-10-16",
+      "title": "v0.1.127",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add mobile navigation for lead kanban stages"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "e171f800ea1224b448ac01675fa74fd9339445f2",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add mobile navigation for lead kanban stages"
+        }
+      ]
+    },
+    {
       "version": "0.1.126",
       "date": "2026-10-16",
       "title": "v0.1.126",
