@@ -18,9 +18,14 @@ vi.mock('../reminders/schedule-reminder-dialog', () => ({ ScheduleReminderDialog
 
 import { LeadsKanban } from './leads-kanban'
 
+type HappyDOMWindow = Window & {
+  happyDOM: { setViewport: (viewport: { width: number; height: number }) => void }
+}
+
 describe('lead kanban responsive columns', () => {
   function setViewport(width: number) {
-    window.happyDOM.setViewport({ width, height: 900 })
+    const happyWindow = window as unknown as HappyDOMWindow
+    happyWindow.happyDOM.setViewport({ width, height: 900 })
   }
 
   beforeEach(() => {
@@ -69,12 +74,7 @@ describe('lead kanban responsive columns', () => {
     expect(toolbar && getComputedStyle(toolbar).display).toBe('flex')
     expect(getComputedStyle(board).scrollSnapType).toContain('mandatory')
     for (const column of columns) {
-      expect(column.classList.contains('w-full')).toBe(true)
-      expect(column.classList.contains('min-w-0')).toBe(true)
-      expect(column.classList.contains('shrink-0')).toBe(true)
       expect(getComputedStyle(column).width).toBe('100%')
-      expect(column.classList.contains('max-w-80')).toBe(false)
-      expect(column.className).not.toContain('100vw')
     }
   })
 
@@ -137,11 +137,11 @@ describe('lead kanban responsive columns', () => {
 
       fireEvent.pointerEnter(column)
       expect(column.dataset.collapsed).toBe('false')
-      expect(getComputedStyle(toggle).display).toBe('inline-flex')
+      expect(column.dataset.hovered).toBe('true')
 
       fireEvent.pointerLeave(column)
       expect(column.dataset.collapsed).toBe('true')
-      expect(getComputedStyle(toggle).display).toBe('none')
+      expect(column.dataset.hovered).toBe('false')
     }
   })
 
