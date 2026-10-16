@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
-import { CheckCircle2, Phone, PhoneOff } from 'lucide-react'
+import { CheckCircle2, Contact, Phone, PhoneOff } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
@@ -40,6 +40,77 @@ function normalizePhone(phone: string): string {
   const plusIndex = cleaned.indexOf('+')
   if (plusIndex > 0) return cleaned.slice(plusIndex)
   return cleaned
+}
+
+function escapeVCardValue(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\r\n|\r|\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;')
+}
+
+export function buildLeadVCard({
+  leadId,
+  name,
+  phone,
+  email,
+  company,
+}: {
+  leadId: string
+  name: string
+  phone: string
+  email?: string | null
+  company?: string | null
+}): string {
+  const fullName = name.trim() || phone.trim() || 'Contacto'
+  const nameParts = fullName.split(/\s+/)
+  const givenName = nameParts[0] ?? fullName
+  const familyName = nameParts.slice(1).join(' ')
+  const lines = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `UID:urn:doscientos:lead:${leadId}`,
+    'CATEGORIES:Lead',
+    `N:${escapeVCardValue(familyName)};${escapeVCardValue(givenName)};;;`,
+    `FN:${escapeVCardValue(fullName)}`,
+    `TEL;TYPE=CELL:${escapeVCardValue(normalizePhone(phone))}`,
+    ...(email?.trim() ? [`EMAIL;TYPE=INTERNET:${escapeVCardValue(email.trim())}`] : []),
+    ...(company?.trim() ? [`ORG:${escapeVCardValue(company.trim())}`] : []),
+    'END:VCARD',
+    '',
+  ]
+  return lines.join('\r\n')
+}
+
+function downloadLeadVCard({
+  leadId,
+  name,
+  phone,
+  email,
+  company,
+}: {
+  leadId: string
+  name: string
+  phone: string
+  email?: string | null
+  company?: string | null
+}) {
+  const contactName = name.trim() || phone.trim() || 'contacto'
+  const filename = Array.from(contactName, (character) =>
+    /[<>:"/\\|?*]/.test(character) || character.charCodeAt(0) < 32 ? '_' : character,
+  ).join('')
+  const blob = new Blob([buildLeadVCard({ leadId, name, phone, email, company })], {
+    type: 'text/vcard;charset=utf-8',
+  })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${filename}.vcf`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 /**
@@ -149,6 +220,15 @@ export function PhoneQuickActions({
       )}
       <CopyButton text={normalized} successMessage="Teléfono copiado" label="Copiar teléfono" />
       {leadId && leadName && (
+        <LeadContactButton
+          leadId={leadId}
+          name={leadName}
+          phone={phone}
+          email={leadEmail}
+          company={leadCompany}
+        />
+      )}
+      {leadId && leadName && (
         <LeadWhatsAppButton
           leadId={leadId}
           leadName={leadName}
@@ -163,6 +243,94 @@ export function PhoneQuickActions({
         />
       )}
     </div>
+  )
+}
+
+function LeadContactButton({
+  leadId,
+  name,
+  phone,
+  email,
+  company,
+}: {
+  leadId: string
+  name: string
+  phone: string
+  email?: string | null
+  company?: string | null
+}) {
+  const [open, setOpen] = useState(false)
+  const [qr, setQr] = useState<string | null>(null)
+  const [qrError, setQrError] = useState(false)
+  const vCard = buildLeadVCard({ leadId, name, phone, email, company })
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    setQr(null)
+    setQrError(false)
+    void import('qrcode')
+      .then(({ toDataURL }) => toDataURL(vCard, { width: 220, margin: 1 }))
+      .then((dataUrl) => {
+        if (!cancelled) setQr(dataUrl)
+      })
+      .catch(() => {
+        if (!cancelled) setQrError(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, vCard])
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Guardar en contactos"
+          title="Guardar en contactos"
+          className="size-6 text-muted-foreground"
+        >
+          <Contact className="size-3.5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Guardar contacto</DialogTitle>
+          <DialogDescription>
+            La ficha incluye la categoría «Lead» y un identificador estable. Escanea el código para
+            añadirla a Contactos o descarga la vCard desde el móvil. La agenda puede decidir si
+            combina una ficha ya existente; el navegador no puede buscarla ni abrirla.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex size-[220px] items-center justify-center rounded-md bg-muted">
+            {qr ? (
+              <Image
+                src={qr}
+                alt={`QR de contacto para ${name}`}
+                width={220}
+                height={220}
+                unoptimized
+              />
+            ) : (
+              <span className="px-4 text-center text-xs text-muted-foreground">
+                {qrError ? 'No se pudo generar el código QR.' : 'Generando código QR…'}
+              </span>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => downloadLeadVCard({ leadId, name, phone, email, company })}
+          >
+            Descargar ficha vCard
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

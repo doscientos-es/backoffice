@@ -1,9 +1,14 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { toDataURL } from 'qrcode'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { getLeadCallSession, startLeadCall } from '../actions'
-import { LeadCallLink, LeadWhatsAppButton, PhoneQuickActions } from './phone-actions'
+import {
+  buildLeadVCard,
+  LeadCallLink,
+  LeadWhatsAppButton,
+  PhoneQuickActions,
+} from './phone-actions'
 
 vi.mock('qrcode', () => ({ toDataURL: vi.fn() }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
@@ -14,6 +19,8 @@ vi.mock('../actions', () => ({ startLeadCall: vi.fn(), getLeadCallSession: vi.fn
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
   vi.clearAllMocks()
 })
 
@@ -51,6 +58,63 @@ describe('PhoneQuickActions', () => {
 
     const icon = screen.getByRole('button', { name: 'Preparar WhatsApp' }).querySelector('svg')
     expect(icon?.getAttribute('fill')).toBe('currentColor')
+    expect(screen.getByRole('button', { name: 'Guardar en contactos' })).not.toBeNull()
+  })
+
+  it('shows a contact QR and offers a vCard download', async () => {
+    const createObjectURL = vi.fn(() => 'blob:lead-contact')
+    const revokeObjectURL = vi.fn()
+    vi.stubGlobal(
+      'URL',
+      new Proxy(URL, {
+        get: (target, property) => {
+          if (property === 'createObjectURL') return createObjectURL
+          if (property === 'revokeObjectURL') return revokeObjectURL
+          return Reflect.get(target, property, target)
+        },
+      }),
+    )
+    const clickLink = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined)
+    vi.mocked(toDataURL).mockImplementationOnce(() =>
+      Promise.resolve('data:image/png;base64,contact'),
+    )
+
+    render(<PhoneQuickActions {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar en contactos' }))
+    await waitFor(() =>
+      expect(toDataURL).toHaveBeenCalledWith(expect.stringContaining('FN:María López'), {
+        width: 220,
+        margin: 1,
+      }),
+    )
+    expect(screen.getByAltText('QR de contacto para María López')).not.toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Descargar ficha vCard' }))
+
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob))
+    expect(clickLink).toHaveBeenCalledOnce()
+  })
+})
+
+describe('buildLeadVCard', () => {
+  it('formats lead details as an escaped contact card', () => {
+    const card = buildLeadVCard({
+      leadId: 'lead-1',
+      name: 'María, López',
+      phone: '+34 600 111 222',
+      email: 'maria@example.com',
+      company: 'Doscientos; S.L.',
+    })
+
+    expect(card).toContain('FN:María\\, López')
+    expect(card).toContain('UID:urn:doscientos:lead:lead-1')
+    expect(card).toContain('CATEGORIES:Lead')
+    expect(card).toContain('TEL;TYPE=CELL:+34600111222')
+    expect(card).toContain('EMAIL;TYPE=INTERNET:maria@example.com')
+    expect(card).toContain('ORG:Doscientos\\; S.L.')
+    expect(card.endsWith('END:VCARD\r\n')).toBe(true)
   })
 })
 
