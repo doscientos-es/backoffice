@@ -195,6 +195,7 @@ export default async function LeadsPage({
           { key: 'telefono', label: 'Teléfono' },
           { key: 'campana', label: 'Campaña' },
           { key: 'estado', label: 'Estado', sortKey: 'status' },
+          { key: 'proxima_accion', label: 'Próxima acción' },
           { key: 'score', label: 'Score', sortKey: 'score', align: 'right' },
           { key: 'responsable', label: 'Responsable' },
           { key: 'creado', label: 'Creado', sortKey: 'created_at' },

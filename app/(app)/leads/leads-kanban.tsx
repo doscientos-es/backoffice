@@ -14,12 +14,9 @@ import {
 import { Button as PopoverButton, PopoverContent, PopoverTrigger } from '@doscientos/ui'
 import {
   TriangleAlert as AlertTriangle,
-  CalendarDays as CalendarClock,
-  CalendarPlus,
   Funnel as Filter,
   GripVertical,
   History as HistoryIcon,
-  Hourglass,
   Mail,
   Maximize2,
   Minimize2,
@@ -30,7 +27,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useOptimistic, useState, useTransition } from 'react'
+import { useEffect, useId, useOptimistic, useRef, useState, useTransition } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
@@ -44,7 +41,6 @@ import {
   groupLeadsForKanban,
   LEAD_KANBAN_COLUMNS,
   type LeadKanbanColumnId,
-  nextActionForKanban,
   sumLeadEstimatedValue,
 } from '@/lib/leads/kanban-policy'
 import {
@@ -54,12 +50,7 @@ import {
   resolveCompactLeadKanbanColumns,
   toggleLeadKanbanColumnPreference,
 } from '@/lib/leads/kanban-preferences'
-import {
-  isRotting,
-  nextActionState,
-  STAGE_ROT_DAYS,
-  waitingForReplySince,
-} from '@/lib/leads/pipeline'
+import { isRotting, STAGE_ROT_DAYS } from '@/lib/leads/pipeline'
 import type { LeadListItem, LeadMemberRef } from '@/lib/leads/types'
 import { leadDisplayName } from '@/lib/leads/utils'
 import type { MemberOption } from '@/lib/members/queries'
@@ -70,6 +61,7 @@ import { ScheduleReminderDialog } from '../reminders/schedule-reminder-dialog'
 import { LeadCallLink } from './[id]/phone-actions'
 import { deleteLead, updateLeadStatus } from './actions'
 import { CloseReasonDialog, type CloseReasonVariant } from './close-reason-dialog'
+import { LeadNextAction } from './lead-next-action'
 import { LeadNotesIndicator } from './lead-notes-indicator'
 import { LeadQuickView } from './lead-quick-view'
 import { QuotedSuggestionDialog } from './quoted-suggestion-dialog'
@@ -182,6 +174,21 @@ export function LeadsKanban({
   members?: MemberOption[]
 }) {
   const router = useRouter()
+  const boardId = useId()
+  const boardRef = useRef<HTMLElement>(null)
+  const jumpToColumn = (id: LeadKanbanColumnId) => {
+    const board = boardRef.current
+    const column = board?.querySelector<HTMLElement>(`[data-stage="${id}"]`)
+    if (!board || !column) return
+    board.scrollTo({
+      left:
+        board.scrollLeft + column.getBoundingClientRect().left - board.getBoundingClientRect().left,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'instant'
+        : 'smooth',
+    })
+    column.focus({ preventScroll: true })
+  }
   const [, startTransition] = useTransition()
   const [isRefreshing, startRefresh] = useTransition()
   const [lastRefresh, setLastRefresh] = useState<Date>(() => new Date())
@@ -311,13 +318,48 @@ export function LeadsKanban({
         onDragCancel={() => setActiveId(null)}
       >
         <div className="flex h-full min-h-0 flex-col">
+          <div className="mb-2 flex shrink-0 items-center gap-2">
+            <nav aria-label="Ir a una etapa de leads" className="min-w-0 flex-1 overflow-x-auto">
+              <div className="flex w-max items-center gap-1 p-1">
+                {LEAD_KANBAN_COLUMNS.map((col) => {
+                  const count = grouped.get(col.id)?.length ?? 0
+                  return (
+                    <button
+                      key={col.id}
+                      type="button"
+                      aria-controls={`${boardId}-${col.id}`}
+                      aria-label={`Ir a ${col.label}: ${count} leads`}
+                      onClick={() => jumpToColumn(col.id)}
+                      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg border border-border px-3 text-xs font-medium transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none sm:min-h-9"
+                    >
+                      <span className={cn('size-2 shrink-0 rounded-full', col.dot)} aria-hidden />
+                      {col.label}
+                      <span className="text-muted-foreground tabular-nums">{count}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </nav>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50 sm:size-9"
+              aria-label={refreshLabel}
+              title={refreshLabel}
+            >
+              <RefreshCw className={cn('size-4', isRefreshing && 'animate-spin')} aria-hidden />
+            </button>
+          </div>
           <section
+            ref={boardRef}
             aria-label="Etapas de leads. Desliza horizontalmente para ver las demás etapas."
             className="no-scrollbar flex min-h-0 flex-1 scroll-fade-x snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden pb-2 sm:snap-none"
           >
             {LEAD_KANBAN_COLUMNS.map((col) => (
               <Column
                 key={col.id}
+                id={`${boardId}-${col.id}`}
                 status={col.id}
                 label={col.label}
                 description={col.description}
@@ -334,17 +376,6 @@ export function LeadsKanban({
           </section>
           <div className="flex h-5 shrink-0 items-center justify-between">
             <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="flex items-center text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-              aria-label={refreshLabel}
-              title={refreshLabel}
-            >
-              <RefreshCw className={cn('size-3', isRefreshing && 'animate-spin')} />
-              <span className="sr-only">{refreshLabel}</span>
-            </button>
           </div>
         </div>
         <DragOverlay>{active ? <Card lead={active} isOverlay /> : null}</DragOverlay>
@@ -398,6 +429,7 @@ export function LeadsKanban({
 }
 
 function Column({
+  id,
   status,
   label,
   description,
@@ -410,6 +442,7 @@ function Column({
   onOpenQuickView,
   onToggleCompact,
 }: {
+  id: string
   status: LeadKanbanColumnId
   label: string
   description: string
@@ -429,13 +462,16 @@ function Column({
   const collapsed = compact && !isOver && !isHovered
   return (
     <section
+      id={id}
+      data-stage={status}
+      tabIndex={-1}
       ref={setNodeRef}
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
       aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? '' : 's'}`}
       title={collapsed ? `${label} (${leads.length}) · pasa el cursor para expandir` : undefined}
       className={cn(
-        'relative flex h-full w-full min-w-0 shrink-0 snap-start flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 sm:w-80',
+        'relative flex h-full w-full min-w-0 shrink-0 snap-start flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none sm:w-80',
         'transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none',
         collapsed && 'md:w-11 md:cursor-pointer md:bg-muted/30',
         isOver && 'bg-primary/5 ring-2 ring-primary/50',
@@ -476,10 +512,7 @@ function Column({
               }}
               title={compact ? 'Mantener siempre visible' : 'Colapsar cuando no esté en uso'}
               aria-label={compact ? 'Mantener siempre visible' : 'Colapsar cuando no esté en uso'}
-              className={cn(
-                'hidden shrink-0 rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none',
-                isHovered && 'md:inline-flex',
-              )}
+              className="hidden size-7 shrink-0 items-center justify-center rounded text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none md:inline-flex"
             >
               {compact ? <Maximize2 className="size-3" /> : <Minimize2 className="size-3" />}
             </button>
@@ -621,7 +654,7 @@ function Card({
           </span>
         )}
       </div>
-      {!isOverlay && <NextActionChip lead={lead} />}
+      {!isOverlay && <LeadNextAction lead={lead} className="pl-8" />}
       {!isOverlay && (lead.company || lead.phone || lead.email) && (
         <div className="flex min-w-0 flex-col gap-0.5 pl-8 text-xs">
           {lead.company ? <p className="truncate text-muted-foreground">{lead.company}</p> : null}
@@ -695,66 +728,6 @@ function Card({
         {lead.assignee ? <MemberFilterPopover member={lead.assignee} /> : null}
       </div>
     </article>
-  )
-}
-
-/**
- * The second axis of the board: what has to happen next on this lead and when.
- * A missing next action is rendered as loudly as an overdue one — both mean
- * nobody is driving the deal. When the ball is in the lead's court the chip
- * also says since when we are waiting.
- */
-function NextActionChip({ lead }: { lead: KanbanLead }) {
-  const next = nextActionForKanban(lead)
-  const state = nextActionState(lead.status, next)
-  if (state === 'none') return null
-
-  const waitingSince = waitingForReplySince(lead.recent_interactions)
-  const waiting =
-    waitingSince && state !== 'overdue' ? (
-      <span
-        className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"
-        title={`Última salida nuestra ${relativeTime(waitingSince)}`}
-      >
-        <Hourglass className="size-2.5 shrink-0" aria-hidden />
-        <span className="truncate">Esperando respuesta {relativeTime(waitingSince)}</span>
-      </span>
-    ) : null
-
-  if (state === 'missing') {
-    return (
-      <div className="flex min-w-0 flex-col gap-0.5 pl-8">
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-600 dark:text-red-400">
-          <CalendarPlus className="size-2.5 shrink-0" aria-hidden />
-          Sin próxima acción
-        </span>
-        {waiting}
-      </div>
-    )
-  }
-
-  if (!next) return null
-  const tone =
-    state === 'overdue'
-      ? 'font-medium text-red-600 dark:text-red-400'
-      : state === 'today'
-        ? 'font-medium text-amber-700 dark:text-amber-400'
-        : 'text-muted-foreground'
-
-  return (
-    <div className="flex min-w-0 flex-col gap-0.5 pl-8">
-      <span
-        className={cn('inline-flex min-w-0 items-center gap-1 text-[10px]', tone)}
-        title={`${next.title} · ${relativeTime(next.remind_at)}`}
-      >
-        <CalendarClock className="size-2.5 shrink-0" aria-hidden />
-        <span className="truncate">
-          {state === 'overdue' ? 'Vencido ' : ''}
-          {relativeTime(next.remind_at)} · {next.title}
-        </span>
-      </span>
-      {waiting}
-    </div>
   )
 }
 

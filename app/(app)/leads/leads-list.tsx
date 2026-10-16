@@ -8,6 +8,7 @@ import { ListPage, type ListPageProps } from '@/components/layout/list-page'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
+import { nextActionForKanban } from '@/lib/leads/kanban-policy'
 import type { LeadListItem } from '@/lib/leads/types'
 import { getLeadInitials, leadDisplayName } from '@/lib/leads/utils'
 import type { MemberOption } from '@/lib/members/queries'
@@ -21,6 +22,8 @@ import {
   bulkUpdateLeadStatus,
 } from './actions'
 import { LeadFastActions } from './lead-fast-actions'
+import { LeadMobileCard } from './lead-mobile-card'
+import { LeadNextAction } from './lead-next-action'
 import { LeadNotesIndicator } from './lead-notes-indicator'
 import { LeadQuickView } from './lead-quick-view'
 import type { KanbanLead } from './leads-kanban'
@@ -135,6 +138,10 @@ export function LeadsList({
         ),
         value: l.score ?? '',
       },
+      proxima_accion: {
+        content: <LeadNextAction lead={l} className="max-w-64" />,
+        value: nextActionForKanban(l)?.title ?? '',
+      },
       responsable: {
         content: <MemberLabel key="assignee" member={l.assignee} size="sm" />,
         value: l.assignee?.name ?? '',
@@ -164,6 +171,14 @@ export function LeadsList({
       <ListPage
         {...props}
         rows={rows}
+        mobileRow={(row) =>
+          row.data ? (
+            <LeadMobileCard
+              lead={row.data}
+              onOpenAction={() => setSelectedLead(row.data ?? null)}
+            />
+          ) : null
+        }
         bulkActions={[
           {
             label: 'Asignarme',

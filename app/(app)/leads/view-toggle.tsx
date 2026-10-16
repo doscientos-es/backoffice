@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 type LeadView = 'board' | 'list' | 'analytics'
+const FILTER_KEYS = ['q', 'status', 'source', 'solution', 'assignee', 'attention', 'ids']
 
 export function LeadsViewToggle({ view }: { view: LeadView }) {
   const router = useRouter()
@@ -30,15 +31,12 @@ export function LeadsViewToggle({ view }: { view: LeadView }) {
         setPending(null)
         return
       }
-      const next = new URLSearchParams()
-      for (const key of ['q', 'source', 'assignee', 'attention']) {
-        const value = params.get(key)
-        if (value) next.set(key, value)
-      }
+      const next = new URLSearchParams(params.toString())
+      next.delete('page')
       if (target === 'list') {
-        const status = params.get('status')
-        if (status) next.set('status', status)
         next.set('view', 'list')
+      } else {
+        next.delete('view')
       }
       const query = next.toString()
       router.push(query ? `/leads?${query}` : '/leads')
@@ -46,13 +44,7 @@ export function LeadsViewToggle({ view }: { view: LeadView }) {
     })
   }
 
-  const activeCount = [
-    'q',
-    'source',
-    'assignee',
-    'attention',
-    ...(view === 'list' ? ['status'] : []),
-  ].filter((key) => Boolean(params.get(key))).length
+  const activeCount = FILTER_KEYS.filter((key) => Boolean(params.get(key))).length
 
   return (
     <div className="flex items-center gap-2">
@@ -65,12 +57,17 @@ export function LeadsViewToggle({ view }: { view: LeadView }) {
           {activeCount}
         </Badge>
       ) : null}
-      <ButtonGroup className="rounded-lg border border-border bg-muted/30">
+      <ButtonGroup
+        aria-label="Vista de leads"
+        className="rounded-lg border border-border bg-muted/30"
+      >
         <Button
           size="sm"
           variant={view === 'board' ? 'secondary' : 'ghost'}
           className={view !== 'board' ? 'text-muted-foreground hover:text-foreground' : ''}
           disabled={pending !== null}
+          aria-label="Tablero"
+          aria-pressed={view === 'board'}
           onClick={() => navigate('board')}
         >
           {pending === 'board' ? (
@@ -85,6 +82,8 @@ export function LeadsViewToggle({ view }: { view: LeadView }) {
           variant={view === 'list' ? 'secondary' : 'ghost'}
           className={view !== 'list' ? 'text-muted-foreground hover:text-foreground' : ''}
           disabled={pending !== null}
+          aria-label="Lista"
+          aria-pressed={view === 'list'}
           onClick={() => navigate('list')}
         >
           {pending === 'list' ? (
@@ -99,6 +98,9 @@ export function LeadsViewToggle({ view }: { view: LeadView }) {
           variant={view === 'analytics' ? 'secondary' : 'ghost'}
           className={view !== 'analytics' ? 'text-muted-foreground hover:text-foreground' : ''}
           disabled={pending !== null}
+          aria-label="Análisis"
+          aria-pressed={view === 'analytics'}
+          title="Análisis de leads"
           onClick={() => navigate('analytics')}
         >
           {pending === 'analytics' ? (
@@ -106,7 +108,7 @@ export function LeadsViewToggle({ view }: { view: LeadView }) {
           ) : (
             <ChartNoAxesCombined className="size-3.5" />
           )}
-          Análisis
+          <span className="hidden sm:inline">Análisis</span>
         </Button>
       </ButtonGroup>
     </div>

@@ -84,6 +84,13 @@ export function ListTable<Data, Key extends string>({
     })
   }
 
+  function toggleRowSelection(id: string, checked: boolean) {
+    setBulkError(null)
+    setSelectedIds((current) =>
+      checked ? [...new Set([...current, id])] : current.filter((selected) => selected !== id),
+    )
+  }
+
   async function runBulkAction(action: BulkAction) {
     if (selectedIds.length === 0 || runningBulkAction) return
     setRunningBulkAction(action.label)
@@ -140,8 +147,33 @@ export function ListTable<Data, Key extends string>({
 
       {mobileRow ? (
         <div className="flex flex-col gap-2 p-3 sm:hidden">
+          {bulkActions.length > 0 ? (
+            <label className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                ref={(el) => {
+                  if (el) el.indeterminate = selectedVisibleCount > 0 && !allVisibleSelected
+                }}
+                checked={allVisibleSelected}
+                onChange={(event) => toggleVisibleSelection(event.target.checked)}
+              />
+              Seleccionar esta página
+            </label>
+          ) : null}
           {rows.map((row) => (
-            <div key={row.id}>{mobileRow(row)}</div>
+            <div key={row.id} className="flex min-w-0 items-start gap-2">
+              {bulkActions.length > 0 ? (
+                <label className="flex min-h-11 w-7 shrink-0 items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(row.id)}
+                    onChange={(event) => toggleRowSelection(row.id, event.target.checked)}
+                    aria-label={`Seleccionar ${rowLabel(columns, row)}`}
+                  />
+                </label>
+              ) : null}
+              <div className="min-w-0 flex-1">{mobileRow(row)}</div>
+            </div>
           ))}
           {addHref ? (
             <Link
@@ -228,14 +260,7 @@ export function ListTable<Data, Key extends string>({
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(row.id)}
-                        onChange={(event) => {
-                          setBulkError(null)
-                          setSelectedIds((current) =>
-                            event.target.checked
-                              ? [...new Set([...current, row.id])]
-                              : current.filter((id) => id !== row.id),
-                          )
-                        }}
+                        onChange={(event) => toggleRowSelection(row.id, event.target.checked)}
                         aria-label={`Seleccionar ${rowLabel(columns, row)}`}
                       />
                     </td>
