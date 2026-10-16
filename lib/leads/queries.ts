@@ -4,9 +4,9 @@ import { scopedLogger } from '@/lib/logger'
 import type { LeadStatus } from '@/lib/status'
 import { notDeleted } from '@/lib/supabase/filters'
 import { createServerClient } from '@/lib/supabase/server'
-import { escapeIlike } from '@/lib/utils/search-params'
 
 import { suggestedCallDurationMinutes } from './meeting-duration'
+import { buildLeadSearchFilters } from './search'
 import {
   LEAD_BOARD_LIMIT,
   LEAD_LIST_PAGE_SIZE,
@@ -163,11 +163,8 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
   let query = notDeleted(supabase.from('leads').select(LIST_COLUMNS, { count: 'exact' }))
 
   if (params.ids?.length) query = query.in('id', params.ids)
-  if (params.q.length > 0) {
-    const pattern = `%${escapeIlike(params.q)}%`
-    query = query.or(
-      `name.ilike.${pattern},company.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern}`,
-    )
+  for (const filter of buildLeadSearchFilters(params.q)) {
+    query = query.or(filter)
   }
   if (params.status) query = query.in('status', statusFilterValues(params.status))
   if (params.source) query = query.in('source', sourceFilterValues(params.source))

@@ -1,11 +1,18 @@
 import { Plus, TriangleAlert } from 'lucide-react'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { ListControls } from '@/components/layout/list-controls'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from '@/components/ui/empty-state'
 import { isAIEnabled } from '@/lib/ai'
 import { requireUser } from '@/lib/auth'
 import { isGoogleEnabled } from '@/lib/env'
@@ -38,6 +45,8 @@ const STATUS_FILTER_OPTIONS = SELECTABLE_LEAD_STATUSES.map((value) => ({
 
 const SOURCE_FILTER_OPTIONS = LEAD_SOURCES.map((s) => ({ value: s, label: s }))
 const SOLUTION_FILTER_OPTIONS = SOLUTION_TYPES.map((s) => ({ value: s, label: s }))
+const SEARCH_HINT =
+  'Combina palabras en cualquier orden, sin preocuparte por tildes, espacios del teléfono o +34.'
 
 const ATTENTION_FILTER_OPTIONS: { value: LeadAttentionFilter; label: string }[] = [
   { value: 'stale', label: 'Estancados' },
@@ -120,7 +129,15 @@ export default async function LeadsPage({
     },
   }))
 
-  const boardCapped = view === 'board' && enrichedLeads.length >= LEAD_BOARD_LIMIT
+  const boardCapped = view === 'board' && count > LEAD_BOARD_LIMIT
+  const hasFilters =
+    leadIds.length > 0 ||
+    q.length > 0 ||
+    !!status ||
+    !!source ||
+    !!solutionType ||
+    !!assignee ||
+    !!attention
 
   const actions = (
     <div className="ml-auto flex min-w-0 items-center gap-2">
@@ -142,14 +159,6 @@ export default async function LeadsPage({
   )
 
   if (view === 'list') {
-    const hasFilters =
-      leadIds.length > 0 ||
-      q.length > 0 ||
-      !!status ||
-      !!source ||
-      !!solutionType ||
-      !!assignee ||
-      !!attention
     return (
       <LeadsList
         leads={enrichedLeads}
@@ -158,12 +167,13 @@ export default async function LeadsPage({
         members={members}
         senderName={user.name}
         title={leadIds.length ? 'Leads pendientes del aviso' : 'Leads'}
+        description={SEARCH_HINT}
         actions={actions}
         error={error ?? undefined}
         empty={hasFilters ? 'Sin coincidencias.' : 'Aún no hay leads.'}
         emptyAction={<LeadCreateDialog />}
         searchKey="q"
-        searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
+        searchPlaceholder="Nombre, alias, empresa, email o teléfono…"
         controlsPresentation="panel"
         controlsMobileInline
         filters={[
@@ -182,6 +192,7 @@ export default async function LeadsPage({
           { key: 'nombre', label: 'Nombre', sortKey: 'name' },
           { key: 'empresa', label: 'Empresa', sortKey: 'company' },
           { key: 'email', label: 'Email' },
+          { key: 'telefono', label: 'Teléfono' },
           { key: 'campana', label: 'Campaña' },
           { key: 'estado', label: 'Estado', sortKey: 'status' },
           { key: 'score', label: 'Score', sortKey: 'score', align: 'right' },
@@ -199,15 +210,16 @@ export default async function LeadsPage({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-6">
-      <PageHeader title="Leads" actions={actions} />
+      <PageHeader title="Leads" description={SEARCH_HINT} actions={actions} />
 
       <ListControls
         searchKey="q"
-        searchPlaceholder="Buscar por nombre, empresa, email o teléfono…"
+        searchPlaceholder="Nombre, alias, empresa, email o teléfono…"
         presentation="panel"
         mobileInline
         className="rounded-none border-0 bg-transparent shadow-none"
         filters={[
+          { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
           { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
           { key: 'solution', label: 'Necesidad', options: SOLUTION_FILTER_OPTIONS },
           {
@@ -218,6 +230,12 @@ export default async function LeadsPage({
           { key: 'attention', label: 'Atención', options: ATTENTION_FILTER_OPTIONS },
         ]}
       />
+
+      {!error && hasFilters ? (
+        <p role="status" className="shrink-0 text-sm text-muted-foreground">
+          {count === 1 ? '1 lead encontrado' : `${count} leads encontrados`}
+        </p>
+      ) : null}
 
       {error ? (
         <Card>
@@ -230,10 +248,28 @@ export default async function LeadsPage({
           <CardContent className="px-0 pt-0">
             <Empty className="border-0 py-10">
               <EmptyHeader>
-                <EmptyTitle>Aún no hay leads.</EmptyTitle>
+                <EmptyTitle>
+                  {hasFilters
+                    ? 'No hay resultados con esta búsqueda y filtros'
+                    : 'Aún no hay leads.'}
+                </EmptyTitle>
+                {hasFilters ? (
+                  <EmptyDescription>
+                    Prueba con parte del nombre, email o teléfono, o quita los filtros activos.
+                  </EmptyDescription>
+                ) : null}
               </EmptyHeader>
               <EmptyContent>
-                <LeadCreateDialog />
+                {hasFilters ? (
+                  <Link
+                    href="/leads"
+                    className="text-sm font-medium text-primary underline underline-offset-4"
+                  >
+                    Limpiar búsqueda y filtros
+                  </Link>
+                ) : (
+                  <LeadCreateDialog />
+                )}
               </EmptyContent>
             </Empty>
           </CardContent>

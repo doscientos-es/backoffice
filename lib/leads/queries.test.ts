@@ -18,6 +18,8 @@ const state = vi.hoisted(() => ({
   leadSelect: '',
   leadSelections: [] as string[],
   inCalls: [] as [string, unknown[]][],
+  searchFilters: [] as string[],
+  leadOperations: [] as string[],
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -63,13 +65,26 @@ vi.mock('@/lib/supabase/server', () => ({
         },
         eq: () => builder,
         is: () => builder,
-        order: () => builder,
-        or: () => builder,
+        order: () => {
+          if (table === 'leads') state.leadOperations.push('order')
+          return builder
+        },
+        or: (filter: string) => {
+          if (table === 'leads') {
+            state.searchFilters.push(filter)
+            state.leadOperations.push('search')
+          }
+          return builder
+        },
         in: (column: string, values: unknown[]) => {
           if (table === 'leads') state.inCalls.push([column, values])
           return builder
         },
         limit: async () => result,
+        range: async () => {
+          if (table === 'leads') state.leadOperations.push('range')
+          return result
+        },
         async maybeSingle() {
           if (table === 'leads' && selection.includes('company_research')) {
             return {
@@ -117,6 +132,54 @@ describe('listLeads client avatar enrichment', () => {
     state.leadSelect = ''
     state.leadSelections = []
     state.inCalls = []
+    state.searchFilters = []
+    state.leadOperations = []
+  })
+
+  it.each(['board', 'list'] as const)(
+    'applies all search words on the server before %s pagination',
+    async (view) => {
+      await listLeads({
+        view,
+        q: 'García Acme 171525',
+        status: 'new',
+        source: null,
+        solutionType: null,
+        assignee: null,
+        attention: null,
+        page: 2,
+      })
+
+      expect(state.searchFilters).toEqual([
+        'search_text.ilike."%garcia%"',
+        'search_text.ilike."%acme%"',
+        'search_text.ilike."%171525%",search_phone.ilike."%171525%"',
+      ])
+      expect(state.inCalls).toContainEqual(['status', ['new']])
+      expect(state.leadOperations).toEqual([
+        'search',
+        'search',
+        'search',
+        'order',
+        ...(view === 'list' ? ['range'] : []),
+      ])
+    },
+  )
+
+  it('searches a pasted phone without depending on its stored formatting', async () => {
+    await listLeads({
+      view: 'board',
+      q: '+34 671 171 525',
+      status: null,
+      source: null,
+      solutionType: null,
+      assignee: null,
+      attention: null,
+      page: 1,
+    })
+    expect(state.searchFilters).toEqual([
+      'search_text.ilike."%+34 671 171 525%",search_phone.ilike."%671171525%"',
+    ])
   })
 
   it('maps the linked client logo and keeps unconverted leads without a client', async () => {

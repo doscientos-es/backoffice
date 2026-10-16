@@ -88,6 +88,19 @@ export function LeadsList({
         ) : null,
         value: l.email ?? '',
       },
+      telefono: {
+        content: l.phone ? (
+          <a
+            key="phone"
+            href={`tel:${l.phone.replace(/[^+0-9]/g, '')}`}
+            className="whitespace-nowrap transition-colors hover:text-foreground"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {l.phone}
+          </a>
+        ) : null,
+        value: l.phone ?? '',
+      },
       campana: {
         content: (
           <div key="campaign" className="flex min-w-32 flex-col gap-0.5">
