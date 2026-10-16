@@ -118,6 +118,8 @@ describe('lead kanban responsive columns', () => {
     expect(columns.length).toBeGreaterThan(1)
     expect(toolbar && getComputedStyle(toolbar).display).toBe('grid')
     expect(toolbar && getComputedStyle(toolbar).position).toBe('sticky')
+    expect(toolbar && getComputedStyle(toolbar).padding).toBe('4px')
+    expect(toolbar && getComputedStyle(toolbar).marginTop).toBe('4px')
     expect(getComputedStyle(navigation).overflowX).toBe('auto')
     expect(
       navigation.firstElementChild && getComputedStyle(navigation.firstElementChild).flexWrap,

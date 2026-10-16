@@ -21,6 +21,8 @@ import { LeadFormFields } from './lead-form-fields'
 interface Props {
   /** Custom trigger element. Defaults to a "Nuevo lead" button. */
   trigger?: ReactNode
+  /** Optional second trigger, useful for a responsive icon-only control. */
+  mobileTrigger?: ReactNode
   /** Callback fired after successful lead creation. */
   onCreated?: (id: string) => void
 }
@@ -28,7 +30,7 @@ interface Props {
 /**
  * Dialog for creating a new lead without navigating away.
  */
-export function LeadCreateDialog({ trigger, onCreated }: Props) {
+export function LeadCreateDialog({ trigger, mobileTrigger, onCreated }: Props) {
   const [open, setOpen] = useState(false)
   const feedback = useFormFeedback()
   const formRef = useRef<HTMLFormElement>(null)
@@ -78,6 +80,8 @@ export function LeadCreateDialog({ trigger, onCreated }: Props) {
           </Button>
         )}
       </DialogTrigger>
+      {mobileTrigger ? <DialogTrigger asChild>{mobileTrigger}</DialogTrigger> : null}
+
       <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Nuevo lead</DialogTitle>

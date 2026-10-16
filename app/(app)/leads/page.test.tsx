@@ -1,3 +1,4 @@
+import { Button as DoscientosButton, IconButton } from '@doscientos/ui'
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -14,7 +15,6 @@ vi.mock('@/lib/members/queries', () => ({ listActiveMembers }))
 vi.mock('@/lib/env', () => ({ isAIEnabled: () => false, isGoogleEnabled: () => false }))
 vi.mock('@/components/layout/list-controls', () => ({ ListControls: () => null }))
 vi.mock('@/components/layout/page-header', () => ({ PageHeader: () => null }))
-vi.mock('@/components/ui/button', () => ({ Button: () => null }))
 vi.mock('./lead-create-dialog', () => ({ LeadCreateDialog: () => null }))
 vi.mock('./leads-kanban', () => ({ LeadsKanban: () => null }))
 vi.mock('./leads-list', () => ({ LeadsList: () => null }))
@@ -39,6 +39,9 @@ type Props = {
   description?: string
   href?: string
   trigger?: ReactNode
+  mobileTrigger?: ReactNode
+  className?: string
+  label?: string
   columns?: { key: string; label: string }[]
   filters?: { key: string }[]
 }
@@ -117,9 +120,10 @@ describe('leads search experience', () => {
     const page = await LeadsPage({ searchParams: Promise.resolve({ status: 'new' }) })
     const controls = elements(page).find((node) => node.type === ListControls)
     expect(controls?.props.filters).toContainEqual(expect.objectContaining({ key: 'status' }))
+    expect(controls?.props.className).toContain('leads-kanban-filter-controls')
   })
 
-  it('keeps the leads header compact and gives the mobile create action a label', async () => {
+  it('uses a responsive Doscientos button pair for creating leads', async () => {
     listLeads.mockResolvedValue({ leads: [{ id: 'lead-1' }], count: 1, error: null })
     const boardPage = await LeadsPage({ searchParams: Promise.resolve({}) })
     const header = elements(boardPage).find((node) => node.type === PageHeader)
@@ -127,9 +131,13 @@ describe('leads search experience', () => {
     expect(header?.props.description).toBeUndefined()
     const dialog = elements(header?.props.actions).find((node) => node.type === LeadCreateDialog)
     const trigger = dialog?.props.trigger as ReactElement<Props> | undefined
-    const labels = elements(trigger?.props.children).map((node) => node.props.children)
-    expect(labels).toContain('Nuevo')
-    expect(labels).toContain('Nuevo lead')
+    const mobileTrigger = dialog?.props.mobileTrigger as ReactElement<Props> | undefined
+    expect(trigger?.type).toBe(DoscientosButton)
+    expect(trigger?.props.children).toContain('Nuevo lead')
+    expect(trigger?.props.className).toContain('hidden sm:inline-flex')
+    expect(mobileTrigger?.type).toBe(IconButton)
+    expect(mobileTrigger?.props.label).toBe('Nuevo lead')
+    expect(mobileTrigger?.props.className).toContain('sm:hidden')
 
     const listPage = await LeadsPage({ searchParams: Promise.resolve({ view: 'list' }) })
     expect((listPage.props as Props).description).toBeUndefined()

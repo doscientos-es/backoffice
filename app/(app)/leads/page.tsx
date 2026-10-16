@@ -1,10 +1,10 @@
+import { Button, IconButton } from '@doscientos/ui'
 import { Plus, TriangleAlert } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { ListControls } from '@/components/layout/list-controls'
 import { PageHeader } from '@/components/layout/page-header'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Empty,
@@ -144,16 +144,15 @@ export default async function LeadsPage({
       <LeadsViewToggle view={view} />
       <LeadCreateDialog
         trigger={
-          <Button
-            size="sm"
-            aria-label="Nuevo lead"
-            title="Nuevo lead"
-            className="h-9 shrink-0 gap-1.5 px-2.5 md:h-8 md:px-3"
-          >
+          <Button className="hidden sm:inline-flex" title="Nuevo lead">
             <Plus className="size-4" aria-hidden />
-            <span className="sm:hidden">Nuevo</span>
-            <span className="hidden sm:inline">Nuevo lead</span>
+            Nuevo lead
           </Button>
+        }
+        mobileTrigger={
+          <IconButton className="sm:hidden" label="Nuevo lead" size="icon-lg" title="Nuevo lead">
+            <Plus className="size-4" aria-hidden />
+          </IconButton>
         }
       />
     </div>
@@ -218,7 +217,7 @@ export default async function LeadsPage({
         searchPlaceholder="Nombre, alias, empresa, email o teléfono…"
         presentation="panel"
         mobileInline
-        className="rounded-none border-0 bg-transparent shadow-none"
+        className="leads-kanban-filter-controls rounded-none border-0 bg-transparent shadow-none"
         filters={[
           { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
           { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
