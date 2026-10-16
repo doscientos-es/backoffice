@@ -176,45 +176,6 @@ export function LeadsKanban({
 }) {
   const router = useRouter()
   const boardId = useId()
-  const boardRef = useRef<HTMLElement>(null)
-  const stageNavigationRef = useRef<HTMLElement>(null)
-  const [activeColumnId, setActiveColumnId] = useState<LeadKanbanColumnId>('new')
-  const jumpToColumn = (id: LeadKanbanColumnId) => {
-    const board = boardRef.current
-    const column = board?.querySelector<HTMLElement>(`[data-stage="${id}"]`)
-    if (!board || !column) return
-    setActiveColumnId(id)
-    board.scrollTo({
-      left:
-        board.scrollLeft + column.getBoundingClientRect().left - board.getBoundingClientRect().left,
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ? 'instant'
-        : 'smooth',
-    })
-    column.focus({ preventScroll: true })
-  }
-  const syncActiveColumn = () => {
-    const board = boardRef.current
-    if (!board) return
-    const boardLeft = board.getBoundingClientRect().left
-    let nearestId: LeadKanbanColumnId | null = null
-    let nearestDistance = Number.POSITIVE_INFINITY
-
-    for (const col of LEAD_KANBAN_COLUMNS) {
-      const column = board.querySelector<HTMLElement>(`[data-stage="${col.id}"]`)
-      if (!column) continue
-      const distance = Math.abs(column.getBoundingClientRect().left - boardLeft)
-      if (distance < nearestDistance) {
-        nearestId = col.id
-        nearestDistance = distance
-      }
-    }
-
-    if (nearestId) {
-      const nextId = nearestId
-      setActiveColumnId((current) => (current === nextId ? current : nextId))
-    }
-  }
   const [, startTransition] = useTransition()
   const [isRefreshing, startRefresh] = useTransition()
   const [lastRefresh, setLastRefresh] = useState<Date>(() => new Date())
@@ -331,30 +292,6 @@ export function LeadsKanban({
   const grouped = groupLeadsForKanban(optimistic)
   const compactColumns = resolveCompactLeadKanbanColumns(columnPreferences)
   const active = activeId ? optimistic.find((lead) => lead.id === activeId) : null
-  useEffect(() => {
-    const navigation = stageNavigationRef.current
-    const activeButton = navigation?.querySelector<HTMLButtonElement>(
-      `[data-stage-navigation="${activeColumnId}"]`,
-    )
-    if (!navigation || !activeButton) return
-
-    const navigationBounds = navigation.getBoundingClientRect()
-    const buttonBounds = activeButton.getBoundingClientRect()
-    if (buttonBounds.left >= navigationBounds.left && buttonBounds.right <= navigationBounds.right)
-      return
-
-    const left =
-      navigation.scrollLeft +
-      buttonBounds.left -
-      navigationBounds.left -
-      (navigation.clientWidth - buttonBounds.width) / 2
-    navigation.scrollTo({
-      left: Math.max(0, left),
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ? 'instant'
-        : 'smooth',
-    })
-  }, [activeColumnId])
   const refreshLabel = isRefreshing
     ? 'Actualizando leads'
     : `Actualizar leads; actualizado ${relativeTime(lastRefresh.toISOString())}`
@@ -369,8 +306,6 @@ export function LeadsKanban({
       >
         <div className="leads-kanban">
           <section
-            ref={boardRef}
-            onScroll={syncActiveColumn}
             aria-label="Etapas de leads. Desliza horizontalmente para ver las demás etapas."
             className="leads-kanban-board no-scrollbar scroll-fade-x gap-4 overflow-x-auto overflow-y-hidden pb-2"
           >
@@ -392,7 +327,7 @@ export function LeadsKanban({
               />
             ))}
           </section>
-          <div className="flex h-5 shrink-0 items-center justify-between">
+          <div className="leads-kanban-footer flex min-h-5 shrink-0 items-center justify-between">
             <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
             <button
               type="button"
@@ -404,36 +339,6 @@ export function LeadsKanban({
             >
               <RefreshCw className={cn('size-3', isRefreshing && 'animate-spin')} aria-hidden />
             </button>
-          </div>
-          <div className="leads-kanban-mobile-toolbar">
-            <nav
-              ref={stageNavigationRef}
-              aria-label="Ir a una etapa de leads"
-              className="leads-kanban-mobile-stage-navigation"
-            >
-              <div className="leads-kanban-mobile-stage-list">
-                {LEAD_KANBAN_COLUMNS.map((col) => {
-                  const count = grouped.get(col.id)?.length ?? 0
-                  const isActive = activeColumnId === col.id
-                  return (
-                    <button
-                      key={col.id}
-                      type="button"
-                      data-stage-navigation={col.id}
-                      aria-controls={`${boardId}-${col.id}`}
-                      aria-label={`Ir a ${col.label}: ${count} leads`}
-                      aria-current={isActive ? 'location' : undefined}
-                      onClick={() => jumpToColumn(col.id)}
-                      className="leads-kanban-mobile-stage-button"
-                    >
-                      <span className={cn('size-2 shrink-0 rounded-full', col.dot)} aria-hidden />
-                      <span>{col.label}</span>
-                      <span className="leads-kanban-mobile-stage-count">{count}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </nav>
             <button
               type="button"
               onClick={handleRefresh}

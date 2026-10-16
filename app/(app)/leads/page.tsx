@@ -144,13 +144,13 @@ export default async function LeadsPage({
       <LeadsViewToggle view={view} />
       <LeadCreateDialog
         trigger={
-          <Button className="hidden sm:inline-flex" title="Nuevo lead">
+          <Button className="hidden sm:inline-flex">
             <Plus className="size-4" aria-hidden />
             Nuevo lead
           </Button>
         }
         mobileTrigger={
-          <IconButton className="sm:hidden" label="Nuevo lead" size="icon-lg" title="Nuevo lead">
+          <IconButton className="sm:hidden" label="Nuevo lead" size="icon-lg">
             <Plus className="size-4" aria-hidden />
           </IconButton>
         }
