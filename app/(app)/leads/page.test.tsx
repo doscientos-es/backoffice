@@ -86,6 +86,10 @@ describe('leads search experience', () => {
       searchParams: Promise.resolve({ view: 'list', q: '  +34 671 171 525  ' }),
     })
     expect((page.props as Props).columns).toContainEqual({ key: 'telefono', label: 'Teléfono' })
+    expect((page.props as Props).columns).toContainEqual({
+      key: 'proxima_accion',
+      label: 'Próxima acción',
+    })
     expect(listLeads).toHaveBeenCalledWith(expect.objectContaining({ q: '+34 671 171 525' }))
   })
 
