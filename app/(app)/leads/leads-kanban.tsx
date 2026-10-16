@@ -435,7 +435,7 @@ function Column({
       aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? '' : 's'}`}
       title={collapsed ? `${label} (${leads.length}) · pasa el cursor para expandir` : undefined}
       className={cn(
-        'relative flex h-full w-[calc(100vw-2rem)] max-w-80 shrink-0 snap-start flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 sm:w-80',
+        'relative flex h-full w-full min-w-0 shrink-0 snap-start flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 sm:w-80',
         'transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none',
         collapsed && 'md:w-11 md:cursor-pointer md:bg-muted/30',
         isOver && 'bg-primary/5 ring-2 ring-primary/50',
