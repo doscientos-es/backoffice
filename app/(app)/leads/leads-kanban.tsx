@@ -1,5 +1,6 @@
 'use client'
 
+import './leads-kanban.css'
 import {
   DndContext,
   type DragEndEvent,
@@ -317,8 +318,8 @@ export function LeadsKanban({
         onDragEnd={onDragEnd}
         onDragCancel={() => setActiveId(null)}
       >
-        <div className="flex h-full min-h-0 flex-col">
-          <div className="mb-2 flex shrink-0 items-center gap-2">
+        <div className="leads-kanban">
+          <div className="leads-kanban-mobile-toolbar mb-2 shrink-0 items-center gap-2">
             <nav aria-label="Ir a una etapa de leads" className="min-w-0 flex-1 overflow-x-auto">
               <div className="flex w-max items-center gap-1 p-1">
                 {LEAD_KANBAN_COLUMNS.map((col) => {
@@ -354,7 +355,7 @@ export function LeadsKanban({
           <section
             ref={boardRef}
             aria-label="Etapas de leads. Desliza horizontalmente para ver las demás etapas."
-            className="no-scrollbar flex min-h-0 flex-1 scroll-fade-x snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden pb-2 sm:snap-none"
+            className="leads-kanban-board no-scrollbar scroll-fade-x gap-4 overflow-x-auto overflow-y-hidden pb-2"
           >
             {LEAD_KANBAN_COLUMNS.map((col) => (
               <Column
@@ -376,6 +377,16 @@ export function LeadsKanban({
           </section>
           <div className="flex h-5 shrink-0 items-center justify-between">
             <FormFeedback state={feedback.state} pendingLabel="Actualizando…" />
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="leads-kanban-desktop-refresh items-center text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50"
+              aria-label={refreshLabel}
+              title={refreshLabel}
+            >
+              <RefreshCw className={cn('size-3', isRefreshing && 'animate-spin')} aria-hidden />
+            </button>
           </div>
         </div>
         <DragOverlay>{active ? <Card lead={active} isOverlay /> : null}</DragOverlay>
@@ -464,6 +475,8 @@ function Column({
     <section
       id={id}
       data-stage={status}
+      data-collapsed={collapsed}
+      data-hovered={isHovered}
       tabIndex={-1}
       ref={setNodeRef}
       onPointerEnter={() => setIsHovered(true)}
@@ -471,21 +484,19 @@ function Column({
       aria-label={`${label} · ${leads.length} lead${leads.length === 1 ? '' : 's'}`}
       title={collapsed ? `${label} (${leads.length}) · pasa el cursor para expandir` : undefined}
       className={cn(
-        'relative flex h-full w-full min-w-0 shrink-0 snap-start flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none sm:w-80',
+        'leads-kanban-column relative flex snap-start flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none',
         'transition-[width,background-color,box-shadow] duration-200 ease-out motion-reduce:transition-none',
-        collapsed && 'md:w-11 md:cursor-pointer md:bg-muted/30',
         isOver && 'bg-primary/5 ring-2 ring-primary/50',
         isDragging && !isOver && 'ring-dashed ring-primary/30',
       )}
     >
-      <header className={cn('shrink-0 border-b border-border px-3 py-3', collapsed && 'md:px-1.5')}>
-        <div className={cn('flex min-w-0 items-center gap-2', collapsed && 'md:flex-col')}>
+      <header className="leads-kanban-column-header shrink-0 border-b border-border px-3 py-3">
+        <div className="leads-kanban-column-heading flex min-w-0 items-center gap-2">
           <span className={cn('size-2 shrink-0 rounded-full', dot)} aria-hidden />
           <span
             className={cn(
-              'min-w-0 flex-1 truncate text-sm font-semibold',
+              'leads-kanban-column-label min-w-0 flex-1 truncate text-sm font-semibold',
               tone,
-              collapsed ? 'md:rotate-180 md:[writing-mode:vertical-rl]' : undefined,
             )}
           >
             {label}
@@ -494,7 +505,7 @@ function Column({
             {attention > 0 && (
               <Badge
                 variant="danger"
-                className={cn('h-5 gap-1 text-[11px] tabular-nums', collapsed && 'md:hidden')}
+                className="leads-kanban-column-details h-5 gap-1 text-[11px] tabular-nums"
                 title={`${attention} lead${attention === 1 ? '' : 's'} sin próxima acción o con el aviso vencido`}
               >
                 <AlertTriangle className="size-2.5" aria-hidden />
@@ -512,37 +523,22 @@ function Column({
               }}
               title={compact ? 'Mantener siempre visible' : 'Colapsar cuando no esté en uso'}
               aria-label={compact ? 'Mantener siempre visible' : 'Colapsar cuando no esté en uso'}
-              className="hidden size-7 shrink-0 items-center justify-center rounded text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none md:inline-flex"
+              className="leads-kanban-compact-toggle size-7 shrink-0 items-center justify-center rounded text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               {compact ? <Maximize2 className="size-3" /> : <Minimize2 className="size-3" />}
             </button>
           </div>
         </div>
-        <p
-          className={cn(
-            'mt-1.5 truncate pl-4 text-[11px] text-muted-foreground',
-            collapsed && 'md:hidden',
-          )}
-        >
+        <p className="leads-kanban-column-details mt-1.5 truncate pl-4 text-[11px] text-muted-foreground">
           {description}
         </p>
         {total > 0 ? (
-          <p
-            className={cn(
-              'mt-2 pl-4 text-xs font-medium text-foreground/80 tabular-nums',
-              collapsed && 'md:hidden',
-            )}
-          >
+          <p className="leads-kanban-column-details mt-2 pl-4 text-xs font-medium text-foreground/80 tabular-nums">
             {formatEUR(total)}
           </p>
         ) : null}
       </header>
-      <div
-        className={cn(
-          'no-scrollbar flex min-h-0 flex-1 scroll-fade flex-col gap-2 overflow-y-auto p-2.5',
-          collapsed && 'md:hidden',
-        )}
-      >
+      <div className="leads-kanban-column-details no-scrollbar flex min-h-0 flex-1 scroll-fade flex-col gap-2 overflow-y-auto p-2.5">
         {leads.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-muted-foreground">
             {isDragging ? 'Soltar aquí' : 'Sin leads'}

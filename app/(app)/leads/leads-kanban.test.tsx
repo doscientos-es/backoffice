@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -17,9 +19,22 @@ vi.mock('../reminders/schedule-reminder-dialog', () => ({ ScheduleReminderDialog
 import { LeadsKanban } from './leads-kanban'
 
 describe('lead kanban responsive columns', () => {
-  beforeEach(() => window.localStorage.clear())
+  function setViewport(width: number) {
+    window.happyDOM.setViewport({ width, height: 900 })
+  }
+
+  beforeEach(() => {
+    window.localStorage.clear()
+    setViewport(390)
+    const style = document.createElement('style')
+    style.dataset.leadsKanbanTestStyles = ''
+    style.textContent = readFileSync('app/(app)/leads/leads-kanban.css', 'utf8')
+    document.head.append(style)
+  })
   afterEach(() => {
     cleanup()
+    document.querySelector('[data-leads-kanban-test-styles]')?.remove()
+    setViewport(390)
     vi.restoreAllMocks()
   })
 
@@ -30,15 +45,34 @@ describe('lead kanban responsive columns', () => {
     })
   }
 
-  it('fills the available mobile width without a fixed or viewport-based cap', () => {
+  function getNavigation() {
+    const navigation = document.querySelector<HTMLElement>(
+      'nav[aria-label="Ir a una etapa de leads"]',
+    )
+    if (!navigation) throw new Error('No se encontró la navegación del kanban de leads')
+    return navigation
+  }
+
+  function getCompactToggle(column: HTMLElement, label: string) {
+    const toggle = column.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)
+    if (!toggle) throw new Error(`No se encontró el control de columna «${label}»`)
+    return toggle
+  }
+
+  it('fills the mobile viewport and displays the touch navigation', () => {
     const board = renderBoard()
     const columns = within(board).getAllByRole('region')
+    const navigation = getNavigation()
+    const toolbar = navigation.parentElement
 
     expect(columns.length).toBeGreaterThan(1)
+    expect(toolbar && getComputedStyle(toolbar).display).toBe('flex')
+    expect(getComputedStyle(board).scrollSnapType).toContain('mandatory')
     for (const column of columns) {
       expect(column.classList.contains('w-full')).toBe(true)
       expect(column.classList.contains('min-w-0')).toBe(true)
       expect(column.classList.contains('shrink-0')).toBe(true)
+      expect(getComputedStyle(column).width).toBe('100%')
       expect(column.classList.contains('max-w-80')).toBe(false)
       expect(column.className).not.toContain('100vw')
     }
@@ -47,33 +81,95 @@ describe('lead kanban responsive columns', () => {
   it('keeps horizontal swiping and alignment between stages', () => {
     const board = renderBoard()
     expect(board.classList.contains('overflow-x-auto')).toBe(true)
-    expect(board.classList.contains('snap-x')).toBe(true)
-    expect(board.classList.contains('snap-mandatory')).toBe(true)
+    expect(getComputedStyle(board).scrollSnapType).toBe('x mandatory')
     for (const column of within(board).getAllByRole('region')) {
       expect(column.classList.contains('snap-start')).toBe(true)
     }
   })
 
-  it('preserves desktop column sizes and desktop-only collapsed stages', () => {
+  it('restores the parallel, compact desktop board and hides the mobile controls', () => {
+    setViewport(1280)
     const board = renderBoard()
-    for (const column of within(board).getAllByRole('region')) {
-      expect(column.classList.contains('sm:w-80')).toBe(true)
+    const columns = within(board).getAllByRole('region')
+    for (const column of columns.slice(0, 5)) {
+      expect(getComputedStyle(column).width).toBe('320px')
     }
-    const archived = within(board).getByRole('region', { name: /Archivado.*0 leads/ })
-    expect(archived.classList.contains('md:w-11')).toBe(true)
-    expect(archived.classList.contains('w-full')).toBe(true)
+    expect(getComputedStyle(board).scrollSnapType).toBe('none')
+    const toolbar = getNavigation().parentElement
+    expect(toolbar && getComputedStyle(toolbar).display).toBe('none')
+    for (const column of columns.slice(5)) {
+      expect(getComputedStyle(column).width).toBe('44px')
+      const details = column.querySelector('.leads-kanban-column-details')
+      expect(details && getComputedStyle(details).display).toBe('none')
+    }
   })
 
   it('provides a shortcut to every stage with its lead count', () => {
     const board = renderBoard()
-    const navigation = screen.getByRole('navigation', { name: 'Ir a una etapa de leads' })
-    const shortcuts = within(navigation).getAllByRole('button')
+    const navigation = getNavigation()
+    const shortcuts = within(navigation).getAllByRole('button', { hidden: true })
     const columns = within(board).getAllByRole('region')
     expect(shortcuts).toHaveLength(columns.length)
     for (const [index, shortcut] of shortcuts.entries()) {
       expect(shortcut.getAttribute('aria-controls')).toBe(columns[index]?.id)
       expect(shortcut.getAttribute('aria-label')).toContain('0 leads')
     }
+  })
+
+  it('limits the stage shortcuts to mobile so desktop keeps its full board height', () => {
+    const board = renderBoard()
+    const navigation = getNavigation()
+
+    expect(navigation.parentElement?.classList.contains('leads-kanban-mobile-toolbar')).toBe(true)
+    expect(navigation.parentElement?.nextElementSibling).toBe(board)
+  })
+
+  it('expands compact desktop stages on hover and collapses them again on leave', () => {
+    setViewport(1280)
+    const board = renderBoard()
+
+    for (const stage of ['Ganado', 'Perdido', 'No interesa', 'Archivado']) {
+      const column = within(board).getByRole('region', { name: `${stage} · 0 leads` })
+      const toggle = getCompactToggle(column, 'Mantener siempre visible')
+
+      expect(column.dataset.collapsed).toBe('true')
+      expect(getComputedStyle(toggle).display).toBe('none')
+
+      fireEvent.pointerEnter(column)
+      expect(column.dataset.collapsed).toBe('false')
+      expect(getComputedStyle(toggle).display).toBe('inline-flex')
+
+      fireEvent.pointerLeave(column)
+      expect(column.dataset.collapsed).toBe('true')
+      expect(getComputedStyle(toggle).display).toBe('none')
+    }
+  })
+
+  it('keeps a stage expanded when pinned and saves the desktop preference', () => {
+    setViewport(1280)
+    const board = renderBoard()
+    const column = within(board).getByRole('region', { name: 'Archivado · 0 leads' })
+
+    fireEvent.pointerEnter(column)
+    fireEvent.click(getCompactToggle(column, 'Mantener siempre visible'))
+    fireEvent.pointerLeave(column)
+
+    expect(column.dataset.collapsed).toBe('false')
+    expect(window.localStorage.getItem('leads-kanban:compact-columns:v3')).toBe(
+      JSON.stringify({ compact: [], expanded: ['archived'] }),
+    )
+
+    cleanup()
+    const restoredBoard = renderBoard()
+    const restoredColumn = within(restoredBoard).getByRole('region', {
+      name: 'Archivado · 0 leads',
+    })
+    expect(restoredColumn.dataset.collapsed).toBe('false')
+
+    fireEvent.pointerEnter(restoredColumn)
+    fireEvent.click(getCompactToggle(restoredColumn, 'Colapsar cuando no esté en uso'))
+    fireEvent.pointerLeave(restoredColumn)
+    expect(restoredColumn.dataset.collapsed).toBe('true')
   })
 
   it.each([false, true])(
@@ -89,7 +185,12 @@ describe('lead kanban responsive columns', () => {
       vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: reducedMotion } as MediaQueryList)
       const focus = vi.spyOn(target, 'focus')
 
-      fireEvent.click(screen.getByRole('button', { name: 'Ir a Reunión agendada: 0 leads' }))
+      fireEvent.click(
+        within(getNavigation()).getByRole('button', {
+          name: 'Ir a Reunión agendada: 0 leads',
+          hidden: true,
+        }),
+      )
 
       expect(scrollTo).toHaveBeenCalledWith({
         left: 520,
@@ -100,9 +201,21 @@ describe('lead kanban responsive columns', () => {
     },
   )
 
-  it('keeps refresh above the board with a touch-sized target', () => {
-    renderBoard()
-    const refresh = screen.getByRole('button', { name: /Actualizar leads/ })
-    expect(refresh.classList.contains('size-11')).toBe(true)
+  it('keeps touch refresh above the mobile board and desktop refresh in the footer', () => {
+    const board = renderBoard()
+    const [mobileRefresh, desktopRefresh] = document.querySelectorAll<HTMLButtonElement>(
+      'button[aria-label^="Actualizar leads"]',
+    )
+
+    expect(mobileRefresh?.classList.contains('size-11')).toBe(true)
+    expect(mobileRefresh?.parentElement?.classList.contains('leads-kanban-mobile-toolbar')).toBe(
+      true,
+    )
+    expect(desktopRefresh?.classList.contains('leads-kanban-desktop-refresh')).toBe(true)
+    expect(desktopRefresh?.parentElement).toBe(board.nextElementSibling)
+    setViewport(1280)
+    const mobileToolbar = mobileRefresh?.parentElement
+    expect(mobileToolbar && getComputedStyle(mobileToolbar).display).toBe('none')
+    expect(desktopRefresh && getComputedStyle(desktopRefresh).display).toBe('flex')
   })
 })
