@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-26 — v0.1.130
+
+### Nuevas funciones
+
+- Improve lead calling from mobile
+
 ## 2026-10-16 — v0.1.129
 
 ### Nuevas funciones

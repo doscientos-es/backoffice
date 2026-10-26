@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.130",
+      "date": "2026-10-26",
+      "title": "v0.1.130",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Improve lead calling from mobile"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "aba2ab82dc91c1497817689f37ae3eeb9c9507a1",
+          "type": "feat",
+          "scope": null,
+          "breaking": false,
+          "description": "Improve lead calling from mobile"
+        }
+      ]
+    },
+    {
       "version": "0.1.129",
       "date": "2026-10-16",
       "title": "v0.1.129",
