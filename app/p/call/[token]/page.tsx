@@ -19,7 +19,9 @@ export default async function MobileCallPage({ params }: { params: Promise<{ tok
   }
   const { data: session } = await createAdminClient()
     .from('lead_call_sessions')
-    .select('status, expires_at, lead_id, leads(id, name, company, phone, status, estimated_value)')
+    .select(
+      'status, expires_at, lead_id, leads(id, name, company, email, phone, status, estimated_value)',
+    )
     .eq('mobile_token', token)
     .gt('expires_at', new Date().toISOString())
     .maybeSingle()
@@ -109,6 +111,10 @@ export default async function MobileCallPage({ params }: { params: Promise<{ tok
   return (
     <MobileCallSession
       token={token}
+      leadId={leadId}
+      leadName={(lead?.name as string | null) ?? 'Lead'}
+      leadEmail={(lead?.email as string | null) ?? null}
+      leadCompany={(lead?.company as string | null) ?? null}
       phone={phone as string}
       status={session.status}
       briefing={{

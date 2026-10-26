@@ -1,13 +1,14 @@
 'use client'
 
-import { ListTodo } from 'lucide-react'
+import { ListTodo, Phone } from 'lucide-react'
 import { useState } from 'react'
 
 import { GoogleCalendarIcon } from '@/components/icons/google-calendar-icon'
 
-import { ScheduleReminderDialog, type ScheduleMember } from '../reminders/schedule-reminder-dialog'
+import { type ScheduleMember, ScheduleReminderDialog } from '../reminders/schedule-reminder-dialog'
 import { ExtractTasksDialog, type ExtractTasksDialogProps } from './[id]/extract-tasks-dialog'
 import { GmailSyncButton } from './[id]/gmail-sync-button'
+import { LeadCallLink, LeadContactSaveButton } from './[id]/phone-actions'
 import {
   type MeetMember,
   QCallDialog,
@@ -16,8 +17,8 @@ import {
   QMeetNowDialog,
   QNoteDialog,
   QSendEmailDialog,
-  QWhatsAppDialog,
   QuickActionTile,
+  QWhatsAppDialog,
 } from './lead-quick-action-dialogs'
 
 type Props = {
@@ -69,6 +70,25 @@ export function LeadQuickActionGroups({
 
   return (
     <section aria-label="Acciones rápidas" className="grid grid-cols-2 gap-1.5">
+      {leadPhone && (
+        <LeadCallLink
+          leadId={leadId}
+          phone={leadPhone}
+          className="flex h-8 w-full min-w-0 items-center justify-start gap-2 rounded-md border border-border/80 bg-card/60 px-2.5 text-left text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted/60"
+        >
+          <Phone className="size-3.5 shrink-0 text-muted-foreground" />
+          <span className="truncate">Llamar</span>
+        </LeadCallLink>
+      )}
+      {leadPhone && (
+        <LeadContactSaveButton
+          leadId={leadId}
+          name={leadName}
+          phone={leadPhone}
+          email={leadEmail}
+          company={leadCompany}
+        />
+      )}
       <QCallDialog
         leadId={leadId}
         leadPhone={leadPhone}

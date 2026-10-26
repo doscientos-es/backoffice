@@ -17,7 +17,10 @@ import { Button } from '@/components/ui/button'
 import { CopyButton } from '@/components/ui/copy-button'
 import { publicEnv } from '@/lib/env'
 import { CALL_REMINDER_SCHEDULED_EVENT } from '@/lib/leads/call-workflow'
+import { buildLeadVCard } from '@/lib/leads/vcard'
 import { buildBookingUrl } from '@/lib/recovery/utils'
+
+export { buildLeadVCard } from '@/lib/leads/vcard'
 
 import { finishLeadCall, getLeadCallSession, markLeadCallDialed, startLeadCall } from '../actions'
 import { WhatsAppComposer } from '../whatsapp-composer'
@@ -40,47 +43,6 @@ function normalizePhone(phone: string): string {
   const plusIndex = cleaned.indexOf('+')
   if (plusIndex > 0) return cleaned.slice(plusIndex)
   return cleaned
-}
-
-function escapeVCardValue(value: string): string {
-  return value
-    .replace(/\\/g, '\\\\')
-    .replace(/\r\n|\r|\n/g, '\\n')
-    .replace(/,/g, '\\,')
-    .replace(/;/g, '\\;')
-}
-
-export function buildLeadVCard({
-  leadId,
-  name,
-  phone,
-  email,
-  company,
-}: {
-  leadId: string
-  name: string
-  phone: string
-  email?: string | null
-  company?: string | null
-}): string {
-  const fullName = name.trim() || phone.trim() || 'Contacto'
-  const nameParts = fullName.split(/\s+/)
-  const givenName = nameParts[0] ?? fullName
-  const familyName = nameParts.slice(1).join(' ')
-  const lines = [
-    'BEGIN:VCARD',
-    'VERSION:3.0',
-    `UID:urn:doscientos:lead:${leadId}`,
-    'CATEGORIES:Lead',
-    `N:${escapeVCardValue(familyName)};${escapeVCardValue(givenName)};;;`,
-    `FN:${escapeVCardValue(fullName)}`,
-    `TEL;TYPE=CELL:${escapeVCardValue(normalizePhone(phone))}`,
-    ...(email?.trim() ? [`EMAIL;TYPE=INTERNET:${escapeVCardValue(email.trim())}`] : []),
-    ...(company?.trim() ? [`ORG:${escapeVCardValue(company.trim())}`] : []),
-    'END:VCARD',
-    '',
-  ]
-  return lines.join('\r\n')
 }
 
 function downloadLeadVCard({
@@ -135,6 +97,10 @@ export function LeadCallLink({
   const [error, setError] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
   async function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    const isMobile =
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent))
+    if (isMobile) return
     event.preventDefault()
     event.stopPropagation()
     setStarting(true)
@@ -173,6 +139,33 @@ export function LeadCallLink({
         />
       )}
     </>
+  )
+}
+
+export function LeadContactSaveButton({
+  leadId,
+  name,
+  phone,
+  email,
+  company,
+}: {
+  leadId: string
+  name: string
+  phone: string
+  email?: string | null
+  company?: string | null
+}) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="h-8 w-full min-w-0 justify-start gap-2 px-2.5 text-left text-xs"
+      onClick={() => downloadLeadVCard({ leadId, name, phone, email, company })}
+    >
+      <Contact className="size-3.5 shrink-0 text-muted-foreground" />
+      <span className="truncate">Guardar contacto</span>
+    </Button>
   )
 }
 

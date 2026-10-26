@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
-import { FileText, LoaderCircle as Loader2, Mail, Plus, Phone, Sparkles } from 'lucide-react'
+import { FileText, LoaderCircle as Loader2, Mail, Phone, Plus, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type ReactNode, type SubmitEvent, useEffect, useState } from 'react'
 
@@ -30,9 +30,9 @@ import { SubmitButton } from '@/components/ui/submit-button'
 import { Textarea } from '@/components/ui/textarea'
 import {
   DEFAULT_MEETING_DURATION,
+  defaultMeetingStart,
   MEETING_DURATIONS,
   type MeetingDuration,
-  defaultMeetingStart,
 } from '@/lib/calendar/date-presets'
 import { publicEnv } from '@/lib/env'
 import { buildLeadWhatsAppMessage } from '@/lib/leads/whatsapp'
@@ -825,7 +825,7 @@ export function QCallDialog({
         <DialogTrigger asChild>
           <QuickActionTile
             icon={<Phone className="size-3.5 text-muted-foreground" />}
-            label="Llamar"
+            label="Registrar llamada"
           />
         </DialogTrigger>
         <DialogContent className="flex max-h-[90vh] w-full max-w-md flex-col">

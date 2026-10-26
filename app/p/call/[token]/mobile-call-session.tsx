@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import type { CallSessionStatus } from '@/lib/leads/call-session'
+import { buildLeadVCard } from '@/lib/leads/vcard'
 import { formatEUR } from '@/lib/utils'
 
 type Completion = { durationMinutes: number; defaultOutcome: 'connected' | 'no_answer' }
@@ -45,11 +46,19 @@ function actionErrorMessage(error?: string): string {
 
 export function MobileCallSession({
   token,
+  leadId,
+  leadName,
+  leadEmail,
+  leadCompany,
   phone,
   status: initialStatus,
   briefing,
 }: {
   token: string
+  leadId: string
+  leadName: string
+  leadEmail: string | null
+  leadCompany: string | null
   phone: string
   status: CallSessionStatus
   briefing: CallBriefing
@@ -111,6 +120,22 @@ export function MobileCallSession({
       </div>
       <div className="rounded-xl border border-emerald-900/10 bg-white/70 p-5 text-center dark:border-emerald-200/10 dark:bg-white/4">
         <p className="font-mono text-lg font-semibold tracking-wide">{phone}</p>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{leadName}</p>
+        <a
+          href={`data:text/vcard;charset=utf-8,${encodeURIComponent(
+            buildLeadVCard({
+              leadId,
+              name: leadName,
+              phone,
+              email: leadEmail,
+              company: leadCompany,
+            }),
+          )}`}
+          download={`${leadName.replace(/[^\p{L}\p{N} _-]/gu, '_') || 'contacto'}.vcf`}
+          className="mt-3 inline-flex text-sm font-medium text-emerald-700 underline underline-offset-2 dark:text-emerald-300"
+        >
+          Guardar contacto
+        </a>
       </div>
       <div className="rounded-xl border bg-card p-4 text-left shadow-sm">
         <h2 className="text-sm font-semibold">Información rápida</h2>
