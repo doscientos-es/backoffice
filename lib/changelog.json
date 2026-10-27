@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.131",
+      "date": "2026-10-27",
+      "title": "v0.1.131",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add Google Ads landing page to allowed origins"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "3a06c8df16a1ee6380f860782e34e3957ba18007",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add Google Ads landing page to allowed origins"
+        }
+      ]
+    },
+    {
       "version": "0.1.130",
       "date": "2026-10-26",
       "title": "v0.1.130",
