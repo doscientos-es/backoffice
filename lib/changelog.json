@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.134",
+      "date": "2026-10-27",
+      "title": "v0.1.134",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Implement email marketing sequences and tracking"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "5b44bc4e9de3c7c15fb3fc2784b1128982b2342d",
+          "type": "feat",
+          "scope": "email-marketing",
+          "breaking": false,
+          "description": "Implement email marketing sequences and tracking"
+        }
+      ]
+    },
+    {
       "version": "0.1.133",
       "date": "2026-10-27",
       "title": "v0.1.133",
