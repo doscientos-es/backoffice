@@ -133,6 +133,42 @@ export async function POST(request: NextRequest) {
   if (!interactionType) return NextResponse.json({ ok: true })
 
   const supabase = createAdminClient()
+  const eventAt = payload.data?.created_at
+    ? new Date(String(payload.data.created_at)).toISOString()
+    : new Date().toISOString()
+  if (type === 'email.delivered') {
+    await supabase
+      .from('lead_campaign_sends')
+      .update({ delivered_at: eventAt })
+      .eq('resend_email_id', emailId)
+  } else if (
+    type === 'email.bounced' ||
+    type === 'email.complained' ||
+    type === 'email.suppressed'
+  ) {
+    const { data: send } = await supabase
+      .from('lead_campaign_sends')
+      .select('id, marketing_contact_id')
+      .eq('resend_email_id', emailId)
+      .maybeSingle()
+    if (send?.id) {
+      const sendPatch =
+        type === 'email.bounced'
+          ? { bounced_at: eventAt }
+          : { complained_at: eventAt, unsubscribed_at: eventAt }
+      await supabase.from('lead_campaign_sends').update(sendPatch).eq('id', send.id)
+      if (send.marketing_contact_id) {
+        await supabase
+          .from('email_marketing_contacts')
+          .update({
+            status: type === 'email.bounced' ? 'bounced' : 'complained',
+            unsubscribed_at: eventAt,
+          })
+          .eq('id', send.marketing_contact_id)
+      }
+    }
+  }
+
   const { data: prior } = await supabase
     .from('lead_interactions')
     .select('lead_id, client_id')

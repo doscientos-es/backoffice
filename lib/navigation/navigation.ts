@@ -87,7 +87,7 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
       { href: '/marketing', label: 'Publicidad', icon: Megaphone, requires: 'marketing.read' },
       {
         href: '/marketing/newsletters',
-        label: 'Newsletters',
+        label: 'Email marketing',
         icon: Mail,
         requires: 'marketing.read',
       },

@@ -6,10 +6,19 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
   const { token } = await params
   const supabase = createAdminClient()
 
-  await supabase
+  const { data: send } = await supabase
     .from('lead_campaign_sends')
     .update({ unsubscribed_at: new Date().toISOString() })
     .eq('tracking_token', token)
+    .select('marketing_contact_id')
+    .maybeSingle()
+
+  if (send?.marketing_contact_id) {
+    await supabase
+      .from('email_marketing_contacts')
+      .update({ status: 'unsubscribed', unsubscribed_at: new Date().toISOString() })
+      .eq('id', send.marketing_contact_id)
+  }
 
   return new NextResponse(
     `<!doctype html>

@@ -55,6 +55,9 @@ export const ServerSchema = PublicSchema.extend({
   RESEND_API_KEY: z.string().optional().default(''),
   RESEND_WEBHOOK_SECRET: z.string().optional().default(''),
   RESEND_FROM_DOMAIN: z.string().default('doscientos.es'),
+  EMAIL_MARKETING_FROM_EMAIL: z.string().email().default('hola@doscientos.click'),
+  EMAIL_MARKETING_FROM_NAME: z.string().trim().min(1).max(80).default('Doscientos'),
+  EMAIL_MARKETING_REPLY_TO: z.string().email().default('hola@doscientos.es'),
   // AI provider selection. Solo está cableado "vertex" en lib/ai.ts:
   //   "vertex"  → GOOGLE_CLOUD_PROJECT_ID + ADC (org policy, no key)
   // Leave empty / unset to disable AI features.

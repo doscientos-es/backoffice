@@ -9,349 +9,615 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { requireUser } from '@/lib/auth'
-import {
-  countNewsletterAudience,
-  getAudienceLabel,
-  listNewsletterIssues,
-  NEWSLETTER_AUDIENCES,
-  type NewsletterIssue,
-} from '@/lib/marketing/newsletters'
+import { getEmailMarketingOverview } from '@/lib/marketing/email-marketing'
 
 import {
-  createNewsletterIssueForm,
-  publishNewsletterIssueForm,
-  sendNewsletterIssueForm,
-  sendNewsletterTestForm,
+  addEmailMarketingStepForm,
+  createEmailMarketingListForm,
+  createEmailMarketingSequenceForm,
+  deleteEmailMarketingStepForm,
+  importEmailMarketingContactsForm,
+  retryEmailMarketingStepForm,
+  setEmailMarketingSequenceStatusForm,
+  updateEmailMarketingStepForm,
 } from './actions'
 
-export const metadata: Metadata = { title: 'Newsletters - doscientos' }
+export const metadata: Metadata = { title: 'Email marketing - doscientos' }
 export const dynamic = 'force-dynamic'
 
-const statusLabel: Record<NewsletterIssue['status'], string> = {
-  draft: 'Borrador',
-  scheduled: 'Planificada',
-  sent: 'Enviada',
-  published: 'Publicada',
-  archived: 'Archivada',
+function dateTimeLocalDefault(monthOffset = 1): string {
+  const date = new Date()
+  date.setMonth(date.getMonth() + monthOffset)
+  date.setDate(10)
+  date.setHours(10, 0, 0, 0)
+  const parts = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date)
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${value.year}-${value.month}-${value.day}T${value.hour}:${value.minute}`
 }
 
-const statusTone: Record<NewsletterIssue['status'], 'neutral' | 'info' | 'success' | 'warning'> = {
-  draft: 'neutral',
-  scheduled: 'info',
-  sent: 'success',
-  published: 'success',
-  archived: 'warning',
+function fmtDate(value: string): string {
+  return new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'Europe/Madrid',
+  }).format(new Date(value))
 }
 
-function canSend(issue: NewsletterIssue): boolean {
-  return !issue.sent_at && issue.status !== 'archived'
+function dateTimeLocalValue(value: string): string {
+  const parts = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(value))
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`
 }
 
-function fmtDate(value: string | null): string {
-  if (!value) return 'Sin fecha'
-  return new Intl.DateTimeFormat('es', { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(value),
-  )
+const sequenceStatus: Record<
+  string,
+  { label: string; variant: 'neutral' | 'info' | 'success' | 'warning' }
+> = {
+  draft: { label: 'Borrador', variant: 'neutral' },
+  active: { label: 'Activa', variant: 'success' },
+  paused: { label: 'Pausada', variant: 'warning' },
+  completed: { label: 'Completada', variant: 'neutral' },
 }
 
-function rate(part: number, total: number): string {
-  if (total === 0) return '0%'
-  return `${Math.round((part / total) * 100)}%`
+const stepStatus: Record<
+  string,
+  { label: string; variant: 'neutral' | 'info' | 'success' | 'warning' }
+> = {
+  draft: { label: 'Borrador', variant: 'neutral' },
+  scheduled: { label: 'Pendiente', variant: 'info' },
+  sending: { label: 'Enviando', variant: 'warning' },
+  sent: { label: 'Enviado', variant: 'success' },
+  paused: { label: 'Pausado', variant: 'warning' },
+  failed: { label: 'Revisar error', variant: 'warning' },
 }
 
-export default async function NewslettersPage() {
+export default async function EmailMarketingPage() {
   await requireUser()
-  const [issues, audienceCounts] = await Promise.all([
-    listNewsletterIssues(),
-    Promise.all(
-      NEWSLETTER_AUDIENCES.map(async (audience) => ({
-        key: audience.key,
-        count: await countNewsletterAudience(audience.key),
-      })),
-    ),
-  ])
-  const counts = new Map(audienceCounts.map((audience) => [audience.key, audience.count]))
-  const scheduled = issues.filter((issue) => issue.status === 'scheduled').length
-  const published = issues.filter((issue) => issue.published_at).length
+  const { lists, sequences } = await getEmailMarketingOverview()
+  const listById = new Map(lists.map((list) => [list.id, list]))
+  const activeSequences = sequences.filter((sequence) => sequence.status === 'active').length
+  const plannedSteps = sequences.reduce(
+    (sum, sequence) => sum + sequence.steps.filter((step) => step.status === 'scheduled').length,
+    0,
+  )
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Newsletters"
-        description="Planifica recursos, decide a quien llegan y conserva cada envio como activo publico."
-        breadcrumbs={[{ label: 'Marketing', href: '/marketing' }, { label: 'Newsletters' }]}
-        actions={
-          <Button asChild variant="outline">
-            <Link href="https://doscientos.es/recursos" target="_blank">
-              Ver recursos
-            </Link>
-          </Button>
-        }
+        title="Email marketing"
+        description="Organiza contactos en listas y planifica secuencias de emails con seguimiento en el CRM."
+        breadcrumbs={[{ label: 'Growth', href: '/marketing' }, { label: 'Email marketing' }]}
       />
 
-      <section className="grid gap-3 md:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-3">
         <Card size="sm">
           <CardHeader>
-            <CardDescription>Total</CardDescription>
-            <CardTitle>{issues.length}</CardTitle>
+            <CardDescription>Listas</CardDescription>
+            <CardTitle>{lists.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card size="sm">
           <CardHeader>
-            <CardDescription>Planificadas</CardDescription>
-            <CardTitle>{scheduled}</CardTitle>
+            <CardDescription>Secuencias activas</CardDescription>
+            <CardTitle>{activeSequences}</CardTitle>
           </CardHeader>
         </Card>
         <Card size="sm">
           <CardHeader>
-            <CardDescription>Publicadas como recurso</CardDescription>
-            <CardTitle>{published}</CardTitle>
+            <CardDescription>Emails programados</CardDescription>
+            <CardTitle>{plannedSteps}</CardTitle>
           </CardHeader>
         </Card>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Calendario editorial</CardTitle>
-            <CardDescription>Issues preparadas para enviar, publicar y medir.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="border-b text-left text-muted-foreground">
-                  <tr>
-                    <th className="py-2 pr-3 font-medium">Newsletter</th>
-                    <th className="py-2 pr-3 font-medium">Audiencia</th>
-                    <th className="py-2 pr-3 font-medium">Fecha</th>
-                    <th className="py-2 pr-3 text-right font-medium">Envios</th>
-                    <th className="py-2 pr-3 text-right font-medium">Open</th>
-                    <th className="py-2 pr-3 text-right font-medium">Click</th>
-                    <th className="py-2 text-right font-medium">Uso</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {issues.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                        Aun no hay newsletters.
-                      </td>
-                    </tr>
-                  ) : (
-                    issues.map((issue) => (
-                      <tr key={issue.id} className="align-top">
-                        <td className="max-w-sm py-3 pr-3">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-medium">{issue.title}</span>
-                              <Badge variant={statusTone[issue.status]}>
-                                {statusLabel[issue.status]}
-                              </Badge>
-                            </div>
-                            <span className="line-clamp-1 text-muted-foreground">
-                              {issue.subject}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 pr-3">{getAudienceLabel(issue.audience_key)}</td>
-                        <td className="py-3 pr-3">
-                          {fmtDate(issue.scheduled_at ?? issue.published_at ?? issue.created_at)}
-                        </td>
-                        <td className="py-3 pr-3 text-right tabular-nums">{issue.total_sends}</td>
-                        <td className="py-3 pr-3 text-right tabular-nums">
-                          {rate(issue.total_opens, issue.total_sends)}
-                        </td>
-                        <td className="py-3 pr-3 text-right tabular-nums">
-                          {rate(issue.total_clicks, issue.total_sends)}
-                        </td>
-                        <td className="py-3">
-                          <div className="flex flex-col items-end gap-2">
-                            <form
-                              action={sendNewsletterTestForm}
-                              className="flex justify-end gap-2"
-                            >
-                              <input type="hidden" name="id" value={issue.id} />
-                              <Input
-                                name="testEmail"
-                                type="email"
-                                placeholder="prueba@..."
-                                className="h-7 w-40"
-                                aria-label="Email de prueba"
-                              />
-                              <Button type="submit" variant="outline" size="sm">
-                                Test
-                              </Button>
-                            </form>
-
-                            <div className="flex flex-wrap justify-end gap-2">
-                              {issue.published_at ? (
-                                <Button asChild variant="ghost" size="sm">
-                                  <Link
-                                    href={`https://doscientos.es/recursos/${issue.public_slug ?? issue.slug}`}
-                                    target="_blank"
-                                  >
-                                    Abrir
-                                  </Link>
-                                </Button>
-                              ) : (
-                                <form action={publishNewsletterIssueForm}>
-                                  <input type="hidden" name="id" value={issue.id} />
-                                  <Button type="submit" variant="outline" size="sm">
-                                    Publicar
-                                  </Button>
-                                </form>
-                              )}
-
-                              {canSend(issue) ? (
-                                <form
-                                  action={sendNewsletterIssueForm}
-                                  className="flex items-center gap-2"
-                                >
-                                  <input type="hidden" name="id" value={issue.id} />
-                                  <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <input
-                                      type="checkbox"
-                                      name="confirmSend"
-                                      className="size-3.5 rounded border-border"
-                                    />
-                                    confirmar
-                                  </label>
-                                  <Button type="submit" size="sm">
-                                    Enviar
-                                  </Button>
-                                </form>
-                              ) : null}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex flex-col gap-4">
           <Card>
             <CardHeader>
-              <CardTitle>Envio seguro</CardTitle>
+              <CardTitle>Secuencias</CardTitle>
               <CardDescription>
-                Primero envia un test. El envio definitivo va a la audiencia seleccionada, guarda
-                cada destinatario y excluye emails dados de baja.
+                Cada correo de una secuencia se envía a la lista elegida en la fecha indicada. Las
+                horas se interpretan en horario peninsular.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-2 text-sm text-muted-foreground">
-              <div>Limite operativo inicial: 500 destinatarios por newsletter.</div>
-              <div>Solo owners y admins pueden hacer el envio definitivo.</div>
-              <div>Los clics y aperturas se registran en la campana enlazada.</div>
+            <CardContent className="grid gap-4">
+              {sequences.length === 0 ? (
+                <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  Crea una secuencia para empezar a planificar los correos de una lista.
+                </p>
+              ) : (
+                sequences.map((sequence) => {
+                  const status = sequenceStatus[sequence.status] ?? sequenceStatus.draft!
+                  const list = listById.get(sequence.list_id)
+                  return (
+                    <article key={sequence.id} className="rounded-xl border">
+                      <div className="flex flex-wrap items-start justify-between gap-3 border-b p-4">
+                        <div className="grid gap-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="font-semibold">{sequence.name}</h2>
+                            <Badge variant={status.variant}>{status.label}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {sequence.list_name} · {list?.contact_count ?? 0} contactos activos ·{' '}
+                            {sequence.steps.length} correos
+                          </p>
+                        </div>
+                        {sequence.status !== 'completed' ? (
+                          <form action={setEmailMarketingSequenceStatusForm}>
+                            <input type="hidden" name="id" value={sequence.id} />
+                            <input
+                              type="hidden"
+                              name="status"
+                              value={sequence.status === 'active' ? 'paused' : 'active'}
+                            />
+                            <Button
+                              type="submit"
+                              size="sm"
+                              variant={sequence.status === 'active' ? 'outline' : 'default'}
+                            >
+                              {sequence.status === 'active'
+                                ? 'Pausar secuencia'
+                                : 'Activar secuencia'}
+                            </Button>
+                          </form>
+                        ) : null}
+                      </div>
+
+                      <div className="grid gap-3 p-4">
+                        {sequence.steps.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            Aún no hay correos planificados.
+                          </p>
+                        ) : (
+                          sequence.steps.map((step) => {
+                            const stepBadge = stepStatus[step.status] ?? stepStatus.draft!
+                            return (
+                              <div
+                                key={step.id}
+                                className="grid gap-3 rounded-lg bg-muted/40 p-3 lg:grid-cols-[minmax(0,1fr)_auto]"
+                              >
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-xs font-medium text-muted-foreground">
+                                      Email {step.position}
+                                    </span>
+                                    <Badge variant={stepBadge.variant}>{stepBadge.label}</Badge>
+                                  </div>
+                                  <h3 className="mt-1 truncate font-medium">{step.title}</h3>
+                                  <p className="truncate text-sm text-muted-foreground">
+                                    {step.subject}
+                                  </p>
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    {step.status === 'sent' && step.sent_at
+                                      ? `Enviado ${fmtDate(step.sent_at)}`
+                                      : `Programado ${fmtDate(step.scheduled_at)}`}
+                                  </p>
+                                  {step.stats.recipients > 0 ? (
+                                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                                      <span>
+                                        {step.stats.delivered} entregados · {step.stats.opened}{' '}
+                                        aperturas · {step.stats.clicked} clics ·{' '}
+                                        {step.stats.converted} formularios ·{' '}
+                                        {step.stats.unsubscribed} bajas ·{' '}
+                                        {step.stats.bounced + step.stats.complained} incidencias
+                                      </span>
+                                      <Link
+                                        href={`/marketing/newsletters/steps/${step.id}`}
+                                        className="font-medium text-foreground underline underline-offset-2"
+                                      >
+                                        Ver actividad por contacto
+                                      </Link>
+                                    </div>
+                                  ) : null}
+                                  {step.last_error ? (
+                                    <p className="mt-2 text-xs text-destructive">
+                                      {step.last_error}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                {step.status === 'failed' && sequence.status === 'active' ? (
+                                  <form action={retryEmailMarketingStepForm} className="self-start">
+                                    <input type="hidden" name="id" value={step.id} />
+                                    <Button type="submit" size="sm" variant="outline">
+                                      Reintentar fallidos
+                                    </Button>
+                                  </form>
+                                ) : null}
+                              </div>
+                            )
+                          })
+                        )}
+                      </div>
+
+                      {sequence.steps.some((step) =>
+                        ['draft', 'scheduled', 'paused'].includes(step.status),
+                      ) ? (
+                        <details className="border-t px-4 py-3">
+                          <summary className="cursor-pointer text-sm font-medium">
+                            Editar correos pendientes
+                          </summary>
+                          <div className="mt-3 grid gap-3">
+                            {sequence.steps
+                              .filter((step) =>
+                                ['draft', 'scheduled', 'paused'].includes(step.status),
+                              )
+                              .map((step) => (
+                                <form
+                                  key={step.id}
+                                  action={updateEmailMarketingStepForm}
+                                  className="grid gap-3 rounded-lg border p-3"
+                                >
+                                  <input type="hidden" name="id" value={step.id} />
+                                  <div className="grid gap-1.5">
+                                    <Label htmlFor={`edit-title-${step.id}`}>Nombre interno</Label>
+                                    <Input
+                                      id={`edit-title-${step.id}`}
+                                      name="title"
+                                      required
+                                      maxLength={140}
+                                      defaultValue={step.title}
+                                    />
+                                  </div>
+                                  <div className="grid gap-1.5">
+                                    <Label htmlFor={`edit-subject-${step.id}`}>Asunto</Label>
+                                    <Input
+                                      id={`edit-subject-${step.id}`}
+                                      name="subject"
+                                      required
+                                      maxLength={160}
+                                      defaultValue={step.subject}
+                                    />
+                                  </div>
+                                  <div className="grid gap-1.5">
+                                    <Label htmlFor={`edit-preview-${step.id}`}>Vista previa</Label>
+                                    <Input
+                                      id={`edit-preview-${step.id}`}
+                                      name="previewText"
+                                      maxLength={220}
+                                      defaultValue={step.preview_text ?? ''}
+                                    />
+                                  </div>
+                                  <div className="grid gap-1.5">
+                                    <Label htmlFor={`edit-date-${step.id}`}>Fecha y hora</Label>
+                                    <Input
+                                      id={`edit-date-${step.id}`}
+                                      name="scheduledAt"
+                                      type="datetime-local"
+                                      required
+                                      defaultValue={dateTimeLocalValue(step.scheduled_at)}
+                                    />
+                                  </div>
+                                  <div className="grid gap-1.5">
+                                    <Label htmlFor={`edit-body-${step.id}`}>Contenido</Label>
+                                    <Textarea
+                                      id={`edit-body-${step.id}`}
+                                      name="bodyMarkdown"
+                                      required
+                                      maxLength={30000}
+                                      className="min-h-28"
+                                      defaultValue={step.body_markdown}
+                                    />
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    <Button type="submit" size="sm" variant="outline">
+                                      Guardar cambios
+                                    </Button>
+                                    <Button
+                                      formAction={deleteEmailMarketingStepForm}
+                                      formNoValidate
+                                      type="submit"
+                                      name="id"
+                                      value={step.id}
+                                      size="sm"
+                                      variant="ghost"
+                                    >
+                                      Eliminar email
+                                    </Button>
+                                  </div>
+                                </form>
+                              ))}
+                          </div>
+                        </details>
+                      ) : null}
+
+                      <details className="border-t p-4">
+                        <summary className="cursor-pointer text-sm font-medium">
+                          Planificar otro email
+                        </summary>
+                        <form action={addEmailMarketingStepForm} className="mt-4 grid gap-3">
+                          <input type="hidden" name="sequenceId" value={sequence.id} />
+                          <div className="grid gap-1.5">
+                            <Label htmlFor={`step-title-${sequence.id}`}>Nombre interno</Label>
+                            <Input
+                              id={`step-title-${sequence.id}`}
+                              name="title"
+                              required
+                              maxLength={140}
+                              placeholder="Caso práctico de automatización"
+                            />
+                          </div>
+                          <div className="grid gap-1.5">
+                            <Label htmlFor={`step-subject-${sequence.id}`}>Asunto del email</Label>
+                            <Input
+                              id={`step-subject-${sequence.id}`}
+                              name="subject"
+                              required
+                              maxLength={160}
+                              placeholder="¿Cuánto tiempo pierde tu equipo en tareas manuales?"
+                            />
+                          </div>
+                          <div className="grid gap-1.5">
+                            <Label htmlFor={`step-preview-${sequence.id}`}>
+                              Texto de vista previa
+                            </Label>
+                            <Input
+                              id={`step-preview-${sequence.id}`}
+                              name="previewText"
+                              maxLength={220}
+                              placeholder="Una idea concreta para mejorar el proceso."
+                            />
+                          </div>
+                          <div className="grid gap-1.5">
+                            <Label htmlFor={`step-date-${sequence.id}`}>
+                              Fecha y hora de envío
+                            </Label>
+                            <Input
+                              id={`step-date-${sequence.id}`}
+                              name="scheduledAt"
+                              type="datetime-local"
+                              required
+                              defaultValue={dateTimeLocalDefault()}
+                            />
+                          </div>
+                          <div className="grid gap-1.5">
+                            <Label htmlFor={`step-body-${sequence.id}`}>Contenido</Label>
+                            <Textarea
+                              id={`step-body-${sequence.id}`}
+                              name="bodyMarkdown"
+                              required
+                              maxLength={30000}
+                              className="min-h-36"
+                              placeholder={
+                                'Hola {{nombre}},\n\nAquí va el mensaje. Puedes usar {{empresa}} y {{email}}.'
+                              }
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Al guardar queda pendiente. Solo se enviará si activas la secuencia. La
+                            baja aparecerá destacada al principio y al final del email.
+                          </p>
+                          <Button type="submit" className="w-fit">
+                            Guardar email planificado
+                          </Button>
+                        </form>
+                      </details>
+                    </article>
+                  )
+                })
+              )}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Nueva newsletter</CardTitle>
-              <CardDescription>Creala como recurso y decide la audiencia inicial.</CardDescription>
+              <CardTitle>Crear una secuencia</CardTitle>
+              <CardDescription>
+                Asocia una lista y luego añade los emails con sus fechas de envío.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form action={createNewsletterIssueForm} className="flex flex-col gap-3">
+              <form
+                action={createEmailMarketingSequenceForm}
+                className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
+              >
                 <div className="grid gap-1.5">
-                  <Label htmlFor="title">Titulo interno y publico</Label>
+                  <Label htmlFor="sequence-name">Nombre de la secuencia</Label>
                   <Input
-                    id="title"
-                    name="title"
+                    id="sequence-name"
+                    name="name"
                     required
-                    placeholder="Checklist para priorizar automatizaciones"
+                    maxLength={160}
+                    placeholder="Empresas interesadas en desarrollo"
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="subject">Asunto</Label>
-                  <Input
-                    id="subject"
-                    name="subject"
-                    required
-                    placeholder="Que proceso deberias automatizar primero"
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="previewText">Preview</Label>
-                  <Input
-                    id="previewText"
-                    name="previewText"
-                    placeholder="Una forma rapida de detectar trabajo manual caro."
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="audienceKey">Audiencia</Label>
+                  <Label htmlFor="sequence-list">Lista de contactos</Label>
                   <select
-                    id="audienceKey"
-                    name="audienceKey"
-                    defaultValue="active_leads"
-                    className="h-8 rounded-lg border border-border bg-background px-2.5 text-sm"
+                    id="sequence-list"
+                    name="listId"
+                    required
+                    disabled={lists.length === 0}
+                    className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
                   >
-                    {NEWSLETTER_AUDIENCES.map((audience) => (
-                      <option key={audience.key} value={audience.key}>
-                        {audience.label} - {counts.get(audience.key) ?? 0}
-                      </option>
-                    ))}
+                    {lists.length === 0 ? (
+                      <option value="">Primero crea una lista</option>
+                    ) : (
+                      lists.map((list) => (
+                        <option key={list.id} value={list.id}>
+                          {list.name} ({list.contact_count})
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+                <Button type="submit" disabled={lists.length === 0}>
+                  Crear secuencia
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        <aside className="flex flex-col gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Listas</CardTitle>
+              <CardDescription>
+                Una empresa puede pertenecer a más de una lista. Las bajas y rebotes se aplican
+                globalmente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {lists.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aún no hay listas.</p>
+              ) : (
+                lists.map((list) => (
+                  <div
+                    key={list.id}
+                    className="flex items-start justify-between gap-3 rounded-lg border p-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium">{list.name}</p>
+                      {list.description ? (
+                        <p className="text-xs text-muted-foreground">{list.description}</p>
+                      ) : null}
+                    </div>
+                    <Badge variant="outline">{list.contact_count}</Badge>
+                  </div>
+                ))
+              )}
+              <details className="rounded-lg border p-3">
+                <summary className="cursor-pointer text-sm font-medium">Crear lista</summary>
+                <form action={createEmailMarketingListForm} className="mt-3 grid gap-3">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="list-name">Nombre</Label>
+                    <Input
+                      id="list-name"
+                      name="name"
+                      required
+                      maxLength={120}
+                      placeholder="Agencias para colaboración"
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="list-description">Descripción</Label>
+                    <Input
+                      id="list-description"
+                      name="description"
+                      maxLength={500}
+                      placeholder="Agencias de marketing y SEO"
+                    />
+                  </div>
+                  <Button type="submit" size="sm">
+                    Crear lista
+                  </Button>
+                </form>
+              </details>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Añadir contactos</CardTitle>
+              <CardDescription>
+                Pega emails o CSV. Acepta columnas email, nombre y empresa. Los contactos dados de
+                baja no se reactivan al importar.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form action={importEmailMarketingContactsForm} className="grid gap-3">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="import-list">Añadir a la lista</Label>
+                  <select
+                    id="import-list"
+                    name="listId"
+                    required
+                    disabled={lists.length === 0}
+                    className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
+                  >
+                    {lists.length === 0 ? (
+                      <option value="">Primero crea una lista</option>
+                    ) : (
+                      lists.map((list) => (
+                        <option key={list.id} value={list.id}>
+                          {list.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="scheduledAt">Fecha prevista</Label>
-                  <Input id="scheduledAt" name="scheduledAt" type="datetime-local" />
+                  <Label htmlFor="consent-source">Origen del permiso</Label>
+                  <Input
+                    id="consent-source"
+                    name="consentSource"
+                    required
+                    minLength={3}
+                    maxLength={200}
+                    placeholder="Formulario web, evento, solicitud…"
+                  />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="bodyMarkdown">Contenido</Label>
+                  <Label htmlFor="contact-csv">Emails o CSV</Label>
                   <Textarea
-                    id="bodyMarkdown"
-                    name="bodyMarkdown"
+                    id="contact-csv"
+                    name="csv"
                     required
-                    className="min-h-44"
-                    placeholder="Problema, diagnostico, recurso util y siguiente paso."
+                    maxLength={2000000}
+                    className="min-h-32 font-mono text-xs"
+                    placeholder={'email,nombre,empresa\nana@empresa.es,Ana,Empresa'}
                   />
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="ctaLabel">CTA</Label>
-                    <Input id="ctaLabel" name="ctaLabel" placeholder="Pedir diagnostico" />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="ctaUrl">URL</Label>
-                    <Input id="ctaUrl" name="ctaUrl" placeholder="/contacto?ref=newsletter" />
-                  </div>
-                </div>
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <label className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
                   <input
                     type="checkbox"
-                    name="publishNow"
-                    className="size-4 rounded border-border"
+                    name="confirmPermission"
+                    required
+                    className="mt-1 size-4 rounded border-border"
                   />
-                  Publicar ya como recurso
+                  <span>
+                    Confirmo que las personas importadas han autorizado recibir estos emails y que
+                    el origen indicado es correcto.
+                  </span>
                 </label>
-                <Button type="submit">Guardar newsletter</Button>
+                <Button type="submit" disabled={lists.length === 0}>
+                  Añadir a la lista
+                </Button>
               </form>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Audiencias</CardTitle>
-              <CardDescription>Base estimada antes de enviar.</CardDescription>
+              <CardTitle>Envío y seguimiento</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-3">
-              {NEWSLETTER_AUDIENCES.map((audience) => (
-                <div key={audience.key} className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="font-medium">{audience.label}</div>
-                    <div className="text-xs text-muted-foreground">{audience.description}</div>
-                  </div>
-                  <Badge variant="outline">{counts.get(audience.key) ?? 0}</Badge>
-                </div>
-              ))}
+            <CardContent className="grid gap-2 text-sm text-muted-foreground">
+              <p>Los envíos se procesan automáticamente cada cinco minutos, en lotes pequeños.</p>
+              <p>
+                Los eventos quedan asociados al email y, cuando hay lead vinculado, aparecen en su
+                actividad del CRM.
+              </p>
+              <p>
+                Los clics llevan UTM y un identificador opaco para atribuir el formulario a su email
+                de origen.
+              </p>
+              <p>
+                Las aperturas se muestran como una orientación: algunos gestores cargan imágenes sin
+                lectura humana.
+              </p>
+              <p>
+                Remitente previsto:{' '}
+                <span className="font-medium text-foreground">hola@doscientos.click</span>
+              </p>
             </CardContent>
           </Card>
-        </div>
+        </aside>
       </section>
     </div>
   )

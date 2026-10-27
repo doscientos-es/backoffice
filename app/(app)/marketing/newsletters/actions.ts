@@ -4,363 +4,429 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { defineAction } from '@/lib/actions/define-action'
-import { externalAppUrl } from '@/lib/email/app-url'
-import { sendEmail } from '@/lib/email/resend'
-import { markdownToHtml } from '@/lib/email/templates'
-import { addEmailTracking } from '@/lib/email/tracking'
-import { publicEnv } from '@/lib/env'
-import {
-  getNewsletterIssue,
-  listNewsletterRecipients,
-  type NewsletterRecipient,
-} from '@/lib/marketing/newsletters'
-import { optionalDate, optionalText, requiredText } from '@/lib/schemas/common'
 import { createServerClient } from '@/lib/supabase/server'
 
-const AudienceInput = z.enum([
-  'all_leads',
-  'active_leads',
-  'calculator_leads',
-  'lost_leads',
-  'clients',
-])
+const PATH = '/marketing/newsletters'
 
-function slugify(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-    .slice(0, 90)
+function madridDateTimeToIso(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value)
+  if (!match) throw new Error('Indica una fecha y hora válidas.')
+  const [, y, mo, d, h, mi] = match
+  const targetUtc = Date.UTC(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi))
+  let result = targetUtc
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  })
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const parts = Object.fromEntries(
+      formatter.formatToParts(new Date(result)).map((part) => [part.type, part.value]),
+    )
+    const represented = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+    )
+    result += targetUtc - represented
+  }
+  return new Date(result).toISOString()
 }
 
-const NewsletterIssueInput = z.object({
-  title: requiredText(140, 'Titulo obligatorio'),
-  slug: optionalText(120),
-  subject: requiredText(160, 'Asunto obligatorio'),
-  previewText: optionalText(220),
-  bodyMarkdown: requiredText(12000, 'Contenido obligatorio'),
-  ctaLabel: optionalText(80),
-  ctaUrl: optionalText(500),
-  audienceKey: AudienceInput.default('active_leads'),
-  scheduledAt: optionalDate,
-  publishNow: z
-    .string()
-    .optional()
-    .transform((value) => value === 'on'),
-})
-
-function renderNewsletterHtml(issue: {
-  body_markdown: string
-  cta_label: string | null
-  cta_url: string | null
-}): string {
-  const publicBase = 'https://doscientos.es'
-  const ctaUrl = issue.cta_url?.startsWith('/') ? `${publicBase}${issue.cta_url}` : issue.cta_url
-  const cta =
-    issue.cta_label && ctaUrl
-      ? `\n\n<p><a href="${ctaUrl}" style="display:inline-block;padding:10px 14px;border-radius:8px;background:#111;color:#fff;text-decoration:none">${issue.cta_label}</a></p>`
-      : ''
-  return markdownToHtml(`${issue.body_markdown}${cta}`)
+function parseCsvLine(line: string): string[] {
+  const cells: string[] = []
+  let value = ''
+  let quoted = false
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index]!
+    if (char === '"' && quoted && line[index + 1] === '"') {
+      value += '"'
+      index += 1
+    } else if (char === '"') {
+      quoted = !quoted
+    } else if (char === ',' && !quoted) {
+      cells.push(value.trim())
+      value = ''
+    } else {
+      value += char
+    }
+  }
+  cells.push(value.trim())
+  return cells
 }
 
-function appendNewsletterFooter(html: string, appUrl: string, token: string): string {
-  const unsubscribeUrl = `${appUrl.replace(/\/+$/, '')}/api/track/unsubscribe/${token}`
-  return `${html}
-<hr style="border:0;border-top:1px solid #e5e7eb;margin:28px 0 16px" />
-<p style="font-size:12px;line-height:18px;color:#6b7280">
-Recibes este email porque has contactado con doscientos o has solicitado un recurso.
-<a href="${unsubscribeUrl}" style="color:#6b7280;text-decoration:underline">Darte de baja</a>.
-</p>`
+function parseContactCsv(
+  source: string,
+): { email: string; name: string | null; company: string | null }[] {
+  const lines = source
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+  if (lines.length > 10001)
+    throw new Error('El archivo supera los 10.000 contactos por importación.')
+  if (lines.length === 0) throw new Error('Pega al menos una dirección de email.')
+
+  const first = parseCsvLine(lines[0]!).map((cell) => cell.toLowerCase())
+  const hasHeader = first.some((cell) =>
+    ['email', 'correo', 'correo electrónico', 'e-mail'].includes(cell),
+  )
+  const emailIndex = hasHeader
+    ? first.findIndex((cell) => ['email', 'correo', 'correo electrónico', 'e-mail'].includes(cell))
+    : 0
+  const nameIndex = hasHeader
+    ? first.findIndex((cell) => ['name', 'nombre', 'contacto'].includes(cell))
+    : 1
+  const companyIndex = hasHeader
+    ? first.findIndex((cell) => ['company', 'empresa', 'compañía'].includes(cell))
+    : 2
+  const rows = hasHeader ? lines.slice(1) : lines
+  const contacts = new Map<string, { email: string; name: string | null; company: string | null }>()
+
+  for (const line of rows) {
+    const cells = parseCsvLine(line)
+    const email = (cells[emailIndex] ?? '').trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) continue
+    contacts.set(email, {
+      email,
+      name: nameIndex >= 0 ? cells[nameIndex]?.trim() || null : null,
+      company: companyIndex >= 0 ? cells[companyIndex]?.trim() || null : null,
+    })
+  }
+  if (contacts.size === 0)
+    throw new Error('No encontré direcciones de email válidas en el contenido.')
+  return [...contacts.values()]
 }
 
-function renderForRecipient(html: string, recipient: NewsletterRecipient): string {
-  return html
-    .replace(/\{\{\s*nombre\s*\}\}/g, recipient.name ?? '')
-    .replace(/\{\{\s*empresa\s*\}\}/g, recipient.company ?? '')
-    .replace(/\{\{\s*email\s*\}\}/g, recipient.email)
-}
-
-export const createNewsletterIssue = defineAction({
-  name: 'newsletters.create',
-  schema: NewsletterIssueInput,
+export const createEmailMarketingList = defineAction({
+  name: 'emailMarketing.createList',
+  schema: z.object({
+    name: z.string().trim().min(2).max(120),
+    description: z.string().trim().max(500).optional(),
+  }),
   roles: ['owner', 'admin', 'member'],
-  revalidate: () => ['/marketing/newsletters'],
+  revalidate: () => [PATH],
   handler: async (input, { user }) => {
     const supabase = await createServerClient()
-    const slug = input.slug ? slugify(input.slug) : slugify(input.title)
-    const scheduledAt = input.scheduledAt ? new Date(input.scheduledAt).toISOString() : null
-    const publishedAt = input.publishNow ? new Date().toISOString() : null
-    const status = publishedAt ? 'published' : scheduledAt ? 'scheduled' : 'draft'
-    const bodyHtml = markdownToHtml(input.bodyMarkdown)
-
-    const { data: campaign, error: campaignError } = await supabase
-      .from('lead_campaigns')
-      .insert({
-        name: `Newsletter - ${input.title}`,
-        subject: input.subject,
-        body_html: bodyHtml,
-        status: 'draft',
-        created_by: user.id,
-      })
-      .select('id')
-      .single()
-    if (campaignError || !campaign) {
-      throw new Error(campaignError?.message ?? 'No se pudo preparar la campana')
-    }
-
-    const { data, error } = await supabase
-      .from('newsletter_issues')
-      .insert({
-        title: input.title,
-        slug,
-        subject: input.subject,
-        preview_text: input.previewText ?? null,
-        body_markdown: input.bodyMarkdown,
-        cta_label: input.ctaLabel ?? null,
-        cta_url: input.ctaUrl ?? null,
-        audience_key: input.audienceKey,
-        scheduled_at: scheduledAt,
-        published_at: publishedAt,
-        public_slug: publishedAt ? slug : null,
-        status,
-        lead_campaign_id: campaign.id as string,
-        created_by: user.id,
-      })
-      .select('id')
-      .single()
-
-    if (error || !data) throw new Error(error?.message ?? 'No se pudo crear la newsletter')
-    return { id: data.id as string }
+    const { error } = await supabase.from('email_marketing_lists').insert({
+      name: input.name,
+      description: input.description || null,
+      created_by: user.id,
+    })
+    if (error) throw new Error(error.message)
   },
 })
 
-export const publishNewsletterIssue = defineAction({
-  name: 'newsletters.publish',
-  schema: z.object({ id: z.string().uuid() }),
+export const importEmailMarketingContacts = defineAction({
+  name: 'emailMarketing.importContacts',
+  schema: z.object({
+    listId: z.string().uuid(),
+    csv: z.string().trim().min(3).max(2_000_000),
+    consentSource: z.string().trim().min(3).max(200),
+    confirmPermission: z
+      .string()
+      .optional()
+      .transform((value) => value === 'on')
+      .refine(Boolean),
+  }),
   roles: ['owner', 'admin', 'member'],
-  revalidate: () => ['/marketing/newsletters'],
-  handler: async ({ id }) => {
+  revalidate: () => [PATH],
+  handler: async ({ listId, csv, consentSource }) => {
+    const contacts = parseContactCsv(csv)
     const supabase = await createServerClient()
-    const { data: issue, error: readError } = await supabase
-      .from('newsletter_issues')
-      .select('slug')
+    const { data: list, error: listError } = await supabase
+      .from('email_marketing_lists')
+      .select('id')
+      .eq('id', listId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (listError || !list) throw new Error(listError?.message ?? 'No se encontró la lista.')
+
+    const now = new Date().toISOString()
+    const ids = new Map<string, string>()
+    const suppressed = new Set<string>()
+    for (let offset = 0; offset < contacts.length; offset += 500) {
+      const batch = contacts.slice(offset, offset + 500)
+      const emails = batch.map((contact) => contact.email)
+      const { data: existing, error: existingError } = await supabase
+        .from('email_marketing_contacts')
+        .select('id, email, status')
+        .in('email', emails)
+      if (existingError) throw new Error(existingError.message)
+      const known = new Set<string>()
+      for (const contact of (existing ?? []) as { id: string; email: string; status: string }[]) {
+        known.add(contact.email.toLowerCase())
+        if (contact.status === 'subscribed') ids.set(contact.email.toLowerCase(), contact.id)
+        else suppressed.add(contact.email.toLowerCase())
+      }
+
+      const newContacts = batch.filter((contact) => !known.has(contact.email))
+      if (newContacts.length) {
+        const { data: inserted, error: insertError } = await supabase
+          .from('email_marketing_contacts')
+          .upsert(
+            newContacts.map((contact) => ({
+              email: contact.email,
+              name: contact.name,
+              company: contact.company,
+              status: 'subscribed',
+              consented_at: now,
+              consent_source: consentSource,
+            })),
+            { onConflict: 'email', ignoreDuplicates: true },
+          )
+          .select('id, email')
+        if (insertError) throw new Error(insertError.message)
+        for (const contact of (inserted ?? []) as { id: string; email: string }[])
+          ids.set(contact.email.toLowerCase(), contact.id)
+      }
+    }
+
+    const memberRows = [...ids.values()].map((contactId) => ({
+      list_id: listId,
+      contact_id: contactId,
+      consented_at: now,
+      consent_source: consentSource,
+    }))
+    for (let offset = 0; offset < memberRows.length; offset += 500) {
+      const { error } = await supabase
+        .from('email_marketing_list_members')
+        .upsert(memberRows.slice(offset, offset + 500), {
+          onConflict: 'list_id,contact_id',
+          ignoreDuplicates: true,
+        })
+      if (error) throw new Error(error.message)
+    }
+    return { addedToList: ids.size, suppressed: suppressed.size }
+  },
+})
+
+export const createEmailMarketingSequence = defineAction({
+  name: 'emailMarketing.createSequence',
+  schema: z.object({ listId: z.string().uuid(), name: z.string().trim().min(2).max(160) }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async (input, { user }) => {
+    const supabase = await createServerClient()
+    const { error } = await supabase.from('email_marketing_sequences').insert({
+      list_id: input.listId,
+      name: input.name,
+      status: 'paused',
+      created_by: user.id,
+    })
+    if (error) throw new Error(error.message)
+  },
+})
+
+export const addEmailMarketingStep = defineAction({
+  name: 'emailMarketing.addStep',
+  schema: z.object({
+    sequenceId: z.string().uuid(),
+    title: z.string().trim().min(2).max(140),
+    subject: z.string().trim().min(2).max(160),
+    previewText: z.string().trim().max(220).optional(),
+    bodyMarkdown: z.string().trim().min(3).max(30000),
+    scheduledAt: z.string().min(16).max(16),
+  }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async (input, { user }) => {
+    const scheduledAt = madridDateTimeToIso(input.scheduledAt)
+    if (new Date(scheduledAt).getTime() < Date.now() + 60_000)
+      throw new Error('Programa el envío al menos un minuto en el futuro.')
+    const supabase = await createServerClient()
+    const { data: sequence, error: sequenceError } = await supabase
+      .from('email_marketing_sequences')
+      .select('id')
+      .eq('id', input.sequenceId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (sequenceError || !sequence)
+      throw new Error(sequenceError?.message ?? 'Secuencia no encontrada.')
+    const { data: lastStep } = await supabase
+      .from('email_marketing_sequence_steps')
+      .select('position')
+      .eq('sequence_id', input.sequenceId)
+      .order('position', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    const { error } = await supabase.from('email_marketing_sequence_steps').insert({
+      sequence_id: input.sequenceId,
+      position: ((lastStep?.position as number | undefined) ?? 0) + 1,
+      title: input.title,
+      subject: input.subject,
+      preview_text: input.previewText || null,
+      body_markdown: input.bodyMarkdown,
+      scheduled_at: scheduledAt,
+      status: 'scheduled',
+      created_by: user.id,
+    })
+    if (error) throw new Error(error.message)
+  },
+})
+
+export const setEmailMarketingSequenceStatus = defineAction({
+  name: 'emailMarketing.setSequenceStatus',
+  schema: z.object({ id: z.string().uuid(), status: z.enum(['active', 'paused']) }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async ({ id, status }) => {
+    const supabase = await createServerClient()
+    const { error } = await supabase
+      .from('email_marketing_sequences')
+      .update({ status })
       .eq('id', id)
       .is('deleted_at', null)
-      .single()
-    if (readError || !issue) throw new Error(readError?.message ?? 'Newsletter no encontrada')
+    if (error) throw new Error(error.message)
+  },
+})
 
+export const updateEmailMarketingStep = defineAction({
+  name: 'emailMarketing.updateStep',
+  schema: z.object({
+    id: z.string().uuid(),
+    title: z.string().trim().min(2).max(140),
+    subject: z.string().trim().min(2).max(160),
+    previewText: z.string().trim().max(220).optional(),
+    bodyMarkdown: z.string().trim().min(3).max(30000),
+    scheduledAt: z.string().min(16).max(16),
+  }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async (input) => {
+    const scheduledAt = madridDateTimeToIso(input.scheduledAt)
+    if (new Date(scheduledAt).getTime() < Date.now() + 60_000)
+      throw new Error('Programa el envío al menos un minuto en el futuro.')
+    const supabase = await createServerClient()
+    const { data: step, error: readError } = await supabase
+      .from('email_marketing_sequence_steps')
+      .select('id, status, tracking_campaign_id')
+      .eq('id', input.id)
+      .maybeSingle()
+    if (readError || !step) throw new Error(readError?.message ?? 'Email no encontrado.')
+    if (
+      step.tracking_campaign_id ||
+      !['draft', 'scheduled', 'paused'].includes(step.status as string)
+    )
+      throw new Error('Este email ya ha entrado en la cola y no se puede editar.')
     const { error } = await supabase
-      .from('newsletter_issues')
+      .from('email_marketing_sequence_steps')
       .update({
-        status: 'published',
-        public_slug: issue.slug as string,
-        published_at: new Date().toISOString(),
+        title: input.title,
+        subject: input.subject,
+        preview_text: input.previewText || null,
+        body_markdown: input.bodyMarkdown,
+        scheduled_at: scheduledAt,
       })
+      .eq('id', input.id)
+    if (error) throw new Error(error.message)
+  },
+})
+
+export const retryEmailMarketingStep = defineAction({
+  name: 'emailMarketing.retryStep',
+  schema: z.object({ id: z.string().uuid() }),
+  roles: ['owner', 'admin'],
+  revalidate: () => [PATH],
+  handler: async ({ id }) => {
+    const supabase = await createServerClient()
+    const { data: step, error: readError } = await supabase
+      .from('email_marketing_sequence_steps')
+      .select('id, status, sequence:email_marketing_sequences(status)')
+      .eq('id', id)
+      .maybeSingle()
+    if (readError || !step) throw new Error(readError?.message ?? 'Email no encontrado.')
+    const sequence = step.sequence as { status: string } | null
+    if (step.status !== 'failed' || sequence?.status !== 'active')
+      throw new Error('Activa la secuencia antes de reintentar un email fallido.')
+    const { error: retryError, count } = await supabase
+      .from('lead_campaign_sends')
+      .update({ marketing_send_status: 'queued', marketing_send_error: null })
+      .eq('sequence_step_id', id)
+      .eq('marketing_send_status', 'failed')
+      .select('id', { count: 'exact', head: true })
+    if (retryError) throw new Error(retryError.message)
+    if (!count) throw new Error('No hay destinatarios fallidos para reintentar.')
+    const { error } = await supabase
+      .from('email_marketing_sequence_steps')
+      .update({ status: 'sending', last_error: null })
       .eq('id', id)
     if (error) throw new Error(error.message)
   },
 })
 
-export const sendNewsletterTest = defineAction({
-  name: 'newsletters.sendTest',
-  schema: z.object({
-    id: z.string().uuid(),
-    testEmail: z.string().email('Email de prueba no valido'),
-  }),
+export const deleteEmailMarketingStep = defineAction({
+  name: 'emailMarketing.deleteStep',
+  schema: z.object({ id: z.string().uuid() }),
   roles: ['owner', 'admin', 'member'],
-  revalidate: () => ['/marketing/newsletters'],
-  handler: async ({ id, testEmail }, { user }) => {
-    if (!user.emailAlias) throw new Error('No tienes un alias configurado en tu perfil.')
-
-    const issue = await getNewsletterIssue(id)
-    if (!issue) throw new Error('Newsletter no encontrada')
-
-    const baseHtml = renderNewsletterHtml(issue)
-    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
-    const testToken = crypto.randomUUID()
-    const html = appendNewsletterFooter(
-      addEmailTracking(baseHtml, appUrl, testToken),
-      appUrl,
-      testToken,
-    )
-
-    await sendEmail({
-      fromName: user.name,
-      fromAlias: user.emailAlias,
-      to: testEmail,
-      replyTo: user.email,
-      subject: `[Prueba] ${issue.subject}`,
-      html,
-      tags: { newsletter_issue_id: issue.id, test: 'true' },
-    })
-  },
-})
-
-export const sendNewsletterIssue = defineAction({
-  name: 'newsletters.send',
-  schema: z.object({
-    id: z.string().uuid(),
-    confirmSend: z
-      .string()
-      .optional()
-      .transform((value) => value === 'on')
-      .refine(Boolean, 'Confirma el envio antes de continuar'),
-  }),
-  roles: ['owner', 'admin'],
-  revalidate: () => ['/marketing/newsletters'],
-  handler: async ({ id }, { user }) => {
-    if (!user.emailAlias) throw new Error('No tienes un alias configurado en tu perfil.')
-
+  revalidate: () => [PATH],
+  handler: async ({ id }) => {
     const supabase = await createServerClient()
-    const issue = await getNewsletterIssue(id)
-    if (!issue) throw new Error('Newsletter no encontrada')
-    if (issue.sent_at) throw new Error('Esta newsletter ya se ha enviado.')
-
-    const recipients = await listNewsletterRecipients(issue.audience_key)
-    if (recipients.length === 0)
-      throw new Error('No hay destinatarios validos para esta audiencia.')
-    if (recipients.length > 500)
-      throw new Error('La audiencia supera el limite operativo de 500 emails.')
-
-    let campaignId = issue.lead_campaign_id
-    const baseHtml = renderNewsletterHtml(issue)
-    if (!campaignId) {
-      const { data: campaign, error } = await supabase
-        .from('lead_campaigns')
-        .insert({
-          name: `Newsletter - ${issue.title}`,
-          subject: issue.subject,
-          body_html: baseHtml,
-          status: 'draft',
-          created_by: user.id,
-        })
-        .select('id')
-        .single()
-      if (error || !campaign) throw new Error(error?.message ?? 'No se pudo preparar la campana')
-      campaignId = campaign.id as string
-      await supabase.from('newsletter_issues').update({ lead_campaign_id: campaignId }).eq('id', id)
-    }
-
-    await supabase.from('lead_campaigns').update({ status: 'sending' }).eq('id', campaignId)
-
-    const { data: previousSends } = await supabase
-      .from('lead_campaign_sends')
-      .select('email')
-      .eq('campaign_id', campaignId)
-      .not('sent_at', 'is', null)
-    const alreadySent = new Set(
-      ((previousSends ?? []) as { email: string }[]).map((row) => row.email.toLowerCase()),
+    const { data: step, error: readError } = await supabase
+      .from('email_marketing_sequence_steps')
+      .select('id, status, tracking_campaign_id')
+      .eq('id', id)
+      .maybeSingle()
+    if (readError || !step) throw new Error(readError?.message ?? 'Correo no encontrado.')
+    if (
+      step.tracking_campaign_id ||
+      !['scheduled', 'draft', 'paused'].includes(step.status as string)
     )
-    const pendingRecipients = recipients.filter(
-      (recipient) => !alreadySent.has(recipient.email.toLowerCase()),
-    )
-    if (pendingRecipients.length === 0) throw new Error('No quedan destinatarios pendientes.')
-
-    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
-    let sentCount = 0
-    try {
-      for (const recipient of pendingRecipients) {
-        const { data: sendRow, error: sendError } = await supabase
-          .from('lead_campaign_sends')
-          .insert({
-            campaign_id: campaignId,
-            lead_id: recipient.lead_id,
-            email: recipient.email,
-          })
-          .select('id, tracking_token')
-          .single()
-        if (sendError || !sendRow)
-          throw new Error(sendError?.message ?? 'No se pudo preparar envio')
-
-        const token = sendRow.tracking_token as string
-        const html = appendNewsletterFooter(
-          addEmailTracking(renderForRecipient(baseHtml, recipient), appUrl, token),
-          appUrl,
-          token,
-        )
-        const sent = await sendEmail({
-          fromName: user.name,
-          fromAlias: user.emailAlias,
-          to: recipient.email,
-          replyTo: user.email,
-          subject: issue.subject,
-          html,
-          tags: {
-            newsletter_issue_id: issue.id,
-            campaign_send_id: sendRow.id as string,
-          },
-        })
-
-        await supabase
-          .from('lead_campaign_sends')
-          .update({
-            resend_email_id: sent.id,
-            sent_at: new Date().toISOString(),
-          })
-          .eq('id', sendRow.id)
-
-        if (recipient.lead_id) {
-          await supabase.from('lead_interactions').insert({
-            lead_id: recipient.lead_id,
-            type: 'email_sent',
-            subject: issue.subject,
-            body: html,
-            resend_email_id: sent.id,
-            performed_by: user.id,
-            payload: {
-              newsletter_issue_id: issue.id,
-              campaign_id: campaignId,
-              campaign_send_id: sendRow.id,
-              mocked: sent.mocked,
-            },
-          })
-        }
-
-        sentCount += 1
-      }
-    } catch (error) {
-      await supabase.from('lead_campaigns').update({ status: 'paused' }).eq('id', campaignId)
-      throw error
-    }
-
-    const now = new Date().toISOString()
-    await Promise.all([
-      supabase
-        .from('lead_campaigns')
-        .update({ status: 'sent', body_html: baseHtml })
-        .eq('id', campaignId),
-      supabase
-        .from('newsletter_issues')
-        .update({ status: 'sent', sent_at: now, lead_campaign_id: campaignId })
-        .eq('id', id),
-    ])
-
-    return { sentCount }
+      throw new Error('No se puede eliminar un correo que ya ha entrado en envío.')
+    const { error } = await supabase.from('email_marketing_sequence_steps').delete().eq('id', id)
+    if (error) throw new Error(error.message)
   },
 })
 
-export async function createNewsletterIssueForm(formData: FormData): Promise<void> {
-  const result = await createNewsletterIssue(formData)
+export async function createEmailMarketingListForm(formData: FormData): Promise<void> {
+  const result = await createEmailMarketingList(formData)
   if (!result.ok) throw new Error(result.error)
-  revalidatePath('/marketing/newsletters')
+  revalidatePath(PATH)
 }
 
-export async function publishNewsletterIssueForm(formData: FormData): Promise<void> {
-  const result = await publishNewsletterIssue(formData)
+export async function importEmailMarketingContactsForm(formData: FormData): Promise<void> {
+  const result = await importEmailMarketingContacts(formData)
   if (!result.ok) throw new Error(result.error)
-  revalidatePath('/marketing/newsletters')
+  revalidatePath(PATH)
 }
 
-export async function sendNewsletterTestForm(formData: FormData): Promise<void> {
-  const result = await sendNewsletterTest(formData)
+export async function createEmailMarketingSequenceForm(formData: FormData): Promise<void> {
+  const result = await createEmailMarketingSequence(formData)
   if (!result.ok) throw new Error(result.error)
-  revalidatePath('/marketing/newsletters')
+  revalidatePath(PATH)
 }
 
-export async function sendNewsletterIssueForm(formData: FormData): Promise<void> {
-  const result = await sendNewsletterIssue(formData)
+export async function addEmailMarketingStepForm(formData: FormData): Promise<void> {
+  const result = await addEmailMarketingStep(formData)
   if (!result.ok) throw new Error(result.error)
-  revalidatePath('/marketing/newsletters')
+  revalidatePath(PATH)
+}
+
+export async function setEmailMarketingSequenceStatusForm(formData: FormData): Promise<void> {
+  const result = await setEmailMarketingSequenceStatus(formData)
+  if (!result.ok) throw new Error(result.error)
+  revalidatePath(PATH)
+}
+
+export async function deleteEmailMarketingStepForm(formData: FormData): Promise<void> {
+  const result = await deleteEmailMarketingStep(formData)
+  if (!result.ok) throw new Error(result.error)
+  revalidatePath(PATH)
+}
+
+export async function updateEmailMarketingStepForm(formData: FormData): Promise<void> {
+  const result = await updateEmailMarketingStep(formData)
+  if (!result.ok) throw new Error(result.error)
+  revalidatePath(PATH)
+}
+
+export async function retryEmailMarketingStepForm(formData: FormData): Promise<void> {
+  const result = await retryEmailMarketingStep(formData)
+  if (!result.ok) throw new Error(result.error)
+  revalidatePath(PATH)
 }
