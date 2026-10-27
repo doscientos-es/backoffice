@@ -1,9 +1,9 @@
+import { SubmitButton } from '@doscientos/ui'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,14 +13,17 @@ import { getEmailMarketingOverview } from '@/lib/marketing/email-marketing'
 
 import {
   addEmailMarketingStepForm,
-  createEmailMarketingListForm,
-  createEmailMarketingSequenceForm,
   deleteEmailMarketingStepForm,
-  importEmailMarketingContactsForm,
   retryEmailMarketingStepForm,
   setEmailMarketingSequenceStatusForm,
   updateEmailMarketingStepForm,
 } from './actions'
+import {
+  CreateListDialog,
+  CreateSequenceDialog,
+  DeleteListDialog,
+  ImportContactsDialog,
+} from './list-dialogs'
 
 export const metadata: Metadata = { title: 'Email marketing - doscientos' }
 export const dynamic = 'force-dynamic'
@@ -129,12 +132,15 @@ export default async function EmailMarketingPage() {
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex flex-col gap-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Secuencias</CardTitle>
-              <CardDescription>
-                Cada correo de una secuencia se envía a la lista elegida en la fecha indicada. Las
-                horas se interpretan en horario peninsular.
-              </CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between gap-3">
+              <div className="grid gap-1">
+                <CardTitle>Secuencias</CardTitle>
+                <CardDescription>
+                  Cada correo de una secuencia se envía a la lista elegida en la fecha indicada. Las
+                  horas se interpretan en horario peninsular.
+                </CardDescription>
+              </div>
+              <CreateSequenceDialog lists={lists} />
             </CardHeader>
             <CardContent className="grid gap-4">
               {sequences.length === 0 ? (
@@ -166,15 +172,16 @@ export default async function EmailMarketingPage() {
                               name="status"
                               value={sequence.status === 'active' ? 'paused' : 'active'}
                             />
-                            <Button
-                              type="submit"
-                              size="sm"
+                            <SubmitButton
                               variant={sequence.status === 'active' ? 'outline' : 'default'}
+                              loadingLabel={
+                                sequence.status === 'active' ? 'Pausando…' : 'Activando…'
+                              }
                             >
                               {sequence.status === 'active'
                                 ? 'Pausar secuencia'
                                 : 'Activar secuencia'}
-                            </Button>
+                            </SubmitButton>
                           </form>
                         ) : null}
                       </div>
@@ -234,9 +241,9 @@ export default async function EmailMarketingPage() {
                                 {step.status === 'failed' && sequence.status === 'active' ? (
                                   <form action={retryEmailMarketingStepForm} className="self-start">
                                     <input type="hidden" name="id" value={step.id} />
-                                    <Button type="submit" size="sm" variant="outline">
+                                    <SubmitButton variant="outline" loadingLabel="Reintentando…">
                                       Reintentar fallidos
-                                    </Button>
+                                    </SubmitButton>
                                   </form>
                                 ) : null}
                               </div>
@@ -315,20 +322,19 @@ export default async function EmailMarketingPage() {
                                     />
                                   </div>
                                   <div className="flex flex-wrap gap-2">
-                                    <Button type="submit" size="sm" variant="outline">
+                                    <SubmitButton variant="outline" loadingLabel="Guardando…">
                                       Guardar cambios
-                                    </Button>
-                                    <Button
+                                    </SubmitButton>
+                                    <SubmitButton
                                       formAction={deleteEmailMarketingStepForm}
                                       formNoValidate
-                                      type="submit"
                                       name="id"
                                       value={step.id}
-                                      size="sm"
                                       variant="ghost"
+                                      loadingLabel="Eliminando…"
                                     >
                                       Eliminar email
-                                    </Button>
+                                    </SubmitButton>
                                   </div>
                                 </form>
                               ))}
@@ -402,9 +408,9 @@ export default async function EmailMarketingPage() {
                             Al guardar queda pendiente. Solo se enviará si activas la secuencia. La
                             baja aparecerá destacada al principio y al final del email.
                           </p>
-                          <Button type="submit" className="w-fit">
+                          <SubmitButton className="w-fit" loadingLabel="Guardando…">
                             Guardar email planificado
-                          </Button>
+                          </SubmitButton>
                         </form>
                       </details>
                     </article>
@@ -413,185 +419,42 @@ export default async function EmailMarketingPage() {
               )}
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Crear una secuencia</CardTitle>
-              <CardDescription>
-                Asocia una lista y luego añade los emails con sus fechas de envío.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form
-                action={createEmailMarketingSequenceForm}
-                className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
-              >
-                <div className="grid gap-1.5">
-                  <Label htmlFor="sequence-name">Nombre de la secuencia</Label>
-                  <Input
-                    id="sequence-name"
-                    name="name"
-                    required
-                    maxLength={160}
-                    placeholder="Empresas interesadas en desarrollo"
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="sequence-list">Lista de contactos</Label>
-                  <select
-                    id="sequence-list"
-                    name="listId"
-                    required
-                    disabled={lists.length === 0}
-                    className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
-                  >
-                    {lists.length === 0 ? (
-                      <option value="">Primero crea una lista</option>
-                    ) : (
-                      lists.map((list) => (
-                        <option key={list.id} value={list.id}>
-                          {list.name} ({list.contact_count})
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-                <Button type="submit" disabled={lists.length === 0}>
-                  Crear secuencia
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
         </div>
 
         <aside className="flex flex-col gap-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Listas</CardTitle>
-              <CardDescription>
-                Una empresa puede pertenecer a más de una lista. Las bajas y rebotes se aplican
-                globalmente.
-              </CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between gap-3">
+              <div className="grid gap-1">
+                <CardTitle>Listas</CardTitle>
+                <CardDescription>
+                  Una empresa puede pertenecer a más de una lista. Las bajas y rebotes se aplican
+                  globalmente.
+                </CardDescription>
+              </div>
+              <CreateListDialog />
             </CardHeader>
             <CardContent className="grid gap-3">
               {lists.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Aún no hay listas.</p>
               ) : (
                 lists.map((list) => (
-                  <div
-                    key={list.id}
-                    className="flex items-start justify-between gap-3 rounded-lg border p-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium">{list.name}</p>
-                      {list.description ? (
-                        <p className="text-xs text-muted-foreground">{list.description}</p>
-                      ) : null}
+                  <div key={list.id} className="grid gap-3 rounded-lg border p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium">{list.name}</p>
+                        {list.description ? (
+                          <p className="text-xs text-muted-foreground">{list.description}</p>
+                        ) : null}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Badge variant="outline">{list.contact_count}</Badge>
+                        <DeleteListDialog list={list} />
+                      </div>
                     </div>
-                    <Badge variant="outline">{list.contact_count}</Badge>
+                    <ImportContactsDialog list={list} />
                   </div>
                 ))
               )}
-              <details className="rounded-lg border p-3">
-                <summary className="cursor-pointer text-sm font-medium">Crear lista</summary>
-                <form action={createEmailMarketingListForm} className="mt-3 grid gap-3">
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="list-name">Nombre</Label>
-                    <Input
-                      id="list-name"
-                      name="name"
-                      required
-                      maxLength={120}
-                      placeholder="Agencias para colaboración"
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="list-description">Descripción</Label>
-                    <Input
-                      id="list-description"
-                      name="description"
-                      maxLength={500}
-                      placeholder="Agencias de marketing y SEO"
-                    />
-                  </div>
-                  <Button type="submit" size="sm">
-                    Crear lista
-                  </Button>
-                </form>
-              </details>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Añadir contactos</CardTitle>
-              <CardDescription>
-                Pega emails o CSV. Acepta email, nombre, empresa y columnas opcionales de origen y
-                referencia del permiso. Los contactos dados de baja no se reactivan al importar.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form action={importEmailMarketingContactsForm} className="grid gap-3">
-                <div className="grid gap-1.5">
-                  <Label htmlFor="import-list">Añadir a la lista</Label>
-                  <select
-                    id="import-list"
-                    name="listId"
-                    required
-                    disabled={lists.length === 0}
-                    className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
-                  >
-                    {lists.length === 0 ? (
-                      <option value="">Primero crea una lista</option>
-                    ) : (
-                      lists.map((list) => (
-                        <option key={list.id} value={list.id}>
-                          {list.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="consent-source">Origen del permiso</Label>
-                  <Input
-                    id="consent-source"
-                    name="consentSource"
-                    required
-                    minLength={3}
-                    maxLength={200}
-                    placeholder="Formulario web, evento, solicitud…"
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="contact-csv">Emails o CSV</Label>
-                  <Textarea
-                    id="contact-csv"
-                    name="csv"
-                    required
-                    maxLength={2000000}
-                    className="min-h-32 font-mono text-xs"
-                    placeholder={
-                      'email,nombre,empresa,consent_source,consent_reference\nana@empresa.es,Ana,Empresa,Formulario web,registro-123'
-                    }
-                  />
-                </div>
-                <label className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    name="confirmPermission"
-                    required
-                    className="mt-1 size-4 rounded border-border"
-                  />
-                  <span>
-                    Confirmo que las personas importadas han autorizado recibir estos emails y que
-                    el origen indicado es correcto.
-                  </span>
-                </label>
-                <Button type="submit" disabled={lists.length === 0}>
-                  Añadir a la lista
-                </Button>
-              </form>
             </CardContent>
           </Card>
 

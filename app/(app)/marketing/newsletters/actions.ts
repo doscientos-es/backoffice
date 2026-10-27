@@ -139,6 +139,14 @@ export const createEmailMarketingList = defineAction({
   revalidate: () => [PATH],
   handler: async (input, { user }) => {
     const supabase = await createServerClient()
+    const { data: duplicate } = await supabase
+      .from('email_marketing_lists')
+      .select('id')
+      .ilike('name', input.name.replace(/[\\%_]/g, '\\$&'))
+      .is('deleted_at', null)
+      .limit(1)
+      .maybeSingle()
+    if (duplicate) throw new Error('Ya existe una lista con ese nombre.')
     const { error } = await supabase.from('email_marketing_lists').insert({
       name: input.name,
       description: input.description || null,
@@ -234,7 +242,10 @@ export const importEmailMarketingContacts = defineAction({
           )
           .select('id, email')
         if (insertError) throw new Error(insertError.message)
-        for (const contact of (inserted ?? []) as { id: string; email: string }[])
+        for (const contact of (inserted ?? []) as {
+          id: string
+          email: string
+        }[])
           ids.set(contact.email.toLowerCase(), contact.id)
       }
     }
@@ -264,7 +275,10 @@ export const importEmailMarketingContacts = defineAction({
 
 export const createEmailMarketingSequence = defineAction({
   name: 'emailMarketing.createSequence',
-  schema: z.object({ listId: z.string().uuid(), name: z.string().trim().min(2).max(160) }),
+  schema: z.object({
+    listId: z.string().uuid(),
+    name: z.string().trim().min(2).max(160),
+  }),
   roles: ['owner', 'admin', 'member'],
   revalidate: () => [PATH],
   handler: async (input, { user }) => {
@@ -328,7 +342,10 @@ export const addEmailMarketingStep = defineAction({
 
 export const setEmailMarketingSequenceStatus = defineAction({
   name: 'emailMarketing.setSequenceStatus',
-  schema: z.object({ id: z.string().uuid(), status: z.enum(['active', 'paused']) }),
+  schema: z.object({
+    id: z.string().uuid(),
+    status: z.enum(['active', 'paused']),
+  }),
   roles: ['owner', 'admin', 'member'],
   revalidate: () => [PATH],
   handler: async ({ id, status }) => {
@@ -440,23 +457,29 @@ export const deleteEmailMarketingStep = defineAction({
   },
 })
 
-export async function createEmailMarketingListForm(formData: FormData): Promise<void> {
-  const result = await createEmailMarketingList(formData)
-  if (!result.ok) throw new Error(result.error)
-  revalidatePath(PATH)
-}
-
-export async function importEmailMarketingContactsForm(formData: FormData): Promise<void> {
-  const result = await importEmailMarketingContacts(formData)
-  if (!result.ok) throw new Error(result.error)
-  revalidatePath(PATH)
-}
-
-export async function createEmailMarketingSequenceForm(formData: FormData): Promise<void> {
-  const result = await createEmailMarketingSequence(formData)
-  if (!result.ok) throw new Error(result.error)
-  revalidatePath(PATH)
-}
+export const deleteEmailMarketingList = defineAction({
+  name: 'emailMarketing.deleteList',
+  schema: z.object({ id: z.string().uuid() }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async ({ id }) => {
+    const supabase = await createServerClient()
+    const { count, error: sequencesError } = await supabase
+      .from('email_marketing_sequences')
+      .select('id', { count: 'exact', head: true })
+      .eq('list_id', id)
+      .is('deleted_at', null)
+    if (sequencesError) throw new Error(sequencesError.message)
+    if (count)
+      throw new Error('Esta lista tiene secuencias asociadas. Elimínalas o usa otra lista.')
+    const { error } = await supabase
+      .from('email_marketing_lists')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .is('deleted_at', null)
+    if (error) throw new Error(error.message)
+  },
+})
 
 export async function addEmailMarketingStepForm(formData: FormData): Promise<void> {
   const result = await addEmailMarketingStep(formData)

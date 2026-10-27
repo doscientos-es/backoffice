@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Eye, Plus } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/ui/status-badge'
 import { requirePagePermission } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { proposalFollowUp } from '@/lib/proposals/follow-up'
+import { getProposalViewStats, proposalHeat } from '@/lib/proposals/view-stats'
 import { PROPOSAL_STATUS, type ProposalStatus } from '@/lib/status'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
@@ -145,7 +146,10 @@ export default async function ProposalsPage({
       return listQuery.order(sort, { ascending, nullsFirst: false }).range(from, to)
     })(),
   ])
-  const CLIENT_FILTER_OPTIONS = (clients ?? []).map((c) => ({ value: c.id, label: c.name }))
+  const CLIENT_FILTER_OPTIONS = (clients ?? []).map((c) => ({
+    value: c.id,
+    label: c.name,
+  }))
 
   const pricesByProposal = new Map<string, number>()
   if (canSeePrices && data?.length) {
@@ -160,6 +164,11 @@ export default async function ProposalsPage({
       pricesByProposal.set(price.proposal_id as string, Number(price.total) || 0)
     }
   }
+
+  const viewStats = await getProposalViewStats(
+    supabase,
+    (data ?? []).map((proposal) => proposal.id as string),
+  )
 
   const newAction = (
     <Button asChild size="sm">
@@ -202,20 +211,43 @@ export default async function ProposalsPage({
         { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
         { key: 'client', label: 'Cliente', options: CLIENT_FILTER_OPTIONS },
         { key: 'expiry', label: 'Vencimiento', options: EXPIRY_FILTER_OPTIONS },
-        { key: 'followup', label: 'Seguimiento', options: FOLLOW_UP_FILTER_OPTIONS },
+        {
+          key: 'followup',
+          label: 'Seguimiento',
+          options: FOLLOW_UP_FILTER_OPTIONS,
+        },
       ]}
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
       columns={[
-        { key: 'numero', label: 'Número', sortKey: 'number', minWidth: '8.5rem' },
+        {
+          key: 'numero',
+          label: 'Número',
+          sortKey: 'number',
+          minWidth: '8.5rem',
+        },
         { key: 'titulo', label: 'Título', sortKey: 'title', minWidth: '15rem' },
         { key: 'cliente_lead', label: 'Cliente / Lead', minWidth: '13rem' },
         { key: 'proyecto', label: 'Proyecto', minWidth: '10rem' },
-        { key: 'estado', label: 'Estado', sortKey: 'status', minWidth: '7rem' },
-        { key: 'seguimiento', label: 'Siguiente paso', sortKey: 'sent_at', minWidth: '16rem' },
+        {
+          key: 'estado',
+          label: 'Estado',
+          sortKey: 'status',
+          minWidth: '11rem',
+        },
+        {
+          key: 'seguimiento',
+          label: 'Siguiente paso',
+          sortKey: 'sent_at',
+          minWidth: '16rem',
+        },
         ...(canSeePrices ? [priceColumn] : []),
-        { key: 'valida_hasta', label: 'Válida hasta', sortKey: 'valid_until', minWidth: '7.5rem' },
+        {
+          key: 'valida_hasta',
+          label: 'Válida hasta',
+          sortKey: 'valid_until',
+          minWidth: '7.5rem',
+        },
       ]}
-
       exportFilename="propuestas"
       rows={
         data?.map((p) => {
@@ -254,6 +286,27 @@ export default async function ProposalsPage({
           )
           const total = pricesByProposal.get(p.id as string)
           const followUpInfo = proposalFollowUp(p)
+          const views = viewStats.get(p.id as string)
+          // Only open proposals still waiting for an answer deserve a call.
+          const heat =
+            views && ['sent', 'viewed'].includes(p.status as string) ? proposalHeat(views) : 'none'
+          const openedBy =
+            views && views.visits > 0 ? (
+              <span
+                key="views"
+                title={`El cliente ha abierto la propuesta ${views.visits} ${views.visits === 1 ? 'vez' : 'veces'}${views.lastViewAt ? ` · última ${relativeTime(views.lastViewAt)}` : ''}`}
+                className={
+                  heat === 'hot'
+                    ? 'inline-flex items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-xs font-semibold text-warning ring-1 ring-warning/50'
+                    : heat === 'warm'
+                      ? 'inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning'
+                      : 'inline-flex items-center gap-1 text-xs text-muted-foreground'
+                }
+              >
+                <Eye aria-hidden="true" className="size-3.5" />
+                {views.visits}×{heat === 'hot' ? ' · Llámale' : ''}
+              </span>
+            ) : null
           return {
             id: p.id as string,
             href: `/proposals/${p.id}`,
@@ -267,12 +320,13 @@ export default async function ProposalsPage({
               proyecto: { content: projectCell, value: projectName },
               estado: {
                 content: (
-                  <span key="status" className="flex items-center gap-1.5">
+                  <span key="status" className="flex flex-wrap items-center gap-1.5">
                     <StatusBadge meta={PROPOSAL_STATUS} value={p.status as string} />
                     {p.delivered_at ? <Badge variant="success">Terminada</Badge> : null}
+                    {openedBy}
                   </span>
                 ),
-                value: p.delivered_at ? `${p.status as string} (terminada)` : (p.status as string),
+                value: `${p.delivered_at ? `${p.status as string} (terminada)` : (p.status as string)}${views?.visits ? ` · ${views.visits} aperturas` : ''}`,
               },
               seguimiento: {
                 content: followUpInfo ? (
@@ -292,7 +346,12 @@ export default async function ProposalsPage({
                   : ((p.sent_at as string | null) ?? ''),
               },
               ...(canSeePrices
-                ? { importe: { content: formatEUR(total ?? 0), value: total ?? 0 } }
+                ? {
+                    importe: {
+                      content: formatEUR(total ?? 0),
+                      value: total ?? 0,
+                    },
+                  }
                 : {}),
               valida_hasta: {
                 content: formatDate(p.valid_until as string | null),
