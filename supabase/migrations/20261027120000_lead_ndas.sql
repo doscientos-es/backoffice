@@ -1,3 +1,7 @@
+-- The generic PDF document feature was removed; both tables were empty.
+drop table if exists public.generated_documents;
+drop table if exists public.document_templates;
+
 -- NDAs generated per lead. The text is a fixed template in code; each row only
 -- stores the counterparty data snapshot, a public token and the signature.
 -- Public access (/p/nda/[token]) goes through the service role, never through RLS.
