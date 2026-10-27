@@ -457,31 +457,6 @@ export default async function EmailMarketingPage() {
               )}
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Envío y seguimiento</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2 text-sm text-muted-foreground">
-              <p>Los envíos se procesan automáticamente cada cinco minutos, en lotes pequeños.</p>
-              <p>
-                Los eventos quedan asociados al email y, cuando hay lead vinculado, aparecen en su
-                actividad del CRM.
-              </p>
-              <p>
-                Los clics llevan UTM y un identificador opaco para atribuir el formulario a su email
-                de origen.
-              </p>
-              <p>
-                Las aperturas se muestran como una orientación: algunos gestores cargan imágenes sin
-                lectura humana.
-              </p>
-              <p>
-                Remitente previsto:{' '}
-                <span className="font-medium text-foreground">hola@doscientos.click</span>
-              </p>
-            </CardContent>
-          </Card>
         </aside>
       </section>
     </div>
