@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-27 — v0.1.133
+
+### Nuevas funciones
+
+- Add price suggestion feature for lead estimation
+
 ## 2026-10-27 — v0.1.131
 
 ### Nuevas funciones

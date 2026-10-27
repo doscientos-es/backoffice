@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.133",
+      "date": "2026-10-27",
+      "title": "v0.1.133",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add price suggestion feature for lead estimation"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "a54fc96b5658fea55efcd8b916faf8728bd5f23f",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add price suggestion feature for lead estimation"
+        }
+      ]
+    },
+    {
       "version": "0.1.131",
       "date": "2026-10-27",
       "title": "v0.1.131",
