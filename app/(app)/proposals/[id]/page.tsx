@@ -1,6 +1,7 @@
 import {
   CircleCheck as CheckCircle2,
   Clock,
+  Eye,
   FileText,
   Pencil,
   Presentation,
@@ -39,9 +40,14 @@ import {
   paymentPlanForSchedule,
   paymentScheduleInput,
 } from '@/lib/proposals/scope'
+import {
+  getProposalViewStats,
+  proposalHeat,
+  type ProposalViewStats,
+} from '@/lib/proposals/view-stats'
 import { PROPOSAL_STATUS, type ProposalStatus } from '@/lib/status'
 import { createServerClient } from '@/lib/supabase/server'
-import { formatDate, formatEUR } from '@/lib/utils'
+import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 
 import { updateProposalPortalAccess } from '../actions'
 import { CreateSubscriptionFromProposalButton } from './create-subscription-from-proposal-button'
@@ -77,6 +83,8 @@ function ProposalSidebar({
   aiEnabled,
   messages,
   views,
+  viewStats,
+  awaitingReply,
 }: {
   proposalId: string
   leadId: string | null
@@ -84,8 +92,12 @@ function ProposalSidebar({
   aiEnabled: boolean
   messages: ProposalMessage[]
   views: ProposalViewRow[]
+  viewStats: ProposalViewStats
+  awaitingReply: boolean
 }) {
   const needsReply = messages.at(-1)?.author_type === 'client'
+  // Only proposals still waiting for an answer deserve a call.
+  const heat = awaitingReply ? proposalHeat(viewStats) : 'none'
 
   return (
     <>
@@ -109,6 +121,29 @@ function ProposalSidebar({
           <CardTitle>Aperturas recientes</CardTitle>
         </CardHeader>
         <CardContent className="px-0">
+          {viewStats.visits > 0 ? (
+            <div
+              className={`mx-4 mb-3 flex items-center gap-3 rounded-lg px-3 py-2.5 ${
+                heat === 'hot'
+                  ? 'bg-warning/20 text-warning ring-1 ring-warning/50'
+                  : heat === 'warm'
+                    ? 'bg-warning/10 text-warning'
+                    : 'bg-muted/50 text-foreground'
+              }`}
+            >
+              <Eye aria-hidden className="size-5 shrink-0" />
+              <div className="min-w-0 text-sm">
+                <p className="font-semibold">
+                  El cliente la ha abierto {viewStats.visits}{' '}
+                  {viewStats.visits === 1 ? 'vez' : 'veces'}
+                </p>
+                <p className="text-xs opacity-80">
+                  {heat === 'hot' ? 'Mucho interés: buen momento para llamar. ' : null}
+                  {viewStats.lastViewAt ? `Última: ${relativeTime(viewStats.lastViewAt)}` : null}
+                </p>
+              </div>
+            </div>
+          ) : null}
           {views.length === 0 ? (
             <p className="px-6 py-4 text-sm text-muted-foreground">Aún no se ha abierto.</p>
           ) : (
@@ -236,6 +271,11 @@ export default async function ProposalDetailPage({
     .is('session_id', null)
     .order('viewed_at', { ascending: false })
     .limit(10)
+
+  const clientViewStats = (await getProposalViewStats(supabase, [id])).get(id) ?? {
+    visits: 0,
+    lastViewAt: null,
+  }
 
   // Latest CLIENT open per surface — drives the check + date on each share row.
   // Team previews never set this; they show up in the history list below.
@@ -893,6 +933,8 @@ export default async function ProposalDetailPage({
               aiEnabled={isAIEnabled() && ['sent', 'viewed'].includes(status)}
               messages={(messages ?? []) as unknown as ProposalMessage[]}
               views={viewRows}
+              viewStats={clientViewStats}
+              awaitingReply={['sent', 'viewed'].includes(status)}
             />
           }
         />
