@@ -96,6 +96,19 @@ export function LineItemsTable({
   const columns = showBillingCycle
     ? 'md:grid-cols-[minmax(12rem,1fr)_8rem_5rem_8rem_5rem_6rem_8rem_5rem]'
     : 'md:grid-cols-[minmax(12rem,1fr)_5rem_8rem_6rem_8rem_5rem]'
+  // Proposals, medium widths: two rows per item (description + importe + actions
+  // on top; cadence, quantity, price, discount, VAT below). Below 480px it stacks.
+  const n = (cls: string) => (showBillingCycle ? cls : '')
+  const reset = 'md:order-none md:col-span-1'
+  const cDesc = n(`min-[480px]:order-1 min-[480px]:col-span-6 ${reset}`)
+  const cCycle = n(`min-[480px]:order-4 min-[480px]:col-span-3 ${reset}`)
+  const cQty = n(`min-[480px]:order-4 min-[480px]:col-span-2 ${reset}`)
+  const cPrice = n(`min-[480px]:order-4 min-[480px]:col-span-3 ${reset}`)
+  const cDisc = n(`min-[480px]:order-4 min-[480px]:col-span-2 ${reset}`)
+  const cVat = n(`min-[480px]:order-4 min-[480px]:col-span-2 ${reset}`)
+  const cAmount = n(`min-[480px]:order-2 min-[480px]:col-span-3 min-[480px]:items-end ${reset}`)
+  const cActions = n(`min-[480px]:order-3 min-[480px]:col-span-3 ${reset}`)
+  const cReason = n(`min-[480px]:order-5 min-[480px]:col-span-12 md:order-none`)
 
   return (
     <div className="max-w-full overflow-x-auto overscroll-x-contain">
@@ -118,9 +131,9 @@ export function LineItemsTable({
           {items.map((it, i) => (
             <div
               key={it.id}
-              className={`grid grid-cols-2 items-start gap-3 p-4 transition-colors focus-within:bg-muted/25 md:items-center md:gap-2 md:px-3 md:py-2.5 ${columns}`}
+              className={`grid grid-cols-2 items-start gap-3 p-4 transition-colors focus-within:bg-muted/25 md:items-center md:gap-2 md:px-3 md:py-2.5 ${n('min-[480px]:grid-cols-12 min-[480px]:items-end min-[480px]:gap-x-2 min-[480px]:gap-y-2 min-[480px]:p-3')} ${columns}`}
             >
-              <div className="col-span-2 md:col-span-1">
+              <div className={`col-span-2 md:col-span-1 ${cDesc}`}>
                 <span className="mb-1 block text-xs font-medium text-muted-foreground md:hidden">
                   Descripción
                 </span>
@@ -145,7 +158,7 @@ export function LineItemsTable({
               </div>
 
               {showBillingCycle && (
-                <div>
+                <div className={cCycle}>
                   <span className="mb-1 block text-xs font-medium text-muted-foreground md:hidden">
                     Cadencia
                   </span>
@@ -164,7 +177,7 @@ export function LineItemsTable({
                 </div>
               )}
 
-              <div>
+              <div className={cQty}>
                 <span className="mb-1 block text-xs font-medium text-muted-foreground md:hidden">
                   Cantidad
                 </span>
@@ -181,7 +194,7 @@ export function LineItemsTable({
                 />
               </div>
 
-              <div>
+              <div className={cPrice}>
                 <span className="mb-1 block text-xs font-medium text-muted-foreground md:hidden">
                   Precio unitario
                 </span>
@@ -207,7 +220,7 @@ export function LineItemsTable({
               </div>
 
               {showDiscounts && (
-                <div>
+                <div className={cDisc}>
                   <span className="mb-1 block text-xs font-medium text-muted-foreground md:hidden">
                     Descuento
                   </span>
@@ -236,7 +249,7 @@ export function LineItemsTable({
                 </div>
               )}
 
-              <div>
+              <div className={cVat}>
                 <span className="mb-1 block text-xs font-medium text-muted-foreground md:hidden">
                   IVA
                 </span>
@@ -263,8 +276,10 @@ export function LineItemsTable({
                 </div>
               </div>
 
-              <div className="flex flex-col md:items-end">
-                <span className="mb-1 text-xs font-medium text-muted-foreground md:hidden">
+              <div className={`flex flex-col md:items-end ${cAmount}`}>
+                <span
+                  className={`mb-1 text-xs font-medium text-muted-foreground md:hidden ${n('min-[480px]:hidden')}`}
+                >
                   Importe
                 </span>
                 <span className="flex h-9 items-center gap-2 font-semibold tabular-nums">
@@ -277,7 +292,7 @@ export function LineItemsTable({
                 </span>
               </div>
 
-              <div className="col-span-2 flex justify-end gap-1 md:col-span-1">
+              <div className={`col-span-2 flex justify-end gap-1 md:col-span-1 ${cActions}`}>
                 <button
                   type="button"
                   onClick={() => duplicate(i)}
@@ -299,7 +314,7 @@ export function LineItemsTable({
               </div>
 
               {showDiscounts && normalizeDiscountPercent(it.discount_percent) > 0 && (
-                <div className="col-span-2 md:col-span-full">
+                <div className={`col-span-2 md:col-span-full ${cReason}`}>
                   <Input
                     value={it.discount_reason ?? ''}
                     onChange={(e) => update(i, { discount_reason: e.target.value || null })}
