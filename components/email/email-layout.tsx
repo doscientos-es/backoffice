@@ -79,7 +79,7 @@ export function EmailLayout({ preview, appUrl, children }: EmailLayoutProps) {
             >
               <span style={{ color: BRAND, fontWeight: 600 }}>doscientos</span>
               {' · '}
-              Doscientos Estudio S.L.
+              Doscientos Desarrollo Tecnológico, S.L.
               <br />
               Este mensaje es confidencial y está dirigido exclusivamente al destinatario.
             </Text>

@@ -36,6 +36,8 @@ function allowedOrigins(): string[] {
     ...serverEnv().LANDING_ALLOWED_ORIGINS.split(','),
     'https://doscientos.es',
     'https://www.doscientos.es',
+    // Landing de Google Ads alojada en GoHighLevel (internal/google-form).
+    'https://funnel.doscientos.es',
   ]
     .map(normalizeOrigin)
     .filter(Boolean)
