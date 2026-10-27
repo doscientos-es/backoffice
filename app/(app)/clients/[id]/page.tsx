@@ -68,11 +68,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         actions={
           user.role !== 'viewer' ? (
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/document-templates/generate?client_id=${client.id as string}`}>
-                  Crear documento
-                </Link>
-              </Button>
               <CopySummaryButton
                 lines={[
                   [

@@ -222,9 +222,7 @@ export default async function LeadDetailPage({
             {canEdit ? (
               <div className="flex items-center gap-2">
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/document-templates/generate?lead_id=${lead.id as string}`}>
-                    Crear documento
-                  </Link>
+                  <Link href={`/leads/${lead.id as string}/nda`}>NDA</Link>
                 </Button>
                 <LeadEditDialog
                   members={members}

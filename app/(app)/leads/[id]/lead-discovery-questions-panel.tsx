@@ -5,6 +5,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Clock,
   LoaderCircle,
   ListChecks,
   Plus,
@@ -353,6 +354,11 @@ function DiscoveryQuestionCard({
     setAnswerDraft(question.answer ?? '')
   }, [question])
 
+  const priorityLabel =
+    question.priority === 1 ? 'alta' : question.priority === 3 ? 'baja' : 'media'
+  const dirty =
+    questionDraft.trim() !== question.question.trim() || answerDraft !== (question.answer ?? '')
+
   async function run(action: () => Promise<{ ok: boolean; error?: string }>) {
     setBusy(true)
     setError(null)
@@ -365,52 +371,92 @@ function DiscoveryQuestionCard({
   return (
     <article
       data-status={question.status}
-      className="group/question flex flex-col gap-2.5 rounded-xl border border-border/80 bg-card p-2.5 shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-primary/25 hover:shadow-md motion-reduce:transition-none"
+      className="group/question flex flex-col gap-1.5 rounded-lg border border-border/70 bg-card px-3 py-2 transition-colors duration-200 hover:border-primary/30 motion-reduce:transition-none"
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge
-              variant="outline"
-              className="h-5 border-border/70 bg-muted/30 px-1.5 text-[10px] font-medium"
+      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+        <span
+          className={`size-1.5 shrink-0 rounded-full ${question.priority === 1 ? 'bg-amber-500' : question.priority === 3 ? 'bg-muted-foreground/30' : 'bg-primary/50'}`}
+          role="img"
+          aria-label={`Prioridad ${priorityLabel}`}
+          title={`Prioridad ${priorityLabel}`}
+        />
+        <span className="font-medium">
+          {CATEGORY_LABEL[question.category] ?? question.category}
+        </span>
+        <Badge
+          variant="outline"
+          className={`h-4 px-1.5 text-[10px] font-medium ${STATUS_TONE[question.status]}`}
+        >
+          {STATUS_LABEL[question.status]}
+        </Badge>
+        {question.origin === 'ai' ? (
+          <span
+            className="inline-flex items-center gap-0.5 text-primary"
+            title="Pregunta generada con IA"
+          >
+            <Sparkles className="size-3" aria-hidden="true" />
+            IA
+          </span>
+        ) : null}
+        {canEdit ? (
+          <div className="ml-auto flex items-center opacity-60 transition-opacity group-focus-within/question:opacity-100 group-hover/question:opacity-100">
+            <Button
+              type="button"
+              size="icon-xs"
+              variant="ghost"
+              disabled={busy || question.status === 'deferred'}
+              aria-label="Posponer pregunta"
+              title="Posponer"
+              onClick={() =>
+                void run(() =>
+                  setLeadDiscoveryQuestionStatus({
+                    leadId,
+                    questionId: question.id,
+                    status: 'deferred',
+                  }),
+                )
+              }
             >
-              {CATEGORY_LABEL[question.category] ?? question.category}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={`h-5 px-1.5 text-[10px] font-medium ${question.priority === 1 ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-border/70 text-muted-foreground'}`}
-              aria-label={`Prioridad ${question.priority === 1 ? 'alta' : question.priority === 3 ? 'baja' : 'media'}`}
+              <Clock className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              size="icon-xs"
+              variant="ghost"
+              className="hover:text-destructive"
+              disabled={busy}
+              aria-label="Archivar pregunta"
+              title="Archivar pregunta"
+              onClick={() =>
+                void run(() =>
+                  setLeadDiscoveryQuestionStatus({
+                    leadId,
+                    questionId: question.id,
+                    status: 'archived',
+                  }),
+                )
+              }
             >
-              {question.priority === 1
-                ? 'Prioridad alta'
-                : question.priority === 3
-                  ? 'Prioridad baja'
-                  : 'Prioridad media'}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={`h-5 px-1.5 text-[10px] font-medium ${STATUS_TONE[question.status]}`}
-            >
-              {STATUS_LABEL[question.status]}
-            </Badge>
+              <Archive className="size-3.5" />
+            </Button>
           </div>
-          {canEdit ? (
-            <Input
-              value={questionDraft}
-              onChange={(event) => setQuestionDraft(event.target.value)}
-              maxLength={500}
-              aria-label={`Editar pregunta: ${question.question}`}
-              className="-mx-1 h-auto min-h-8 rounded-md border-0 px-1 py-1 leading-snug font-medium shadow-none transition-colors hover:bg-muted/50 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/30"
-            />
-          ) : (
-            <p className="text-sm leading-snug font-medium">{question.question}</p>
-          )}
-        </div>
-        {question.origin === 'ai' ? <Badge variant="outline">IA</Badge> : null}
+        ) : null}
       </div>
 
+      {canEdit ? (
+        <Input
+          value={questionDraft}
+          onChange={(event) => setQuestionDraft(event.target.value)}
+          maxLength={500}
+          aria-label={`Editar pregunta: ${question.question}`}
+          className="-mx-1.5 h-auto min-h-7 rounded-md border-0 bg-transparent px-1.5 py-0.5 text-sm leading-snug font-medium shadow-none transition-colors hover:bg-muted/50 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/30"
+        />
+      ) : (
+        <p className="text-sm leading-snug font-medium">{question.question}</p>
+      )}
+
       {question.rationale ? (
-        <p className="border-l-2 border-primary/20 pl-2 text-xs leading-relaxed text-muted-foreground">
+        <p className="truncate text-[11px] text-muted-foreground" title={question.rationale}>
           {question.rationale}
         </p>
       ) : null}
@@ -464,80 +510,25 @@ function DiscoveryQuestionCard({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-1.5">
-        <label
-          className="text-xs font-medium text-muted-foreground"
-          htmlFor={`answer-${question.id}`}
-        >
+      <div className="flex items-start gap-2">
+        <label className="sr-only" htmlFor={`answer-${question.id}`}>
           Respuesta confirmada
         </label>
         <Textarea
           id={`answer-${question.id}`}
           value={answerDraft}
           onChange={(event) => setAnswerDraft(event.target.value)}
-          placeholder="Anota la respuesta abierta…"
-          rows={2}
+          placeholder="Anota la respuesta…"
+          rows={1}
           maxLength={2000}
           disabled={!canEdit || busy}
-          className="min-h-[60px] resize-y bg-background/70 text-sm leading-relaxed transition-shadow motion-reduce:transition-none"
+          className="field-sizing-content max-h-40 min-h-8 flex-1 resize-none bg-muted/30 px-2.5 py-1.5 text-sm leading-snug"
         />
-      </div>
-      {question.answer_source ? (
-        <p className="-mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <CheckCircle2 className="size-3 text-emerald-600" aria-hidden="true" />
-          {question.answer_source === 'manual'
-            ? 'Respuesta editada manualmente'
-            : 'Respuesta confirmada desde sugerencia IA'}
-        </p>
-      ) : null}
-
-      {canEdit ? (
-        <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-2">
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              size="xs"
-              variant="ghost"
-              className="text-muted-foreground"
-              disabled={busy}
-              onClick={() =>
-                void run(() =>
-                  setLeadDiscoveryQuestionStatus({
-                    leadId,
-                    questionId: question.id,
-                    status: 'deferred',
-                  }),
-                )
-              }
-            >
-              Posponer
-            </Button>
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="ghost"
-              className="text-muted-foreground hover:text-destructive"
-              disabled={busy}
-              aria-label="Archivar pregunta"
-              title="Archivar pregunta"
-              onClick={() =>
-                void run(() =>
-                  setLeadDiscoveryQuestionStatus({
-                    leadId,
-                    questionId: question.id,
-                    status: 'archived',
-                  }),
-                )
-              }
-            >
-              <Archive className="size-3.5" />
-            </Button>
-          </div>
+        {canEdit && dirty ? (
           <Button
             type="button"
             size="sm"
-            variant="outline"
-            className="min-w-20"
+            className="motion-safe:animate-in motion-safe:fade-in"
             disabled={busy || questionDraft.trim().length < 3}
             onClick={() =>
               void run(() =>
@@ -553,7 +544,15 @@ function DiscoveryQuestionCard({
           >
             {busy ? <LoaderCircle className="size-3.5 motion-safe:animate-spin" /> : 'Guardar'}
           </Button>
-        </div>
+        ) : null}
+      </div>
+      {question.answer_source ? (
+        <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <CheckCircle2 className="size-3 text-emerald-600" aria-hidden="true" />
+          {question.answer_source === 'manual'
+            ? 'Respuesta editada manualmente'
+            : 'Respuesta confirmada desde sugerencia IA'}
+        </p>
       ) : null}
       {error ? (
         <p

@@ -70,8 +70,6 @@ export const sendDocumentEmail = defineAction({
       tags: { attachment_id: id, kind: 'generated_document_email', sent_by: user.id },
     })
 
-    await supabase.from('generated_documents').update({ status: 'sent' }).eq('attachment_id', id)
-
     return { mocked: result.mocked }
   },
 })
