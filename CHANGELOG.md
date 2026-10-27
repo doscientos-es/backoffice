@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-27 — v0.1.138
+
+### Nuevas funciones
+
+- Add client view stats and heat indication in sidebar
+
 ## 2026-10-27 — v0.1.137
 
 ### Nuevas funciones

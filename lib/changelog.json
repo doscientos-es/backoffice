@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.138",
+      "date": "2026-10-27",
+      "title": "v0.1.138",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add client view stats and heat indication in sidebar"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "f50ecdbf151155ae590bedb5e4b6ee58c646ef86",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Add client view stats and heat indication in sidebar"
+        }
+      ]
+    },
+    {
       "version": "0.1.137",
       "date": "2026-10-27",
       "title": "v0.1.137",
