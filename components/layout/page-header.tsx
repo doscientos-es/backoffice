@@ -20,7 +20,7 @@ export type PageHeaderProps = {
   title: string
   /** Small contextual label rendered above the page title. */
   eyebrow?: ReactNode
-  description?: string
+  description?: ReactNode
   /** Optional secondary metadata rendered below the description. */
   meta?: ReactNode
   /** Optional icon/avatar rendered to the left of the title. */
@@ -93,7 +93,7 @@ export function PageHeader({
               {title}
             </h1>
             {description ? (
-              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+              <div className="mt-1 text-sm text-muted-foreground">{description}</div>
             ) : null}
             {meta ? <div className="mt-2">{meta}</div> : null}
           </div>

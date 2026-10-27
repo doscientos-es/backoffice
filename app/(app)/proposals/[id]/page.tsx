@@ -464,7 +464,19 @@ export default async function ProposalDetailPage({
         title={proposal.title as string}
         eyebrow={proposalNumber}
         titleClassName="text-pretty"
-        description={recipientName}
+        description={
+          client ? (
+            <Link href={`/clients/${client.id}`} className="hover:text-foreground hover:underline">
+              {recipientName}
+            </Link>
+          ) : lead ? (
+            <Link href={`/leads/${lead.id}`} className="hover:text-foreground hover:underline">
+              {recipientName}
+            </Link>
+          ) : (
+            recipientName
+          )
+        }
         back={<BackLink href="/proposals" label="Volver a propuestas" />}
         actions={
           <div className="flex items-center gap-1.5">

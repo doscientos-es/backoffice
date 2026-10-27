@@ -226,13 +226,31 @@ export default async function ProposalsPage({
           const leadRow = p.leads as unknown as { name: string } | null
           const clientName = clientRow?.name ?? leadRow?.name ?? '—'
           const projectName = (p.projects as unknown as { name: string } | null)?.name ?? '—'
+          const recipientHref = p.client_id
+            ? `/clients/${p.client_id}`
+            : p.lead_id
+              ? `/leads/${p.lead_id}`
+              : null
           const clientCell = (
             <span key="client" className="flex items-center gap-2">
               {clientRow ? (
                 <ClientAvatar name={clientRow.name} logoUrl={clientRow.logo_url} size="xs" />
               ) : null}
-              {clientName}
+              {recipientHref ? (
+                <Link href={recipientHref} className="hover:underline">
+                  {clientName}
+                </Link>
+              ) : (
+                clientName
+              )}
             </span>
+          )
+          const projectCell = p.project_id ? (
+            <Link key="project" href={`/projects/${p.project_id}`} className="hover:underline">
+              {projectName}
+            </Link>
+          ) : (
+            projectName
           )
           const total = pricesByProposal.get(p.id as string)
           const followUpInfo = proposalFollowUp(p)
@@ -246,7 +264,7 @@ export default async function ProposalsPage({
               },
               titulo: { content: p.title as string, value: p.title as string },
               cliente_lead: { content: clientCell, value: clientName },
-              proyecto: { content: projectName, value: projectName },
+              proyecto: { content: projectCell, value: projectName },
               estado: {
                 content: (
                   <span key="status" className="flex items-center gap-1.5">
