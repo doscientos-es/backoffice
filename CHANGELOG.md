@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-27 — v0.1.137
+
+### Nuevas funciones
+
+- Add validation for duplicate email marketing lists
+
 ## 2026-10-27 — v0.1.135
 
 ### Nuevas funciones
