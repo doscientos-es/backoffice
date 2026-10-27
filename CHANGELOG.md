@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-27 — v0.1.135
+
+### Nuevas funciones
+
+- Add sales hourly rate for price suggestion calculations
+
 ## 2026-10-27 — v0.1.134
 
 ### Nuevas funciones

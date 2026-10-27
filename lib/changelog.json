@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.135",
+      "date": "2026-10-27",
+      "title": "v0.1.135",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add sales hourly rate for price suggestion calculations"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "fb3d04a6ceafcb92fef718d76d5aed534192ea85",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add sales hourly rate for price suggestion calculations"
+        }
+      ]
+    },
+    {
       "version": "0.1.134",
       "date": "2026-10-27",
       "title": "v0.1.134",
