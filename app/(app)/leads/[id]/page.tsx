@@ -47,6 +47,7 @@ import { LeadNextActionReminderItem } from './lead-next-action-reminder-item'
 import { LeadNextActionTaskItem } from './lead-next-action-task-item'
 import { LeadNextMove } from './lead-next-move'
 import { LeadNotesDialog } from './lead-notes-dialog'
+import { LeadPriceSuggestion } from './lead-price-suggestion'
 import { LeadRecentInteractions } from './lead-recent-interactions'
 import { MomTestChecklist } from './mom-test-checklist'
 import { PhoneQuickActions } from './phone-actions'
@@ -483,6 +484,13 @@ export default async function LeadDetailPage({
                 aiEnabled={aiEnabled}
                 canEdit={canEdit}
               />
+              {aiEnabled ? (
+                <LeadPriceSuggestion
+                  leadId={lead.id as string}
+                  currentValue={lead.estimated_value == null ? null : Number(lead.estimated_value)}
+                  canEdit={canEdit}
+                />
+              ) : null}
 
               {canEdit || nextActions.length > 0 ? (
                 <NextActionsCard
