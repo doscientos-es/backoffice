@@ -58,6 +58,19 @@ export type EmailMarketingRecipientEvent = {
   converted_lead_id: string | null
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }
+    return entities[character]!
+  })
+}
+
 export async function getEmailMarketingOverview(): Promise<{
   lists: EmailMarketingList[]
   sequences: EmailMarketingSequence[]
@@ -82,16 +95,22 @@ export async function getEmailMarketingOverview(): Promise<{
   const listIds = listRows.map((row) => row.id)
   const memberCounts = new Map<string, number>()
   if (listIds.length) {
-    const { data } = await supabase
-      .from('email_marketing_list_members')
-      .select('list_id, contact:email_marketing_contacts(status)')
-      .in('list_id', listIds)
-    for (const row of (data ?? []) as unknown as {
-      list_id: string
-      contact: { status: string } | null
-    }[]) {
-      if (row.contact?.status === 'subscribed')
-        memberCounts.set(row.list_id, (memberCounts.get(row.list_id) ?? 0) + 1)
+    for (let offset = 0; ; offset += 1000) {
+      const { data, error } = await supabase
+        .from('email_marketing_list_members')
+        .select('list_id, contact:email_marketing_contacts(status)')
+        .in('list_id', listIds)
+        .range(offset, offset + 999)
+      if (error) throw new Error(error.message)
+      const rows = (data ?? []) as unknown as {
+        list_id: string
+        contact: { status: string } | null
+      }[]
+      for (const row of rows) {
+        if (row.contact?.status === 'subscribed')
+          memberCounts.set(row.list_id, (memberCounts.get(row.list_id) ?? 0) + 1)
+      }
+      if (rows.length < 1000) break
     }
   }
   const lists = listRows.map((row) => ({
@@ -111,43 +130,49 @@ export async function getEmailMarketingOverview(): Promise<{
   const stepIds = rawSequences.flatMap((sequence) => (sequence.steps ?? []).map((step) => step.id))
   const statsByStep = new Map<string, EmailMarketingStep['stats']>()
   if (stepIds.length) {
-    const { data } = await supabase
-      .from('lead_campaign_sends')
-      .select(
-        'sequence_step_id, sent_at, delivered_at, opened_at, clicked_at, unsubscribed_at, bounced_at, complained_at, converted_lead_id, marketing_send_status',
-      )
-      .in('sequence_step_id', stepIds)
-    for (const row of (data ?? []) as unknown as {
-      sequence_step_id: string
-      sent_at: string | null
-      delivered_at: string | null
-      opened_at: string | null
-      clicked_at: string | null
-      unsubscribed_at: string | null
-      bounced_at: string | null
-      complained_at: string | null
-      converted_lead_id: string | null
-      marketing_send_status: string
-    }[]) {
-      const stats = statsByStep.get(row.sequence_step_id) ?? {
-        recipients: 0,
-        delivered: 0,
-        opened: 0,
-        clicked: 0,
-        unsubscribed: 0,
-        bounced: 0,
-        complained: 0,
-        converted: 0,
+    for (let offset = 0; ; offset += 1000) {
+      const { data, error } = await supabase
+        .from('lead_campaign_sends')
+        .select(
+          'sequence_step_id, sent_at, delivered_at, opened_at, clicked_at, unsubscribed_at, bounced_at, complained_at, converted_lead_id, marketing_send_status',
+        )
+        .in('sequence_step_id', stepIds)
+        .range(offset, offset + 999)
+      if (error) throw new Error(error.message)
+      const rows = (data ?? []) as unknown as {
+        sequence_step_id: string
+        sent_at: string | null
+        delivered_at: string | null
+        opened_at: string | null
+        clicked_at: string | null
+        unsubscribed_at: string | null
+        bounced_at: string | null
+        complained_at: string | null
+        converted_lead_id: string | null
+        marketing_send_status: string
+      }[]
+      for (const row of rows) {
+        const stats = statsByStep.get(row.sequence_step_id) ?? {
+          recipients: 0,
+          delivered: 0,
+          opened: 0,
+          clicked: 0,
+          unsubscribed: 0,
+          bounced: 0,
+          complained: 0,
+          converted: 0,
+        }
+        if (row.marketing_send_status !== 'skipped') stats.recipients += 1
+        if (row.delivered_at) stats.delivered += 1
+        if (row.opened_at) stats.opened += 1
+        if (row.clicked_at) stats.clicked += 1
+        if (row.unsubscribed_at) stats.unsubscribed += 1
+        if (row.bounced_at) stats.bounced += 1
+        if (row.complained_at) stats.complained += 1
+        if (row.converted_lead_id) stats.converted += 1
+        statsByStep.set(row.sequence_step_id, stats)
       }
-      if (row.marketing_send_status !== 'skipped') stats.recipients += 1
-      if (row.delivered_at) stats.delivered += 1
-      if (row.opened_at) stats.opened += 1
-      if (row.clicked_at) stats.clicked += 1
-      if (row.unsubscribed_at) stats.unsubscribed += 1
-      if (row.bounced_at) stats.bounced += 1
-      if (row.complained_at) stats.complained += 1
-      if (row.converted_lead_id) stats.converted += 1
-      statsByStep.set(row.sequence_step_id, stats)
+      if (rows.length < 1000) break
     }
   }
 
@@ -158,8 +183,8 @@ export async function getEmailMarketingOverview(): Promise<{
     name: sequence.name,
     status: sequence.status,
     created_at: sequence.created_at,
-    steps: (sequence.steps ?? [])
-      .toSorted((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))
+    steps: [...(sequence.steps ?? [])]
+      .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))
       .map((step, index) => ({
         ...step,
         position: index + 1,
@@ -173,8 +198,7 @@ export async function getEmailMarketingOverview(): Promise<{
           complained: 0,
           converted: 0,
         },
-      }))
-      .sort((a, b) => a.position - b.position),
+      })),
   }))
 
   return { lists, sequences }
@@ -386,7 +410,7 @@ export async function processDueEmailMarketing(): Promise<{
   const { data: queue, error: queueError } = await supabase
     .from('lead_campaign_sends')
     .select(
-      'id, campaign_id, lead_id, email, tracking_token, marketing_contact_id, sequence_step_id, marketing_contact:email_marketing_contacts(name, company, status), step:email_marketing_sequence_steps(id, title, subject, body_markdown, sequence:email_marketing_sequences(name, status))',
+      'id, campaign_id, lead_id, email, tracking_token, marketing_contact_id, sequence_step_id, marketing_contact:email_marketing_contacts(name, company, status), step:email_marketing_sequence_steps(id, title, subject, preview_text, body_markdown, sequence:email_marketing_sequences(name, status))',
     )
     .eq('marketing_send_status', 'queued')
     .not('sequence_step_id', 'is', null)
@@ -423,6 +447,7 @@ export async function processDueEmailMarketing(): Promise<{
       id: string
       title: string
       subject: string
+      preview_text: string | null
       body_markdown: string
       sequence: { name: string; status: string } | null
     } | null
@@ -458,7 +483,7 @@ export async function processDueEmailMarketing(): Promise<{
       html = html.replace(/href=(["'])([^"']+)\1/gi, (match, quote: string, rawUrl: string) => {
         try {
           if (/^(#|mailto:|tel:|javascript:)/i.test(rawUrl)) return match
-          const target = new URL(rawUrl, 'https://doscientos.es')
+          const target = new URL(rawUrl.replace(/&amp;/gi, '&'), 'https://doscientos.es')
           if (target.hostname !== 'doscientos.es' && !target.hostname.endsWith('.doscientos.es'))
             return match
           target.searchParams.set('utm_source', 'email')
@@ -475,6 +500,9 @@ export async function processDueEmailMarketing(): Promise<{
         }
       })
       const unsubscribeUrl = `${appUrl.replace(/\/+$/, '')}/api/track/unsubscribe/${row.tracking_token}`
+      if (row.step.preview_text) {
+        html = `<div style="display:none!important;max-height:0;overflow:hidden;opacity:0;color:transparent">${escapeHtml(row.step.preview_text)}</div>${html}`
+      }
       html = `<p style="padding:12px;background:#f5f5f4;text-align:center;font-size:13px"><a href="${unsubscribeUrl}" style="color:#444;font-weight:600">¿No quieres recibir más emails? Date de baja aquí</a></p>${html}<hr style="border:0;border-top:1px solid #e5e7eb;margin:28px 0 16px"/><p style="font-size:12px;line-height:18px;color:#6b7280">Recibes este mensaje porque te suscribiste a las comunicaciones de Doscientos. <a href="${unsubscribeUrl}">Darte de baja</a>.</p>`
       html = addEmailTracking(html, appUrl, row.tracking_token)
       const result = await sendEmail({

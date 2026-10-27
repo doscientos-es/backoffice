@@ -487,6 +487,13 @@ export default async function LeadDetailPage({
               {aiEnabled ? (
                 <LeadPriceSuggestion
                   leadId={lead.id as string}
+                  leadLabel={(lead.company as string | null) || (lead.name as string)}
+                  canCreateProposal={
+                    canEdit &&
+                    can(user.role, 'proposals.write') &&
+                    canSeeProposalPrices &&
+                    proposals.length === 0
+                  }
                   currentValue={lead.estimated_value == null ? null : Number(lead.estimated_value)}
                   canEdit={canEdit}
                 />

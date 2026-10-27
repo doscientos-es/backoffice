@@ -86,15 +86,19 @@ create index if not exists email_marketing_steps_due_idx
 alter table public.lead_campaign_sends
   add column if not exists marketing_contact_id uuid references public.email_marketing_contacts(id) on delete set null,
   add column if not exists sequence_step_id uuid references public.email_marketing_sequence_steps(id) on delete set null,
+  add column if not exists clicked_at timestamptz,
+  add column if not exists bounced_at timestamptz,
   add column if not exists marketing_send_status text not null default 'sent'
     check (marketing_send_status in ('queued','sending','sent','failed','skipped')),
   add column if not exists marketing_send_error text,
+  add column if not exists bounced_at timestamptz,
   add column if not exists delivered_at timestamptz,
   add column if not exists complained_at timestamptz,
   add column if not exists converted_lead_id uuid references public.leads(id) on delete set null;
 
-alter table public.lead_campaign_sends
-  add constraint lead_campaign_sends_sequence_contact_key unique (sequence_step_id, marketing_contact_id);
+create index if not exists lead_campaign_sends_marketing_contact_idx
+  on public.lead_campaign_sends (marketing_contact_id)
+  where marketing_contact_id is not null;
 
 create unique index if not exists lead_campaign_sends_step_contact_uidx
   on public.lead_campaign_sends (sequence_step_id, marketing_contact_id)

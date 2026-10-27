@@ -178,6 +178,10 @@ const CompanyInput = z.object({
   default_vat_rate: z.coerce.number().min(0).max(100),
   invoice_series: z.string().min(1).max(10),
   internal_hourly_cost: z.coerce.number().min(0).max(100000),
+  /** Vacío = sin configurar. */
+  sales_hourly_rate: z
+    .union([z.literal(''), z.coerce.number().positive('La tarifa debe ser > 0').max(1000)])
+    .transform((value) => (value === '' ? null : value)),
 })
 
 const GmailSyncMailboxesInput = z.object({
@@ -228,6 +232,7 @@ export async function updateCompanySettings(
     default_vat_rate: formData.get('default_vat_rate')?.toString() ?? '21',
     invoice_series: formData.get('invoice_series')?.toString() ?? 'A',
     internal_hourly_cost: formData.get('internal_hourly_cost')?.toString() ?? '0',
+    sales_hourly_rate: formData.get('sales_hourly_rate')?.toString().trim() ?? '',
   }
   const parsed = CompanyInput.safeParse(raw)
   if (!parsed.success) {
@@ -261,6 +266,7 @@ export async function updateCompanySettings(
       default_vat_rate: parsed.data.default_vat_rate,
       invoice_series: parsed.data.invoice_series,
       internal_hourly_cost: parsed.data.internal_hourly_cost,
+      sales_hourly_rate: parsed.data.sales_hourly_rate,
       updated_at: new Date().toISOString(),
     })
     .eq('id', 1)

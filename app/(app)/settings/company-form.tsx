@@ -25,6 +25,7 @@ interface Props {
   companyAddressProvince: string
   companyAddressCountry: string
   internalHourlyCost: number
+  salesHourlyRate: number | null
   paymentTerms: string
 }
 
@@ -40,6 +41,7 @@ export function CompanyForm({
   companyAddressProvince,
   companyAddressCountry,
   internalHourlyCost,
+  salesHourlyRate,
   paymentTerms,
 }: Props) {
   const feedback = useFormFeedback()
@@ -124,6 +126,26 @@ export function CompanyForm({
           />
           <FieldDescription id="internal-hourly-cost-hint">
             Valora las horas registradas al calcular la rentabilidad de cada proyecto.
+          </FieldDescription>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="sales_hourly_rate" className="text-xs font-medium">
+            Tarifa de venta por hora (€/h)
+          </FieldLabel>
+          <Input
+            id="sales_hourly_rate"
+            name="sales_hourly_rate"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            max="1000"
+            step="0.01"
+            defaultValue={salesHourlyRate ?? ''}
+            placeholder="Sin configurar"
+            aria-describedby="sales-hourly-rate-hint"
+          />
+          <FieldDescription id="sales-hourly-rate-hint">
+            La IA la usa para convertir las horas estimadas en precio al sugerir presupuestos.
           </FieldDescription>
         </Field>
         <Field className="sm:col-span-2">

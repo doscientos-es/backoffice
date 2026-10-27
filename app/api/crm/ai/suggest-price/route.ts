@@ -3,8 +3,9 @@
  *
  * Estima un rango de precio para un lead a partir de su briefing (ficha,
  * interacciones y guion de preguntas con respuestas confirmadas).
- * La IA estima HORAS por partida; los euros se calculan aquí con la tarifa
- * configurada, para que las cifras sean consistentes y auditables.
+ * La IA estima HORAS por partida; los euros se calculan aquí con la tarifa de
+ * venta de Ajustes › Empresa (settings.sales_hourly_rate), para que las cifras
+ * sean consistentes y auditables.
  * No persiste nada: el usuario decide si usarlo como valor estimado.
  */
 import { type NextRequest, NextResponse } from 'next/server'
@@ -13,10 +14,11 @@ import { z } from 'zod'
 import { AI_MODELS, isAIEnabled, runAIObject } from '@/lib/ai'
 import { requireUser } from '@/lib/auth'
 import { formatLeadBriefingForAI } from '@/lib/leads/ai-context'
-import { buildPriceSuggestion, resolveHourlyRate } from '@/lib/leads/price-suggestion'
+import { buildPriceSuggestion, parseHourlyRate } from '@/lib/leads/price-suggestion'
 import { getLeadDetail } from '@/lib/leads/queries'
 import { scopedLogger } from '@/lib/logger'
 import { rateLimit } from '@/lib/ratelimit'
+import { createServerClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -70,6 +72,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'lead_id inválido' }, { status: 400 })
   }
 
+  const supabase = await createServerClient()
+  const { data: settings } = await supabase
+    .from('settings')
+    .select('sales_hourly_rate, default_vat_rate')
+    .eq('id', 1)
+    .maybeSingle()
+  const hourlyRate = parseHourlyRate(settings?.sales_hourly_rate)
+  if (hourlyRate == null) {
+    return NextResponse.json(
+      { error: 'Configura la tarifa de venta por hora en Ajustes › Empresa para estimar precios.' },
+      { status: 422 },
+    )
+  }
+  const vatRate = Number(settings?.default_vat_rate ?? 21)
+
   let detail: Awaited<ReturnType<typeof getLeadDetail>>
   try {
     detail = await getLeadDetail(body.lead_id)
@@ -98,7 +115,7 @@ export async function POST(req: NextRequest) {
       temperature: 0.2,
       maxOutputTokens: 1200,
     })
-    const suggestion = buildPriceSuggestion(result, resolveHourlyRate())
+    const suggestion = buildPriceSuggestion(result, hourlyRate, vatRate)
     log.info({ leadId: body.lead_id, recommended: suggestion.recommended }, 'suggest_price_ok')
     return NextResponse.json({ ok: true, ...suggestion })
   } catch (err) {

@@ -32,6 +32,9 @@ export default async function CompanySettingsPage() {
             companyAddressProvince={(settings?.company_address_province as string | null) ?? ''}
             companyAddressCountry={(settings?.company_address_country as string | null) ?? 'ES'}
             internalHourlyCost={(settings?.internal_hourly_cost as number | null) ?? 0}
+            salesHourlyRate={
+              settings?.sales_hourly_rate == null ? null : Number(settings.sales_hourly_rate)
+            }
             paymentTerms={(settings?.payment_terms as string | null) ?? ''}
           />
         </CardContent>

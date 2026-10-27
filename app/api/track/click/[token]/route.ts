@@ -11,7 +11,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
   // separate links table for v1. The redirect happens immediately; the DB
   // update runs after.
   const rawUrl = req.nextUrl.searchParams.get('url')
-  const destination = rawUrl ? decodeURIComponent(rawUrl) : FALLBACK_URL
+  let destination = FALLBACK_URL
+  if (rawUrl) {
+    try {
+      const url = new URL(rawUrl)
+      if (url.protocol === 'http:' || url.protocol === 'https:') destination = url.toString()
+    } catch {
+      destination = FALLBACK_URL
+    }
+  }
 
   // Record the click (fire-and-forget from the user's perspective — we reply
   // with a redirect before the DB write resolves in edge runtimes).

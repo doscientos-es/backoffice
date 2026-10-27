@@ -1,21 +1,25 @@
 'use client'
 
-import { Check, Euro, LoaderCircle, Sparkles } from 'lucide-react'
+import { Check, Euro, FileText, LoaderCircle, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { PriceSuggestion } from '@/lib/leads/price-suggestion'
+import { type PriceSuggestion, toProposalLines } from '@/lib/leads/price-suggestion'
 import { readJsonResponse } from '@/lib/utils/http'
 
+import { createProposalAction } from '../../proposals/actions'
 import { updateLeadEstimatedValue } from '../actions'
 
 type Props = {
   leadId: string
+  leadLabel: string
   currentValue: number | null
   canEdit: boolean
+  /** Solo se ofrece crear la propuesta si el lead aún no tiene ninguna. */
+  canCreateProposal: boolean
 }
 
 const eur = (value: number) =>
@@ -25,7 +29,13 @@ const eur = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value)
 
-export function LeadPriceSuggestion({ leadId, currentValue, canEdit }: Props) {
+export function LeadPriceSuggestion({
+  leadId,
+  leadLabel,
+  currentValue,
+  canEdit,
+  canCreateProposal,
+}: Props) {
   const router = useRouter()
   const [suggestion, setSuggestion] = useState<PriceSuggestion | null>(null)
   const [busy, setBusy] = useState(false)
@@ -64,6 +74,25 @@ export function LeadPriceSuggestion({ leadId, currentValue, canEdit }: Props) {
     if (!result.ok) return setError(result.error ?? 'No se pudo guardar el valor estimado.')
     setApplied(true)
     router.refresh()
+  }
+
+  async function createProposal() {
+    if (!suggestion) return
+    setBusy(true)
+    setError(null)
+    try {
+      const result = await createProposalAction({
+        lead_id: leadId,
+        title: `Propuesta · ${leadLabel}`.slice(0, 200),
+        notes: suggestion.scope_summary.slice(0, 4000),
+        items: toProposalLines(suggestion, suggestion.vat_rate),
+      })
+      if (!result.ok) throw new Error(result.error)
+      router.push(`/proposals/${result.id}`)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo crear la propuesta.')
+      setBusy(false)
+    }
   }
 
   return (
@@ -146,11 +175,29 @@ export function LeadPriceSuggestion({ leadId, currentValue, canEdit }: Props) {
                   </ul>
                 </div>
               ) : null}
-              {canEdit ? (
-                <Button type="button" size="sm" disabled={busy || applied} onClick={apply}>
-                  {applied ? <Check className="size-3.5" /> : null}
-                  {applied ? 'Aplicado' : `Usar ${eur(suggestion.recommended)} como valor estimado`}
-                </Button>
+              {canEdit || canCreateProposal ? (
+                <div className="flex flex-wrap gap-2">
+                  {canCreateProposal ? (
+                    <Button type="button" size="sm" disabled={busy} onClick={createProposal}>
+                      <FileText className="size-3.5" />
+                      Crear propuesta con estas partidas
+                    </Button>
+                  ) : null}
+                  {canEdit ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={busy || applied}
+                      onClick={apply}
+                    >
+                      {applied ? <Check className="size-3.5" /> : null}
+                      {applied
+                        ? 'Aplicado'
+                        : `Usar ${eur(suggestion.recommended)} como valor estimado`}
+                    </Button>
+                  ) : null}
+                </div>
               ) : null}
             </>
           ) : null}

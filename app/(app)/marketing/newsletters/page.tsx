@@ -526,8 +526,8 @@ export default async function EmailMarketingPage() {
             <CardHeader>
               <CardTitle>Añadir contactos</CardTitle>
               <CardDescription>
-                Pega emails o CSV. Acepta columnas email, nombre y empresa. Los contactos dados de
-                baja no se reactivan al importar.
+                Pega emails o CSV. Acepta email, nombre, empresa y columnas opcionales de origen y
+                referencia del permiso. Los contactos dados de baja no se reactivan al importar.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -571,7 +571,9 @@ export default async function EmailMarketingPage() {
                     required
                     maxLength={2000000}
                     className="min-h-32 font-mono text-xs"
-                    placeholder={'email,nombre,empresa\nana@empresa.es,Ana,Empresa'}
+                    placeholder={
+                      'email,nombre,empresa,consent_source,consent_reference\nana@empresa.es,Ana,Empresa,Formulario web,registro-123'
+                    }
                   />
                 </div>
                 <label className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">

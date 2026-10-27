@@ -61,9 +61,13 @@ function parseCsvLine(line: string): string[] {
   return cells
 }
 
-function parseContactCsv(
-  source: string,
-): { email: string; name: string | null; company: string | null }[] {
+function parseContactCsv(source: string): {
+  email: string
+  name: string | null
+  company: string | null
+  consentSource: string | null
+  consentReference: string | null
+}[] {
   const lines = source
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -85,8 +89,27 @@ function parseContactCsv(
   const companyIndex = hasHeader
     ? first.findIndex((cell) => ['company', 'empresa', 'compañía'].includes(cell))
     : 2
+  const consentSourceIndex = hasHeader
+    ? first.findIndex((cell) =>
+        ['consent_source', 'origen_permiso', 'origen del permiso'].includes(cell),
+      )
+    : -1
+  const consentReferenceIndex = hasHeader
+    ? first.findIndex((cell) =>
+        ['consent_reference', 'referencia_permiso', 'evidencia'].includes(cell),
+      )
+    : -1
   const rows = hasHeader ? lines.slice(1) : lines
-  const contacts = new Map<string, { email: string; name: string | null; company: string | null }>()
+  const contacts = new Map<
+    string,
+    {
+      email: string
+      name: string | null
+      company: string | null
+      consentSource: string | null
+      consentReference: string | null
+    }
+  >()
 
   for (const line of rows) {
     const cells = parseCsvLine(line)
@@ -96,6 +119,9 @@ function parseContactCsv(
       email,
       name: nameIndex >= 0 ? cells[nameIndex]?.trim() || null : null,
       company: companyIndex >= 0 ? cells[companyIndex]?.trim() || null : null,
+      consentSource: consentSourceIndex >= 0 ? cells[consentSourceIndex]?.trim() || null : null,
+      consentReference:
+        consentReferenceIndex >= 0 ? cells[consentReferenceIndex]?.trim() || null : null,
     })
   }
   if (contacts.size === 0)
@@ -150,19 +176,44 @@ export const importEmailMarketingContacts = defineAction({
     const now = new Date().toISOString()
     const ids = new Map<string, string>()
     const suppressed = new Set<string>()
+    const contactsByEmail = new Map(contacts.map((contact) => [contact.email, contact]))
     for (let offset = 0; offset < contacts.length; offset += 500) {
       const batch = contacts.slice(offset, offset + 500)
       const emails = batch.map((contact) => contact.email)
       const { data: existing, error: existingError } = await supabase
         .from('email_marketing_contacts')
-        .select('id, email, status')
+        .select('id, email, status, lead_id')
         .in('email', emails)
       if (existingError) throw new Error(existingError.message)
+      const { data: matchingLeads, error: leadsError } = await supabase
+        .from('leads')
+        .select('id, email')
+        .in('email', emails)
+        .is('deleted_at', null)
+      if (leadsError) throw new Error(leadsError.message)
+      const leadsByEmail = new Map(
+        ((matchingLeads ?? []) as { id: string; email: string | null }[])
+          .filter((lead) => lead.email)
+          .map((lead) => [lead.email!.toLowerCase(), lead.id]),
+      )
       const known = new Set<string>()
-      for (const contact of (existing ?? []) as { id: string; email: string; status: string }[]) {
+      for (const contact of (existing ?? []) as {
+        id: string
+        email: string
+        status: string
+        lead_id: string | null
+      }[]) {
         known.add(contact.email.toLowerCase())
         if (contact.status === 'subscribed') ids.set(contact.email.toLowerCase(), contact.id)
         else suppressed.add(contact.email.toLowerCase())
+        const matchingLeadId = leadsByEmail.get(contact.email.toLowerCase())
+        if (contact.status === 'subscribed' && !contact.lead_id && matchingLeadId) {
+          const { error } = await supabase
+            .from('email_marketing_contacts')
+            .update({ lead_id: matchingLeadId })
+            .eq('id', contact.id)
+          if (error) throw new Error(error.message)
+        }
       }
 
       const newContacts = batch.filter((contact) => !known.has(contact.email))
@@ -174,9 +225,10 @@ export const importEmailMarketingContacts = defineAction({
               email: contact.email,
               name: contact.name,
               company: contact.company,
+              lead_id: leadsByEmail.get(contact.email) ?? null,
               status: 'subscribed',
               consented_at: now,
-              consent_source: consentSource,
+              consent_source: contact.consentSource || consentSource,
             })),
             { onConflict: 'email', ignoreDuplicates: true },
           )
@@ -187,12 +239,16 @@ export const importEmailMarketingContacts = defineAction({
       }
     }
 
-    const memberRows = [...ids.values()].map((contactId) => ({
-      list_id: listId,
-      contact_id: contactId,
-      consented_at: now,
-      consent_source: consentSource,
-    }))
+    const memberRows = [...ids.entries()].map(([email, contactId]) => {
+      const contact = contactsByEmail.get(email)
+      return {
+        list_id: listId,
+        contact_id: contactId,
+        consented_at: now,
+        consent_source: contact?.consentSource || consentSource,
+        consent_reference: contact?.consentReference ?? null,
+      }
+    })
     for (let offset = 0; offset < memberRows.length; offset += 500) {
       const { error } = await supabase
         .from('email_marketing_list_members')
@@ -341,15 +397,16 @@ export const retryEmailMarketingStep = defineAction({
       .eq('id', id)
       .maybeSingle()
     if (readError || !step) throw new Error(readError?.message ?? 'Email no encontrado.')
-    const sequence = step.sequence as { status: string } | null
-    if (step.status !== 'failed' || sequence?.status !== 'active')
+    const rawSequence = step.sequence as unknown as { status: string } | { status: string }[] | null
+    const sequenceStatus = Array.isArray(rawSequence) ? rawSequence[0]?.status : rawSequence?.status
+    if (step.status !== 'failed' || sequenceStatus !== 'active')
       throw new Error('Activa la secuencia antes de reintentar un email fallido.')
     const { error: retryError, count } = await supabase
       .from('lead_campaign_sends')
-      .update({ marketing_send_status: 'queued', marketing_send_error: null })
+      .update({ marketing_send_status: 'queued', marketing_send_error: null }, { count: 'exact' })
       .eq('sequence_step_id', id)
       .eq('marketing_send_status', 'failed')
-      .select('id', { count: 'exact', head: true })
+      .select('id')
     if (retryError) throw new Error(retryError.message)
     if (!count) throw new Error('No hay destinatarios fallidos para reintentar.')
     const { error } = await supabase
