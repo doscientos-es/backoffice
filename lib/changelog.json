@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.140",
+      "date": "2026-10-28",
+      "title": "v0.1.140",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add support for dedicated email marketing API key"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "8d731c33d349c3f8131a34c172a88cf027a12f6c",
+          "type": "feat",
+          "scope": "email-marketing",
+          "breaking": false,
+          "description": "Add support for dedicated email marketing API key"
+        }
+      ]
+    },
+    {
       "version": "0.1.138",
       "date": "2026-10-27",
       "title": "v0.1.138",
