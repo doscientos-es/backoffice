@@ -2,14 +2,18 @@ import { Resend } from 'resend'
 
 import { serverEnv } from '@/lib/env'
 
-let cached: Resend | null = null
+const cachedByKey = new Map<string, Resend>()
 
-export function getResend(): Resend | null {
-  const env = serverEnv()
-  if (!env.RESEND_API_KEY) return null
-  if (cached) return cached
-  cached = new Resend(env.RESEND_API_KEY)
-  return cached
+/** Returns a Resend client for `apiKey` (defaults to RESEND_API_KEY), or null when unset. */
+export function getResend(apiKey?: string): Resend | null {
+  const key = apiKey || serverEnv().RESEND_API_KEY
+  if (!key) return null
+  let client = cachedByKey.get(key)
+  if (!client) {
+    client = new Resend(key)
+    cachedByKey.set(key, client)
+  }
+  return client
 }
 
 export type SendEmailInput = {
@@ -22,13 +26,15 @@ export type SendEmailInput = {
   html: string
   tags?: Record<string, string>
   attachments?: Array<{ filename: string; content: Buffer | string }>
+  /** Overrides RESEND_API_KEY (e.g. the dedicated email marketing account). */
+  apiKey?: string
 }
 
 export async function sendEmail(
   input: SendEmailInput,
 ): Promise<{ id: string | null; mocked: boolean }> {
   const env = serverEnv()
-  const resend = getResend()
+  const resend = getResend(input.apiKey)
   const safeName = input.fromName.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
   const address = input.fromAlias.includes('@')
     ? input.fromAlias

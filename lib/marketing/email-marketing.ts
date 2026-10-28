@@ -419,12 +419,14 @@ export async function processDueEmailMarketing(): Promise<{
 
   const {
     RESEND_API_KEY,
+    EMAIL_MARKETING_RESEND_API_KEY,
     EMAIL_MARKETING_FROM_EMAIL,
     EMAIL_MARKETING_FROM_NAME,
     EMAIL_MARKETING_REPLY_TO,
   } = (await import('@/lib/env')).serverEnv()
-  if ((queue ?? []).length > 0 && !RESEND_API_KEY) {
-    throw new Error('Falta configurar RESEND_API_KEY; los envíos quedan en cola.')
+  const marketingApiKey = EMAIL_MARKETING_RESEND_API_KEY || RESEND_API_KEY
+  if ((queue ?? []).length > 0 && !marketingApiKey) {
+    throw new Error('Falta configurar EMAIL_MARKETING_RESEND_API_KEY; los envíos quedan en cola.')
   }
 
   const { sendEmail } = await import('@/lib/email/resend')
@@ -510,6 +512,7 @@ export async function processDueEmailMarketing(): Promise<{
         fromAlias: EMAIL_MARKETING_FROM_EMAIL,
         to: row.email,
         replyTo: EMAIL_MARKETING_REPLY_TO,
+        apiKey: marketingApiKey,
         subject: row.step.subject,
         html,
         tags: {

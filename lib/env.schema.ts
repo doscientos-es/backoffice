@@ -55,6 +55,9 @@ export const ServerSchema = PublicSchema.extend({
   RESEND_API_KEY: z.string().optional().default(''),
   RESEND_WEBHOOK_SECRET: z.string().optional().default(''),
   RESEND_FROM_DOMAIN: z.string().default('doscientos.es'),
+  // API key dedicated to email marketing (doscientos.click). Falls back to
+  // RESEND_API_KEY when empty.
+  EMAIL_MARKETING_RESEND_API_KEY: z.string().optional().default(''),
   EMAIL_MARKETING_FROM_EMAIL: z.string().email().default('hola@doscientos.click'),
   EMAIL_MARKETING_FROM_NAME: z.string().trim().min(1).max(80).default('Doscientos'),
   EMAIL_MARKETING_REPLY_TO: z.string().email().default('hola@doscientos.es'),
