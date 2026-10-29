@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.141",
+      "date": "2026-10-29",
+      "title": "v0.1.141",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add page view event tracking for proposals"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "c3796b9abc9bcb54320e6cdfd964028fc48f917a",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Add page view event tracking for proposals"
+        }
+      ]
+    },
+    {
       "version": "0.1.140",
       "date": "2026-10-28",
       "title": "v0.1.140",
