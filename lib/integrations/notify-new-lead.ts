@@ -18,12 +18,14 @@ export type NotifyNewLeadInput = {
 
 const log = scopedLogger('notify-new-lead')
 
+const SALES_EMAIL = 'sales@doscientos.es'
+
 /**
- * Notifies all active owners and admins when a new lead is created.
+ * Notifies the team when a new lead is created.
  *
- * - Inserts an in-app `notifications` row (event_type: "lead_new") for each recipient
- *   so the bell icon lights up in real-time via Supabase Realtime.
- * - Sends a transactional email via Resend.
+ * - Inserts an in-app `notifications` row (event_type: "lead_new") for each active
+ *   owner/admin so the bell icon lights up in real-time via Supabase Realtime.
+ * - Sends one transactional email via Resend to the shared sales@doscientos.es mailbox.
  *
  * Errors inside this function are logged but never propagate — callers should
  * invoke with `.catch(() => {})` so lead creation is never blocked.
@@ -101,26 +103,24 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
 
   const subject = `Nuevo lead: ${input.leadName}${input.leadCompany ? ` · ${input.leadCompany}` : ''}`
 
-  const results = await Promise.allSettled(
-    recipients.map((r) =>
-      sendEmail({
-        fromName: 'doscientos',
-        fromAlias: 'notificaciones',
-        to: r.email as string,
-        subject,
-        html,
-        tags: { lead_id: input.leadId },
-      }),
-    ),
-  )
-
-  const failed = results.filter((r) => r.status === 'rejected').length
-  if (failed > 0) {
-    log.error({ leadId: input.leadId, failed }, 'some lead_new emails failed to send')
+  // A single send to the shared sales mailbox reaches the whole sales team.
+  let emailFailed = false
+  try {
+    await sendEmail({
+      fromName: 'doscientos',
+      fromAlias: 'notificaciones',
+      to: SALES_EMAIL,
+      subject,
+      html,
+      tags: { lead_id: input.leadId },
+    })
+  } catch (e) {
+    emailFailed = true
+    log.error({ err: e, leadId: input.leadId }, 'lead_new email to sales failed to send')
   }
 
   log.info(
-    { leadId: input.leadId, recipientCount: recipients.length, emailsFailed: failed },
+    { leadId: input.leadId, recipientCount: recipients.length, emailFailed },
     'lead_new notifications dispatched',
   )
 }

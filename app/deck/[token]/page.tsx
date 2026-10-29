@@ -11,7 +11,7 @@ import {
   parseMaintenanceOffer,
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
-import { recordClientProposalView } from '@/lib/proposals/record-client-view'
+import { insertPageViewEvent, recordClientProposalView } from '@/lib/proposals/record-client-view'
 import { type PaymentSchedule, parseScopeModules, type ScopeModule } from '@/lib/proposals/scope'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -162,15 +162,15 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
       const forwarded = h.get('x-forwarded-for')
       const ip = forwarded ? forwarded.split(',')[0]?.trim() : (h.get('x-real-ip') ?? null)
       const userAgent = h.get('user-agent')
-      await admin.from('proposal_view_events').insert({
-        proposal_id: proposal.id as string,
-        viewer_type: isTeam ? 'team' : 'client',
-        team_member_id: isTeam ? auth.user.id : null,
+      const inserted = await insertPageViewEvent({
+        proposalId: proposal.id as string,
+        viewerType: isTeam ? 'team' : 'client',
+        teamMemberId: isTeam ? auth.user.id : null,
         surface: 'deck',
-        ip,
-        user_agent: userAgent,
+        ip: ip ?? null,
+        userAgent,
       })
-      if (!isTeam) {
+      if (!isTeam && inserted) {
         await recordClientProposalView(
           {
             id: proposal.id as string,

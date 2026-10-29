@@ -38,7 +38,7 @@ import {
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
 import { effectiveProposalTerms } from '@/lib/proposals/proposal-acceptance'
-import { recordClientProposalView } from '@/lib/proposals/record-client-view'
+import { insertPageViewEvent, recordClientProposalView } from '@/lib/proposals/record-client-view'
 import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import {
   effectivePaymentPlan,
@@ -330,15 +330,15 @@ export default async function PortalProposalPage({
             .eq('id', trackedProposal.id)
             .eq('status', 'sent')
         }
-        await admin.from('proposal_view_events').insert({
-          proposal_id: trackedProposal.id,
-          viewer_type: isTeam ? 'team' : 'client',
-          team_member_id: teamMemberId,
+        const inserted = await insertPageViewEvent({
+          proposalId: trackedProposal.id,
+          viewerType: isTeam ? 'team' : 'client',
+          teamMemberId,
           surface: 'portal',
-          ip,
-          user_agent: userAgent,
+          ip: ip ?? null,
+          userAgent,
         })
-        if (!isTeam) await recordClientProposalView(trackedProposal, 'portal')
+        if (!isTeam && inserted) await recordClientProposalView(trackedProposal, 'portal')
       } catch (err) {
         log.warn({ err, proposalId: trackedProposal.id }, 'proposal_view_insert_failed')
       }
