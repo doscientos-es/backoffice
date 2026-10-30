@@ -23,6 +23,7 @@ import {
 } from './actions'
 import { LeadQuickView } from './lazy-lead-quick-view'
 import { LeadFastActions } from './lead-fast-actions'
+import { LeadHeatBadge } from './lead-heat-badge'
 import { LeadMobileCard } from './lead-mobile-card'
 import { LeadNextAction } from './lead-next-action'
 import { LeadNotesIndicator } from './lead-notes-indicator'
@@ -132,8 +133,9 @@ export function LeadsList({
       },
       score: {
         content: (
-          <span key="score" className="text-muted-foreground tabular-nums">
-            {l.score ?? '—'}
+          <span key="score" className="flex items-center gap-1.5">
+            <span className="text-muted-foreground tabular-nums">{l.score ?? '—'}</span>
+            <LeadHeatBadge lead={l} />
           </span>
         ),
         value: l.score ?? '',

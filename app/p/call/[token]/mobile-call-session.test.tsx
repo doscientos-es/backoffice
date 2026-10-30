@@ -17,6 +17,13 @@ const briefing = {
   outstandingTotal: 0,
 }
 
+const leadProps = {
+  leadId: 'lead-1',
+  leadName: 'Lead de prueba',
+  leadEmail: null,
+  leadCompany: null,
+}
+
 describe('MobileCallSession', () => {
   beforeEach(() => {
     fetchMock.mockReset()
@@ -35,6 +42,7 @@ describe('MobileCallSession', () => {
     render(
       <MobileCallSession
         token="token-1"
+        {...leadProps}
         phone="600 111 222"
         status="started"
         briefing={briefing}
@@ -58,6 +66,7 @@ describe('MobileCallSession', () => {
     render(
       <MobileCallSession
         token="token-1"
+        {...leadProps}
         phone="600 111 222"
         status="started"
         briefing={briefing}
@@ -80,6 +89,7 @@ describe('MobileCallSession', () => {
     render(
       <MobileCallSession
         token="token-1"
+        {...leadProps}
         phone="600 111 222"
         status="dialing"
         briefing={briefing}

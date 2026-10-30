@@ -48,7 +48,7 @@ const MOM_TEST_COLUMNS =
 
 const COMPANY_RESEARCH_COLUMNS = 'company_research, company_researched_at'
 
-const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, language, notes, status, created_at, updated_at, estimated_value, score, ${LIST_QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
+const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, language, notes, status, created_at, updated_at, estimated_value, score, temperature, engagement_score, last_engaged_at, ${LIST_QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
 
 const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, language, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
 
@@ -217,6 +217,9 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     updated_at: (l.updated_at as string | null) ?? (l.created_at as string),
     estimated_value: l.estimated_value == null ? null : Number(l.estimated_value),
     score: l.score == null ? null : Number(l.score),
+    temperature: (l.temperature as 'hot' | 'warm' | 'cold' | null) ?? null,
+    engagement_score: l.engagement_score == null ? null : Number(l.engagement_score),
+    last_engaged_at: (l.last_engaged_at as string | null) ?? null,
     company_size: (l.company_size as string | null) ?? null,
     solution_type: (l.solution_type as string | null) ?? null,
     urgency: (l.urgency as string | null) ?? null,

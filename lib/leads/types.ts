@@ -53,6 +53,12 @@ export type LeadListItem = {
   updated_at: string
   estimated_value: number | null
   score: number | null
+  /** Sales temperature; raised automatically when the lead shows interest in a proposal. */
+  temperature?: LeadDetailAiTemperature | null
+  /** 0-100 interest shown in public proposals over the last 14 days. */
+  engagement_score?: number | null
+  /** Last time the lead did something in a public proposal. */
+  last_engaged_at?: string | null
   /** Firmographic + intent signals parsed from the lead form. */
   company_size: string | null
   solution_type: string | null

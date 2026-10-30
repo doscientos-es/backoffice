@@ -68,18 +68,30 @@ export function EngagementTracker({ token }: { token: string }) {
 export function TrackedLink({
   token,
   type,
-  onClick,
-  ...props
-}: AnchorHTMLAttributes<HTMLAnchorElement> & { token: string; type: ReportableEngagement }) {
+  href,
+  className,
+  target,
+  rel,
+  children,
+}: {
+  token: string
+  type: ReportableEngagement
+  href: string
+  className?: string
+  target?: AnchorHTMLAttributes<HTMLAnchorElement>['target']
+  rel?: string
+  children: ReactNode
+}) {
   return (
-    // biome-ignore lint/a11y/useAnchorContent: children come through props
     <a
-      {...props}
-      onClick={(event) => {
-        reportOnce(token, type)
-        onClick?.(event)
-      }}
-    />
+      href={href}
+      target={target}
+      rel={rel}
+      className={className}
+      onClick={() => reportOnce(token, type)}
+    >
+      {children}
+    </a>
   )
 }
 

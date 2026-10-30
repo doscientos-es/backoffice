@@ -18,6 +18,7 @@ import {
   Building2,
   CalendarPlus,
   Clock,
+  Flame,
   Hand,
   LoaderCircle as Loader2,
   Mail,
@@ -51,6 +52,7 @@ import { createTask } from '../tasks/actions'
 import { LeadEditDialog } from './[id]/lead-edit-dialog'
 import { LeadCallLink } from './[id]/phone-actions'
 import { assignLeadOwner, claimLead } from './actions'
+import { leadHeatTitle } from './lead-heat-badge'
 import { LeadQuickActionGroups } from './lead-quick-action-groups'
 import type { KanbanLead } from './leads-kanban'
 
@@ -217,6 +219,11 @@ function Body({
           {lead.score != null && (
             <Row icon={<Timer className="size-3.5" />}>
               <span className="tabular-nums">Score {lead.score}/100</span>
+            </Row>
+          )}
+          {leadHeatTitle(lead) && (
+            <Row icon={<Flame className="size-3.5" />}>
+              <span className="tabular-nums">{leadHeatTitle(lead)}</span>
             </Row>
           )}
           <Row icon={<UserRound className="size-3.5" />}>

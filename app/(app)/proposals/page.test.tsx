@@ -28,7 +28,19 @@ beforeEach(() => {
   results.clear()
   mocks.from.mockImplementation((table: string) => {
     const builder: Record<string, ReturnType<typeof vi.fn>> = {}
-    for (const method of ['select', 'is', 'in', 'eq', 'lt', 'order', 'range', 'or', 'gte', 'lte'])
+    for (const method of [
+      'select',
+      'is',
+      'in',
+      'eq',
+      'lt',
+      'order',
+      'range',
+      'or',
+      'gte',
+      'lte',
+      'limit',
+    ])
       builder[method] = vi.fn(() => builder)
     builder.maybeSingle = mocks.leadClient
     // oxlint-disable-next-line unicorn/no-thenable -- Match the awaitable Supabase query-builder contract.

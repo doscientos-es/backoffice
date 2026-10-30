@@ -16,6 +16,8 @@ import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 import { escapeIlike, parsePage, parseSortParam, parseStringParam } from '@/lib/utils/search-params'
 
+import { ProposalCallChip } from './proposal-call-chip'
+
 export const metadata: Metadata = { title: 'Propuestas · doscientos' }
 export const dynamic = 'force-dynamic'
 
@@ -99,7 +101,7 @@ export default async function ProposalsPage({
   let query = supabase
     .from('proposals')
     .select(
-      'id, number, title, status, delivered_at, valid_until, sent_at, viewed_at, client_id, clients(name, logo_url), lead_id, leads(name), project_id, projects(name)',
+      'id, number, title, status, delivered_at, valid_until, sent_at, viewed_at, client_id, clients(name, logo_url, lead_id, leads(phone)), lead_id, leads(name, phone), project_id, projects(name)',
       { count: 'exact' },
     )
     .is('deleted_at', null)
@@ -254,8 +256,13 @@ export default async function ProposalsPage({
           const clientRow = p.clients as unknown as {
             name: string
             logo_url: string | null
+            lead_id: string | null
+            leads: { phone: string | null } | null
           } | null
-          const leadRow = p.leads as unknown as { name: string } | null
+          const leadRow = p.leads as unknown as { name: string; phone: string | null } | null
+          // Who to call: the proposal's lead, or the lead the client came from.
+          const callLeadId = (p.lead_id as string | null) ?? clientRow?.lead_id ?? null
+          const callPhone = leadRow?.phone ?? clientRow?.leads?.phone ?? null
           const clientName = clientRow?.name ?? leadRow?.name ?? '—'
           const projectName = (p.projects as unknown as { name: string } | null)?.name ?? '—'
           const recipientHref = p.client_id
@@ -290,22 +297,37 @@ export default async function ProposalsPage({
           // Only open proposals still waiting for an answer deserve a call.
           const heat =
             views && ['sent', 'viewed'].includes(p.status as string) ? proposalHeat(views) : 'none'
+          const canCall = heat === 'hot' && callLeadId !== null && callPhone !== null
+          const viewsTitle = `El cliente ha abierto la propuesta ${views?.visits ?? 0} ${views?.visits === 1 ? 'vez' : 'veces'}${views?.lastViewAt ? ` · última ${relativeTime(views.lastViewAt)}` : ''}`
+          const viewsClass =
+            heat === 'hot'
+              ? 'inline-flex items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-xs font-semibold text-warning ring-1 ring-warning/50'
+              : heat === 'warm'
+                ? 'inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning'
+                : 'inline-flex items-center gap-1 text-xs text-muted-foreground'
+          const viewsBody = (
+            <>
+              <Eye aria-hidden="true" className="size-3.5" />
+              {views?.visits}×{heat === 'hot' ? ' · Llámale' : ''}
+            </>
+          )
           const openedBy =
             views && views.visits > 0 ? (
-              <span
-                key="views"
-                title={`El cliente ha abierto la propuesta ${views.visits} ${views.visits === 1 ? 'vez' : 'veces'}${views.lastViewAt ? ` · última ${relativeTime(views.lastViewAt)}` : ''}`}
-                className={
-                  heat === 'hot'
-                    ? 'inline-flex items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-xs font-semibold text-warning ring-1 ring-warning/50'
-                    : heat === 'warm'
-                      ? 'inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning'
-                      : 'inline-flex items-center gap-1 text-xs text-muted-foreground'
-                }
-              >
-                <Eye aria-hidden="true" className="size-3.5" />
-                {views.visits}×{heat === 'hot' ? ' · Llámale' : ''}
-              </span>
+              canCall ? (
+                <ProposalCallChip
+                  key="views"
+                  leadId={callLeadId}
+                  phone={callPhone}
+                  title={`${viewsTitle} · Clic para llamar`}
+                  className={`${viewsClass} cursor-pointer transition-colors hover:bg-warning/30 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none`}
+                >
+                  {viewsBody}
+                </ProposalCallChip>
+              ) : (
+                <span key="views" title={viewsTitle} className={viewsClass}>
+                  {viewsBody}
+                </span>
+              )
             ) : null
           return {
             id: p.id as string,

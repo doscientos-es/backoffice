@@ -63,6 +63,7 @@ import { LeadCallLink } from './[id]/phone-actions'
 import { deleteLead, updateLeadStatus } from './actions'
 import type { CloseReasonVariant } from './close-reason-dialog'
 import { LeadQuickView } from './lazy-lead-quick-view'
+import { LeadHeatBadge } from './lead-heat-badge'
 import { LeadNextAction } from './lead-next-action'
 import { LeadNotesIndicator } from './lead-notes-indicator'
 
@@ -679,6 +680,7 @@ function Card({
               {lead.score}
             </Badge>
           )}
+          <LeadHeatBadge lead={lead} />
           {lead.estimated_value != null && lead.estimated_value > 0 && (
             <Badge variant="neutral" className="h-4 px-1.5 text-[10px] tabular-nums">
               {formatEUR(lead.estimated_value)}

@@ -50,6 +50,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
 
 import { updateProposalPortalAccess } from '../actions'
+import { ProposalCallChip } from '../proposal-call-chip'
 import { CreateSubscriptionFromProposalButton } from './create-subscription-from-proposal-button'
 import { ProposalMoreActions } from './delete-proposal-button'
 import { type DeliveryNote, DeliveryNoteCard } from './delivery-note-card'
@@ -79,6 +80,7 @@ type ProposalViewRow = {
 function ProposalSidebar({
   proposalId,
   leadId,
+  leadPhone,
   clientId,
   aiEnabled,
   messages,
@@ -88,6 +90,8 @@ function ProposalSidebar({
 }: {
   proposalId: string
   leadId: string | null
+  /** Phone of the lead, used to turn the "call now" hint into a call action. */
+  leadPhone: string | null
   clientId: string | null
   aiEnabled: boolean
   messages: ProposalMessage[]
@@ -98,6 +102,32 @@ function ProposalSidebar({
   const needsReply = messages.at(-1)?.author_type === 'client'
   // Only proposals still waiting for an answer deserve a call.
   const heat = awaitingReply ? proposalHeat(viewStats) : 'none'
+  const callable = heat === 'hot' && leadId !== null && leadPhone !== null
+  const viewsCardClass = `mx-4 mb-3 flex items-center gap-3 rounded-lg px-3 py-2.5 ${
+    heat === 'hot'
+      ? 'bg-warning/20 text-warning ring-1 ring-warning/50'
+      : heat === 'warm'
+        ? 'bg-warning/10 text-warning'
+        : 'bg-muted/50 text-foreground'
+  }`
+  const viewsCardBody = (
+    <>
+      <Eye aria-hidden className="size-5 shrink-0" />
+      <div className="min-w-0 text-sm">
+        <p className="font-semibold">
+          El cliente la ha abierto {viewStats.visits} {viewStats.visits === 1 ? 'vez' : 'veces'}
+        </p>
+        <p className="text-xs opacity-80">
+          {callable
+            ? 'Mucho interés: pulsa para llamar. '
+            : heat === 'hot'
+              ? 'Mucho interés: buen momento para llamar. '
+              : null}
+          {viewStats.lastViewAt ? `Última: ${relativeTime(viewStats.lastViewAt)}` : null}
+        </p>
+      </div>
+    </>
+  )
 
   return (
     <>
@@ -122,27 +152,18 @@ function ProposalSidebar({
         </CardHeader>
         <CardContent className="px-0">
           {viewStats.visits > 0 ? (
-            <div
-              className={`mx-4 mb-3 flex items-center gap-3 rounded-lg px-3 py-2.5 ${
-                heat === 'hot'
-                  ? 'bg-warning/20 text-warning ring-1 ring-warning/50'
-                  : heat === 'warm'
-                    ? 'bg-warning/10 text-warning'
-                    : 'bg-muted/50 text-foreground'
-              }`}
-            >
-              <Eye aria-hidden className="size-5 shrink-0" />
-              <div className="min-w-0 text-sm">
-                <p className="font-semibold">
-                  El cliente la ha abierto {viewStats.visits}{' '}
-                  {viewStats.visits === 1 ? 'vez' : 'veces'}
-                </p>
-                <p className="text-xs opacity-80">
-                  {heat === 'hot' ? 'Mucho interés: buen momento para llamar. ' : null}
-                  {viewStats.lastViewAt ? `Última: ${relativeTime(viewStats.lastViewAt)}` : null}
-                </p>
-              </div>
-            </div>
+            callable ? (
+              <ProposalCallChip
+                leadId={leadId}
+                phone={leadPhone}
+                title="Llamar al cliente"
+                className={`${viewsCardClass} cursor-pointer transition-colors hover:bg-warning/30 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none`}
+              >
+                {viewsCardBody}
+              </ProposalCallChip>
+            ) : (
+              <div className={viewsCardClass}>{viewsCardBody}</div>
+            )
           ) : null}
           {views.length === 0 ? (
             <p className="px-6 py-4 text-sm text-muted-foreground">Aún no se ha abierto.</p>
@@ -929,6 +950,7 @@ export default async function ProposalDetailPage({
             <ProposalSidebar
               proposalId={id}
               leadId={lead?.id ?? null}
+              leadPhone={lead?.phone ?? null}
               clientId={client?.id ?? null}
               aiEnabled={isAIEnabled() && ['sent', 'viewed'].includes(status)}
               messages={(messages ?? []) as unknown as ProposalMessage[]}
