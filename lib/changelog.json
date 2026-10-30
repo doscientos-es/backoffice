@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.142",
+      "date": "2026-10-30",
+      "title": "v0.1.142",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add new components for proposal details and pricing summary",
+            "Add multilingual support for proposal interface"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "0a8a5218a9136e1e0a0c41597679a8db263866f0",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add new components for proposal details and pricing summary"
+        },
+        {
+          "sha": "b634fd791adbec5fb692f02575a0825fe745bc4c",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add multilingual support for proposal interface"
+        }
+      ]
+    },
+    {
       "version": "0.1.141",
       "date": "2026-10-29",
       "title": "v0.1.141",

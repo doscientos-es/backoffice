@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-30 — v0.1.142
+
+### Nuevas funciones
+
+- Add new components for proposal details and pricing summary
+- Add multilingual support for proposal interface
+
 ## 2026-10-29 — v0.1.141
 
 ### Nuevas funciones
