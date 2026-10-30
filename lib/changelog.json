@@ -1,6 +1,52 @@
 {
   "releases": [
     {
+      "version": "0.1.144",
+      "date": "2026-10-30",
+      "title": "v0.1.144",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add tracking for client signature intent and update tests",
+            "Add contact card and next steps components for proposals",
+            "Add response controls and summary calculations",
+            "Add leads board component with loading and empty states"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "3a6e17355c3aa441ebaeba734d3d145cdce584be",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add tracking for client signature intent and update tests"
+        },
+        {
+          "sha": "c98d184b76c89bd3fc78b52d9485106a536731fd",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add contact card and next steps components for proposals"
+        },
+        {
+          "sha": "d2e2fde06839ecebdc91149302bcf2f5054dc00c",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add response controls and summary calculations"
+        },
+        {
+          "sha": "c2931051c634352da88499e744ca240468dc9af1",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add leads board component with loading and empty states"
+        }
+      ]
+    },
+    {
       "version": "0.1.143",
       "date": "2026-10-30",
       "title": "v0.1.143",

@@ -2,6 +2,15 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-30 — v0.1.144
+
+### Nuevas funciones
+
+- Add tracking for client signature intent and update tests
+- Add contact card and next steps components for proposals
+- Add response controls and summary calculations
+- Add leads board component with loading and empty states
+
 ## 2026-10-30 — v0.1.143
 
 ### Nuevas funciones
