@@ -103,7 +103,8 @@ function NavigationLink({
         aria-label={`${pinned ? 'Desfijar' : 'Fijar'} ${item.label}`}
         className={cn(
           'absolute top-1/2 right-1 -translate-y-1/2 rounded p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:opacity-100',
-          'opacity-100 lg:opacity-0 lg:group-hover:opacity-100',
+          // Hidden until the row is hovered or focused. Touch devices have no hover, so keep it visible there.
+          'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100',
         )}
       >
         {pinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}

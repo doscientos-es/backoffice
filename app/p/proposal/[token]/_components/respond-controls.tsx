@@ -1,6 +1,87 @@
 'use client'
 
-import { type ReactNode, useEffect, useState } from 'react'
+import { type AnchorHTMLAttributes, type ReactNode, useEffect, useState } from 'react'
+
+import { trackPortalEngagement } from '../actions'
+
+type ReportableEngagement = 'pricing_viewed' | 'terms_viewed' | 'whatsapp_click'
+
+/** Reports a signal once per browser session; failures are silent by design. */
+function reportOnce(token: string, type: ReportableEngagement) {
+  const key = `proposal-engagement:${token}:${type}`
+  try {
+    if (window.sessionStorage.getItem(key)) return
+    window.sessionStorage.setItem(key, '1')
+  } catch {
+    // Storage blocked: the server still deduplicates.
+  }
+  void trackPortalEngagement(token, type).catch(() => undefined)
+}
+
+/**
+ * Tells the team when the lead actually reads the price and the terms: the
+ * section must stay mostly on screen for a couple of seconds, so a fast scroll
+ * past it does not count.
+ */
+export function EngagementTracker({ token }: { token: string }) {
+  useEffect(() => {
+    const targets: Array<[string, ReportableEngagement]> = [
+      ['inversion', 'pricing_viewed'],
+      ['condiciones', 'terms_viewed'],
+    ]
+    const timers = new Map<Element, number>()
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const type = targets.find(([id]) => id === entry.target.id)?.[1]
+          if (!type) continue
+          const pending = timers.get(entry.target)
+          if (entry.isIntersecting && pending === undefined) {
+            timers.set(
+              entry.target,
+              window.setTimeout(() => {
+                reportOnce(token, type)
+                observer.unobserve(entry.target)
+              }, 2500),
+            )
+          } else if (!entry.isIntersecting && pending !== undefined) {
+            window.clearTimeout(pending)
+            timers.delete(entry.target)
+          }
+        }
+      },
+      { threshold: 0.5 },
+    )
+    for (const [id] of targets) {
+      const el = document.getElementById(id)
+      if (el && el.getClientRects().length > 0) observer.observe(el)
+    }
+    return () => {
+      for (const timer of timers.values()) window.clearTimeout(timer)
+      observer.disconnect()
+    }
+  }, [token])
+  return null
+}
+
+/** Link that reports a lead click (e.g. WhatsApp) before following the href. */
+export function TrackedLink({
+  token,
+  type,
+  onClick,
+  ...props
+}: AnchorHTMLAttributes<HTMLAnchorElement> & { token: string; type: ReportableEngagement }) {
+  return (
+    // biome-ignore lint/a11y/useAnchorContent: children come through props
+    <a
+      {...props}
+      onClick={(event) => {
+        reportOnce(token, type)
+        onClick?.(event)
+      }}
+    />
+  )
+}
 
 /** Attribute that marks every rendering of the accept/decline panel. */
 export const RESPONSE_PANEL_ATTR = 'data-proposal-response'

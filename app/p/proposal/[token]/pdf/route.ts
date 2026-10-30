@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { after, type NextRequest, NextResponse } from 'next/server'
 
 import { getCurrentUser } from '@/lib/auth'
 import { externalAppUrl } from '@/lib/email/app-url'
@@ -11,6 +11,7 @@ import {
 } from '@/lib/finance'
 import { isPortalUnlocked } from '@/lib/portal/access'
 import { resolvePortalLanguage } from '@/lib/portal/language'
+import { recordProposalEngagement } from '@/lib/proposals/engagement'
 import { parseKeyPoints } from '@/lib/proposals/key-points'
 import {
   maintenancePlanAsLineItem,
@@ -70,6 +71,23 @@ export async function GET(
       (proposal.portal_password_hash as string | null) ?? null,
     )
     if (!unlocked) return NextResponse.redirect(new URL(`/p/proposal/${token}`, req.url))
+
+    // Downloading the PDF to read or forward it is a sign of interest.
+    if (['sent', 'viewed'].includes(proposal.status as string)) {
+      after(() =>
+        recordProposalEngagement(
+          {
+            id: proposal.id as string,
+            number: (proposal.number as string | null) ?? null,
+            title: (proposal.title as string | null) ?? null,
+            lead_id: (proposal.lead_id as string | null) ?? null,
+            client_id: (proposal.client_id as string | null) ?? null,
+            created_by: (proposal.created_by as string | null) ?? null,
+          },
+          'pdf_download',
+        ),
+      )
+    }
   }
 
   const { data: items, error: itemsError } = await admin

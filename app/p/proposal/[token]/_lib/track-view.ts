@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { after } from 'next/server'
 
 import { scopedLogger } from '@/lib/logger'
+import { recordProposalEngagement } from '@/lib/proposals/engagement'
 import { insertPageViewEvent, recordClientProposalView } from '@/lib/proposals/record-client-view'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -57,7 +58,11 @@ export async function trackProposalView({
         ip: ip ?? null,
         userAgent,
       })
-      if (!isTeam && inserted) await recordClientProposalView(tracked, 'portal')
+      if (!isTeam && inserted) {
+        const visit = await recordClientProposalView(tracked, 'portal')
+        // Coming back after hours is a buying signal: heat up the lead.
+        if (visit === 'return') await recordProposalEngagement(tracked, 'return_visit')
+      }
     } catch (err) {
       log.warn({ err, proposalId: tracked.id }, 'proposal_view_insert_failed')
     }

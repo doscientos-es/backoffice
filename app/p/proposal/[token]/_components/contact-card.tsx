@@ -3,6 +3,7 @@ import { Mail } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 
 import type { Tr } from '../_lib/i18n'
+import { TrackedLink } from './respond-controls'
 
 export type ProposalContact = {
   name: string
@@ -15,10 +16,12 @@ const COMPANY_WHATSAPP_PHONE = '34671171525'
 
 /** Puts a person behind the proposal: who wrote it and how to reach them. */
 export function ContactCard({
+  token,
   contact,
   proposalNumber,
   tr,
 }: {
+  token: string
   /** Null when the author is unknown: the card falls back to a generic "write to us". */
   contact: ProposalContact | null
   proposalNumber: string
@@ -70,7 +73,9 @@ export function ContactCard({
         </p>
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
-        <a
+        <TrackedLink
+          token={token}
+          type="whatsapp_click"
           href={`https://wa.me/${COMPANY_WHATSAPP_PHONE}?text=${whatsappText}`}
           target="_blank"
           rel="noreferrer"
@@ -78,7 +83,7 @@ export function ContactCard({
         >
           <WhatsAppIcon size={14} />
           {tr('Preguntar por WhatsApp', 'Preguntar per WhatsApp', 'Ask on WhatsApp')}
-        </a>
+        </TrackedLink>
         {contact?.email ? (
           <a
             href={`mailto:${contact.email}?subject=${subject}`}

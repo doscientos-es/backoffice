@@ -31,6 +31,11 @@ import {
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { isPortalUnlocked, unlockPortalResource } from '@/lib/portal/access'
+import {
+  CLIENT_REPORTABLE_ENGAGEMENT,
+  type EngagementType,
+  recordProposalEngagement,
+} from '@/lib/proposals/engagement'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
 import {
   PROPOSAL_ACCEPTANCE_VERSION,
@@ -38,7 +43,7 @@ import {
   proposalAcceptanceHash,
   proposalAcceptanceSnapshot,
 } from '@/lib/proposals/proposal-acceptance'
-import { recordClientSignIntent } from '@/lib/proposals/record-client-view'
+import { recordClientSignIntent, type ViewedProposal } from '@/lib/proposals/record-client-view'
 import { paymentInitialPercentage, paymentScheduleInput } from '@/lib/proposals/scope'
 import {
   AcceptProposalContractSignature,
@@ -411,6 +416,60 @@ export async function rejectProposal(token: string, reason?: string): Promise<Ac
   return rejectAction(token, parsedReason.success ? parsedReason.data : undefined)
 }
 
+/**
+ * Best-effort signal that the lead opened the signature form. Never throws and
+ * never reveals anything: team previews, locked portals and answered or expired
+ * proposals are silently ignored.
+ */
+export async function trackSignIntent(token: string): Promise<void> {
+  try {
+    const proposal = await loadTrackableProposal(token)
+    if (!proposal) return
+    await recordClientSignIntent(proposal)
+    await recordProposalEngagement(proposal, 'sign_form_opened')
+  } catch (err) {
+    log.warn({ err }, 'proposal_sign_intent_failed')
+  }
+}
+
+/**
+ * Interest signals the portal page reports from the browser (price section seen,
+ * terms read, WhatsApp opened). Same rules as above: silent, best-effort, and
+ * ignored for team previews and for proposals that can no longer be accepted.
+ */
+export async function trackPortalEngagement(token: string, type: string): Promise<void> {
+  try {
+    if (!(CLIENT_REPORTABLE_ENGAGEMENT as readonly string[]).includes(type)) return
+    const proposal = await loadTrackableProposal(token)
+    if (!proposal) return
+    await recordProposalEngagement(proposal, type as EngagementType)
+  } catch (err) {
+    log.warn({ err }, 'proposal_engagement_track_failed')
+  }
+}
+
+/** Proposal behind a public token, only if a real lead could still act on it. */
+async function loadTrackableProposal(token: string): Promise<ViewedProposal | null> {
+  const parsed = ProposalPortalToken.safeParse(token)
+  if (!parsed.success) return null
+  if ((await getCurrentUser()).ok) return null
+
+  const admin = createAdminClient()
+  const { data: proposal } = await admin
+    .from('proposals')
+    .select(
+      'id, number, title, status, valid_until, lead_id, client_id, created_by, is_client_visible, portal_password_hash',
+    )
+    .eq('portal_token', parsed.data)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (!proposal) return null
+  if (!['sent', 'viewed'].includes(proposal.status as string)) return null
+  if (isProposalExpired(proposal.valid_until)) return null
+  if (!(await requirePublicPortalAccess(parsed.data, proposal)).ok) return null
+  return viewedProposal(proposal)
+}
+
 /** The portal can only change maintenance before the proposal has a final response. */
 export async function selectProposalMaintenance(
   token: string,
@@ -425,7 +484,9 @@ export async function selectProposalMaintenance(
   const admin = createAdminClient()
   const { data: proposal, error } = await admin
     .from('proposals')
-    .select('id, status, valid_until, is_client_visible, portal_password_hash, maintenance_options')
+    .select(
+      'id, number, title, lead_id, client_id, created_by, status, valid_until, is_client_visible, portal_password_hash, maintenance_options',
+    )
     .eq('portal_token', parsedToken.data)
     .is('deleted_at', null)
     .maybeSingle()
@@ -458,6 +519,7 @@ export async function selectProposalMaintenance(
     .in('status', ['sent', 'viewed'])
   if (updateError) return { ok: false, error: 'No se pudo actualizar el mantenimiento' }
 
+  if (planId) await recordProposalEngagement(viewedProposal(proposal), 'maintenance_selected')
   revalidatePath(`/p/proposal/${parsedToken.data}`)
   return { ok: true }
 }
@@ -473,7 +535,7 @@ export async function sendProposalQuestion(token: string, body: string): Promise
   const { data: proposal, error } = await admin
     .from('proposals')
     .select(
-      'id, status, valid_until, title, is_client_visible, portal_password_hash, clients(name), leads(name)',
+      'id, number, lead_id, client_id, created_by, status, valid_until, title, is_client_visible, portal_password_hash, clients(name), leads(name)',
     )
     .eq('portal_token', parsedToken.data)
     .is('deleted_at', null)
@@ -504,9 +566,21 @@ export async function sendProposalQuestion(token: string, body: string): Promise
     `${proposal.title as string}: ${parsedBody.data.slice(0, 120)}`,
     `/proposals/${proposal.id}`,
   )
+  await recordProposalEngagement(viewedProposal(proposal), 'question_sent')
   revalidatePath(`/p/proposal/${parsedToken.data}`)
   revalidatePath(`/proposals/${proposal.id}`)
   return { ok: true }
+}
+
+function viewedProposal(row: Record<string, unknown>): ViewedProposal {
+  return {
+    id: row.id as string,
+    number: (row.number as string | null) ?? null,
+    title: (row.title as string | null) ?? null,
+    lead_id: (row.lead_id as string | null) ?? null,
+    client_id: (row.client_id as string | null) ?? null,
+    created_by: (row.created_by as string | null) ?? null,
+  }
 }
 
 /** Public unlock-form submit for a password-protected proposal portal link. */

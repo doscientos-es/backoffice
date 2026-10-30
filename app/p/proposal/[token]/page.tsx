@@ -39,7 +39,12 @@ import { LineItems } from './_components/line-items'
 import { NextSteps } from './_components/next-steps'
 import { PresentationCard } from './_components/presentation-card'
 import { PricingSummary } from './_components/pricing-summary'
-import { MobileCtaBar, type NavItem, SectionNav } from './_components/respond-controls'
+import {
+  EngagementTracker,
+  MobileCtaBar,
+  type NavItem,
+  SectionNav,
+} from './_components/respond-controls'
 import { ResponseArea } from './_components/response-area'
 import { ScopeSection } from './_components/scope-section'
 import { NotesSection, SpecsSection, TermsSection } from './_components/terms-section'
@@ -359,6 +364,7 @@ export default async function PortalProposalPage({
           </AlertDescription>
         </Alert>
       )}
+      {canRespond && !isTeam ? <EngagementTracker token={token} /> : null}
       <SectionNav items={navItems} />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <article className="overflow-hidden border-y border-zinc-200 dark:border-zinc-800">
@@ -460,7 +466,12 @@ export default async function PortalProposalPage({
             />
           ) : null}
           {!responded && !expired ? (
-            <ContactCard contact={contact ?? null} proposalNumber={proposalNumber} tr={tr} />
+            <ContactCard
+              token={token}
+              contact={contact ?? null}
+              proposalNumber={proposalNumber}
+              tr={tr}
+            />
           ) : null}
         </article>
         <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">

@@ -16,6 +16,12 @@ vi.mock('@/lib/auth', () => ({
     state.isTeam ? { ok: true, user: { id: 'member-1' } } : { ok: false },
 }))
 vi.mock('@/lib/portal/access', () => ({ isPortalUnlocked: async () => state.unlocked }))
+vi.mock('@/lib/proposals/engagement', () => ({ recordProposalEngagement: vi.fn() }))
+// `after` only works inside a real request scope; run the callback inline here.
+vi.mock('next/server', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next/server')>()),
+  after: (task: () => unknown) => void task(),
+}))
 vi.mock('@/lib/proposals/proposal-pdf-document', () => ({
   proposalPdfFilename: (number: string | null, id: string) => `propuesta-${number ?? id}.pdf`,
   renderProposalPdf,

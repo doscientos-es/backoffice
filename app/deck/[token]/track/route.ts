@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
+import { recordProposalEngagement } from '@/lib/proposals/engagement'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const log = scopedLogger('deck.track')
@@ -34,7 +35,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
 
   const { data: proposal } = await admin
     .from('proposals')
-    .select('id, number, title, status, created_by, lead_id, clients(name)')
+    .select('id, number, title, status, created_by, lead_id, client_id, clients(name)')
     .eq('portal_token', token)
     .is('deleted_at', null)
     .maybeSingle()
@@ -87,6 +88,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
         body: `${clientName} ha visto la presentación completa de ${proposal.number} [${parsed.data.sessionId}]`,
         link: `/proposals/${proposal.id as string}`,
       })
+
+      await recordProposalEngagement(
+        {
+          id: proposal.id as string,
+          number: (proposal.number as string | null) ?? null,
+          title: (proposal.title as string | null) ?? null,
+          lead_id: (proposal.lead_id as string | null) ?? null,
+          client_id: (proposal.client_id as string | null) ?? null,
+          created_by: (proposal.created_by as string | null) ?? null,
+        },
+        'deck_completed',
+      )
 
       // A completed view is a high-intent signal. Persist the follow-up so it
       // survives a closed browser and does not depend on someone revisiting

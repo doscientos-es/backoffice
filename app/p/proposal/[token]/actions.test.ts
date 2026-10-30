@@ -59,6 +59,10 @@ vi.mock('@/lib/portal/access', () => ({
 }))
 vi.mock('@/lib/auth', () => ({ getCurrentUser: vi.fn(async () => ({ ok: false })) }))
 vi.mock('@/lib/proposals/record-client-view', () => ({ recordClientSignIntent: vi.fn() }))
+vi.mock('@/lib/proposals/engagement', () => ({
+  CLIENT_REPORTABLE_ENGAGEMENT: ['pricing_viewed', 'terms_viewed', 'whatsapp_click'],
+  recordProposalEngagement: vi.fn(),
+}))
 
 type ProposalRow = {
   id: string
