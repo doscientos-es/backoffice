@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import { Markdown } from '@/components/ui/markdown'
 import type { KeyPoint } from '@/lib/proposals/key-points'
 
 /**
@@ -50,9 +51,10 @@ export function PortalKeyPointsList({
               {kp.title}
             </p>
             {kp.description ? (
-              <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-600 dark:text-zinc-400">
-                {kp.description}
-              </p>
+              <Markdown
+                source={kp.description}
+                className="gap-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400"
+              />
             ) : null}
           </div>
         </li>

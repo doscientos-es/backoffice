@@ -56,9 +56,10 @@ export function TermsSection({
             <p className="mt-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
               {paymentScheduleLabel(tr, paymentSchedule)}
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              {paymentTerms}
-            </p>
+            <Markdown
+              source={paymentTerms}
+              className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400"
+            />
           </div>
         ) : null}
         {changeManagementTerms ? (
@@ -66,9 +67,10 @@ export function TermsSection({
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               {tr('Cambios de alcance', 'Canvis d’abast', 'Scope changes')}
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              {changeManagementTerms}
-            </p>
+            <Markdown
+              source={changeManagementTerms}
+              className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400"
+            />
           </div>
         ) : null}
       </div>
