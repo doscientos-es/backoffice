@@ -26,6 +26,7 @@ import {
   RefreshCw,
   User,
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useId, useOptimistic, useRef, useState, useTransition } from 'react'
@@ -58,15 +59,27 @@ import type { MemberOption } from '@/lib/members/queries'
 import type { LeadStatus } from '@/lib/status'
 import { cn, formatEUR, relativeTime } from '@/lib/utils'
 
-import { ScheduleReminderDialog } from '../reminders/schedule-reminder-dialog'
 import { LeadCallLink } from './[id]/phone-actions'
 import { deleteLead, updateLeadStatus } from './actions'
-import { CloseReasonDialog, type CloseReasonVariant } from './close-reason-dialog'
+import type { CloseReasonVariant } from './close-reason-dialog'
 import { LeadQuickView } from './lazy-lead-quick-view'
 import { LeadNextAction } from './lead-next-action'
 import { LeadNotesIndicator } from './lead-notes-indicator'
-import { QuotedSuggestionDialog } from './quoted-suggestion-dialog'
-import { ReopenConfirmDialog } from './reopen-confirm-dialog'
+
+// Dialogs are only needed after a card action, so they stay out of the initial
+// board bundle and download in the background after the board is interactive.
+const CloseReasonDialog = dynamic(() =>
+  import('./close-reason-dialog').then((m) => m.CloseReasonDialog),
+)
+const ReopenConfirmDialog = dynamic(() =>
+  import('./reopen-confirm-dialog').then((m) => m.ReopenConfirmDialog),
+)
+const QuotedSuggestionDialog = dynamic(() =>
+  import('./quoted-suggestion-dialog').then((m) => m.QuotedSuggestionDialog),
+)
+const ScheduleReminderDialog = dynamic(() =>
+  import('../reminders/schedule-reminder-dialog').then((m) => m.ScheduleReminderDialog),
+)
 
 const URGENCY_STYLE: Record<string, string> = {
   Inmediata: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400',

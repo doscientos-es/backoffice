@@ -1,35 +1,23 @@
 import { Button, IconButton } from '@doscientos/ui'
-import { Plus, TriangleAlert } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Suspense } from 'react'
 
 import { ListControls } from '@/components/layout/list-controls'
 import { PageHeader } from '@/components/layout/page-header'
-import { Card, CardContent } from '@/components/ui/card'
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from '@/components/ui/empty-state'
 import { requireUser } from '@/lib/auth'
 import { isAIEnabled, isGoogleEnabled } from '@/lib/env'
 import { SELECTABLE_LEAD_STATUSES } from '@/lib/leads/pipeline'
 import { listLeads } from '@/lib/leads/queries'
-import {
-  LEAD_BOARD_LIMIT,
-  LEAD_LIST_PAGE_SIZE,
-  LEAD_SORT_COLUMNS,
-  type LeadAttentionFilter,
-} from '@/lib/leads/types'
+import { LEAD_LIST_PAGE_SIZE, LEAD_SORT_COLUMNS, type LeadAttentionFilter } from '@/lib/leads/types'
 import { listActiveMembers } from '@/lib/members/queries'
 import { LEAD_STATUS, type LeadStatus } from '@/lib/status'
 import { parseSortParam } from '@/lib/utils/search-params'
 
 import { LeadCreateDialog } from './lead-create-dialog'
 import { LEAD_SOURCES, SOLUTION_TYPES } from './lead-form-fields'
-import { LeadsKanban } from './leads-kanban'
+import { LeadsBoard } from './leads-board'
+import { LeadsBoardSkeleton } from './leads-board-skeleton'
 import { LeadsList } from './leads-list'
 import { LeadsViewToggle } from './view-toggle'
 
@@ -102,22 +90,22 @@ export default async function LeadsPage({
     ? (sp.attention as LeadAttentionFilter)
     : null
 
-  const [members, { leads: enrichedLeads, count, error }] = await Promise.all([
-    membersPromise,
-    listLeads({
-      view,
-      ids: leadIds,
-      q,
-      status,
-      source,
-      solutionType,
-      assignee,
-      attention,
-      page,
-      sort,
-      dir,
-    }),
-  ])
+  // Start the leads query now, in parallel with members. The board streams it
+  // behind a Suspense boundary; the list view awaits it below.
+  const leadsPromise = listLeads({
+    view,
+    ids: leadIds,
+    q,
+    status,
+    source,
+    solutionType,
+    assignee,
+    attention,
+    page,
+    sort,
+    dir,
+  })
+  const members = await membersPromise
 
   const ASSIGNEE_FILTER_OPTIONS = members.map((m) => ({
     value: m.id,
@@ -129,7 +117,6 @@ export default async function LeadsPage({
     },
   }))
 
-  const boardCapped = view === 'board' && count > LEAD_BOARD_LIMIT
   const hasFilters =
     leadIds.length > 0 ||
     q.length > 0 ||
@@ -138,6 +125,9 @@ export default async function LeadsPage({
     !!solutionType ||
     !!assignee ||
     !!attention
+
+  // Changing any filter remounts the boundary so the skeleton shows again.
+  const boardKey = JSON.stringify([q, status, source, solutionType, assignee, attention, leadIds])
 
   const actions = (
     <div className="ml-auto flex min-w-0 items-center gap-2">
@@ -159,6 +149,7 @@ export default async function LeadsPage({
   )
 
   if (view === 'list') {
+    const { leads: enrichedLeads, count, error } = await leadsPromise
     return (
       <LeadsList
         leads={enrichedLeads}
@@ -231,71 +222,16 @@ export default async function LeadsPage({
         ]}
       />
 
-      {!error && hasFilters ? (
-        <output aria-live="polite" className="shrink-0 text-sm text-muted-foreground">
-          {count === 1 ? '1 lead encontrado' : `${count} leads encontrados`}
-        </output>
-      ) : null}
-
-      {error ? (
-        <Card>
-          <CardContent className="py-6">
-            <p className="text-sm text-destructive">{error}</p>
-          </CardContent>
-        </Card>
-      ) : enrichedLeads.length === 0 ? (
-        <Card>
-          <CardContent className="px-0 pt-0">
-            <Empty className="border-0 py-10">
-              <EmptyHeader>
-                <EmptyTitle>
-                  {hasFilters
-                    ? 'No hay resultados con esta búsqueda y filtros'
-                    : 'Aún no hay leads.'}
-                </EmptyTitle>
-                {hasFilters ? (
-                  <EmptyDescription>
-                    Prueba con parte del nombre, email o teléfono, o quita los filtros activos.
-                  </EmptyDescription>
-                ) : null}
-              </EmptyHeader>
-              <EmptyContent>
-                {hasFilters ? (
-                  <Link
-                    href="/leads"
-                    className="text-sm font-medium text-primary underline underline-offset-4"
-                  >
-                    Limpiar búsqueda y filtros
-                  </Link>
-                ) : (
-                  <LeadCreateDialog />
-                )}
-              </EmptyContent>
-            </Empty>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-3">
-          {boardCapped ? (
-            <div className="flex shrink-0 items-center gap-2 rounded-lg border border-amber-300/40 bg-amber-50/60 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
-              <TriangleAlert className="size-4 shrink-0" />
-              <span>
-                Se muestran los primeros <strong>{LEAD_BOARD_LIMIT}</strong> leads. Usa los filtros
-                para acotar los resultados.
-              </span>
-            </div>
-          ) : null}
-          <div className="min-h-0 flex-1">
-            <LeadsKanban
-              leads={enrichedLeads}
-              canEdit={canEdit}
-              aiEnabled={aiEnabled}
-              googleEnabled={googleEnabled}
-              members={members}
-            />
-          </div>
-        </div>
-      )}
+      <Suspense key={boardKey} fallback={<LeadsBoardSkeleton />}>
+        <LeadsBoard
+          leadsPromise={leadsPromise}
+          hasFilters={hasFilters}
+          canEdit={canEdit}
+          aiEnabled={aiEnabled}
+          googleEnabled={googleEnabled}
+          members={members}
+        />
+      </Suspense>
     </div>
   )
 }

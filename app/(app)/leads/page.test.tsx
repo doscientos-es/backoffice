@@ -31,6 +31,7 @@ import { LEAD_BOARD_LIMIT } from '@/lib/leads/types'
 import type { MemberOption } from '@/lib/members/queries'
 
 import { LeadCreateDialog } from './lead-create-dialog'
+import { LeadsBoard } from './leads-board'
 import LeadsPage from './page'
 
 type Props = {
@@ -54,6 +55,13 @@ function elements(node: ReactNode): ReactElement<Props>[] {
     }
   })
   return found
+}
+
+/** The board streams behind Suspense, so render its async body to inspect it. */
+async function boardContent(page: ReactNode) {
+  const board = elements(page).find((node) => node.type === LeadsBoard)
+  if (!board) throw new Error('LeadsBoard not found in page')
+  return LeadsBoard(board.props as unknown as Parameters<typeof LeadsBoard>[0])
 }
 
 describe('leads search experience', () => {
@@ -95,7 +103,7 @@ describe('leads search experience', () => {
     'distinguishes an empty search from an empty CRM: %j',
     async (searchParams) => {
       const page = await LeadsPage({ searchParams: Promise.resolve(searchParams) })
-      const nodes = elements(page)
+      const nodes = elements(await boardContent(page))
 
       expect(nodes.find((node) => node.type === EmptyTitle)?.props.children).toBe(
         'No hay resultados con esta búsqueda y filtros',
@@ -111,9 +119,9 @@ describe('leads search experience', () => {
 
   it('keeps the initial empty state when there is no search or filter', async () => {
     const page = await LeadsPage({ searchParams: Promise.resolve({}) })
-    expect(elements(page).find((node) => node.type === EmptyTitle)?.props.children).toBe(
-      'Aún no hay leads.',
-    )
+    expect(
+      elements(await boardContent(page)).find((node) => node.type === EmptyTitle)?.props.children,
+    ).toBe('Aún no hay leads.')
   })
 
   it('makes a status filter visible in board view instead of silently retaining it', async () => {
@@ -160,7 +168,7 @@ describe('leads search experience', () => {
     async (count) => {
       listLeads.mockResolvedValue({ leads: [{ id: 'lead-1' }], count, error: null })
       const page = await LeadsPage({ searchParams: Promise.resolve({ q: 'acme' }) })
-      const warning = elements(page).some((node) =>
+      const warning = elements(await boardContent(page)).some((node) =>
         Children.toArray(node.props.children).includes('Se muestran los primeros '),
       )
       expect(warning).toBe(count > LEAD_BOARD_LIMIT)
