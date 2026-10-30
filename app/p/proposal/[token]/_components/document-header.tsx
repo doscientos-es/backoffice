@@ -1,8 +1,8 @@
-import { Download } from 'lucide-react'
+import { Clock, Download } from 'lucide-react'
 
 import { formatPortalDate } from '@/lib/portal/language'
 
-import type { PortalCopy, PortalLanguage } from '../_lib/i18n'
+import { makeTr, type PortalCopy, type PortalLanguage } from '../_lib/i18n'
 import { SectionLabel, StatusPill } from './primitives'
 
 export function DocumentHeader({
@@ -12,6 +12,7 @@ export function DocumentHeader({
   proposalNumber,
   title,
   validUntil,
+  daysLeft,
   status,
   statusLabel,
 }: {
@@ -21,9 +22,23 @@ export function DocumentHeader({
   proposalNumber: string
   title: string
   validUntil: string | null
+  /** Days until `validUntil` (see `daysUntilExpiry`); null when there is no deadline. */
+  daysLeft: number | null
   status: string
   statusLabel: string
 }) {
+  const tr = makeTr(language)
+  const pending = status !== 'accepted' && status !== 'rejected' && status !== 'expired'
+  // Only urgent when the date is real and close; never shown once answered.
+  const countdown =
+    pending && daysLeft !== null && daysLeft >= 0 && daysLeft <= 7
+      ? daysLeft === 0
+        ? tr('Último día para aceptar', 'Últim dia per acceptar', 'Last day to accept')
+        : daysLeft === 1
+          ? tr('Queda 1 día', 'Queda 1 dia', '1 day left')
+          : tr(`Quedan ${daysLeft} días`, `Queden ${daysLeft} dies`, `${daysLeft} days left`)
+      : null
+  const urgent = daysLeft !== null && daysLeft <= 2
   return (
     <header className="border-b border-zinc-200 px-6 py-6 sm:px-8 dark:border-zinc-800">
       <div className="flex items-center justify-between gap-4">
@@ -40,11 +55,21 @@ export function DocumentHeader({
             {title}
           </h1>
           {validUntil ? (
-            <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400">
-              {copy.validUntil}{' '}
-              <strong className="text-zinc-700 dark:text-zinc-300">
-                {formatPortalDate(validUntil, language)}
-              </strong>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+              <span>
+                {copy.validUntil}{' '}
+                <strong className="text-zinc-700 dark:text-zinc-300">
+                  {formatPortalDate(validUntil, language)}
+                </strong>
+              </span>
+              {countdown ? (
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold ${urgent ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300' : 'border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'}`}
+                >
+                  <Clock aria-hidden className="size-3" />
+                  {countdown}
+                </span>
+              ) : null}
             </p>
           ) : null}
         </div>
