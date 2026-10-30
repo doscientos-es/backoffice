@@ -1,6 +1,44 @@
 {
   "releases": [
     {
+      "version": "0.1.146",
+      "date": "2026-10-30",
+      "title": "v0.1.146",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add lead heat badge and proposal call chip components",
+            "Add engagement tracking for proposal interactions",
+            "Add proposal engagement events table and lead scoring"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "f14ca5bceedf81ee8650f282c3222b86b2cf2b92",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add lead heat badge and proposal call chip components"
+        },
+        {
+          "sha": "594510eab013c1e77917a1e1e58102ee8bae49db",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add engagement tracking for proposal interactions"
+        },
+        {
+          "sha": "aa29146c52f5622b8979f5f73a72e79d1d0274d2",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add proposal engagement events table and lead scoring"
+        }
+      ]
+    },
+    {
       "version": "0.1.145",
       "date": "2026-10-30",
       "title": "v0.1.145",
