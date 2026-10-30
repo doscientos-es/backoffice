@@ -18,6 +18,7 @@ export async function loadProposalData(proposal: ProposalRow) {
     { data: settings },
     { data: payments },
     { data: depositInvoice },
+    { data: contact },
   ] = await Promise.all([
     admin
       .from('proposal_items')
@@ -55,7 +56,16 @@ export async function loadProposalData(proposal: ProposalRow) {
       )
       .is('deleted_at', null)
       .maybeSingle(),
+    // Whoever prepared the proposal is the human contact shown to the lead.
+    typeof proposal.created_by === 'string'
+      ? admin
+          .from('team_members')
+          .select('name, email, avatar_url')
+          .eq('id', proposal.created_by)
+          .is('deleted_at', null)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ])
 
-  return { items, specs, messages, settings, payments, depositInvoice }
+  return { items, specs, messages, settings, payments, depositInvoice, contact }
 }

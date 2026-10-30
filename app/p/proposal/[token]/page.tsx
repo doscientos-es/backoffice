@@ -14,7 +14,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { computeLineSubtotal, computeProposalTotals, type DiscountType } from '@/lib/finance'
 import { scopedLogger } from '@/lib/logger'
 import { isPortalUnlocked } from '@/lib/portal/access'
-import { resolvePortalLanguage } from '@/lib/portal/language'
+import { formatPortalEUR, resolvePortalLanguage } from '@/lib/portal/language'
 import { parseKeyPoints } from '@/lib/proposals/key-points'
 import {
   maintenancePlanAsLineItem,
@@ -24,6 +24,7 @@ import {
 import { effectiveProposalTerms } from '@/lib/proposals/proposal-acceptance'
 import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import {
+  effectivePaymentPlan,
   type PaymentSchedule,
   parseScopeModules,
   paymentInitialPercentage,
@@ -31,15 +32,20 @@ import {
 import type { ProposalStatus } from '@/lib/status'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+import { ContactCard } from './_components/contact-card'
+import { DecisionSummary } from './_components/decision-summary'
 import { DocumentHeader, RecipientBlock } from './_components/document-header'
 import { LineItems } from './_components/line-items'
+import { NextSteps } from './_components/next-steps'
 import { PresentationCard } from './_components/presentation-card'
 import { PricingSummary } from './_components/pricing-summary'
+import { MobileCtaBar, type NavItem, SectionNav } from './_components/respond-controls'
 import { ResponseArea } from './_components/response-area'
 import { ScopeSection } from './_components/scope-section'
 import { NotesSection, SpecsSection, TermsSection } from './_components/terms-section'
 import { getPortalCopy, getStatusLabel, makeTr } from './_lib/i18n'
 import { loadProposalData } from './_lib/load-proposal-data'
+import { daysUntilExpiry, estimatedTotalWeeks } from './_lib/summary'
 import { trackProposalView } from './_lib/track-view'
 import type { ProposalItem, ProposalSpec } from './_lib/types'
 import { sendProposalQuestion, unlockProposalPortal } from './actions'
@@ -130,6 +136,7 @@ export default async function PortalProposalPage({
     settings,
     payments: proposalPayments,
     depositInvoice,
+    contact,
   } = await loadProposalData(proposal)
 
   if (!isDraft) {
@@ -167,8 +174,15 @@ export default async function PortalProposalPage({
       } | null
     }
   ).leads
-  const status = proposal.status as ProposalStatus
-  const responded = status === 'accepted' || status === 'rejected'
+  const storedStatus = proposal.status as ProposalStatus
+  const responded = storedStatus === 'accepted' || storedStatus === 'rejected'
+  const validUntil = (proposal.valid_until as string | null) ?? null
+  const daysLeft = daysUntilExpiry(validUntil)
+  // The accept actions refuse a proposal past its date even if the stored status
+  // has not been flipped to `expired` yet, so the page must not offer it either.
+  const expired =
+    !responded && storedStatus !== 'draft' && (storedStatus === 'expired' || (daysLeft ?? 0) < 0)
+  const status: ProposalStatus = expired ? 'expired' : storedStatus
   const statusLabel = getStatusLabel(portalLanguage, status)
 
   // The lead branch always asks for fiscal data (no `clients` row exists yet).
@@ -274,21 +288,42 @@ export default async function PortalProposalPage({
         ? Number(depositInvoice.total)
         : Math.round(Number(proposal.total) * initialPaymentPercentage) / 100
 
+  const canRespond = !isDraft && !responded && !expired
+  const paymentPlan = effectivePaymentPlan(proposal.payment_plan, proposal.payment_schedule)
+  const hasScope = scopeModules.length > 0 || Boolean(deliverables) || Boolean(acceptanceCriteria)
+  const hasNarrative = Boolean(contextMarkdown) || problems.length > 0 || solutions.length > 0
+  const navItems: NavItem[] = [
+    hasNarrative && { id: 'contexto', label: tr('Contexto', 'Context', 'Context') },
+    hasScope && { id: 'alcance', label: tr('Alcance', 'Abast', 'Scope') },
+    { id: 'inversion', label: tr('Inversión', 'Inversió', 'Investment') },
+    Boolean(paymentTerms || changeManagementTerms) && {
+      id: 'condiciones',
+      label: tr('Condiciones', 'Condicions', 'Terms'),
+    },
+    canRespond && {
+      id: 'siguientes-pasos',
+      label: tr('Al aceptar', 'En acceptar', 'On acceptance'),
+    },
+  ].filter((item): item is NavItem => item !== false)
+
   // Accept/decline panel: rendered in the sidebar on desktop and below the
-  // document on mobile.
+  // document on mobile. Each rendering is marked so the "accept" shortcuts can
+  // scroll to whichever one is visible.
   const actions = (
-    <ProposalActions
-      token={token}
-      language={portalLanguage}
-      needsFiscal={needsFiscal}
-      fiscalPrefill={fiscalPrefill}
-      signerPrefill={client?.contact_person ?? lead?.name ?? ''}
-      legalTerms={contractualAnnex}
-    />
+    <div data-proposal-response className="scroll-mt-24">
+      <ProposalActions
+        token={token}
+        language={portalLanguage}
+        needsFiscal={needsFiscal}
+        fiscalPrefill={fiscalPrefill}
+        signerPrefill={client?.contact_person ?? lead?.name ?? ''}
+        legalTerms={contractualAnnex}
+      />
+    </div>
   )
 
   return (
-    <div className="flex flex-col gap-4 pt-4 lg:pt-6">
+    <div className={`flex flex-col gap-4 pt-4 lg:pt-6 ${canRespond ? 'pb-24 lg:pb-0' : ''}`}>
       {isDraft && (
         <div className="flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
           <span className="tracking-wider uppercase">{copy.draft}</span>
@@ -324,6 +359,7 @@ export default async function PortalProposalPage({
           </AlertDescription>
         </Alert>
       )}
+      <SectionNav items={navItems} />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <article className="overflow-hidden border-y border-zinc-200 dark:border-zinc-800">
           <DocumentHeader
@@ -332,7 +368,8 @@ export default async function PortalProposalPage({
             copy={copy}
             proposalNumber={proposalNumber}
             title={proposal.title as string}
-            validUntil={(proposal.valid_until as string | null) ?? null}
+            validUntil={validUntil}
+            daysLeft={daysLeft}
             status={status}
             statusLabel={statusLabel}
           />
@@ -341,10 +378,24 @@ export default async function PortalProposalPage({
             name={recipientName}
             logoUrl={client?.logo_url ?? null}
           />
+          {!responded && !expired ? (
+            <DecisionSummary
+              language={portalLanguage}
+              tr={tr}
+              totals={totals}
+              depositAmount={depositAmount}
+              initialPaymentPercentage={initialPaymentPercentage}
+              totalWeeks={estimatedTotalWeeks(scopeModules)}
+              canRespond={canRespond}
+            />
+          ) : null}
 
           {/* Narrative: Context → Problems → Solutions (always before price) */}
-          {contextMarkdown || problems.length > 0 || solutions.length > 0 ? (
-            <div className="flex flex-col divide-y divide-zinc-100 border-b border-zinc-100 dark:divide-zinc-800/60 dark:border-zinc-800/60">
+          {hasNarrative ? (
+            <div
+              id="contexto"
+              className="flex scroll-mt-16 flex-col divide-y divide-zinc-100 border-b border-zinc-100 dark:divide-zinc-800/60 dark:border-zinc-800/60"
+            >
               {contextMarkdown ? (
                 <PortalNarrativeBlock label={tr('Contexto', 'Context', 'Context')}>
                   <Markdown source={contextMarkdown} />
@@ -367,39 +418,57 @@ export default async function PortalProposalPage({
             </div>
           ) : null}
 
-          <ScopeSection
-            modules={scopeModules}
-            deliverables={deliverables}
-            acceptanceCriteria={acceptanceCriteria}
-            tr={tr}
-          />
-          <LineItems
-            items={safeItems}
-            hasRecurring={hasRecurring}
-            language={portalLanguage}
-            tr={tr}
-          />
-          <PricingSummary
-            totals={totals}
-            globalDiscountReason={globalDiscountReason}
-            language={portalLanguage}
-            tr={tr}
-          />
-          <TermsSection
-            paymentTerms={paymentTerms}
-            paymentSchedule={paymentSchedule}
-            changeManagementTerms={changeManagementTerms}
-            tr={tr}
-          />
+          <div id="alcance" className="scroll-mt-16">
+            <ScopeSection
+              modules={scopeModules}
+              deliverables={deliverables}
+              acceptanceCriteria={acceptanceCriteria}
+              tr={tr}
+            />
+          </div>
+          <div id="inversion" className="scroll-mt-16">
+            <LineItems
+              items={safeItems}
+              hasRecurring={hasRecurring}
+              language={portalLanguage}
+              tr={tr}
+            />
+            <PricingSummary
+              totals={totals}
+              paymentPlan={paymentPlan}
+              globalDiscountReason={globalDiscountReason}
+              language={portalLanguage}
+              tr={tr}
+            />
+          </div>
+          <div id="condiciones" className="scroll-mt-16">
+            <TermsSection
+              paymentTerms={paymentTerms}
+              paymentSchedule={paymentSchedule}
+              changeManagementTerms={changeManagementTerms}
+              tr={tr}
+            />
+          </div>
           <NotesSection notes={(proposal.notes as string | null) ?? null} tr={tr} />
           <SpecsSection specs={safeSpecs} language={portalLanguage} tr={tr} />
+          {canRespond ? (
+            <NextSteps
+              language={portalLanguage}
+              tr={tr}
+              needsFiscal={needsFiscal}
+              depositAmount={depositAmount}
+            />
+          ) : null}
+          {contact && !responded && !expired ? (
+            <ContactCard contact={contact} proposalNumber={proposalNumber} tr={tr} />
+          ) : null}
         </article>
         <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
-          {!isDraft && !responded ? <div className="max-lg:hidden">{actions}</div> : null}
+          {canRespond ? <div className="max-lg:hidden">{actions}</div> : null}
           <ProposalMessageThread
             messages={proposalMessages}
             submit={sendProposalQuestion.bind(null, token)}
-            disabled={isDraft || responded || isTeam}
+            disabled={isDraft || responded || expired || isTeam}
             sticky={false}
             language={portalLanguage}
           />
@@ -411,7 +480,7 @@ export default async function PortalProposalPage({
             token={token}
             offer={maintenanceOffer}
             selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
-            disabled={isDraft || responded || isTeam}
+            disabled={isDraft || responded || expired || isTeam}
             language={portalLanguage}
           />
         ) : null}
@@ -419,12 +488,14 @@ export default async function PortalProposalPage({
       </div>
 
       {/* Response area — hidden for draft previews */}
-      {!isDraft && responded ? (
+      {!isDraft && (responded || expired) ? (
         <ResponseArea
           token={token}
           language={portalLanguage}
           status={status}
           isTeam={isTeam}
+          expired={expired}
+          contactEmail={contact?.email ?? null}
           respondedAt={(proposal.responded_at as string | null) ?? null}
           proposalId={proposal.id as string}
           proposalNumber={proposalNumber}
@@ -435,8 +506,15 @@ export default async function PortalProposalPage({
           companyName={(settings?.company_name as string | null) ?? null}
           iban={(settings?.iban as string | null) ?? null}
         />
-      ) : !isDraft ? (
+      ) : canRespond ? (
         <div className="lg:hidden">{actions}</div>
+      ) : null}
+      {canRespond ? (
+        <MobileCtaBar
+          totalLabel={tr('Inversión', 'Inversió', 'Investment')}
+          total={formatPortalEUR(totals.oneTime.total, portalLanguage)}
+          cta={tr('Revisar y aceptar', 'Revisar i acceptar', 'Review and accept')}
+        />
       ) : null}
     </div>
   )

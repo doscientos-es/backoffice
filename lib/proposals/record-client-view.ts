@@ -85,11 +85,17 @@ export async function recordClientProposalView(
     .eq('surface', surface)
     .is('session_id', null)
 
-  // The page inserts the current visit before calling this. One row means first open.
-  if (countError || count !== 1) {
-    if (countError) log.warn({ err: countError, proposalId }, 'proposal_view_count_failed')
+  if (countError) {
+    log.warn({ err: countError, proposalId }, 'proposal_view_count_failed')
     return
   }
+  // The page inserts the current visit before calling this. More than one row
+  // means the lead is back; only a long enough gap is worth a notification.
+  if ((count ?? 0) > 1) {
+    await notifyReturnVisit(admin, proposal, surface, count ?? 0)
+    return
+  }
+  if (count !== 1) return
 
   const leadId = await resolveLeadId(admin, proposal)
   const label = proposal.number ?? proposal.title ?? 'Propuesta'
@@ -116,6 +122,82 @@ export async function recordClientProposalView(
     entityId: proposalId,
     body: subject,
     link: leadId ? `/leads/${leadId}` : `/proposals/${proposalId}`,
+  })
+}
+
+/** A visit this long after the previous one counts as the lead coming back. */
+const RETURN_VISIT_MIN_GAP_MS = 6 * 60 * 60 * 1000
+
+async function notifyReturnVisit(
+  admin: ReturnType<typeof createAdminClient>,
+  proposal: ViewedProposal,
+  surface: ProposalViewSurface,
+  visits: number,
+): Promise<void> {
+  // Latest two opens: the current visit and the one before it.
+  const { data, error } = await admin
+    .from('proposal_view_events')
+    .select('viewed_at')
+    .eq('proposal_id', proposal.id)
+    .eq('viewer_type', 'client')
+    .eq('surface', surface)
+    .is('session_id', null)
+    .order('viewed_at', { ascending: false })
+    .limit(2)
+  if (error || !data || data.length < 2) {
+    if (error) log.warn({ err: error, proposalId: proposal.id }, 'proposal_return_lookup_failed')
+    return
+  }
+  const gap = Date.parse(data[0].viewed_at as string) - Date.parse(data[1].viewed_at as string)
+  if (!(gap >= RETURN_VISIT_MIN_GAP_MS)) return
+
+  const leadId = await resolveLeadId(admin, proposal)
+  const recipientId = await resolveRecipientId(admin, proposal, leadId)
+  if (!recipientId) return
+  const label = proposal.number ?? proposal.title ?? 'Propuesta'
+  await dispatchNotifications({
+    recipientIds: [recipientId],
+    eventType: 'proposal_viewed',
+    entityType: 'proposal',
+    entityId: proposal.id,
+    body: `Ha vuelto a abrir ${SURFACE_LABEL[surface]} · ${label} (${visits} visitas)`,
+    link: leadId ? `/leads/${leadId}` : `/proposals/${proposal.id}`,
+  })
+}
+
+/**
+ * The lead opened the signature form on the portal. Notified at most once per
+ * proposal per day: it is the best moment to follow up if they do not finish.
+ */
+export async function recordClientSignIntent(proposal: ViewedProposal): Promise<void> {
+  const admin = createAdminClient()
+  const label = proposal.number ?? proposal.title ?? 'Propuesta'
+  const body = `Está revisando la firma · ${label}. Buen momento para escribirle`
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const { count, error } = await admin
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('entity_type', 'proposal')
+    .eq('entity_id', proposal.id)
+    .eq('body', body)
+    .gte('created_at', since)
+  if (error) {
+    log.warn({ err: error, proposalId: proposal.id }, 'proposal_sign_intent_dedupe_failed')
+    return
+  }
+  if ((count ?? 0) > 0) return
+
+  const leadId = await resolveLeadId(admin, proposal)
+  const recipientId = await resolveRecipientId(admin, proposal, leadId)
+  if (!recipientId) return
+  await dispatchNotifications({
+    recipientIds: [recipientId],
+    eventType: 'proposal_viewed',
+    entityType: 'proposal',
+    entityId: proposal.id,
+    body,
+    link: leadId ? `/leads/${leadId}` : `/proposals/${proposal.id}`,
   })
 }
 

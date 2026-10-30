@@ -13,7 +13,7 @@ const state: { results: QueryResult[] } = { results: [] }
 function query(): QueryResult & Record<string, unknown> {
   const result = state.results.shift() ?? {}
   const chain: Record<string, unknown> = {}
-  for (const method of ['select', 'eq', 'is', 'insert']) {
+  for (const method of ['select', 'eq', 'is', 'insert', 'order', 'limit', 'gte']) {
     chain[method] = () => chain
   }
   chain.maybeSingle = () => Promise.resolve(result)
@@ -56,12 +56,45 @@ describe('recordClientProposalView', () => {
   })
 
   it('stays quiet on a reload', async () => {
-    state.results = [{ count: 3 }]
+    const now = Date.now()
+    state.results = [
+      { count: 3 },
+      {
+        data: [
+          { viewed_at: new Date(now).toISOString() },
+          { viewed_at: new Date(now - 5 * 60_000).toISOString() },
+        ],
+      },
+    ]
     const { recordClientProposalView } = await import('./record-client-view')
 
     await recordClientProposalView(proposal, 'deck')
 
     expect(dispatchNotifications).not.toHaveBeenCalled()
+  })
+
+  it('notifies when the lead comes back after a long gap', async () => {
+    const now = Date.now()
+    state.results = [
+      { count: 2 },
+      {
+        data: [
+          { viewed_at: new Date(now).toISOString() },
+          { viewed_at: new Date(now - 24 * 60 * 60_000).toISOString() },
+        ],
+      },
+      { data: { assigned_to: 'owner-1' } },
+    ]
+    const { recordClientProposalView } = await import('./record-client-view')
+
+    await recordClientProposalView(proposal, 'portal')
+
+    expect(dispatchNotifications).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientIds: ['owner-1'],
+        body: 'Ha vuelto a abrir el presupuesto · P-2026-001 (2 visitas)',
+      }),
+    )
   })
 
   it('falls back to the proposal author when the lead has no owner', async () => {
@@ -76,5 +109,35 @@ describe('recordClientProposalView', () => {
         body: 'Ha abierto la presentación · P-2026-001',
       }),
     )
+  })
+})
+
+describe('recordClientSignIntent', () => {
+  beforeEach(() => {
+    dispatchNotifications.mockReset()
+    state.results = []
+  })
+
+  it('notifies once when the signature form is opened', async () => {
+    state.results = [{ count: 0 }, { data: { assigned_to: 'owner-1' } }]
+    const { recordClientSignIntent } = await import('./record-client-view')
+
+    await recordClientSignIntent(proposal)
+
+    expect(dispatchNotifications).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientIds: ['owner-1'],
+        body: 'Está revisando la firma · P-2026-001. Buen momento para escribirle',
+      }),
+    )
+  })
+
+  it('does not repeat within the same day', async () => {
+    state.results = [{ count: 1 }]
+    const { recordClientSignIntent } = await import('./record-client-view')
+
+    await recordClientSignIntent(proposal)
+
+    expect(dispatchNotifications).not.toHaveBeenCalled()
   })
 })
