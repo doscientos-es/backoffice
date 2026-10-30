@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Markdown } from '@/components/ui/markdown'
 import { Textarea } from '@/components/ui/textarea'
 
-import { acceptProposal, rejectProposal } from './actions'
+import { acceptProposal, rejectProposal, trackSignIntent } from './actions'
 
 type FiscalForm = {
   name: string
@@ -259,6 +259,12 @@ export function ProposalActions({
     const res = await rejectProposal(token, reason.trim() || undefined)
     if (res.ok) feedback.setSuccess(copy.answered)
     else feedback.setError(res.error)
+  }
+
+  const openAccept = () => {
+    setShowAccept(true)
+    // Lets the team know the lead is about to sign (deduplicated server-side).
+    void trackSignIntent(token).catch(() => undefined)
   }
 
   const patch = (k: keyof FiscalForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -531,11 +537,7 @@ export function ProposalActions({
           >
             {copy.reject}
           </Button>
-          <Button
-            className="w-full"
-            onClick={() => setShowAccept(true)}
-            disabled={feedback.pending}
-          >
+          <Button className="w-full" onClick={openAccept} disabled={feedback.pending}>
             {feedback.pending ? copy.processing : copy.sign}
           </Button>
         </div>

@@ -57,6 +57,8 @@ vi.mock('@/lib/portal/access', () => ({
   isPortalUnlocked,
   unlockPortalResource: vi.fn(),
 }))
+vi.mock('@/lib/auth', () => ({ getCurrentUser: vi.fn(async () => ({ ok: false })) }))
+vi.mock('@/lib/proposals/record-client-view', () => ({ recordClientSignIntent: vi.fn() }))
 
 type ProposalRow = {
   id: string

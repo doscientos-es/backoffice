@@ -7,6 +7,7 @@ import { headers } from 'next/headers'
 import { z } from 'zod'
 
 import { formatAddress } from '@/lib/address'
+import { getCurrentUser } from '@/lib/auth'
 import {
   ensureClientForProposal,
   ensureProjectForProposal,
@@ -37,6 +38,7 @@ import {
   proposalAcceptanceHash,
   proposalAcceptanceSnapshot,
 } from '@/lib/proposals/proposal-acceptance'
+import { recordClientSignIntent } from '@/lib/proposals/record-client-view'
 import { paymentInitialPercentage, paymentScheduleInput } from '@/lib/proposals/scope'
 import {
   AcceptProposalContractSignature,

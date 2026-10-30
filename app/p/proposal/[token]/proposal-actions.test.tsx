@@ -1,12 +1,17 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('./actions', () => ({ acceptProposal: vi.fn(), rejectProposal: vi.fn() }))
+vi.mock('./actions', () => ({
+  acceptProposal: vi.fn(),
+  rejectProposal: vi.fn(),
+  trackSignIntent: vi.fn(async () => undefined),
+}))
 
-import { acceptProposal } from './actions'
+import { acceptProposal, trackSignIntent } from './actions'
 import { ProposalActions } from './proposal-actions'
 
 const accept = vi.mocked(acceptProposal)
+const signIntent = vi.mocked(trackSignIntent)
 const props = {
   token: '12345678-1234-4123-8123-123456789abc',
   needsFiscal: false,
@@ -26,6 +31,15 @@ describe('ProposalActions', () => {
   beforeEach(() => {
     accept.mockReset()
     accept.mockResolvedValue({ ok: true })
+    signIntent.mockClear()
+  })
+
+  it('tells the team when the signature form is opened', () => {
+    render(<ProposalActions {...props} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
+
+    expect(signIntent).toHaveBeenCalledWith(props.token)
   })
 
   it('requires an explicit electronic signature before accepting a proposal', async () => {
