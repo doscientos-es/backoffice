@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-30 — v0.1.143
+
+### Nuevas funciones
+
+- Replace text with Markdown rendering for terms sections
+
 ## 2026-10-30 — v0.1.142
 
 ### Nuevas funciones

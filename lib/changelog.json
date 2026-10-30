@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.143",
+      "date": "2026-10-30",
+      "title": "v0.1.143",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Replace text with Markdown rendering for terms sections"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "667e96a09a7d23142ee1d6a45fff2a18906238fd",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Replace text with Markdown rendering for terms sections"
+        }
+      ]
+    },
+    {
       "version": "0.1.142",
       "date": "2026-10-30",
       "title": "v0.1.142",
