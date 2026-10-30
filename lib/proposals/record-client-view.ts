@@ -6,7 +6,7 @@ const log = scopedLogger('proposals.client-view')
 
 export type ProposalViewSurface = 'portal' | 'deck'
 
-type ViewedProposal = {
+export type ViewedProposal = {
   id: string
   number: string | null
   title: string | null
@@ -73,7 +73,7 @@ export async function insertPageViewEvent(event: {
 export async function recordClientProposalView(
   proposal: ViewedProposal,
   surface: ProposalViewSurface,
-): Promise<void> {
+): Promise<'first' | 'return' | 'none'> {
   const admin = createAdminClient()
   const proposalId = proposal.id
 
@@ -87,15 +87,14 @@ export async function recordClientProposalView(
 
   if (countError) {
     log.warn({ err: countError, proposalId }, 'proposal_view_count_failed')
-    return
+    return 'none'
   }
   // The page inserts the current visit before calling this. More than one row
   // means the lead is back; only a long enough gap is worth a notification.
   if ((count ?? 0) > 1) {
-    await notifyReturnVisit(admin, proposal, surface, count ?? 0)
-    return
+    return (await notifyReturnVisit(admin, proposal, surface, count ?? 0)) ? 'return' : 'none'
   }
-  if (count !== 1) return
+  if (count !== 1) return 'none'
 
   const leadId = await resolveLeadId(admin, proposal)
   const label = proposal.number ?? proposal.title ?? 'Propuesta'
@@ -113,7 +112,7 @@ export async function recordClientProposalView(
   }
 
   const recipientId = await resolveRecipientId(admin, proposal, leadId)
-  if (!recipientId) return
+  if (!recipientId) return 'first'
 
   await dispatchNotifications({
     recipientIds: [recipientId],
@@ -123,6 +122,7 @@ export async function recordClientProposalView(
     body: subject,
     link: leadId ? `/leads/${leadId}` : `/proposals/${proposalId}`,
   })
+  return 'first'
 }
 
 /** A visit this long after the previous one counts as the lead coming back. */
@@ -133,7 +133,7 @@ async function notifyReturnVisit(
   proposal: ViewedProposal,
   surface: ProposalViewSurface,
   visits: number,
-): Promise<void> {
+): Promise<boolean> {
   // Latest two opens: the current visit and the one before it.
   const { data, error } = await admin
     .from('proposal_view_events')
@@ -146,14 +146,15 @@ async function notifyReturnVisit(
     .limit(2)
   if (error || !data || data.length < 2) {
     if (error) log.warn({ err: error, proposalId: proposal.id }, 'proposal_return_lookup_failed')
-    return
+    return false
   }
-  const gap = Date.parse(data[0].viewed_at as string) - Date.parse(data[1].viewed_at as string)
-  if (!(gap >= RETURN_VISIT_MIN_GAP_MS)) return
+  const [current, previous] = data
+  const gap = Date.parse(current?.viewed_at as string) - Date.parse(previous?.viewed_at as string)
+  if (!(gap >= RETURN_VISIT_MIN_GAP_MS)) return false
 
   const leadId = await resolveLeadId(admin, proposal)
   const recipientId = await resolveRecipientId(admin, proposal, leadId)
-  if (!recipientId) return
+  if (!recipientId) return true
   const label = proposal.number ?? proposal.title ?? 'Propuesta'
   await dispatchNotifications({
     recipientIds: [recipientId],
@@ -163,6 +164,7 @@ async function notifyReturnVisit(
     body: `Ha vuelto a abrir ${SURFACE_LABEL[surface]} · ${label} (${visits} visitas)`,
     link: leadId ? `/leads/${leadId}` : `/proposals/${proposal.id}`,
   })
+  return true
 }
 
 /**
@@ -201,7 +203,7 @@ export async function recordClientSignIntent(proposal: ViewedProposal): Promise<
   })
 }
 
-async function resolveLeadId(
+export async function resolveLeadId(
   admin: ReturnType<typeof createAdminClient>,
   proposal: ViewedProposal,
 ): Promise<string | null> {
@@ -220,7 +222,7 @@ async function resolveLeadId(
   return (data?.lead_id as string | null) ?? null
 }
 
-async function resolveRecipientId(
+export async function resolveRecipientId(
   admin: ReturnType<typeof createAdminClient>,
   proposal: ViewedProposal,
   leadId: string | null,
