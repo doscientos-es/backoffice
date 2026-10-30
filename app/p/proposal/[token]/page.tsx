@@ -1,7 +1,9 @@
 import {
+  Check,
   CircleCheck as CheckCircle2,
   Download,
   FileText,
+  Minus,
   Presentation,
   XCircle,
 } from 'lucide-react'
@@ -76,6 +78,47 @@ type ProposalItem = {
   discount_reason?: string | null
 }
 
+/** Small uppercase section label. Dark enough to pass WCAG AA on white. */
+function SectionLabel({
+  children,
+  as: Tag = 'h2',
+  className = '',
+}: {
+  children: React.ReactNode
+  as?: 'h2' | 'h3' | 'p'
+  className?: string
+}) {
+  return (
+    <Tag
+      className={`text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400 ${className}`}
+    >
+      {children}
+    </Tag>
+  )
+}
+
+const STATUS_PILL: Record<string, string> = {
+  accepted:
+    'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300',
+  rejected:
+    'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300',
+  expired:
+    'border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+}
+const STATUS_PILL_PENDING =
+  'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300'
+
+function StatusPill({ status, label }: { status: string; label: string }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${STATUS_PILL[status] ?? STATUS_PILL_PENDING}`}
+    >
+      <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      {label}
+    </span>
+  )
+}
+
 function ScopeBullets({
   label,
   items,
@@ -85,17 +128,24 @@ function ScopeBullets({
   items: string[]
   tone: 'included' | 'excluded'
 }) {
+  const included = tone === 'included'
+  const Icon = included ? Check : Minus
   return (
-    <div>
-      <p
-        className={`text-xs font-semibold ${tone === 'included' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}`}
+    <div
+      className={`rounded-lg p-4 ${included ? 'bg-emerald-50/70 dark:bg-emerald-950/20' : 'bg-zinc-50 dark:bg-zinc-900/60'}`}
+    >
+      <h4
+        className={`text-sm font-semibold ${included ? 'text-emerald-800 dark:text-emerald-300' : 'text-zinc-700 dark:text-zinc-300'}`}
       >
         {label}
-      </p>
-      <ul className="mt-2 flex flex-col gap-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+      </h4>
+      <ul className="mt-2.5 flex flex-col gap-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
         {items.map((item) => (
-          <li key={item} className="flex gap-2">
-            <span aria-hidden>•</span>
+          <li key={item} className="flex gap-2.5">
+            <Icon
+              aria-hidden
+              className={`mt-0.5 size-4 shrink-0 ${included ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'}`}
+            />
             <span>{item}</span>
           </li>
         ))}
@@ -106,10 +156,29 @@ function ScopeBullets({
 
 function ProposalTextBlock({ label, source }: { label: string; source: string }) {
   return (
-    <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-      <p className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">{label}</p>
-      <Markdown source={source} className="text-sm text-zinc-600 dark:text-zinc-400" />
+    <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <h3 className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100">{label}</h3>
+      <Markdown
+        source={source}
+        className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300"
+      />
     </section>
+  )
+}
+
+function LineSubtotal({ item, language }: { item: ProposalItem; language: 'es' | 'ca' | 'en' }) {
+  const discount = Number(item.discount_percent ?? 0)
+  if (discount <= 0) return <>{formatPortalEUR(item.subtotal, language)}</>
+  return (
+    <>
+      <span className="block text-xs font-normal text-zinc-500 line-through dark:text-zinc-400">
+        {formatPortalEUR(item.subtotal, language)}
+      </span>
+      {formatPortalEUR(roundCurrency(item.subtotal * (1 - discount / 100)), language)}
+      <span className="block text-xs font-normal text-emerald-800 dark:text-emerald-400">
+        −{discount}%{item.discount_reason ? ` · ${item.discount_reason}` : ''}
+      </span>
+    </>
   )
 }
 
@@ -501,6 +570,12 @@ export default async function PortalProposalPage({
   const globalDiscountReason = ((proposal.discount_reason as string | null) ?? '').trim() || null
   const hasRecurring =
     totals.monthly.total > 0 || totals.quarterly.total > 0 || totals.yearly.total > 0
+  const cycleText = (cycle: Exclude<BillingCycle, 'none'>) =>
+    tr(
+      BILLING_CYCLE_LABELS[cycle],
+      cycle === 'monthly' ? 'Mensual' : cycle === 'quarterly' ? 'Trimestral' : 'Anual',
+      cycle === 'monthly' ? 'Monthly' : cycle === 'quarterly' ? 'Quarterly' : 'Yearly',
+    )
   const recurringBuckets = [
     { title: tr('Mensual', 'Mensual', 'Monthly'), bucket: totals.monthly },
     { title: tr('Trimestral', 'Trimestral', 'Quarterly'), bucket: totals.quarterly },
@@ -560,13 +635,11 @@ export default async function PortalProposalPage({
           <header className="border-b border-zinc-200 px-6 py-6 sm:px-8 dark:border-zinc-800">
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1">
-                <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
+                <SectionLabel as="p">
                   {copy.proposal} · {proposalNumber}
-                </p>
+                </SectionLabel>
               </div>
-              <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-                {statusLabel}
-              </span>
+              <StatusPill status={status} label={statusLabel} />
             </div>
             <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0">
@@ -574,7 +647,7 @@ export default async function PortalProposalPage({
                   {proposal.title as string}
                 </h1>
                 {proposal.valid_until ? (
-                  <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400">
                     {copy.validUntil}{' '}
                     <strong className="text-zinc-700 dark:text-zinc-300">
                       {formatPortalDate(proposal.valid_until as string, portalLanguage)}
@@ -594,7 +667,7 @@ export default async function PortalProposalPage({
 
           {/* Recipient */}
           <div className="border-b border-zinc-100 bg-zinc-50 px-6 py-5 sm:px-8 dark:border-zinc-800/60 dark:bg-zinc-900/50">
-            <p className="mb-2 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+            <p className="mb-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
               {copy.recipient}
             </p>
             <div className="flex items-center gap-3">
@@ -639,28 +712,32 @@ export default async function PortalProposalPage({
 
           {(scopeModules.length > 0 || deliverables || acceptanceCriteria) && (
             <div className="border-b border-zinc-100 px-6 py-7 sm:px-8 dark:border-zinc-800/60">
-              <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+              <SectionLabel>
                 {tr('Alcance del proyecto', 'Abast del projecte', 'Project scope')}
-              </p>
+              </SectionLabel>
               <div className="mt-4 flex flex-col gap-4">
                 {scopeModules.map((module, index) => (
                   <section
                     key={module.id}
-                    className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+                    aria-labelledby={`module-${module.id}`}
+                    className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40"
                   >
-                    <p className="text-[11px] font-semibold tracking-widest text-[#2A4227] uppercase dark:text-[#9CC196]">
+                    <p className="text-xs font-semibold tracking-wider text-[#2A4227] uppercase dark:text-[#9CC196]">
                       {tr('Módulo', 'Mòdul', 'Module')} {String(index + 1).padStart(2, '0')}
                     </p>
-                    <h2 className="mt-1 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    <h3
+                      id={`module-${module.id}`}
+                      className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100"
+                    >
                       {module.title}
-                    </h2>
+                    </h3>
                     {module.description ? (
-                      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                      <p className="mt-2 text-[15px] leading-relaxed text-zinc-700 dark:text-zinc-300">
                         {module.description}
                       </p>
                     ) : null}
                     {scopeModuleDurationText(module) ? (
-                      <p className="mt-3 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-3 inline-flex rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                         {tr('Plazo estimado:', 'Termini estimat:', 'Estimated timeline:')}{' '}
                         {scopeModuleDurationText(module)}
                       </p>
@@ -691,7 +768,13 @@ export default async function PortalProposalPage({
                   </section>
                 ))}
                 {deliverables || acceptanceCriteria ? (
-                  <div className="grid gap-4 lg:grid-cols-2">
+                  <div
+                    className={
+                      deliverables && acceptanceCriteria
+                        ? 'grid gap-4 lg:grid-cols-2'
+                        : 'grid gap-4'
+                    }
+                  >
                     {deliverables ? (
                       <ProposalTextBlock
                         label={tr('Entregables', 'Lliurables', 'Deliverables')}
@@ -715,115 +798,149 @@ export default async function PortalProposalPage({
           )}
 
           {/* Line items */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                  <th className="px-8 py-3 text-left text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('Descripción', 'Descripció', 'Description')}
-                  </th>
-                  {hasRecurring ? (
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                      {tr('Cadencia', 'Periodicitat', 'Billing cycle')}
-                    </th>
-                  ) : null}
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('Cant.', 'Quant.', 'Qty.')}
-                  </th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('Precio', 'Preu', 'Price')}
-                  </th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('IVA', 'IVA', 'VAT')}
-                  </th>
-                  <th className="px-8 py-3 text-right text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-                    {tr('Subtotal', 'Subtotal', 'Subtotal')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {safeItems.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={hasRecurring ? 6 : 5}
-                      className="px-8 py-6 text-sm text-zinc-400 dark:text-zinc-600"
+          <section
+            aria-labelledby="proposal-investment"
+            className="border-t border-zinc-200 dark:border-zinc-800"
+          >
+            <SectionLabel className="px-6 pt-6 pb-3 sm:px-8">
+              <span id="proposal-investment">
+                {tr('Detalle de la inversión', 'Detall de la inversió', 'Investment breakdown')}
+              </span>
+            </SectionLabel>
+
+            {/* Tablet and desktop: real table */}
+            <div className="hidden overflow-x-auto sm:block">
+              <table className="w-full text-sm">
+                <caption className="sr-only">
+                  {tr('Líneas de la propuesta', 'Línies de la proposta', 'Proposal line items')}
+                </caption>
+                <thead className="bg-zinc-50 dark:bg-zinc-900/60">
+                  <tr className="border-y border-zinc-200 dark:border-zinc-800">
+                    <th
+                      scope="col"
+                      className="px-8 py-3 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-400"
                     >
-                      {tr('Sin líneas.', 'Sense línies.', 'No line items.')}
-                    </td>
-                  </tr>
-                ) : (
-                  safeItems.map((item, i) => {
-                    const cycle: BillingCycle = item.billing_cycle ?? 'none'
-                    return (
-                      <tr
-                        key={item.id}
-                        className={i > 0 ? 'border-t border-zinc-100 dark:border-zinc-800/60' : ''}
+                      {tr('Descripción', 'Descripció', 'Description')}
+                    </th>
+                    {hasRecurring ? (
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-400"
                       >
-                        <td className="px-8 py-3.5 text-zinc-800 dark:text-zinc-200">
-                          {item.description}
-                        </td>
-                        {hasRecurring ? (
-                          <td className="px-4 py-3.5 text-left text-xs">
-                            {cycle === 'none' ? (
-                              <span className="text-zinc-400 dark:text-zinc-600">
-                                {tr('Único', 'Únic', 'One-time')}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center rounded-full bg-[#2A4227]/10 px-2 py-0.5 font-medium text-[#2A4227] dark:bg-[#9CC196]/10 dark:text-[#9CC196]">
-                                {tr(
-                                  BILLING_CYCLE_LABELS[cycle],
-                                  cycle === 'monthly'
-                                    ? 'Mensual'
-                                    : cycle === 'quarterly'
-                                      ? 'Trimestral'
-                                      : 'Anual',
-                                  cycle === 'monthly'
-                                    ? 'Monthly'
-                                    : cycle === 'quarterly'
-                                      ? 'Quarterly'
-                                      : 'Yearly',
-                                )}
-                              </span>
-                            )}
-                          </td>
-                        ) : null}
-                        <td className="px-4 py-3.5 text-right text-zinc-600 tabular-nums dark:text-zinc-400">
-                          {item.quantity}
-                        </td>
-                        <td className="px-4 py-3.5 text-right text-zinc-600 tabular-nums dark:text-zinc-400">
-                          {formatPortalEUR(item.unit_price, portalLanguage)}
-                        </td>
-                        <td className="px-4 py-3.5 text-right text-zinc-600 tabular-nums dark:text-zinc-400">
-                          {item.vat_rate}%
-                        </td>
-                        <td className="px-8 py-3.5 text-right font-medium text-zinc-900 tabular-nums dark:text-zinc-100">
-                          {Number(item.discount_percent ?? 0) > 0 ? (
-                            <>
-                              <span className="block text-xs font-normal text-zinc-400 line-through dark:text-zinc-600">
-                                {formatPortalEUR(item.subtotal, portalLanguage)}
-                              </span>
-                              {formatPortalEUR(
-                                roundCurrency(
-                                  item.subtotal * (1 - Number(item.discount_percent) / 100),
-                                ),
-                                portalLanguage,
+                        {tr('Cadencia', 'Periodicitat', 'Billing cycle')}
+                      </th>
+                    ) : null}
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-right text-xs font-semibold text-zinc-600 dark:text-zinc-400"
+                    >
+                      {tr('Cant.', 'Quant.', 'Qty.')}
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-right text-xs font-semibold text-zinc-600 dark:text-zinc-400"
+                    >
+                      {tr('Precio', 'Preu', 'Price')}
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-right text-xs font-semibold text-zinc-600 dark:text-zinc-400"
+                    >
+                      {tr('IVA', 'IVA', 'VAT')}
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-8 py-3 text-right text-xs font-semibold text-zinc-600 dark:text-zinc-400"
+                    >
+                      {tr('Subtotal', 'Subtotal', 'Subtotal')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                  {safeItems.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={hasRecurring ? 6 : 5}
+                        className="px-8 py-6 text-sm text-zinc-600 dark:text-zinc-400"
+                      >
+                        {tr('Sin líneas.', 'Sense línies.', 'No line items.')}
+                      </td>
+                    </tr>
+                  ) : (
+                    safeItems.map((item) => {
+                      const cycle: BillingCycle = item.billing_cycle ?? 'none'
+                      return (
+                        <tr key={item.id} className="align-top">
+                          <th
+                            scope="row"
+                            className="px-8 py-4 text-left font-medium text-zinc-900 dark:text-zinc-100"
+                          >
+                            {item.description}
+                          </th>
+                          {hasRecurring ? (
+                            <td className="px-4 py-4 text-left text-xs">
+                              {cycle === 'none' ? (
+                                <span className="text-zinc-600 dark:text-zinc-400">
+                                  {tr('Único', 'Únic', 'One-time')}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full bg-[#2A4227]/10 px-2.5 py-0.5 font-medium text-[#2A4227] dark:bg-[#9CC196]/10 dark:text-[#9CC196]">
+                                  {cycleText(cycle)}
+                                </span>
                               )}
-                              <span className="block text-[10px] font-normal text-emerald-700 dark:text-emerald-400">
-                                −{Number(item.discount_percent)}%
-                                {item.discount_reason ? ` · ${item.discount_reason}` : ''}
-                              </span>
-                            </>
-                          ) : (
-                            formatPortalEUR(item.subtotal, portalLanguage)
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                            </td>
+                          ) : null}
+                          <td className="px-4 py-4 text-right text-zinc-700 tabular-nums dark:text-zinc-300">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-4 text-right text-zinc-700 tabular-nums dark:text-zinc-300">
+                            {formatPortalEUR(item.unit_price, portalLanguage)}
+                          </td>
+                          <td className="px-4 py-4 text-right text-zinc-700 tabular-nums dark:text-zinc-300">
+                            {item.vat_rate}%
+                          </td>
+                          <td className="px-8 py-4 text-right font-semibold text-zinc-900 tabular-nums dark:text-zinc-100">
+                            <LineSubtotal item={item} language={portalLanguage} />
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile: one card per line, no horizontal scroll */}
+            <ul className="divide-y divide-zinc-100 border-t border-zinc-200 sm:hidden dark:divide-zinc-800/60 dark:border-zinc-800">
+              {safeItems.length === 0 ? (
+                <li className="px-6 py-5 text-sm text-zinc-600 dark:text-zinc-400">
+                  {tr('Sin líneas.', 'Sense línies.', 'No line items.')}
+                </li>
+              ) : (
+                safeItems.map((item) => {
+                  const cycle: BillingCycle = item.billing_cycle ?? 'none'
+                  return (
+                    <li key={item.id} className="px-6 py-4">
+                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        {item.description}
+                      </p>
+                      <div className="mt-2 flex items-end justify-between gap-4">
+                        <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                          {item.quantity} × {formatPortalEUR(item.unit_price, portalLanguage)}
+                          {' · '}
+                          {tr('IVA', 'IVA', 'VAT')} {item.vat_rate}%
+                          {cycle !== 'none' ? ` · ${cycleText(cycle)}` : ''}
+                        </p>
+                        <p className="shrink-0 text-right text-sm font-semibold text-zinc-900 tabular-nums dark:text-zinc-100">
+                          <LineSubtotal item={item} language={portalLanguage} />
+                        </p>
+                      </div>
+                    </li>
+                  )
+                })
+              )}
+            </ul>
+          </section>
 
           {/* Totals */}
           <div className="flex justify-end border-t border-zinc-200 px-8 py-5 dark:border-zinc-800">
@@ -839,7 +956,7 @@ export default async function PortalProposalPage({
 
               {hasRecurring ? (
                 <div className="flex flex-col gap-1.5 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-                  <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+                  <p className="text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
                     {tr(
                       'Mantenimiento recurrente',
                       'Manteniment recurrent',
@@ -864,7 +981,7 @@ export default async function PortalProposalPage({
 
           {paymentTerms || changeManagementTerms ? (
             <div className="border-t border-zinc-100 bg-zinc-50 px-8 py-6 dark:border-zinc-800/60 dark:bg-zinc-900/50">
-              <p className="mb-4 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+              <p className="mb-4 text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
                 {tr('Condiciones', 'Condicions', 'Terms')}
               </p>
               <div className="grid gap-5 lg:grid-cols-2">
@@ -924,7 +1041,7 @@ export default async function PortalProposalPage({
           {/* Notes */}
           {(proposal.notes as string | null) ? (
             <div className="border-t border-zinc-100 bg-zinc-50 px-8 py-5 dark:border-zinc-800/60 dark:bg-zinc-900/50">
-              <p className="mb-2 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+              <p className="mb-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
                 {tr('Notas', 'Notes', 'Notes')}
               </p>
               <Markdown
@@ -937,7 +1054,7 @@ export default async function PortalProposalPage({
           {/* Technical specs */}
           {safeSpecs.length > 0 ? (
             <div className="flex flex-col gap-4 border-t border-zinc-200 px-8 py-6 dark:border-zinc-800">
-              <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+              <p className="text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
                 {tr('Documentación técnica', 'Documentació tècnica', 'Technical documentation')}
               </p>
               <ul className="flex flex-col gap-2">
@@ -949,7 +1066,7 @@ export default async function PortalProposalPage({
                     >
                       <FileText className="size-4 shrink-0 text-zinc-400 dark:text-zinc-600" />
                       <span className="flex-1 truncate font-medium">{spec.title}</span>
-                      <span className="text-xs text-zinc-400 dark:text-zinc-600">
+                      <span className="text-xs text-zinc-600 dark:text-zinc-400">
                         {tr('Abrir', 'Obrir', 'Open')} →
                       </span>
                     </a>
@@ -981,7 +1098,7 @@ export default async function PortalProposalPage({
           />
           {portalLanguage === 'es' ? (
             <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 max-lg:hidden dark:bg-zinc-900 dark:ring-zinc-800">
-              <p className="mb-3 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+              <p className="mb-3 text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
                 Presentación
               </p>
               <PresentationLink token={token} language={portalLanguage} />
@@ -1000,7 +1117,7 @@ export default async function PortalProposalPage({
         ) : null}
         {portalLanguage === 'es' ? (
           <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 lg:hidden dark:bg-zinc-900 dark:ring-zinc-800">
-            <p className="mb-3 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+            <p className="mb-3 text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
               Presentación
             </p>
             <PresentationLink token={token} language={portalLanguage} />
@@ -1011,7 +1128,7 @@ export default async function PortalProposalPage({
       {/* Response area — hidden for draft previews */}
       {!isDraft && responded ? (
         <div className="flex flex-col items-center gap-4 py-4">
-          <p className="text-center text-xs text-zinc-400 dark:text-zinc-600">
+          <p className="text-center text-xs text-zinc-600 dark:text-zinc-400">
             {portalLanguage === 'ca'
               ? 'Resposta el '
               : portalLanguage === 'en'
