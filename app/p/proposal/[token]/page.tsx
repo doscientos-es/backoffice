@@ -459,8 +459,8 @@ export default async function PortalProposalPage({
               depositAmount={depositAmount}
             />
           ) : null}
-          {contact && !responded && !expired ? (
-            <ContactCard contact={contact} proposalNumber={proposalNumber} tr={tr} />
+          {!responded && !expired ? (
+            <ContactCard contact={contact ?? null} proposalNumber={proposalNumber} tr={tr} />
           ) : null}
         </article>
         <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
