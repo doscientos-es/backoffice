@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.145",
+      "date": "2026-10-30",
+      "title": "v0.1.145",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add WhatsApp icon and improve contact card handling"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "48adef03406fb64fb3029df4370dba2ff116e001",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add WhatsApp icon and improve contact card handling"
+        }
+      ]
+    },
+    {
       "version": "0.1.144",
       "date": "2026-10-30",
       "title": "v0.1.144",

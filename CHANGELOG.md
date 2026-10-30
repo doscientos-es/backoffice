@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-10-30 — v0.1.145
+
+### Nuevas funciones
+
+- Add WhatsApp icon and improve contact card handling
+
 ## 2026-10-30 — v0.1.144
 
 ### Nuevas funciones
