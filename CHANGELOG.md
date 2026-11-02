@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-02 — v0.1.150
+
+### Correcciones
+
+- Notify team when no reminder exists
+
 ## 2026-11-02 — v0.1.149
 
 ### Nuevas funciones

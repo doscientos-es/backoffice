@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.150",
+      "date": "2026-11-02",
+      "title": "v0.1.150",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Notify team when no reminder exists"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "454d5f5148d2d1c1804d9a1fe4e33a26256da206",
+          "type": "fix",
+          "scope": "meet",
+          "breaking": false,
+          "description": "Notify team when no reminder exists"
+        }
+      ]
+    },
+    {
       "version": "0.1.149",
       "date": "2026-11-02",
       "title": "v0.1.149",
