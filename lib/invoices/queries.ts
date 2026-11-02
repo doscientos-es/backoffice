@@ -6,28 +6,18 @@ import { escapeIlike } from '@/lib/utils/search-params'
 import type { InvoicePdfWorkLogInput } from './pdf-data'
 import {
   type ClientInfo,
-  type CompanySettings,
   INVOICE_LIST_PAGE_SIZE,
   type InvoiceDelivery,
   type InvoiceDeliveryChannel,
   type InvoiceDetailResult,
   type InvoiceForEmail,
-  type InvoiceForRectification,
-  type InvoiceForVerifactu,
-  type InvoiceHeaderPatch,
   type InvoiceItemInsert,
   type InvoiceListParams,
   type InvoiceListResult,
   type InvoiceStatusPatch,
-  type InvoiceTimestamps,
   type NewInvoiceData,
-  type ProjectForHourlyBilling,
   type ProposalForInvoice,
   type ProposalItem,
-  type VatLineItem,
-  type VerifactuChainEntry,
-  type VerifactuPatch,
-  type WorkLogEntry,
 } from './types'
 
 const log = scopedLogger('invoices.queries')
@@ -229,25 +219,6 @@ export async function getInvoiceDetail(id: string): Promise<InvoiceDetailResult>
 // ─── Status / soft-delete mutations ──────────────────────────────────────────
 
 /**
- * Returns `issued_at` for the invoice so the caller can decide whether
- * to stamp it. Returns `null` when the invoice does not exist.
- */
-export async function findInvoiceTimestamps(id: string): Promise<InvoiceTimestamps | null> {
-  const supabase = await createServerClient()
-  const { data } = await supabase
-    .from('invoices')
-    .select('issued_at, client_id')
-    .eq('id', id)
-    .maybeSingle()
-  return data
-    ? {
-        issued_at: (data.issued_at as string | null) ?? null,
-        client_id: (data.client_id as string | null) ?? null,
-      }
-    : null
-}
-
-/**
  * Overwrites the client snapshot fields on a draft invoice with fresh data
  * from the client record. The `.eq("status", "draft")` guard is an extra
  * safety net on top of the `fn_check_invoice_immutable` trigger.
@@ -294,101 +265,6 @@ export async function softDeleteInvoice(id: string): Promise<void> {
 export async function restoreDeletedInvoice(id: string): Promise<void> {
   const supabase = await createServerClient()
   const { error } = await supabase.from('invoices').update({ deleted_at: null }).eq('id', id)
-  if (error) throw new Error(error.message)
-}
-
-// ─── Verifactu queries ────────────────────────────────────────────────────────
-
-/**
- * Fetches the invoice columns required for Verifactu submission.
- * Returns `null` when the invoice is deleted or does not exist.
- */
-export async function findInvoiceForVerifactu(id: string): Promise<InvoiceForVerifactu | null> {
-  const supabase = await createServerClient()
-  const { data, error } = await supabase
-    .from('invoices')
-    .select(
-      'id, client_id, status, verifactu_status, full_number, invoice_type, issue_date, tax_amount, total, previous_hash, chain_sequence, client_nif, client_name',
-    )
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (error) log.error({ invoiceId: id, err: error.message }, 'find_invoice_for_verifactu_failed')
-  if (!data) return null
-  return {
-    id: data.id as string,
-    client_id: (data.client_id as string | null) ?? null,
-    status: data.status as string,
-    verifactu_status: data.verifactu_status as string,
-    full_number: data.full_number as string,
-    invoice_type: data.invoice_type as string,
-    issue_date: data.issue_date as string,
-    tax_amount: Number(data.tax_amount ?? 0),
-    total: Number(data.total ?? 0),
-    previous_hash: (data.previous_hash as string | null) ?? null,
-    chain_sequence: (data.chain_sequence as number | null) ?? null,
-    client_nif: (data.client_nif as string | null) ?? null,
-    client_name: (data.client_name as string | null) ?? null,
-  }
-}
-
-/**
- * Returns the most recently accepted invoice in the Verifactu hash chain,
- * or `null` when no accepted invoices exist yet.
- */
-export async function findLastVerifactuChainEntry(): Promise<VerifactuChainEntry | null> {
-  const supabase = await createServerClient()
-  const { data } = await supabase
-    .from('invoices')
-    .select('current_hash, chain_sequence, full_number, issue_date')
-    .eq('verifactu_status', 'accepted')
-    .not('current_hash', 'is', null)
-    .order('chain_sequence', { ascending: false, nullsFirst: false })
-    .limit(1)
-    .maybeSingle()
-  if (!data) return null
-  return {
-    current_hash: data.current_hash as string,
-    chain_sequence: data.chain_sequence as number,
-    full_number: data.full_number as string,
-    issue_date: data.issue_date as string,
-  }
-}
-
-/** Returns the line items needed to build the Verifactu VAT breakdown. */
-export async function findInvoiceItemsForVat(id: string): Promise<VatLineItem[]> {
-  const supabase = await createServerClient()
-  const { data } = await supabase
-    .from('invoice_items')
-    .select('description, vat_rate, subtotal')
-    .eq('invoice_id', id)
-    .order('position')
-  return (data ?? []).map((it) => ({
-    description: (it.description as string | null) ?? null,
-    vat_rate: Number(it.vat_rate ?? 0),
-    subtotal: Number(it.subtotal ?? 0),
-  }))
-}
-
-/** Returns company-level Verifactu settings (NIF + name). */
-export async function findCompanySettings(): Promise<CompanySettings | null> {
-  const supabase = await createServerClient()
-  const { data } = await supabase
-    .from('settings')
-    .select('company_nif, company_name')
-    .eq('id', 1)
-    .maybeSingle()
-  if (!data) return null
-  return {
-    company_nif: (data.company_nif as string | null) ?? null,
-    company_name: (data.company_name as string | null) ?? '',
-  }
-}
-
-/** Persists the Verifactu submission result on the invoice row. Throws on DB error. */
-export async function patchInvoiceAfterVerifactu(id: string, patch: VerifactuPatch): Promise<void> {
-  const supabase = await createServerClient()
-  const { error } = await supabase.from('invoices').update(patch).eq('id', id)
   if (error) throw new Error(error.message)
 }
 
@@ -491,22 +367,6 @@ export async function findInvoiceSeries(): Promise<string> {
 }
 
 /**
- * Returns the next available invoice number for a given series.
- * Reads the current maximum and adds 1.
- */
-/**
- * Returns the next available invoice number for a given series.
- * Uses the `next_invoice_number` RPC which acquires an advisory lock to
- * serialise concurrent calls and avoid duplicate number collisions.
- */
-export async function findNextInvoiceNumberForSeries(series: string): Promise<number> {
-  const supabase = await createServerClient()
-  const { data, error } = await supabase.rpc('next_invoice_number', { p_series: series })
-  if (error) throw new Error(error.message)
-  return data as number
-}
-
-/**
  * Inserts a new invoice row and its line items.
  * Returns the new invoice `id`. Throws on any DB error.
  *
@@ -538,63 +398,7 @@ export async function insertInvoiceWithItems(
   return { id: invoice.id as string }
 }
 
-// ─── Hourly invoice helpers ───────────────────────────────────────────────────
-
-/** Returns project billing data for generating a monthly hourly invoice. */
-export async function findProjectForHourlyBilling(
-  projectId: string,
-): Promise<ProjectForHourlyBilling | null> {
-  const supabase = await createServerClient()
-  const { data } = await supabase
-    .from('projects')
-    .select('id, client_id, name, billing_type, hourly_rate, hourly_vat_rate')
-    .eq('id', projectId)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (!data) return null
-  return {
-    id: data.id as string,
-    client_id: data.client_id as string,
-    name: data.name as string,
-    billing_type: data.billing_type as string,
-    hourly_rate: Number(data.hourly_rate ?? 0),
-    hourly_vat_rate: Number(data.hourly_vat_rate ?? 0),
-  }
-}
-
-/**
- * Returns work logs for a project in the given month window that are not
- * yet linked to any invoice.
- */
-export async function findUnlinkedWorkLogsForMonth(
-  projectId: string,
-  monthStart: string,
-  monthEnd: string,
-): Promise<WorkLogEntry[]> {
-  const supabase = await createServerClient()
-  const { data, error } = await supabase
-    .from('work_logs')
-    .select('id, hours')
-    .eq('project_id', projectId)
-    .is('deleted_at', null)
-    .is('invoice_id', null)
-    .gte('work_date', monthStart)
-    .lt('work_date', monthEnd)
-    .order('work_date', { ascending: true })
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((l) => ({ id: l.id as string, hours: Number(l.hours ?? 0) }))
-}
-
-/** Links a set of work-log rows to an invoice so they can't be double-billed. */
-export async function linkWorkLogsToInvoice(logIds: string[], invoiceId: string): Promise<void> {
-  if (logIds.length === 0) return
-  const supabase = await createServerClient()
-  const { error } = await supabase
-    .from('work_logs')
-    .update({ invoice_id: invoiceId })
-    .in('id', logIds)
-  if (error) throw new Error(error.message)
-}
+// ─── Work logs ────────────────────────────────────────────────────────────────
 
 /**
  * Returns the work logs linked to an invoice, with member name, ordered by
@@ -636,47 +440,6 @@ export async function findInvoiceForEdit(id: string): Promise<{ status: string }
   const { data } = await supabase.from('invoices').select('status').eq('id', id).single()
   if (!data) return null
   return { status: data.status as string }
-}
-
-/** Applies a partial header patch to a draft invoice. Throws on DB error. */
-export async function patchInvoiceHeader(id: string, patch: InvoiceHeaderPatch): Promise<void> {
-  const supabase = await createServerClient()
-  const { error } = await supabase.from('invoices').update(patch).eq('id', id)
-  if (error) throw new Error(error.message)
-}
-
-/**
- * Replaces all line items for an invoice atomically:
- * deletes existing rows and inserts the new set.
- * Throws on any DB error.
- */
-export async function replaceInvoiceItems(
-  invoiceId: string,
-  items: InvoiceItemInsert[],
-): Promise<void> {
-  const supabase = await createServerClient()
-  const { error: deleteError } = await supabase
-    .from('invoice_items')
-    .delete()
-    .eq('invoice_id', invoiceId)
-  if (deleteError) throw new Error(deleteError.message)
-
-  const { error: insertError } = await supabase
-    .from('invoice_items')
-    .insert(items.map((it, idx) => ({ ...it, position: idx, invoice_id: invoiceId })))
-  if (insertError) throw new Error(insertError.message)
-}
-
-// ─── Portal access ────────────────────────────────────────────────────────────
-
-/** Applies a portal-access patch (visibility + password) to an invoice. Throws on DB error. */
-export async function patchInvoicePortal(
-  id: string,
-  patch: Record<string, unknown>,
-): Promise<void> {
-  const supabase = await createServerClient()
-  const { error } = await supabase.from('invoices').update(patch).eq('id', id)
-  if (error) throw new Error(error.message)
 }
 
 // ─── Email helpers ────────────────────────────────────────────────────────────
@@ -772,90 +535,4 @@ export async function findInvoiceDeliveries(invoiceId: string): Promise<InvoiceD
     sent_by_name:
       (row as unknown as { team_members: { name: string } | null }).team_members?.name ?? null,
   }))
-}
-
-// ─── Rectification helpers ────────────────────────────────────────────────────
-
-/**
- * Fetches the original invoice fields needed to clone a rectification invoice.
- * Returns `null` when the invoice is deleted or does not exist.
- */
-export async function findInvoiceForRectification(
-  id: string,
-): Promise<InvoiceForRectification | null> {
-  const supabase = await createServerClient()
-  const { data, error } = await supabase
-    .from('invoices')
-    .select(
-      'id, status, verifactu_status, invoice_type, full_number, series, number, issue_date, client_id, project_id, client_nif, client_name, client_address_street, client_address_zip, client_address_city, client_address_province, client_address_country, notes, payment_terms, subtotal, tax_amount, total, is_rectification',
-    )
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (error)
-    log.error({ invoiceId: id, err: error.message }, 'find_invoice_for_rectification_failed')
-  if (!data) return null
-  return {
-    id: data.id as string,
-    status: data.status as string,
-    verifactu_status: data.verifactu_status as string,
-    invoice_type: data.invoice_type as string,
-    full_number: data.full_number as string,
-    series: data.series as string,
-    number: data.number as number,
-    issue_date: data.issue_date as string,
-    client_id: data.client_id as string,
-    project_id: (data.project_id as string | null) ?? null,
-    client_nif: (data.client_nif as string | null) ?? null,
-    client_name: (data.client_name as string | null) ?? null,
-    client_address_street: (data.client_address_street as string | null) ?? null,
-    client_address_zip: (data.client_address_zip as string | null) ?? null,
-    client_address_city: (data.client_address_city as string | null) ?? null,
-    client_address_province: (data.client_address_province as string | null) ?? null,
-    client_address_country: (data.client_address_country as string | null) ?? null,
-    notes: (data.notes as string | null) ?? null,
-    payment_terms: (data.payment_terms as string | null) ?? null,
-    subtotal: Number(data.subtotal ?? 0),
-    tax_amount: Number(data.tax_amount ?? 0),
-    total: Number(data.total ?? 0),
-    is_rectification: Boolean(data.is_rectification),
-  }
-}
-
-/**
- * Inserts a rectification invoice with its cloned line items.
- * Uses explicit casts for the new rectification columns not yet in generated types.
- */
-export async function insertRectificationWithItems(
-  invoiceData: NewInvoiceData & {
-    invoice_type: string
-    is_rectification: true
-    rectified_invoice_id: string
-    rectification_reason: string
-    rectification_type: string
-  },
-  items: InvoiceItemInsert[],
-): Promise<{ id: string }> {
-  const supabase = await createServerClient()
-  // Cast to `any` because the generated DB types don't include the new
-  // rectification columns until the schema types are regenerated.
-  const { data: invoice, error: invoiceError } = await supabase
-    .from('invoices')
-    // biome-ignore lint/suspicious/noExplicitAny: new columns not yet in generated types
-    // oxlint-disable-next-line typescript/no-explicit-any -- DB types lack rectification columns.
-    .insert(invoiceData as any)
-    .select('id')
-    .single()
-  if (invoiceError || !invoice)
-    throw new Error(invoiceError?.message ?? 'No se pudo crear la factura rectificativa')
-
-  const { error: itemsError } = await supabase
-    .from('invoice_items')
-    .insert(items.map((it) => ({ ...it, invoice_id: invoice.id as string })))
-  if (itemsError) {
-    log.error({ err: itemsError, invoiceId: invoice.id }, 'insert_rectification_items_failed')
-    throw new Error(itemsError.message)
-  }
-
-  return { id: invoice.id as string }
 }

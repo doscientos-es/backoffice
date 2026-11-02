@@ -17,6 +17,7 @@ import { isAIEnabled, serverEnv } from '@/lib/env'
 import { formatLeadBriefingForAI } from '@/lib/leads/ai-context'
 import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
 import { suggestedCallDurationMinutes } from '@/lib/leads/meeting-duration'
+import { suggestLeadOwner } from '@/lib/leads/owner-suggestion'
 import { getLeadDetail } from '@/lib/leads/queries'
 import type { LeadCompanyResearch as LeadCompanyResearchData } from '@/lib/leads/types'
 import { leadDisplayName } from '@/lib/leads/utils'
@@ -45,8 +46,8 @@ import { LeadEditDialog } from './lead-edit-dialog'
 import { LeadLanguageSelect } from './lead-language-select'
 import { LeadNextActionReminderItem } from './lead-next-action-reminder-item'
 import { LeadNextActionTaskItem } from './lead-next-action-task-item'
-import { LeadNextMove } from './lead-next-move'
 import { LeadNotesDialog } from './lead-notes-dialog'
+import { LeadOwnerSuggestionCard } from './lead-owner-suggestion'
 import { LeadPriceSuggestion } from './lead-price-suggestion'
 import { LeadRecentInteractions } from './lead-recent-interactions'
 import { LeadRelatedContacts } from './lead-related-contacts'
@@ -106,6 +107,7 @@ export default async function LeadDetailPage({
     projects,
     invoices,
     contacts,
+    dismissedMeetContactSuggestionKeys,
     tasks,
     reminders,
     attachments,
@@ -115,6 +117,13 @@ export default async function LeadDetailPage({
   const aiEnabled = isAIEnabled()
   const canEdit = user.role !== 'viewer'
   const members = canEdit ? await listActiveMembers().catch(() => []) : []
+  const ownerSuggestion = canEdit
+    ? suggestLeadOwner({
+        interactions,
+        members,
+        currentAssigneeId: lead.assigned_to,
+      })
+    : null
   const nextActions: NextAction[] = [
     ...tasks.map((task) => ({
       id: task.id as string,
@@ -340,6 +349,13 @@ export default async function LeadDetailPage({
                           <MemberLabel member={lead.assignee} />
                         </DetailRow>
                       </DetailGrid>
+                      {ownerSuggestion ? (
+                        <LeadOwnerSuggestionCard
+                          leadId={lead.id}
+                          currentOwnerName={lead.assignee?.name ?? null}
+                          suggestion={ownerSuggestion}
+                        />
+                      ) : null}
                     </section>
 
                     <section className="min-w-0">
@@ -541,6 +557,7 @@ export default async function LeadDetailPage({
                 leadCompany={(lead.company as string | null) ?? null}
                 interactions={interactions ?? []}
                 contacts={contacts}
+                dismissedSuggestionKeys={dismissedMeetContactSuggestionKeys}
                 teamNames={members.map((member) => member.name)}
                 canEdit={canEdit}
               />
@@ -571,6 +588,7 @@ export default async function LeadDetailPage({
                 leadCompany={(lead.company as string | null) ?? null}
                 interactions={interactions ?? []}
                 contacts={contacts}
+                dismissedSuggestionKeys={dismissedMeetContactSuggestionKeys}
                 teamNames={members.map((member) => member.name)}
                 canEdit={canEdit}
               />
@@ -700,18 +718,6 @@ export default async function LeadDetailPage({
                 </CardContent>
               </Card>
             </SectionBoundary>
-
-            <LeadNextMove
-              leadId={lead.id as string}
-              leadStatus={lead.status as string}
-              firstContactedAt={lead.first_contacted_at}
-              phone={lead.phone}
-              reminders={reminders}
-              interactions={interactions ?? []}
-              proposals={proposals}
-              projects={projects}
-              invoices={invoices}
-            />
           </div>
         </aside>
       </section>

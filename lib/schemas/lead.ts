@@ -40,7 +40,7 @@ export const CreateLeadInput = z.object({
   urgency: optionalText(80),
 })
 
-export type CreateLeadInputType = z.infer<typeof CreateLeadInput>
+type CreateLeadInputType = z.infer<typeof CreateLeadInput>
 
 export const UpdateLeadInput = CreateLeadInput.extend({
   id: z.string().uuid(),
@@ -48,7 +48,7 @@ export const UpdateLeadInput = CreateLeadInput.extend({
   estimated_value: z.number().min(0).max(99_999_999.99).nullable().optional(),
 })
 
-export type UpdateLeadInputType = z.infer<typeof UpdateLeadInput>
+type UpdateLeadInputType = z.infer<typeof UpdateLeadInput>
 
 /** Imports emails that already exist in the configured Gmail mailboxes. */
 export const SyncLeadGmailInput = z.object({ leadId: z.string().uuid() })
@@ -66,7 +66,7 @@ export const ConvertLeadInput = z.object({
   notes: optionalText(4000),
 })
 
-export type ConvertLeadInputType = z.infer<typeof ConvertLeadInput>
+type ConvertLeadInputType = z.infer<typeof ConvertLeadInput>
 
 export const UpdateLeadStatusInput = z
   .object({
@@ -95,7 +95,7 @@ export const UpdateLeadStatusInput = z
     },
   )
 
-export type UpdateLeadStatusInputType = z.infer<typeof UpdateLeadStatusInput>
+type UpdateLeadStatusInputType = z.infer<typeof UpdateLeadStatusInput>
 
 export const CALL_OUTCOMES = [
   'connected',
@@ -106,7 +106,8 @@ export const CALL_OUTCOMES = [
 ] as const
 export type CallOutcome = (typeof CALL_OUTCOMES)[number]
 
-const CALL_OUTCOMES_WITHOUT_DETAILS = new Set<CallOutcome>([
+/** Unanswered calls: there is nobody to take notes from, so none are expected. */
+export const CALL_OUTCOMES_WITHOUT_DETAILS = new Set<CallOutcome>([
   'voicemail',
   'no_answer',
   'busy',
@@ -150,6 +151,14 @@ export const LogCallInput = z
     callSessionId: z.string().uuid().optional(),
     durationMinutes: z.coerce.number().int().min(0).max(600).optional(),
     outcome: z.enum(CALL_OUTCOMES).optional(),
+    relatedContact: z
+      .object({
+        name: requiredText(160, 'El nombre del contacto es obligatorio'),
+        email: optionalEmail,
+        phone: optionalText(40),
+        role: optionalText(120),
+      })
+      .optional(),
     /** The calendar date when the actual call happened, not when it was logged. */
     callDate: CallDate.default(() => todayIsoLocal()),
   })
@@ -163,8 +172,12 @@ export const LogCallInput = z
       path: ['notes'],
     },
   )
+  .refine((value) => !value.relatedContact || value.outcome === 'connected', {
+    message: 'Solo se puede asociar otra persona a una llamada atendida',
+    path: ['relatedContact'],
+  })
 
-export type LogCallInputType = z.infer<typeof LogCallInput>
+type LogCallInputType = z.infer<typeof LogCallInput>
 
 export const UpdateLeadCallInput = z
   .object({
@@ -187,7 +200,7 @@ export const UpdateLeadCallInput = z
     },
   )
 
-export type UpdateLeadCallInputType = z.infer<typeof UpdateLeadCallInput>
+type UpdateLeadCallInputType = z.infer<typeof UpdateLeadCallInput>
 
 export const LogEmailInput = z.object({
   leadId: z.string().uuid(),
@@ -197,14 +210,14 @@ export const LogEmailInput = z.object({
   counterparty: optionalEmail,
 })
 
-export type LogEmailInputType = z.infer<typeof LogEmailInput>
+type LogEmailInputType = z.infer<typeof LogEmailInput>
 
 export const LogNoteInput = z.object({
   leadId: z.string().uuid(),
   content: requiredText(8000, 'La nota no puede estar vacía'),
 })
 
-export type LogNoteInputType = z.infer<typeof LogNoteInput>
+type LogNoteInputType = z.infer<typeof LogNoteInput>
 
 export const LeadContactInput = z.object({
   leadId: z.string().uuid(),
@@ -228,12 +241,20 @@ export const ArchiveLeadContactInput = z.object({
   contactId: z.string().uuid(),
 })
 
+export const DismissLeadMeetContactSuggestionInput = z.object({
+  leadId: z.string().uuid(),
+  suggestionKey: requiredText(320, 'Sugerencia no válida'),
+  name: requiredText(160, 'El nombre es obligatorio'),
+  email: optionalEmail,
+  phone: optionalText(40),
+})
+
 export const LogWhatsAppInput = z.object({
   leadId: z.string().uuid(),
   content: requiredText(8000, 'El mensaje no puede estar vacío'),
 })
 
-export type LogWhatsAppInputType = z.infer<typeof LogWhatsAppInput>
+type LogWhatsAppInputType = z.infer<typeof LogWhatsAppInput>
 
 export const DeleteLeadInteractionInput = z.object({
   interactionId: z.string().uuid(),
@@ -250,14 +271,14 @@ export const SendEmailToLeadInput = z.object({
   to: z.string().email(),
 })
 
-export type SendEmailToLeadInputType = z.infer<typeof SendEmailToLeadInput>
+type SendEmailToLeadInputType = z.infer<typeof SendEmailToLeadInput>
 
 export const AssignLeadOwnerInput = z.object({
   leadId: z.string().uuid(),
   assigneeId: assignableUuid,
 })
 
-export type AssignLeadOwnerInputType = z.infer<typeof AssignLeadOwnerInput>
+type AssignLeadOwnerInputType = z.infer<typeof AssignLeadOwnerInput>
 
 /** Check for calendar conflicts without creating anything. */
 export const CheckMeetingSlotInput = z.object({
@@ -266,7 +287,7 @@ export const CheckMeetingSlotInput = z.object({
   start: z.string().datetime({ offset: true }),
   end: z.string().datetime({ offset: true }),
 })
-export type CheckMeetingSlotInputType = z.infer<typeof CheckMeetingSlotInput>
+type CheckMeetingSlotInputType = z.infer<typeof CheckMeetingSlotInput>
 
 /** Schedule a meeting on the shared calendar and log it as an interaction. */
 export const ScheduleLeadMeetingInput = z.object({
@@ -282,7 +303,7 @@ export const ScheduleLeadMeetingInput = z.object({
   /** Optional project this meeting is linked to. */
   projectId: z.string().uuid().optional(),
 })
-export type ScheduleLeadMeetingInputType = z.infer<typeof ScheduleLeadMeetingInput>
+type ScheduleLeadMeetingInputType = z.infer<typeof ScheduleLeadMeetingInput>
 
 /**
  * The 6 Mom Test signals used to spot a qualified lead: real problem,
@@ -306,4 +327,4 @@ export const UpdateLeadMomTestInput = z.object({
   value: z.boolean().nullable(),
 })
 
-export type UpdateLeadMomTestInputType = z.infer<typeof UpdateLeadMomTestInput>
+type UpdateLeadMomTestInputType = z.infer<typeof UpdateLeadMomTestInput>

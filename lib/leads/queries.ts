@@ -366,6 +366,7 @@ export async function getLeadDetail(
     { data: reminders },
     { data: attachments },
     { data: contactRows, error: contactsError },
+    { data: dismissedMeetContactRows, error: dismissedMeetContactError },
     { data: auditRows, error: auditTimelineError },
   ] = await Promise.all([
     notDeleted(supabase.from('leads').select(DETAIL_COLUMNS).eq('id', id)).maybeSingle(),
@@ -422,6 +423,7 @@ export async function getLeadDetail(
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(LEAD_RELATED_LIMIT),
+    supabase.from('lead_contact_suggestion_dismissals').select('suggestion_key').eq('lead_id', id),
     supabase.rpc('list_entity_audit_timeline', {
       p_entity_type: 'leads',
       p_entity_id: id,
@@ -448,6 +450,13 @@ export async function getLeadDetail(
   if (contactsError) {
     log.error({ leadId: id, err: contactsError.message }, 'lead_contacts_query_failed')
     throw new Error('No se pudieron cargar los contactos relacionados.')
+  }
+  if (dismissedMeetContactError) {
+    log.error(
+      { leadId: id, err: dismissedMeetContactError.message },
+      'lead_meet_contact_dismissals_query_failed',
+    )
+    throw new Error('No se pudieron cargar las sugerencias descartadas de Meet.')
   }
 
   const [campaignNames, marketingAdName] = await Promise.all([
@@ -519,6 +528,7 @@ export async function getLeadDetail(
     body: (i.body as string | null) ?? null,
     created_at: i.created_at as string,
     performer: mapMemberRef((i as Record<string, unknown>).performer),
+    performed_by: (i.performed_by as string | null) ?? null,
     payload: i.payload ?? null,
     resend_email_id: (i.resend_email_id as string | null) ?? null,
   }))
@@ -587,6 +597,9 @@ export async function getLeadDetail(
       version: Number(contact.version),
       created_at: contact.created_at as string,
     })),
+    dismissedMeetContactSuggestionKeys: (dismissedMeetContactRows ?? []).map(
+      (row) => row.suggestion_key as string,
+    ),
     tasks: (tasks ?? []).map((t) => ({
       id: t.id as string,
       title: t.title as string,

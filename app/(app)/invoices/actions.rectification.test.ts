@@ -53,35 +53,18 @@ const { db, authUser, rpc } = vi.hoisted(() => ({
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock('@/lib/invoices/queries', () => ({
-  findInvoiceForRectification: async () => db.original,
-  findNextInvoiceNumberForSeries: async () => 1,
-  insertRectificationWithItems: async (invoiceData: Record<string, unknown>) => {
-    db.insertedInvoice = invoiceData
-    return { id: 'rect-invoice-uuid' }
-  },
   patchInvoiceStatus: async (id: string, patch: Record<string, unknown>) => {
     db.patchedStatus = { id, ...patch }
   },
   // Unused in this action but imported by the module — stub to avoid errors.
   findClientInfo: vi.fn(),
-  findCompanySettings: vi.fn(),
   findInvoiceForEdit: vi.fn(),
   findInvoiceForEmail: vi.fn(),
-  findInvoiceForVerifactu: vi.fn(),
-  findInvoiceItemsForVat: vi.fn(),
   findInvoiceSeries: vi.fn(),
-  findInvoiceTimestamps: vi.fn(),
-  findLastVerifactuChainEntry: vi.fn(),
-  findProjectForHourlyBilling: vi.fn(),
   findProposalForInvoice: vi.fn(),
   findProposalItems: vi.fn(),
-  findUnlinkedWorkLogsForMonth: vi.fn(),
   insertInvoiceWithItems: vi.fn(),
-  linkWorkLogsToInvoice: vi.fn(),
-  patchInvoiceAfterVerifactu: vi.fn(),
   patchInvoiceClientSnapshot: vi.fn(),
-  patchInvoiceHeader: vi.fn(),
-  replaceInvoiceItems: vi.fn(),
   restoreDeletedInvoice: vi.fn(),
   softDeleteInvoice: vi.fn(),
 }))

@@ -90,7 +90,7 @@ export type LeadListItem = {
   scheduled_meeting_duration_minutes: number | null
 }
 
-export type LeadListView = 'board' | 'list'
+type LeadListView = 'board' | 'list'
 
 export type LeadAttentionFilter = 'stale' | 'unassigned' | 'urgent'
 
@@ -123,7 +123,7 @@ export type LeadListResult = {
   error: string | null
 }
 
-export type LeadDetailAiTemperature = 'hot' | 'warm' | 'cold'
+type LeadDetailAiTemperature = 'hot' | 'warm' | 'cold'
 
 export type LeadCompanyResearch = {
   domain: string
@@ -140,7 +140,7 @@ export type LeadCompanyResearch = {
   sources: Array<{ title: string; url: string; excerpt: string }>
 }
 
-export type LeadDetail = {
+type LeadDetail = {
   id: string
   /** Internal optimistic-concurrency token. */
   version: number
@@ -324,6 +324,7 @@ export type LeadDetailResult = {
   projects: LeadRelatedProject[]
   invoices: LeadRelatedInvoice[]
   contacts: LeadRelatedContact[]
+  dismissedMeetContactSuggestionKeys: string[]
   /** Tasks directly associated with this lead, newest first. */
   tasks: LeadRelatedTask[]
   /** Pending reminders scheduled against this lead, soonest first. */
@@ -331,7 +332,7 @@ export type LeadDetailResult = {
   attachments: LeadRelatedAttachment[]
 }
 
-export type LeadConvertSeed = {
+type LeadConvertSeed = {
   id: string
   name: string
   alias: string | null

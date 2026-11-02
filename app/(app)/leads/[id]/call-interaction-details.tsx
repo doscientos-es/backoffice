@@ -9,6 +9,7 @@ import {
   DialogTrigger,
 } from '@doscientos/ui'
 import { AlertTriangle, Eye, FileText, Pencil } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { type FormEvent, useState } from 'react'
 
@@ -23,6 +24,7 @@ import { SubmitButton } from '@/components/ui/submit-button'
 import { Textarea } from '@/components/ui/textarea'
 import { getCallInteractionDetails } from '@/lib/leads/interaction-utils'
 import type { LeadDetailInteraction } from '@/lib/leads/types'
+import { CALL_OUTCOMES_WITHOUT_DETAILS, type CallOutcome } from '@/lib/schemas/lead'
 
 import { updateLeadCall } from '../actions'
 import { CallDateField } from '../call-date-field'
@@ -35,8 +37,6 @@ const CALL_OUTCOME_LABEL = {
   busy: 'Comunicando',
   wrong_number: 'Número erróneo',
 }
-type CallOutcome = keyof typeof CALL_OUTCOME_LABEL
-
 function isCallOutcome(value: string | null): value is CallOutcome {
   return value !== null && value in CALL_OUTCOME_LABEL
 }
@@ -53,6 +53,14 @@ export function CallInteractionDetails({
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const details = getCallInteractionDetails(interaction.payload)
+  const relatedContact =
+    interaction.payload && typeof interaction.payload === 'object'
+      ? (interaction.payload as Record<string, unknown>).related_contact
+      : null
+  const callContact =
+    relatedContact && typeof relatedContact === 'object'
+      ? (relatedContact as { id?: string | null; name?: string; role?: string | null })
+      : null
   const [outcome, setOutcome] = useState<CallOutcome | ''>(
     isCallOutcome(details.outcome) ? details.outcome : '',
   )
@@ -223,6 +231,29 @@ export function CallInteractionDetails({
                 </p>
               </section>
             ) : null}
+            {callContact?.id && callContact.name ? (
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                <p className="text-xs font-medium text-muted-foreground">Atendió la llamada</p>
+                <Link
+                  href={`/leads/${leadId}?tab=actividad#related-contact-${callContact.id}`}
+                  className="mt-1 inline-flex min-h-10 items-center font-medium text-primary hover:underline"
+                >
+                  {callContact.name}
+                  {callContact.role ? ` · ${callContact.role}` : ''}
+                </Link>
+              </div>
+            ) : callContact?.name ? (
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                <p className="text-xs font-medium text-muted-foreground">Atendió la llamada</p>
+                <p className="mt-1 font-medium">
+                  {callContact.name}
+                  {callContact.role ? ` · ${callContact.role}` : ''}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Esta persona no se pudo vincular como contacto.
+                </p>
+              </div>
+            ) : null}
 
             {!hasNotes && !hasTranscript ? (
               <p className="text-sm text-muted-foreground">
@@ -251,7 +282,8 @@ export function CallInteractionDetails({
 
 export function CallInteractionWarning({ interaction }: { interaction: LeadDetailInteraction }) {
   const details = getCallInteractionDetails(interaction.payload)
-  const missingNotes = !interaction.body?.trim()
+  const unanswered = CALL_OUTCOMES_WITHOUT_DETAILS.has(details.outcome as CallOutcome)
+  const missingNotes = !unanswered && !interaction.body?.trim()
   const missingOutcome = !details.outcome?.trim()
 
   if (!missingNotes && !missingOutcome) return null

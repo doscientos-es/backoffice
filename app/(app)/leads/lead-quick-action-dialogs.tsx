@@ -55,13 +55,7 @@ import { createReminder } from '../reminders/actions'
 import { EmailComposer } from './[id]/email-composer'
 import type { MomTestValues } from './[id]/mom-test-checklist'
 import { MomTestQuickDialog } from './[id]/mom-test-quick-dialog'
-import {
-  createLeadContact,
-  logLeadCall,
-  logLeadEmail,
-  logLeadNote,
-  scheduleLeadMeeting,
-} from './actions'
+import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from './actions'
 import { CallDateField } from './call-date-field'
 import { CallDigestDialog } from './call-digest-dialog'
 import { NextCallSection } from './next-call-section'
@@ -835,27 +829,17 @@ export function QCallDialog({
       durationMinutes: duration ? Number(duration) : undefined,
       outcome,
       callDate,
+      relatedContact:
+        outcome === 'connected' && differentContact && saveContact
+          ? {
+              name: contactName.trim(),
+              email: contactEmail || undefined,
+              phone: contactPhone || undefined,
+              role: contactRole || undefined,
+            }
+          : undefined,
     })
     if (!res.ok) return feedback.setError(res.error)
-    let relatedContactSaved = false
-    let relatedContactError: string | null = null
-    if (outcome === 'connected' && differentContact && saveContact && contactName.trim()) {
-      const contactResult = await createLeadContact({
-        leadId,
-        name: contactName.trim(),
-        email: contactEmail || undefined,
-        phone: contactPhone || undefined,
-        role: contactRole || undefined,
-        company: leadCompany || undefined,
-        notes: `Atendió una llamada el ${callDate}.`,
-        source: 'manual',
-      })
-      if (!contactResult.ok) {
-        relatedContactError = contactResult.error
-      } else {
-        relatedContactSaved = true
-      }
-    }
     if (followUpEnabled && followUpAt) {
       await createReminder({
         leadId,
@@ -877,9 +861,9 @@ export function QCallDialog({
     }
     const successMessage = scheduleFailed
       ? 'Llamada registrada, pero no se pudo agendar la próxima llamada'
-      : relatedContactError
-        ? `Llamada registrada, pero no se pudo guardar el contacto: ${relatedContactError}`
-        : relatedContactSaved
+      : res.relatedContactError
+        ? `Llamada registrada, pero el contacto no se pudo guardar: ${res.relatedContactError}`
+        : res.relatedContactSaved
           ? 'Llamada y contacto relacionado registrados'
           : 'Llamada registrada'
     feedback.setSuccess(successMessage)

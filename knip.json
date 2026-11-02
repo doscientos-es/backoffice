@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "proxy.ts",
+    "instrumentation.ts",
+    "scripts/*.ts",
+    "**/*.test.{ts,tsx}",
+    "vitest.config.ts",
+    "oxlint.config.ts"
+  ],
+  "project": ["app/**", "components/**", "lib/**", "primitives/**", "scripts/**"],
+  "ignore": ["lib/database.types.ts", "vendor/**", "supabase/**", ".next/**"],
+  "ignoreDependencies": ["tw-animate-css", "shadcn", "@shadcn/lint", "oxlint-tsgolint"]
+}

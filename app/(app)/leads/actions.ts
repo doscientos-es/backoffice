@@ -37,6 +37,7 @@ import { scopedLogger } from '@/lib/logger'
 import {
   AssignLeadOwnerInput,
   ArchiveLeadContactInput,
+  DismissLeadMeetContactSuggestionInput,
   CheckMeetingSlotInput,
   CallSessionInput,
   ConvertLeadInput,
@@ -202,7 +203,7 @@ export const updateLead = defineAction({
  * fiscal data, links it via `clients.lead_id`, and marks the lead as `won`.
  * Idempotent: if the lead already has a linked client, returns it.
  */
-export const convertLeadToClient = defineAction({
+const convertLeadToClient = defineAction({
   name: 'leads.convert',
   schema: ConvertLeadInput,
   handler: async (data) => {
@@ -1151,30 +1152,111 @@ export const logLeadCall = defineAction<
     showMomTestPrompt: boolean
     accessible: boolean | null
     momTestValues: Record<MomTestSignal, boolean | null>
+    relatedContactSaved: boolean
+    relatedContactError: string | null
   }
 >({
   name: 'leads.logCall',
   schema: LogCallInput,
   revalidate: (_payload, input) => [`/leads/${input.leadId}`, '/reminders', '/inicio'],
   handler: async (data, { user }) => {
-    const { leadId, notes, transcript, callSessionId, durationMinutes, outcome, callDate } = data
+    const {
+      leadId,
+      notes,
+      transcript,
+      callSessionId,
+      durationMinutes,
+      outcome,
+      callDate,
+      relatedContact,
+    } = data
 
     const supabase = await createServerClient()
-    const { error } = await supabase.from('lead_interactions').insert({
-      lead_id: leadId,
-      type: 'call',
-      subject: outcome ? `Llamada · ${CALL_OUTCOME_LABEL[outcome]}` : 'Llamada',
-      body: notes?.trim() || null,
-      performed_by: user.id,
-      payload: {
-        transcript: transcript?.trim() || null,
-        duration_minutes: durationMinutes ?? null,
-        outcome: outcome ?? null,
-        call_date: callDate,
-        call_session_id: callSessionId ?? null,
-      },
-    })
-    if (error) throw new Error(error.message)
+    let relatedContactId: string | null = null
+    let relatedContactError: string | null = null
+    if (relatedContact) {
+      try {
+        await ensureLeadContactIsUnique(supabase, {
+          leadId,
+          email: relatedContact.email,
+          phone: relatedContact.phone,
+        })
+        const { data: savedContact, error: contactError } = await supabase
+          .from('lead_contacts')
+          .insert({
+            lead_id: leadId,
+            name: relatedContact.name.trim(),
+            email: relatedContact.email?.trim() || null,
+            phone: relatedContact.phone?.trim() || null,
+            role: relatedContact.role?.trim() || null,
+            source: 'manual',
+            notes: `Atendió una llamada el ${callDate}.`,
+            created_by: user.id,
+          })
+          .select('id')
+          .single()
+        if (contactError || !savedContact)
+          throw new Error(contactError?.message ?? 'No se pudo guardar el contacto.')
+        relatedContactId = savedContact.id as string
+      } catch (contactError) {
+        relatedContactError =
+          contactError instanceof Error ? contactError.message : 'No se pudo guardar el contacto.'
+      }
+    }
+
+    const { data: call, error } = await supabase
+      .from('lead_interactions')
+      .insert({
+        lead_id: leadId,
+        type: 'call',
+        subject: outcome ? `Llamada · ${CALL_OUTCOME_LABEL[outcome]}` : 'Llamada',
+        body: notes?.trim() || null,
+        performed_by: user.id,
+        payload: {
+          transcript: transcript?.trim() || null,
+          duration_minutes: durationMinutes ?? null,
+          outcome: outcome ?? null,
+          call_date: callDate,
+          call_session_id: callSessionId ?? null,
+          related_contact_id: relatedContactId,
+          related_contact: relatedContact
+            ? {
+                id: relatedContactId,
+                name: relatedContact.name.trim(),
+                email: relatedContact.email?.trim() || null,
+                phone: relatedContact.phone?.trim() || null,
+                role: relatedContact.role?.trim() || null,
+              }
+            : null,
+        },
+      })
+      .select('id')
+      .single()
+    if (error || !call) {
+      if (relatedContactId)
+        await supabase
+          .from('lead_contacts')
+          .update({ deleted_at: new Date().toISOString() })
+          .eq('id', relatedContactId)
+          .eq('lead_id', leadId)
+      throw new Error(error?.message ?? 'No se pudo registrar la llamada.')
+    }
+    if (relatedContactId) {
+      try {
+        await recordLeadContactHistory(
+          supabase,
+          {
+            leadId,
+            contactId: relatedContactId,
+            name: relatedContact?.name.trim() ?? '',
+            action: 'añadido',
+          },
+          user.id,
+        )
+      } catch (historyError) {
+        log.warn({ err: historyError, leadId, callId: call.id }, 'call_contact_history_failed')
+      }
+    }
 
     if (callSessionId) {
       const { error: sessionError } = await supabase
@@ -1328,6 +1410,8 @@ export const logLeadCall = defineAction<
         Object.values(momTestValues).some((value) => value === null),
       accessible,
       momTestValues,
+      relatedContactSaved: Boolean(relatedContactId),
+      relatedContactError,
     }
   },
 })
@@ -1747,6 +1831,28 @@ export const archiveLeadContact = defineAction({
   },
 })
 
+export const dismissLeadMeetContactSuggestion = defineAction({
+  name: 'leads.dismissMeetContactSuggestion',
+  schema: DismissLeadMeetContactSuggestionInput,
+  roles: ['owner', 'admin', 'member'],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (input, { user }) => {
+    const supabase = await createServerClient()
+    const { error } = await supabase.from('lead_contact_suggestion_dismissals').upsert(
+      {
+        lead_id: input.leadId,
+        suggestion_key: input.suggestionKey,
+        name: input.name.trim(),
+        email: input.email?.trim() || null,
+        phone: input.phone?.trim() || null,
+        dismissed_by: user.id,
+      },
+      { onConflict: 'lead_id,suggestion_key', ignoreDuplicates: true },
+    )
+    if (error) throw new Error(error.message)
+  },
+})
+
 /**
  * Records a WhatsApp message only after the operator confirms it was sent in
  * WhatsApp. It remains a `note` until the interaction enum is migrated.
@@ -1881,7 +1987,7 @@ export const assignLeadOwner = defineAction({
  * Step 1 — Check for conflicts on the shared calendar without creating anything.
  * Returns the overlapping events so the user can decide whether to proceed.
  */
-export const checkLeadMeetingSlot = defineAction({
+const checkLeadMeetingSlot = defineAction({
   name: 'leads.checkMeetingSlot',
   schema: CheckMeetingSlotInput,
   roles: ['owner', 'admin', 'member'],

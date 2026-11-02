@@ -12,6 +12,7 @@ import {
   Users,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 
@@ -24,7 +25,12 @@ import type { LeadDetailInteraction, LeadRelatedContact } from '@/lib/leads/type
 import { buildLeadVCard } from '@/lib/leads/vcard'
 import { buildWhatsAppUrl } from '@/lib/leads/whatsapp'
 
-import { archiveLeadContact, createLeadContact, updateLeadContact } from '../actions'
+import {
+  archiveLeadContact,
+  createLeadContact,
+  dismissLeadMeetContactSuggestion,
+  updateLeadContact,
+} from '../actions'
 
 type ContactDraft = {
   name: string
@@ -36,8 +42,11 @@ type ContactDraft = {
   sourceInteractionId?: string
 }
 
-type MeetSuggestion = ContactDraft & { key: string; meetingLabel: string }
-const dismissedMeetSuggestions = new Set<string>()
+type MeetSuggestion = ContactDraft & {
+  key: string
+  meetingLabel: string
+  possibleDuplicate?: 'contact' | 'team'
+}
 
 function normalise(value: string) {
   return value
@@ -120,6 +129,7 @@ export function LeadRelatedContacts({
   leadCompany,
   interactions,
   contacts,
+  dismissedSuggestionKeys,
   teamNames,
   canEdit,
 }: {
@@ -128,14 +138,16 @@ export function LeadRelatedContacts({
   leadCompany: string | null
   interactions: LeadDetailInteraction[]
   contacts: LeadRelatedContact[]
+  dismissedSuggestionKeys: string[]
   teamNames: string[]
   canEdit: boolean
 }) {
   const suggestions = useMemo(() => meetingSuggestions(interactions), [interactions])
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<ContactDraft | null>(null)
   const [editing, setEditing] = useState<LeadRelatedContact | null>(null)
-  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set(dismissedMeetSuggestions))
+  const dismissed = useMemo(() => new Set(dismissedSuggestionKeys), [dismissedSuggestionKeys])
   const [busy, startTransition] = useTransition()
   const known = useMemo(() => {
     const emails = new Set(contacts.map((contact) => contact.email?.toLowerCase()).filter(Boolean))
@@ -147,14 +159,21 @@ export function LeadRelatedContacts({
     return { emails, phones, names, internalNames }
   }, [contacts, teamNames])
   const pendingSuggestions = suggestions
-    .filter(
-      (suggestion) =>
+    .filter((suggestion) => {
+      return (
         !dismissed.has(suggestion.key) &&
         !(suggestion.email && known.emails.has(suggestion.email.toLowerCase())) &&
-        !(suggestion.phone && known.phones.has(phoneDigits(suggestion.phone))) &&
-        !known.names.has(normalise(suggestion.name)) &&
-        !known.internalNames.has(normalise(suggestion.name)),
-    )
+        !(suggestion.phone && known.phones.has(phoneDigits(suggestion.phone)))
+      )
+    })
+    .map((suggestion) => ({
+      ...suggestion,
+      possibleDuplicate: known.names.has(normalise(suggestion.name))
+        ? 'contact'
+        : known.internalNames.has(normalise(suggestion.name))
+          ? 'team'
+          : undefined,
+    }))
     .sort((left, right) => left.meetingLabel.localeCompare(right.meetingLabel, 'es'))
 
   function beginCreate(contact?: ContactDraft) {
@@ -214,11 +233,6 @@ export function LeadRelatedContacts({
         return
       }
       sileo.success({ title: editing ? 'Contacto actualizado' : 'Contacto vinculado al lead' })
-      if (!editing && draft.sourceInteractionId) {
-        dismissedMeetSuggestions.add(
-          draft.email.toLowerCase() || phoneDigits(draft.phone) || normalise(draft.name),
-        )
-      }
       setOpen(false)
       setDraft(null)
       setEditing(null)
@@ -297,6 +311,13 @@ export function LeadRelatedContacts({
                     <p className="truncate text-xs text-muted-foreground">
                       Reunión: {suggestion.meetingLabel}
                     </p>
+                    {suggestion.possibleDuplicate ? (
+                      <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                        {suggestion.possibleDuplicate === 'team'
+                          ? 'Comprueba si es alguien del equipo'
+                          : 'Puede coincidir con otro contacto'}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
                 <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
@@ -314,9 +335,23 @@ export function LeadRelatedContacts({
                     size="sm"
                     variant="ghost"
                     className="min-h-11"
+                    disabled={busy}
                     onClick={() => {
-                      dismissedMeetSuggestions.add(suggestion.key)
-                      setDismissed(new Set(dismissedMeetSuggestions))
+                      startTransition(async () => {
+                        const result = await dismissLeadMeetContactSuggestion({
+                          leadId,
+                          suggestionKey: suggestion.key,
+                          name: suggestion.name,
+                          email: suggestion.email || undefined,
+                          phone: suggestion.phone || undefined,
+                        })
+                        if (!result.ok) {
+                          sileo.error({ title: result.error })
+                          return
+                        }
+                        sileo.success({ title: 'Sugerencia descartada para este lead' })
+                        router.refresh()
+                      })
                     }}
                   >
                     Descartar
@@ -332,6 +367,7 @@ export function LeadRelatedContacts({
         {contacts.map((contact) => (
           <article
             key={contact.id}
+            id={`related-contact-${contact.id}`}
             className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between sm:px-5"
           >
             <div className="flex min-w-0 items-start gap-3">
