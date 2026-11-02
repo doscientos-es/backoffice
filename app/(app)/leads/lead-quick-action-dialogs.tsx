@@ -12,7 +12,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
-import { FileText, LoaderCircle as Loader2, Mail, Phone, Plus, Sparkles } from 'lucide-react'
+import {
+  FileText,
+  LoaderCircle as Loader2,
+  Mail,
+  Phone,
+  Plus,
+  Sparkles,
+  UserRound,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type ReactNode, type SubmitEvent, useCallback, useEffect, useId, useState } from 'react'
 
@@ -47,7 +55,13 @@ import { createReminder } from '../reminders/actions'
 import { EmailComposer } from './[id]/email-composer'
 import type { MomTestValues } from './[id]/mom-test-checklist'
 import { MomTestQuickDialog } from './[id]/mom-test-quick-dialog'
-import { logLeadCall, logLeadEmail, logLeadNote, scheduleLeadMeeting } from './actions'
+import {
+  createLeadContact,
+  logLeadCall,
+  logLeadEmail,
+  logLeadNote,
+  scheduleLeadMeeting,
+} from './actions'
 import { CallDateField } from './call-date-field'
 import { CallDigestDialog } from './call-digest-dialog'
 import { NextCallSection } from './next-call-section'
@@ -754,6 +768,12 @@ export function QCallDialog({
   const [importError, setImportError] = useState<string | null>(null)
   const [summarizingNotes, setSummarizingNotes] = useState(false)
   const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [differentContact, setDifferentContact] = useState(false)
+  const [contactName, setContactName] = useState('')
+  const [contactRole, setContactRole] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
+  const [saveContact, setSaveContact] = useState(false)
   const feedback = useFormFeedback()
   const router = useRouter()
 
@@ -802,6 +822,10 @@ export function QCallDialog({
       feedback.setError('Elige una fecha y hora futuras para la próxima llamada.')
       return
     }
+    if (outcome === 'connected' && differentContact && saveContact && !contactName.trim()) {
+      feedback.setError('Añade el nombre de la persona antes de guardarla como contacto.')
+      return
+    }
     feedback.setPending()
     const res = await logLeadCall({
       leadId,
@@ -813,6 +837,25 @@ export function QCallDialog({
       callDate,
     })
     if (!res.ok) return feedback.setError(res.error)
+    let relatedContactSaved = false
+    let relatedContactError: string | null = null
+    if (outcome === 'connected' && differentContact && saveContact && contactName.trim()) {
+      const contactResult = await createLeadContact({
+        leadId,
+        name: contactName.trim(),
+        email: contactEmail || undefined,
+        phone: contactPhone || undefined,
+        role: contactRole || undefined,
+        company: leadCompany || undefined,
+        notes: `Atendió una llamada el ${callDate}.`,
+        source: 'manual',
+      })
+      if (!contactResult.ok) {
+        relatedContactError = contactResult.error
+      } else {
+        relatedContactSaved = true
+      }
+    }
     if (followUpEnabled && followUpAt) {
       await createReminder({
         leadId,
@@ -832,11 +875,14 @@ export function QCallDialog({
       })
       scheduleFailed = !scheduled.ok
     }
-    feedback.setSuccess(
-      scheduleFailed
-        ? 'Llamada registrada, pero no se pudo agendar la próxima llamada'
-        : 'Llamada registrada',
-    )
+    const successMessage = scheduleFailed
+      ? 'Llamada registrada, pero no se pudo agendar la próxima llamada'
+      : relatedContactError
+        ? `Llamada registrada, pero no se pudo guardar el contacto: ${relatedContactError}`
+        : relatedContactSaved
+          ? 'Llamada y contacto relacionado registrados'
+          : 'Llamada registrada'
+    feedback.setSuccess(successMessage)
     setNotes('')
     setTranscript('')
     setDuration(defaultDurationMinutes?.toString() ?? '')
@@ -844,6 +890,12 @@ export function QCallDialog({
     setCallDate(todayIsoLocal())
     setFollowUpEnabled(false)
     setNextCallEnabled(false)
+    setDifferentContact(false)
+    setContactName('')
+    setContactRole('')
+    setContactPhone('')
+    setContactEmail('')
+    setSaveContact(false)
     setDigestKey((key) => key + 1)
     router.refresh()
     setOpen(false)
@@ -929,6 +981,79 @@ export function QCallDialog({
                 onChange={setCallDate}
               />
             </div>
+            {outcome === 'connected' ? (
+              <div className="rounded-lg border bg-muted/20 p-3">
+                <label className="flex min-h-10 cursor-pointer items-center gap-2 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={differentContact}
+                    onChange={(event) => {
+                      setDifferentContact(event.target.checked)
+                      if (event.target.checked && !contactName) setContactName('')
+                    }}
+                    className="size-4 accent-primary"
+                  />
+                  <UserRound className="size-4 text-muted-foreground" />
+                  Me atendió otra persona
+                </label>
+                {differentContact ? (
+                  <div className="mt-2 space-y-2 border-t pt-3">
+                    <p className="text-xs text-muted-foreground">
+                      Si quieres vincular a esta persona al lead, activa Guardar contacto y completa
+                      su nombre.
+                    </p>
+                    <Input
+                      value={contactName}
+                      onChange={(event) => setContactName(event.target.value)}
+                      placeholder="Nombre de la persona"
+                      aria-label="Nombre de quien atendió"
+                      maxLength={160}
+                    />
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <Input
+                        value={contactRole}
+                        onChange={(event) => setContactRole(event.target.value)}
+                        placeholder="Cargo o relación"
+                        aria-label="Cargo o relación"
+                        maxLength={120}
+                      />
+                      <Input
+                        value={contactPhone}
+                        onChange={(event) => setContactPhone(event.target.value)}
+                        placeholder="Teléfono"
+                        aria-label="Teléfono de contacto"
+                        type="tel"
+                        inputMode="tel"
+                        maxLength={40}
+                      />
+                    </div>
+                    <Input
+                      value={contactEmail}
+                      onChange={(event) => setContactEmail(event.target.value)}
+                      placeholder="Email (opcional)"
+                      aria-label="Email del contacto"
+                      type="email"
+                      inputMode="email"
+                      maxLength={254}
+                    />
+                    <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={saveContact}
+                        onChange={(event) => setSaveContact(event.target.checked)}
+                        className="size-4 accent-primary"
+                      />
+                      Guardar como contacto relacionado de este lead
+                    </label>
+                    {saveContact && !contactName.trim() ? (
+                      <p className="text-xs text-muted-foreground">
+                        El nombre será obligatorio para guardar el contacto.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor={`qa-call-notes-${leadId}`} className="text-xs font-medium">

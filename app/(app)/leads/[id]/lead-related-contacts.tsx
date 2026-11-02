@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import type { LeadRelatedContact, LeadDetailInteraction } from '@/lib/leads/types'
+import type { LeadDetailInteraction, LeadRelatedContact } from '@/lib/leads/types'
 import { buildLeadVCard } from '@/lib/leads/vcard'
 import { buildWhatsAppUrl } from '@/lib/leads/whatsapp'
 
@@ -37,6 +37,7 @@ type ContactDraft = {
 }
 
 type MeetSuggestion = ContactDraft & { key: string; meetingLabel: string }
+const dismissedMeetSuggestions = new Set<string>()
 
 function normalise(value: string) {
   return value
@@ -67,7 +68,7 @@ function meetingSuggestions(interactions: LeadDetailInteraction[]): MeetSuggesti
       const email = typeof participant.email === 'string' ? participant.email.trim() : ''
       const phone = typeof participant.phone === 'string' ? participant.phone.trim() : ''
       if (!name || /^(users\/|conferenceRecords\/)/i.test(name)) continue
-      const key = email.toLowerCase() || phone.replace(/\D/g, '') || normalise(name)
+      const key = email.toLowerCase() || phoneDigits(phone) || normalise(name)
       if (key && !suggestions.has(key)) {
         suggestions.set(key, {
           key,
@@ -134,6 +135,7 @@ export function LeadRelatedContacts({
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<ContactDraft | null>(null)
   const [editing, setEditing] = useState<LeadRelatedContact | null>(null)
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set(dismissedMeetSuggestions))
   const [busy, startTransition] = useTransition()
   const known = useMemo(() => {
     const emails = new Set(contacts.map((contact) => contact.email?.toLowerCase()).filter(Boolean))
@@ -144,13 +146,16 @@ export function LeadRelatedContacts({
     const internalNames = new Set(teamNames.map(normalise))
     return { emails, phones, names, internalNames }
   }, [contacts, teamNames])
-  const pendingSuggestions = suggestions.filter(
-    (suggestion) =>
-      !(suggestion.email && known.emails.has(suggestion.email.toLowerCase())) &&
-      !(suggestion.phone && known.phones.has(phoneDigits(suggestion.phone))) &&
-      !known.names.has(normalise(suggestion.name)) &&
-      !known.internalNames.has(normalise(suggestion.name)),
-  )
+  const pendingSuggestions = suggestions
+    .filter(
+      (suggestion) =>
+        !dismissed.has(suggestion.key) &&
+        !(suggestion.email && known.emails.has(suggestion.email.toLowerCase())) &&
+        !(suggestion.phone && known.phones.has(phoneDigits(suggestion.phone))) &&
+        !known.names.has(normalise(suggestion.name)) &&
+        !known.internalNames.has(normalise(suggestion.name)),
+    )
+    .sort((left, right) => left.meetingLabel.localeCompare(right.meetingLabel, 'es'))
 
   function beginCreate(contact?: ContactDraft) {
     setEditing(null)
@@ -209,6 +214,11 @@ export function LeadRelatedContacts({
         return
       }
       sileo.success({ title: editing ? 'Contacto actualizado' : 'Contacto vinculado al lead' })
+      if (!editing && draft.sourceInteractionId) {
+        dismissedMeetSuggestions.add(
+          draft.email.toLowerCase() || phoneDigits(draft.phone) || normalise(draft.name),
+        )
+      }
       setOpen(false)
       setDraft(null)
       setEditing(null)
@@ -243,7 +253,7 @@ export function LeadRelatedContacts({
             <Badge variant="secondary">{contacts.length}</Badge>
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Personas vinculadas a este lead y a sus reuniones.
+            Personas vinculadas a este lead, detectadas en Meet o añadidas desde una llamada.
           </p>
         </div>
         {canEdit ? (
@@ -261,14 +271,19 @@ export function LeadRelatedContacts({
 
       {canEdit && pendingSuggestions.length ? (
         <div className="border-b bg-primary/[0.035] px-4 py-4 sm:px-5">
-          <p className="mb-3 text-xs font-semibold text-muted-foreground">
-            Vistos en Google Meet · elige a quién guardar
-          </p>
+          <div className="mb-3">
+            <p className="text-xs font-semibold text-foreground">
+              Personas detectadas en Google Meet
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Revisa cada sugerencia: solo se guardan las personas que elijas.
+            </p>
+          </div>
           <div className="grid gap-2 sm:grid-cols-2">
             {pendingSuggestions.map((suggestion) => (
               <div
                 key={suggestion.key}
-                className="flex min-w-0 items-center justify-between gap-3 rounded-lg border bg-background p-3"
+                className="flex min-w-0 flex-col gap-3 rounded-lg border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -277,19 +292,36 @@ export function LeadRelatedContacts({
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{suggestion.name}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {suggestion.email || suggestion.meetingLabel}
+                      {suggestion.email || 'Email no disponible'}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      Reunión: {suggestion.meetingLabel}
                     </p>
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="min-h-10 shrink-0"
-                  onClick={() => beginCreate(suggestion)}
-                >
-                  Guardar
-                </Button>
+                <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="min-h-11"
+                    onClick={() => beginCreate(suggestion)}
+                  >
+                    Guardar contacto
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="min-h-11"
+                    onClick={() => {
+                      dismissedMeetSuggestions.add(suggestion.key)
+                      setDismissed(new Set(dismissedMeetSuggestions))
+                    }}
+                  >
+                    Descartar
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
