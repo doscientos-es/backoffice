@@ -1,0 +1,238 @@
+import { AI_MODELS, isAIEnabled, runAIChat } from '@/lib/ai'
+import { isGoogleEnabled } from '@/lib/env'
+import { resolveSubject } from '@/lib/google/client'
+import { readDocumentText } from '@/lib/google/drive'
+import { listConferenceArtifacts, listConferenceRecords } from '@/lib/google/meet'
+import { scopedLogger } from '@/lib/logger'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+const log = scopedLogger('integrations.meet-artifacts')
+const WINDOW_DAYS = 30
+const BATCH_SIZE = 100
+const SUMMARY_PROMPT = `Resume notas y transcripciones de reuniones comerciales en español. Conserva necesidades, decisiones, objeciones, presupuesto/plazos si aparecen y próximos pasos con responsables. No inventes datos. Devuelve un resumen práctico, sin introducción genérica y con un máximo de 7.700 caracteres.`
+
+type MeetingPayload = Record<string, unknown> & {
+  meet_url?: string
+  start?: string
+  end?: string
+  meet_artifacts?: { processed_at?: string; last_checked_at?: string }
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+function meetingCode(url: string): string | null {
+  const match = url.match(/meet\.google\.com\/([a-z]{3}-[a-z]{4}-[a-z]{3})/i)
+  return match?.[1]?.toLowerCase() ?? null
+}
+
+function closestConference<T extends { startTime: string }>(records: T[], target: Date): T | null {
+  return (
+    records
+      .map((item) => ({
+        item,
+        distance: Math.abs(new Date(item.startTime).getTime() - target.getTime()),
+      }))
+      .filter(({ distance }) => distance <= 18 * 60 * 60 * 1000)
+      .sort((a, b) => a.distance - b.distance)[0]?.item ?? null
+  )
+}
+
+function cleanText(value: string): string {
+  return value.replaceAll(String.fromCharCode(0), '').trim()
+}
+
+async function summarize(notes: string, transcript: string): Promise<string> {
+  if (notes.trim()) return notes.trim().slice(0, 8_000)
+  if (!transcript.trim() || !isAIEnabled()) return ''
+  try {
+    return (
+      await runAIChat({
+        model: AI_MODELS.summarizer,
+        system: SUMMARY_PROMPT,
+        user: transcript.slice(0, 50_000),
+        maxOutputTokens: 1_800,
+      })
+    )
+      .trim()
+      .slice(0, 8_000)
+  } catch (err) {
+    log.warn({ err }, 'meet_artifact_summary_failed')
+    return ''
+  }
+}
+
+/** Polls recent CRM meetings and imports Google Meet's generated artifacts once ready. */
+export async function importRecentMeetArtifacts(): Promise<{
+  scanned: number
+  imported: number
+  pending: number
+  failed: number
+}> {
+  if (!isGoogleEnabled()) throw new Error('Google Workspace no está configurado')
+  const supabase = createAdminClient()
+  const cutoff = new Date(Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString()
+  const retryBefore = new Date(Date.now() - 15 * 60_000).toISOString()
+  const { data: rows, error } = await supabase
+    .from('lead_interactions')
+    .select('id, lead_id, performed_by, payload, body, created_at')
+    .eq('type', 'meeting')
+    .gte('created_at', cutoff)
+    .not('payload->>meet_url', 'is', null)
+    .is('payload->meet_artifacts->>processed_at', null)
+    .order('created_at', { ascending: false })
+    .limit(BATCH_SIZE)
+  if (error) throw new Error(error.message)
+
+  let imported = 0
+  let pending = 0
+  let failed = 0
+  const performerIds = Array.from(
+    new Set((rows ?? []).map((row) => row.performed_by).filter((id): id is string => Boolean(id))),
+  )
+  const { data: performers } = performerIds.length
+    ? await supabase.from('team_members').select('id, email').in('id', performerIds)
+    : { data: [] }
+  const performerEmails = new Map((performers ?? []).map((member) => [member.id, member.email]))
+
+  for (const row of rows ?? []) {
+    const payload = record(row.payload) as MeetingPayload
+    if (payload.meet_artifacts?.processed_at) continue
+    const lastCheckedAt = payload.meet_artifacts?.last_checked_at
+    if (lastCheckedAt && lastCheckedAt > retryBefore) continue
+    const meetUrl = typeof payload.meet_url === 'string' ? payload.meet_url : ''
+    const code = meetingCode(meetUrl)
+    const start =
+      typeof payload.start === 'string' ? new Date(payload.start) : new Date(row.created_at)
+    if (!code || Number.isNaN(start.getTime()) || start.getTime() > Date.now() - 2 * 60_000)
+      continue
+
+    try {
+      const organizerEmail =
+        typeof payload.organizer_email === 'string'
+          ? payload.organizer_email
+          : row.performed_by
+            ? performerEmails.get(row.performed_by)
+            : undefined
+      const subject = resolveSubject(organizerEmail)
+      const conferences = await listConferenceRecords({
+        subject,
+        meetingCode: code,
+        from: new Date(start.getTime() - 18 * 60 * 60 * 1000),
+        to: new Date(start.getTime() + 18 * 60 * 60 * 1000),
+      })
+      const conference = closestConference(conferences, start)
+      if (!conference) {
+        await supabase
+          .from('lead_interactions')
+          .update({
+            payload: {
+              ...payload,
+              meet_artifacts: {
+                ...record(payload.meet_artifacts),
+                last_checked_at: new Date().toISOString(),
+              },
+            },
+          })
+          .eq('id', row.id)
+        pending++
+        continue
+      }
+
+      const artifacts = await listConferenceArtifacts({
+        subject,
+        conferenceRecord: conference.name,
+      })
+      const readyTranscript = artifacts.transcripts.find((item) => item.state === 'FILE_GENERATED')
+      const readyNotes = artifacts.smartNotes.find((item) => item.state === 'FILE_GENERATED')
+      const transcriptId = readyTranscript?.docsDestination?.document
+      const notesId = readyNotes?.docsDestination?.document
+      if (!transcriptId && !notesId) {
+        await supabase
+          .from('lead_interactions')
+          .update({
+            payload: {
+              ...payload,
+              meet_artifacts: {
+                ...record(payload.meet_artifacts),
+                last_checked_at: new Date().toISOString(),
+              },
+            },
+          })
+          .eq('id', row.id)
+        pending++
+        continue
+      }
+
+      const [transcriptResult, notesResult] = await Promise.allSettled([
+        transcriptId ? readDocumentText(subject, transcriptId) : Promise.resolve(''),
+        notesId ? readDocumentText(subject, notesId) : Promise.resolve(''),
+      ])
+      const transcriptRaw = transcriptResult.status === 'fulfilled' ? transcriptResult.value : ''
+      const notesRaw = notesResult.status === 'fulfilled' ? notesResult.value : ''
+      if (transcriptResult.status === 'rejected') {
+        log.warn(
+          { err: transcriptResult.reason, interactionId: row.id },
+          'meet_transcript_read_failed',
+        )
+      }
+      if (notesResult.status === 'rejected') {
+        log.warn({ err: notesResult.reason, interactionId: row.id }, 'meet_notes_read_failed')
+      }
+      const transcript = cleanText(transcriptRaw).slice(0, 100_000)
+      const notes = cleanText(notesRaw).slice(0, 50_000)
+      if (!transcript && !notes) {
+        throw new Error(
+          'Los documentos de Meet están generados, pero no se pudo leer su contenido.',
+        )
+      }
+      const summary = await summarize(notes, transcript)
+      const importedAt = new Date().toISOString()
+      const meetingArtifacts = {
+        processed_at: importedAt,
+        last_checked_at: importedAt,
+        conference_record: conference.name,
+        transcript_document_id: transcriptId ?? null,
+        transcript_url: transcriptId
+          ? `https://docs.google.com/document/d/${transcriptId}/view`
+          : null,
+        notes_document_id: notesId ?? null,
+        notes_url: notesId ? `https://docs.google.com/document/d/${notesId}/view` : null,
+        notes_text: notes || null,
+        transcript_text: transcript || null,
+        summary: summary || notes || null,
+      }
+      const { error: updateError } = await supabase
+        .from('lead_interactions')
+        .update({
+          body: typeof row.body === 'string' ? row.body : null,
+          payload: { ...payload, meet_artifacts: meetingArtifacts },
+        })
+        .eq('id', row.id)
+      if (updateError) throw new Error(updateError.message)
+      imported++
+    } catch (err) {
+      failed++
+      await supabase
+        .from('lead_interactions')
+        .update({
+          payload: {
+            ...payload,
+            meet_artifacts: {
+              ...record(payload.meet_artifacts),
+              last_checked_at: new Date().toISOString(),
+            },
+          },
+        })
+        .eq('id', row.id)
+      log.error({ err, interactionId: row.id, leadId: row.lead_id }, 'meet_artifact_import_failed')
+    }
+  }
+
+  const result = { scanned: rows?.length ?? 0, imported, pending, failed }
+  log.info(result, 'meet_artifact_import_completed')
+  return result
+}

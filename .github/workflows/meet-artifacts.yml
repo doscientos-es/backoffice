@@ -1,0 +1,32 @@
+name: Import Google Meet notes into the CRM
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: meet-artifacts-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    name: Import generated meeting artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the meeting artifact endpoint
+        run: |
+          STATUS=$(curl --silent --output /tmp/meet-artifacts.json \
+                        --write-out "%{http_code}" \
+                        --max-time 120 \
+                        -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+                        "${{ secrets.APP_URL }}/api/cron/meet-artifacts")
+
+          echo "HTTP status: $STATUS"
+          cat /tmp/meet-artifacts.json | python3 -m json.tool || true
+
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "::error::El endpoint devolvió HTTP $STATUS"
+            exit 1
+          fi

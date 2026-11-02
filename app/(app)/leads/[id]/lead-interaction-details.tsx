@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
-import { CalendarDays, CornerUpLeft, Eye, Mail, Sparkles } from 'lucide-react'
+import { CalendarDays, CornerUpLeft, Eye, Mail, Sparkles, Video } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -84,13 +84,48 @@ export function LeadInteractionDetails({
   const body = interactionBodyText(interaction.body)
   const isEmail = interaction.type.startsWith('email_')
   const metadata = isEmail ? emailMetadata(interaction.payload) : []
+  const meetingData =
+    interaction.type === 'meeting' && interaction.payload && typeof interaction.payload === 'object'
+      ? (interaction.payload as Record<string, unknown>)
+      : null
+  const meetingDetails =
+    meetingData?.meet_artifacts && typeof meetingData.meet_artifacts === 'object'
+      ? (meetingData.meet_artifacts as Record<string, unknown>)
+      : null
+  const meetUrl = typeof meetingData?.meet_url === 'string' ? meetingData.meet_url : null
+  const meetingSummary =
+    typeof meetingDetails?.summary === 'string' ? meetingDetails.summary.trim() : null
+  const meetingNotes =
+    typeof meetingDetails?.notes_text === 'string' ? meetingDetails.notes_text.trim() : null
+  const transcript =
+    typeof meetingDetails?.transcript_text === 'string'
+      ? meetingDetails.transcript_text.trim()
+      : null
+  const transcriptUrl =
+    typeof meetingDetails?.transcript_url === 'string' ? meetingDetails.transcript_url : null
+  const notesUrl = typeof meetingDetails?.notes_url === 'string' ? meetingDetails.notes_url : null
+  const importedAt =
+    typeof meetingDetails?.processed_at === 'string' ? meetingDetails.processed_at : null
+  const lastCheckedAt =
+    typeof meetingDetails?.last_checked_at === 'string' ? meetingDetails.last_checked_at : null
+  const meetingStart = typeof meetingData?.start === 'string' ? meetingData.start : null
+  const meetingStarted = meetingStart ? new Date(meetingStart).getTime() <= Date.now() : false
+  const meetingAttendees = Array.isArray(meetingData?.attendees)
+    ? meetingData.attendees.filter((value): value is string => typeof value === 'string')
+    : []
+  const organizerEmail =
+    typeof meetingData?.organizer_email === 'string' ? meetingData.organizer_email : null
+  const showMeetingSection =
+    interaction.type === 'meeting' &&
+    Boolean(meetUrl || meetingSummary || meetingNotes || transcript || notesUrl || transcriptUrl)
+  const meetingDate = meetingStart ? new Date(meetingStart).toLocaleString('es-ES') : null
   const replyTo =
     emailAddress(payloadText(interaction.payload, 'from')) ??
     emailAddress(payloadText(interaction.payload, 'counterparty')) ??
     leadEmail
   const canQuickReply = interaction.type === 'email_received' && canReply
 
-  if (!body) return null
+  if (!body && !showMeetingSection) return null
 
   return (
     <Dialog>
@@ -109,7 +144,13 @@ export function LeadInteractionDetails({
         <DialogHeader className="shrink-0 border-b bg-gradient-to-br from-primary/[0.07] via-background to-background p-5 pr-12 sm:p-6 sm:pr-14">
           <div className="flex items-start gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
-              {isEmail ? <Mail className="size-5" /> : <Eye className="size-5" />}
+              {isEmail ? (
+                <Mail className="size-5" />
+              ) : interaction.type === 'meeting' ? (
+                <Video className="size-5" />
+              ) : (
+                <Eye className="size-5" />
+              )}
             </span>
             <div className="min-w-0 space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
@@ -121,7 +162,9 @@ export function LeadInteractionDetails({
               </DialogTitle>
               <DialogDescription className="flex flex-wrap items-center gap-2 text-left">
                 <CalendarDays className="size-3.5" />
-                <span>{new Date(interaction.created_at).toLocaleString('es-ES')}</span>
+                <span>
+                  {meetingDate ?? new Date(interaction.created_at).toLocaleString('es-ES')}
+                </span>
               </DialogDescription>
             </div>
           </div>
@@ -169,20 +212,121 @@ export function LeadInteractionDetails({
                 </section>
               ) : null}
 
-              <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
-                <div className="flex items-center justify-between gap-3 border-b bg-muted/20 px-4 py-3">
-                  <div>
-                    <h3 className="text-sm font-medium">Contenido completo</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Formato original convertido a texto legible.
-                    </p>
+              {body ? (
+                <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+                  <div className="flex items-center justify-between gap-3 border-b bg-muted/20 px-4 py-3">
+                    <div>
+                      <h3 className="text-sm font-medium">
+                        {interaction.type === 'meeting'
+                          ? 'Descripción de la reunión'
+                          : 'Contenido completo'}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {interaction.type === 'meeting'
+                          ? 'Agenda y contexto guardados al agendar.'
+                          : 'Formato original convertido a texto legible.'}
+                      </p>
+                    </div>
+                    <CopyButton
+                      text={body}
+                      label="Copiar contenido"
+                      showLabel
+                      className="shrink-0"
+                    />
                   </div>
-                  <CopyButton text={body} label="Copiar contenido" showLabel className="shrink-0" />
-                </div>
-                <p className="p-4 text-sm leading-7 break-words whitespace-pre-wrap sm:p-5">
-                  {body}
-                </p>
-              </section>
+                  <p className="p-4 text-sm leading-7 break-words whitespace-pre-wrap sm:p-5">
+                    {body}
+                  </p>
+                </section>
+              ) : null}
+              {showMeetingSection ? (
+                <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/20 px-4 py-3">
+                    <div className="flex min-w-0 items-start gap-2.5">
+                      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Video className="size-4" aria-hidden />
+                      </span>
+                      <div>
+                        <h3 className="text-sm font-medium">Notas y transcripción</h3>
+                        <p className="text-xs text-muted-foreground">
+                          {importedAt
+                            ? `Sincronizado el ${new Date(importedAt).toLocaleString('es-ES')}`
+                            : meetingStarted
+                              ? lastCheckedAt
+                                ? `Esperando los documentos de Google Meet · última búsqueda ${new Date(lastCheckedAt).toLocaleString('es-ES')}`
+                                : 'Meet ha terminado; el backoffice espera a que Google genere los documentos.'
+                              : 'Al terminar la reunión, el backoffice buscará aquí los documentos de Google Meet.'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {meetUrl ? (
+                        <Button asChild type="button" variant="outline" size="sm">
+                          <a href={meetUrl} target="_blank" rel="noopener noreferrer">
+                            Abrir Meet
+                          </a>
+                        </Button>
+                      ) : null}
+                      {notesUrl ? (
+                        <Button asChild type="button" variant="outline" size="sm">
+                          <a href={notesUrl} target="_blank" rel="noopener noreferrer">
+                            Documento de notas
+                          </a>
+                        </Button>
+                      ) : null}
+                      {transcriptUrl ? (
+                        <Button asChild type="button" variant="outline" size="sm">
+                          <a href={transcriptUrl} target="_blank" rel="noopener noreferrer">
+                            Documento de transcripción
+                          </a>
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="space-y-4 p-4 sm:p-5">
+                    {meetingSummary ? (
+                      <div>
+                        <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                          Resumen de la reunión
+                        </h4>
+                        <p className="mt-2 text-sm leading-7 break-words whitespace-pre-wrap">
+                          {meetingSummary}
+                        </p>
+                      </div>
+                    ) : null}
+                    {meetingNotes && meetingNotes !== meetingSummary ? (
+                      <details className="rounded-lg border border-border/70">
+                        <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
+                          Notas completas de Google Meet
+                        </summary>
+                        <pre className="max-h-[50vh] overflow-auto border-t p-3 text-sm leading-6 whitespace-pre-wrap">
+                          {meetingNotes}
+                        </pre>
+                      </details>
+                    ) : null}
+                    {transcript ? (
+                      <details className="rounded-lg border border-border/70">
+                        <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
+                          Ver transcripción íntegra
+                        </summary>
+                        <pre className="max-h-[60vh] overflow-auto border-t p-3 text-sm leading-6 whitespace-pre-wrap">
+                          {transcript}
+                        </pre>
+                      </details>
+                    ) : importedAt ? (
+                      <p className="text-sm text-muted-foreground">
+                        Google no generó una transcripción para esta reunión.
+                      </p>
+                    ) : null}
+                    {!importedAt && !meetingSummary && !meetingNotes && !transcript ? (
+                      <p className="text-sm text-muted-foreground">
+                        No hace falta reenviar ni copiar el email de Google: los documentos se
+                        asociarán a esta ficha cuando estén listos.
+                      </p>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
             </div>
 
             <aside className="space-y-4 lg:sticky lg:top-0">
@@ -197,6 +341,22 @@ export function LeadInteractionDetails({
                       <dd className="mt-0.5 leading-snug font-medium break-words">{value}</dd>
                     </div>
                   ))}
+                  {organizerEmail ? (
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Organizador</dt>
+                      <dd className="mt-0.5 leading-snug font-medium break-words">
+                        {organizerEmail}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {meetingAttendees.length > 0 ? (
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Invitados</dt>
+                      <dd className="mt-0.5 leading-snug font-medium break-words">
+                        {meetingAttendees.join(', ')}
+                      </dd>
+                    </div>
+                  ) : null}
                   <div>
                     <dt className="text-xs text-muted-foreground">Registrado por</dt>
                     <dd className="mt-1">

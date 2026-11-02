@@ -1739,6 +1739,7 @@ export const scheduleLeadMeeting = defineAction<
         calendar_event_id: event.id,
         calendar_html_link: event.htmlLink,
         meet_url: event.meetUrl,
+        organizer_email: user.email,
         start: data.start,
         end: data.end,
         attendees: attendeeEmails,

@@ -17,6 +17,7 @@ import { isGoogleEnabled, serverEnv } from '@/lib/env'
 export const GOOGLE_SCOPES = {
   drive: 'https://www.googleapis.com/auth/drive',
   calendar: 'https://www.googleapis.com/auth/calendar',
+  meet: 'https://www.googleapis.com/auth/meetings.space.readonly',
   gmail: 'https://www.googleapis.com/auth/gmail.modify',
 } as const
 

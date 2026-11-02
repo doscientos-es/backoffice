@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from 'react'
 
 import { scheduleLeadMeeting } from '@/app/(app)/leads/actions'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EntityCombobox } from '@/components/ui/entity-combobox'
 import { EntityMultiCombobox } from '@/components/ui/entity-multi-combobox'
 import { createCalendarEvent } from '@/lib/calendar/actions'
@@ -88,6 +89,7 @@ export function CalendarCreateDialog({
   const [location, setLocation] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [confirmMeetingOpen, setConfirmMeetingOpen] = useState(false)
 
   // Meeting/Event state
   const [selectedLeadId, setSelectedLeadId] = useState('')
@@ -121,7 +123,20 @@ export function CalendarCreateDialog({
     e.preventDefault()
     if (!title.trim()) return
     setError(null)
+    if (kind === 'google_meeting') {
+      setConfirmMeetingOpen(true)
+      return
+    }
 
+    createCalendarItem()
+  }
+
+  function confirmCreateMeeting() {
+    setConfirmMeetingOpen(false)
+    createCalendarItem()
+  }
+
+  function createCalendarItem() {
     startTransition(async () => {
       try {
         // Emails of the selected internal members (Google adds the organizer automatically).
@@ -214,6 +229,7 @@ export function CalendarCreateDialog({
   }
 
   const hasLead = kind === 'google_meeting' && !!selectedLeadId && !!selectedContactLeadId
+  const selectedTeamMembers = teamMembers.filter((member) => selectedMemberIds.includes(member.id))
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -502,6 +518,27 @@ export function CalendarCreateDialog({
             </label>
           )}
 
+          {kind === 'google_meeting' ? (
+            <div className="rounded-md border border-primary/15 bg-primary/[0.04] px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+              {withMeet ? (
+                selectedContactLeadId ? (
+                  <>
+                    La reunión quedará vinculada a <strong>{selectedContact?.name}</strong>. Cuando
+                    Google genere las notas de Gemini y la transcripción, se añadirán a su ficha
+                    automáticamente, sin depender del correo al que Google las envíe.
+                  </>
+                ) : (
+                  <>
+                    Para guardar las notas de Gemini y la transcripción en el CRM, selecciona un
+                    lead arriba. Sin lead, la reunión solo aparecerá en Google Calendar.
+                  </>
+                )
+              ) : (
+                'Sin enlace de Meet, no se podrán importar notas ni transcripciones de esta reunión.'
+              )}
+            </div>
+          ) : null}
+
           {/* Notes */}
           <textarea
             placeholder="Notas (opcional)"
@@ -523,6 +560,48 @@ export function CalendarCreateDialog({
           </div>
         </form>
       </DialogContent>
+      <ConfirmDialog
+        open={confirmMeetingOpen}
+        onOpenChange={setConfirmMeetingOpen}
+        title={
+          selectedContact?.email
+            ? '¿Enviar invitación de Meet?'
+            : '¿Crear reunión en Google Calendar?'
+        }
+        description={
+          <>
+            <p>
+              <strong>{title.trim()}</strong> · {meetingStart.replace('T', ' ')} · {meetingDuration}{' '}
+              minutos.
+            </p>
+            {selectedContact?.email ? (
+              <p className="mt-2">
+                Google enviará la invitación a <strong>{selectedContact.email}</strong>.
+              </p>
+            ) : (
+              <p className="mt-2">
+                No se enviará invitación al contacto porque no hay un email seleccionado.
+              </p>
+            )}
+            {selectedTeamMembers.length > 0 ? (
+              <p className="mt-2">
+                En el calendario compartido:{' '}
+                <strong>{selectedTeamMembers.map((member) => member.name).join(', ')}</strong>. No
+                recibirán un correo duplicado.
+              </p>
+            ) : null}
+            <p className="mt-2">
+              {hasLead
+                ? 'La reunión quedará vinculada a la ficha del lead y el backoffice importará allí los documentos generados por Google Meet.'
+                : 'Sin un lead seleccionado, la reunión aparecerá en Google Calendar, pero no tendrá una ficha del CRM donde guardar notas y transcripción.'}
+            </p>
+          </>
+        }
+        confirmLabel={selectedContact?.email ? 'Crear y enviar invitación' : 'Crear reunión'}
+        cancelLabel="Volver a revisar"
+        pending={isPending}
+        onConfirm={confirmCreateMeeting}
+      />
     </Dialog>
   )
 }

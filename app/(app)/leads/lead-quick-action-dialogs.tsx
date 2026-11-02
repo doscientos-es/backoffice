@@ -1,7 +1,7 @@
 'use client'
 
 // Compartido entre el drawer de la lista de leads y la ficha del lead.
-// Única fuente de verdad para las 3 fast actions (llamada, email, nota)
+// Acciones rápidas de comunicación, nota y agenda
 // con opción de agendar follow-up. Todas refrescan el router tras éxito.
 
 import {
@@ -14,7 +14,7 @@ import {
 } from '@doscientos/ui'
 import { FileText, LoaderCircle as Loader2, Mail, Phone, Plus, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { type ReactNode, type SubmitEvent, useEffect, useState } from 'react'
+import { type ReactNode, type SubmitEvent, useCallback, useEffect, useId, useState } from 'react'
 
 import { GoogleMeetIcon } from '@/components/icons/google-meet-icon'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
@@ -244,10 +244,12 @@ function LastAttemptDialog({
 // ─── Shared helper: member checkboxes ────────────────────────────────────────
 
 function MemberCheckboxes({
+  idPrefix,
   members,
   selected,
   onToggle,
 }: {
+  idPrefix: string
   members: MeetMember[]
   selected: Set<string>
   onToggle: (id: string) => void
@@ -256,18 +258,18 @@ function MemberCheckboxes({
   return (
     <div className="flex flex-col gap-1.5">
       <Label className="text-xs font-medium">
-        Invitar compañeros <span className="text-muted-foreground/60">(opcional)</span>
+        Añadir compañeros al calendario <span className="text-muted-foreground/60">(opcional)</span>
       </Label>
       <div className="flex flex-col gap-1.5 rounded-md border border-border/60 bg-muted/30 p-2.5">
         {members.map((m) => (
           <div key={m.id} className="flex items-center gap-2">
             <Checkbox
-              id={`member-${m.id}`}
+              id={`${idPrefix}-member-${m.id}`}
               isSelected={selected.has(m.id)}
               onChange={() => onToggle(m.id)}
             />
             <label
-              htmlFor={`member-${m.id}`}
+              htmlFor={`${idPrefix}-member-${m.id}`}
               className="flex-1 cursor-pointer py-0.5 text-sm select-none"
             >
               {m.name}
@@ -292,7 +294,8 @@ function useMemberToggle() {
   function emails(members: MeetMember[]) {
     return members.filter((m) => selected.has(m.id)).map((m) => m.email)
   }
-  return { selected, toggle, emails }
+  const reset = useCallback(() => setSelected(new Set()), [])
+  return { selected, toggle, emails, reset }
 }
 
 // ─── QMeetDialog — scheduled meeting ─────────────────────────────────────────
@@ -320,6 +323,17 @@ export function QMeetDialog({
   const members = useMemberToggle()
   const feedback = useFormFeedback()
   const router = useRouter()
+  const dialogId = useId()
+
+  useEffect(() => {
+    if (!open) return
+    setTitle(`Consultoría ${leadName} - Doscientos`)
+    setStart(defaultMeetingStart())
+    setDuration(DEFAULT_MEETING_DURATION)
+    setDescription('')
+    setProjectId('')
+    members.reset()
+  }, [open, leadName, members.reset])
 
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -346,9 +360,12 @@ export function QMeetDialog({
     setConfirmOpen(false)
     feedback.setSuccess('Reunión creada')
     router.refresh()
-    if (res.meetUrl) window.open(res.meetUrl, '_blank')
     setTimeout(() => setOpen(false), 600)
   }
+
+  const selectedInternalMembers = meetMembers
+    .filter((member) => members.selected.has(member.id))
+    .map((member) => member.name)
 
   return (
     <>
@@ -364,8 +381,10 @@ export function QMeetDialog({
             <DialogTitle>Agendar reunión Google Meet</DialogTitle>
             <DialogDescription>
               {leadEmail
-                ? 'Se creará en el calendario compartido y se enviará una invitación por email.'
-                : 'Se creará en el calendario compartido. Este lead no tiene email registrado.'}
+                ? `Se creará en el calendario compartido y se enviará una invitación a ${leadEmail}.`
+                : 'Se creará en el calendario compartido. Este lead no tiene email registrado.'}{' '}
+              La reunión quedará vinculada a esta ficha; el backoffice añadirá las notas de Gemini y
+              la transcripción cuando Google las genere, aunque el correo llegue a otro organizador.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={onSubmit} className="flex flex-col gap-3">
@@ -427,10 +446,15 @@ export function QMeetDialog({
               </div>
             )}
             <MemberCheckboxes
+              idPrefix={`${dialogId}-scheduled-meet-${leadId}`}
               members={meetMembers}
               selected={members.selected}
               onToggle={members.toggle}
             />
+            <div className="rounded-md border border-primary/15 bg-primary/[0.04] px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+              La ficha guardará el enlace de Meet y buscará las notas y la transcripción al terminar
+              la reunión. La llegada del documento por email no es necesaria.
+            </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={`qa-meet-desc-${leadId}`} className="text-xs font-medium">
                 Descripción <span className="text-muted-foreground/60">(opcional)</span>
@@ -474,6 +498,16 @@ export function QMeetDialog({
                 ? 'El lead recibirá la invitación en su calendario.'
                 : 'La reunión se creará sin invitación para el lead.'}
             </p>
+            {selectedInternalMembers.length > 0 ? (
+              <p className="mt-2">
+                En el calendario compartido: <strong>{selectedInternalMembers.join(', ')}</strong>.
+                No recibirán un correo duplicado.
+              </p>
+            ) : null}
+            <p className="mt-2">
+              Al terminar, Meet generará los documentos según la configuración de Google Workspace;
+              el backoffice los vinculará aquí automáticamente.
+            </p>
           </>
         }
         confirmLabel={leadEmail ? 'Sí, enviar invitación' : 'Sí, crear reunión'}
@@ -504,6 +538,13 @@ export function QMeetNowDialog({
   const members = useMemberToggle()
   const feedback = useFormFeedback()
   const router = useRouter()
+  const dialogId = useId()
+
+  useEffect(() => {
+    if (!open) return
+    setDescription('')
+    members.reset()
+  }, [open, members.reset])
 
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -512,6 +553,7 @@ export function QMeetNowDialog({
 
   async function handleConfirmCreate() {
     feedback.setPending()
+    const meetWindow = window.open('about:blank', '_blank')
     const now = new Date()
     const endTime = new Date(now.getTime() + 60 * 60 * 1000)
     const attendeeEmails = [...(leadEmail ? [leadEmail] : []), ...members.emails(meetMembers)]
@@ -525,13 +567,23 @@ export function QMeetNowDialog({
       withMeet: true,
     })
     if (!res.ok) {
+      meetWindow?.close()
       setConfirmOpen(false)
       return feedback.setError(res.error)
     }
     setConfirmOpen(false)
-    feedback.setSuccess('¡Meet creado!')
+    feedback.setSuccess(
+      meetWindow && res.meetUrl
+        ? '¡Meet creado!'
+        : 'Meet creado; puedes abrir el enlace desde la actividad del lead.',
+    )
     router.refresh()
-    if (res.meetUrl) window.open(res.meetUrl, '_blank')
+    if (res.meetUrl && meetWindow) {
+      meetWindow.opener = null
+      meetWindow.location.href = res.meetUrl
+    } else {
+      meetWindow?.close()
+    }
     setTimeout(() => setOpen(false), 600)
   }
 
@@ -549,12 +601,15 @@ export function QMeetNowDialog({
             <DialogTitle>Iniciar Meet ahora</DialogTitle>
             <DialogDescription>
               {leadEmail
-                ? 'Se crea el enlace Meet, se abre en una nueva pestaña y se envía invitación.'
-                : 'Se crea el enlace Meet y se abre en una nueva pestaña. Este lead no tiene email registrado.'}
+                ? `Se crea el enlace Meet, se abre en una nueva pestaña y se invita a ${leadEmail}.`
+                : 'Se crea el enlace Meet y se abre en una nueva pestaña. Este lead no tiene email registrado.'}{' '}
+              Las notas y la transcripción se añadirán automáticamente a esta ficha cuando Meet las
+              genere.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={onSubmit} className="flex flex-col gap-3">
             <MemberCheckboxes
+              idPrefix={`${dialogId}-instant-meet-${leadId}`}
               members={meetMembers}
               selected={members.selected}
               onToggle={members.toggle}
@@ -595,6 +650,10 @@ export function QMeetNowDialog({
               <p>Este lead no tiene email registrado y no recibirá una invitación.</p>
             )}
             <p className="mt-2">También se abrirá el enlace de Meet en una nueva pestaña.</p>
+            <p className="mt-2">
+              Al terminar la llamada, el backoffice buscará las notas de Gemini y la transcripción
+              generadas por Google Meet y las guardará en esta ficha.
+            </p>
           </>
         }
         confirmLabel={leadEmail ? 'Sí, crear y enviar' : 'Sí, crear y abrir Meet'}
