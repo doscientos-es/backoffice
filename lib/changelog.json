@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.152",
+      "date": "2026-11-02",
+      "title": "v0.1.152",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add functionality to save related contacts from calls"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "6d548690d88920ff7bcb6aae6207b7798e329d04",
+          "type": "feat",
+          "scope": "lead",
+          "breaking": false,
+          "description": "Add functionality to save related contacts from calls"
+        }
+      ]
+    },
+    {
       "version": "0.1.151",
       "date": "2026-11-02",
       "title": "v0.1.151",
