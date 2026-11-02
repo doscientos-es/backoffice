@@ -11,11 +11,11 @@ export type MeetArtifactDoc = {
 export type MeetParticipant = {
   name: string
   email?: string
-  earliestStartTime?: string
-  latestEndTime?: string
-  signedinUser?: { user?: string }
+  signedinUser?: { user?: string; displayName?: string }
   anonymousUser?: { displayName?: string }
   phoneUser?: { displayName?: string }
+  earliestStartTime?: string
+  latestEndTime?: string
 }
 
 type ConferenceRecord = { name: string; startTime: string; endTime?: string; space?: string }

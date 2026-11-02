@@ -221,9 +221,11 @@ export async function importRecentMeetArtifacts(): Promise<{
         duration_minutes: durationMinutes,
         participants: participants.map((participant) => ({
           name:
+            participant.signedinUser?.displayName ??
             participant.anonymousUser?.displayName ??
             participant.phoneUser?.displayName ??
             participant.email ??
+            participant.name.split('/').at(-1) ??
             participant.name,
           email: participant.email ?? null,
           start: participant.earliestStartTime ?? null,
@@ -283,7 +285,6 @@ export async function importRecentMeetArtifacts(): Promise<{
       const { data: taskMembers } = completedTaskIds.length
         ? await supabase.from('task_members').select('member_id').in('task_id', completedTaskIds)
         : { data: [] }
-      if (!completedTaskIds.length) continue
       const { data: leadOwner } = await supabase
         .from('leads')
         .select('assigned_to')
@@ -299,8 +300,10 @@ export async function importRecentMeetArtifacts(): Promise<{
       const normalizedParticipantNames = participants.map((participant) =>
         (
           participant.anonymousUser?.displayName ??
+          participant.signedinUser?.displayName ??
           participant.phoneUser?.displayName ??
           participant.email ??
+          participant.name.split('/').at(-1) ??
           participant.name
         )
           .toLocaleLowerCase('es-ES')
