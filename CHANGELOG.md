@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-02 — v0.1.148
+
+### Correcciones
+
+- Pin Node 22 for Vercel
+
 ## 2026-11-02 — v0.1.147
 
 ### Nuevas funciones

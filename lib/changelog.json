@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.148",
+      "date": "2026-11-02",
+      "title": "v0.1.148",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Pin Node 22 for Vercel"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "c9a65aa3be1b6878f266bd05668f6eb7c31e4e46",
+          "type": "fix",
+          "scope": "build",
+          "breaking": false,
+          "description": "Pin Node 22 for Vercel"
+        }
+      ]
+    },
+    {
       "version": "0.1.147",
       "date": "2026-11-02",
       "title": "v0.1.147",
