@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-02 — v0.1.147
+
+### Nuevas funciones
+
+- Sync Google Meet notes and transcripts
+
 ## 2026-10-30 — v0.1.146
 
 ### Nuevas funciones

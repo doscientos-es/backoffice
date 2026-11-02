@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.147",
+      "date": "2026-11-02",
+      "title": "v0.1.147",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Sync Google Meet notes and transcripts"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "7ef2099adc19bc2006266ce5fd16d7fa5f8a4934",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Sync Google Meet notes and transcripts"
+        }
+      ]
+    },
+    {
       "version": "0.1.146",
       "date": "2026-10-30",
       "title": "v0.1.146",
