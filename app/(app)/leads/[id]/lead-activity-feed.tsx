@@ -152,12 +152,30 @@ function buildEvents({
     ({ interaction, latestInteraction, statuses }) => ({
       kind: 'interaction' as const,
       id: `interaction-${interaction.id}`,
-      date: interactionDate(latestInteraction),
+      date:
+        interaction.type === 'meeting' &&
+        interaction.payload &&
+        typeof interaction.payload === 'object' &&
+        typeof (interaction.payload as Record<string, unknown>).start === 'string'
+          ? String((interaction.payload as Record<string, unknown>).start)
+          : interactionDate(latestInteraction),
       label: interaction.resend_email_id
         ? statuses.includes('email_received')
           ? 'Email recibido'
           : 'Email enviado'
-        : (INTERACTION_LABEL[interaction.type] ?? interaction.type),
+        : interaction.type === 'meeting' &&
+            interaction.payload &&
+            typeof interaction.payload === 'object' &&
+            typeof (interaction.payload as Record<string, unknown>).meet_artifacts === 'object' &&
+            (interaction.payload as Record<string, unknown>).meet_artifacts !== null &&
+            typeof (
+              (interaction.payload as Record<string, unknown>).meet_artifacts as Record<
+                string,
+                unknown
+              >
+            ).duration_minutes === 'number'
+          ? `Reunión · ${((interaction.payload as Record<string, unknown>).meet_artifacts as Record<string, unknown>).duration_minutes} min`
+          : (INTERACTION_LABEL[interaction.type] ?? interaction.type),
       interaction,
       statuses,
     }),
@@ -205,6 +223,7 @@ function buildEvents({
   })
 
   const taskEvents: ActivityEvent[] = tasks.flatMap((item) => {
+    if (item.kind === 'reminder' && item.action_type === 'meeting') return []
     if (!item.due_date) return []
     return [
       {
@@ -267,6 +286,11 @@ export function LeadActivityFeed({
   tasks,
 }: LeadActivityFeedProps) {
   const events = buildEvents({ interactions, auditEvents, proposals, invoices, tasks })
+  const scheduledMeetingIds = new Set(
+    tasks
+      .filter((task) => task.kind === 'reminder' && task.action_type === 'meeting')
+      .map((task) => task.id),
+  )
   const groups = groupEventsByDay(events)
 
   return (
@@ -300,7 +324,11 @@ export function LeadActivityFeed({
                       <AuditRow key={event.id} event={event} />
                     ) : event.kind === 'record' ? (
                       <RecordRow key={event.id} event={event} />
-                    ) : isLowValueInteraction(event.interaction.type) ? (
+                    ) : isLowValueInteraction(event.interaction.type) &&
+                      !(
+                        event.interaction.type === 'meeting' &&
+                        scheduledMeetingIds.has(event.interaction.id)
+                      ) ? (
                       <CompactInteractionRow key={event.id} event={event} />
                     ) : (
                       <InteractionRow

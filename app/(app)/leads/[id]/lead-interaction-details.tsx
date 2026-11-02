@@ -88,9 +88,10 @@ export function LeadInteractionDetails({
     interaction.type === 'meeting' && interaction.payload && typeof interaction.payload === 'object'
       ? (interaction.payload as Record<string, unknown>)
       : null
+  const meetingArtifactsValue = meetingData?.meet_artifacts
   const meetingDetails =
-    meetingData?.meet_artifacts && typeof meetingData.meet_artifacts === 'object'
-      ? (meetingData.meet_artifacts as Record<string, unknown>)
+    meetingArtifactsValue && typeof meetingArtifactsValue === 'object'
+      ? (meetingArtifactsValue as Record<string, unknown>)
       : null
   const meetUrl = typeof meetingData?.meet_url === 'string' ? meetingData.meet_url : null
   const meetingSummary =
@@ -109,6 +110,20 @@ export function LeadInteractionDetails({
   const lastCheckedAt =
     typeof meetingDetails?.last_checked_at === 'string' ? meetingDetails.last_checked_at : null
   const meetingStart = typeof meetingData?.start === 'string' ? meetingData.start : null
+  const actualStart =
+    typeof meetingDetails?.actual_start === 'string' ? meetingDetails.actual_start : null
+  const actualEnd =
+    typeof meetingDetails?.actual_end === 'string' ? meetingDetails.actual_end : null
+  const actualDuration =
+    typeof meetingDetails?.duration_minutes === 'number' ? meetingDetails.duration_minutes : null
+  const meetingParticipants = Array.isArray(meetingDetails?.participants)
+    ? (meetingDetails.participants as Array<{
+        name?: string
+        email?: string | null
+        start?: string | null
+        end?: string | null
+      }>)
+    : []
   const meetingStarted = meetingStart ? new Date(meetingStart).getTime() <= Date.now() : false
   const meetingAttendees = Array.isArray(meetingData?.attendees)
     ? meetingData.attendees.filter((value): value is string => typeof value === 'string')
@@ -118,7 +133,10 @@ export function LeadInteractionDetails({
   const showMeetingSection =
     interaction.type === 'meeting' &&
     Boolean(meetUrl || meetingSummary || meetingNotes || transcript || notesUrl || transcriptUrl)
-  const meetingDate = meetingStart ? new Date(meetingStart).toLocaleString('es-ES') : null
+  const meetingDisplayStart = actualStart ?? meetingStart
+  const meetingDate = meetingDisplayStart
+    ? new Date(meetingDisplayStart).toLocaleString('es-ES')
+    : null
   const replyTo =
     emailAddress(payloadText(interaction.payload, 'from')) ??
     emailAddress(payloadText(interaction.payload, 'counterparty')) ??
@@ -247,7 +265,7 @@ export function LeadInteractionDetails({
                         <Video className="size-4" aria-hidden />
                       </span>
                       <div>
-                        <h3 className="text-sm font-medium">Notas y transcripción</h3>
+                        <h3 className="text-sm font-medium">Resumen de la reunión</h3>
                         <p className="text-xs text-muted-foreground">
                           {importedAt
                             ? `Sincronizado el ${new Date(importedAt).toLocaleString('es-ES')}`
@@ -284,6 +302,41 @@ export function LeadInteractionDetails({
                     </div>
                   </div>
                   <div className="space-y-4 p-4 sm:p-5">
+                    {importedAt ? (
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        <div className="rounded-lg border bg-background/70 px-3 py-2">
+                          <p className="text-xs text-muted-foreground">Duración real</p>
+                          <p className="mt-1 text-sm font-semibold">
+                            {actualDuration !== null ? `${actualDuration} min` : 'No disponible'}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border bg-background/70 px-3 py-2">
+                          <p className="text-xs text-muted-foreground">Participantes</p>
+                          <p className="mt-1 text-sm font-semibold">{meetingParticipants.length}</p>
+                        </div>
+                        <div className="rounded-lg border bg-background/70 px-3 py-2">
+                          <p className="text-xs text-muted-foreground">Estado</p>
+                          <p className="mt-1 text-sm font-semibold">Información sincronizada</p>
+                        </div>
+                      </div>
+                    ) : null}
+                    {meetingParticipants.length ? (
+                      <div>
+                        <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                          Quién estuvo en la llamada
+                        </h4>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {meetingParticipants.map((participant) => (
+                            <Badge
+                              key={`${participant.email ?? participant.name ?? 'participante'}-${participant.start ?? ''}`}
+                              variant="secondary"
+                            >
+                              {participant.name ?? participant.email ?? 'Participante'}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                     {meetingSummary ? (
                       <div>
                         <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -354,6 +407,14 @@ export function LeadInteractionDetails({
                       <dt className="text-xs text-muted-foreground">Invitados</dt>
                       <dd className="mt-0.5 leading-snug font-medium break-words">
                         {meetingAttendees.join(', ')}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {actualEnd ? (
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Fin real</dt>
+                      <dd className="mt-0.5 leading-snug font-medium break-words">
+                        {new Date(actualEnd).toLocaleString('es-ES')}
                       </dd>
                     </div>
                   ) : null}

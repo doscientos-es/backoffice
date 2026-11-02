@@ -371,7 +371,9 @@ export async function getLeadDetail(
     loadCompanyResearch(supabase, id),
     supabase
       .from('lead_interactions')
-      .select(`id, type, subject, body, created_at, payload, resend_email_id, ${PERFORMER_EMBED}`)
+      .select(
+        `id, type, subject, body, created_at, payload, resend_email_id, performed_by, ${PERFORMER_EMBED}`,
+      )
       .eq('lead_id', id)
       .order('created_at', { ascending: false })
       .limit(50),
@@ -386,8 +388,10 @@ export async function getLeadDetail(
     notDeleted(
       supabase
         .from('tasks')
-        .select('id, title, status, due_date, description, priority')
-        .eq('kind', 'task')
+        .select(
+          'id, title, status, due_date, description, priority, kind, action_type, start_at, completed_at',
+        )
+        .in('kind', ['task', 'reminder'])
         .eq('lead_id', id),
     )
       .order('created_at', { ascending: false })
@@ -563,6 +567,10 @@ export async function getLeadDetail(
       due_date: (t.due_date as string | null) ?? null,
       description: (t.description as string | null) ?? null,
       priority: (t.priority as string | null) ?? null,
+      kind: (t.kind as string | null) ?? null,
+      action_type: (t.action_type as string | null) ?? null,
+      start_at: (t.start_at as string | null) ?? null,
+      completed_at: (t.completed_at as string | null) ?? null,
     })),
     reminders: (reminders ?? []).map((r) => ({
       id: r.id as string,

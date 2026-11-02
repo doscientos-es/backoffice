@@ -8,7 +8,21 @@ export type MeetArtifactDoc = {
   docsDestination?: { document?: string; exportUri?: string }
 }
 
+export type MeetParticipant = {
+  name: string
+  email?: string
+  earliestStartTime?: string
+  latestEndTime?: string
+  signedinUser?: { user?: string }
+  anonymousUser?: { displayName?: string }
+  phoneUser?: { displayName?: string }
+}
+
 type ConferenceRecord = { name: string; startTime: string; endTime?: string; space?: string }
+
+export type EnrichedConferenceRecord = ConferenceRecord & {
+  participants: MeetParticipant[]
+}
 
 /** Lists conference instances matching a Meet code near the scheduled time. */
 export async function listConferenceRecords(opts: {
@@ -25,6 +39,19 @@ export async function listConferenceRecords(opts: {
     `${BASE}/conferenceRecords?${params}`,
   )
   return result.conferenceRecords ?? []
+}
+
+/** Loads conference participants and their real join/leave time range. */
+export async function getConferenceParticipants(opts: {
+  subject: string
+  conferenceRecord: string
+}): Promise<MeetParticipant[]> {
+  const result = await googleFetch<{ participants?: MeetParticipant[] }>(
+    opts.subject,
+    [GOOGLE_SCOPES.meet],
+    `${BASE}/${opts.conferenceRecord}/participants?pageSize=100`,
+  )
+  return result.participants ?? []
 }
 
 /** Returns generated transcript and Gemini smart-note document references. */

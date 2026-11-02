@@ -9,6 +9,7 @@ export type NotificationEvent =
   | 'lead_at_risk'
   | 'lead_follow_up_summary'
   | 'call_pending'
+  | 'meeting_synced'
   | 'task_comment'
   | 'task_mention'
   | 'task_assigned'
@@ -32,6 +33,7 @@ const TITLES: Record<NotificationEvent, string> = {
   lead_at_risk: '🚨 Lead en riesgo',
   lead_follow_up_summary: '📋 Leads pendientes',
   call_pending: '📞 Llamada pendiente',
+  meeting_synced: '📝 Reunión lista',
   task_comment: '💬 Nuevo comentario',
   task_mention: '💬 Te han mencionado',
   task_assigned: '✅ Tarea asignada',

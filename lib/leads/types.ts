@@ -216,6 +216,7 @@ export type LeadDetail = {
 export type LeadDetailInteraction = LeadInteraction & {
   payload: unknown
   resend_email_id: string | null
+  performed_by?: string | null
 }
 
 export type EntityAuditTimelineEvent = {
@@ -285,6 +286,10 @@ export type LeadRelatedTask = {
   due_date: string | null
   description: string | null
   priority: string | null
+  kind?: string | null
+  action_type?: string | null
+  start_at?: string | null
+  completed_at?: string | null
 }
 
 export type LeadRelatedAttachment = {

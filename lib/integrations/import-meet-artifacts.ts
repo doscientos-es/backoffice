@@ -2,8 +2,13 @@ import { AI_MODELS, isAIEnabled, runAIChat } from '@/lib/ai'
 import { isGoogleEnabled } from '@/lib/env'
 import { resolveSubject } from '@/lib/google/client'
 import { readDocumentText } from '@/lib/google/drive'
-import { listConferenceArtifacts, listConferenceRecords } from '@/lib/google/meet'
+import {
+  getConferenceParticipants,
+  listConferenceArtifacts,
+  listConferenceRecords,
+} from '@/lib/google/meet'
 import { scopedLogger } from '@/lib/logger'
+import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const log = scopedLogger('integrations.meet-artifacts')
@@ -15,6 +20,9 @@ type MeetingPayload = Record<string, unknown> & {
   meet_url?: string
   start?: string
   end?: string
+  calendar_event_id?: string
+  organizer_email?: string
+  attendees?: string[]
   meet_artifacts?: { processed_at?: string; last_checked_at?: string }
 }
 
@@ -146,6 +154,10 @@ export async function importRecentMeetArtifacts(): Promise<{
         subject,
         conferenceRecord: conference.name,
       })
+      const participants = await getConferenceParticipants({
+        subject,
+        conferenceRecord: conference.name,
+      })
       const readyTranscript = artifacts.transcripts.find((item) => item.state === 'FILE_GENERATED')
       const readyNotes = artifacts.smartNotes.find((item) => item.state === 'FILE_GENERATED')
       const transcriptId = readyTranscript?.docsDestination?.document
@@ -191,10 +203,32 @@ export async function importRecentMeetArtifacts(): Promise<{
       }
       const summary = await summarize(notes, transcript)
       const importedAt = new Date().toISOString()
+      const durationMinutes = conference.endTime
+        ? Math.max(
+            0,
+            Math.round(
+              (new Date(conference.endTime).getTime() - new Date(conference.startTime).getTime()) /
+                60_000,
+            ),
+          )
+        : null
       const meetingArtifacts = {
         processed_at: importedAt,
         last_checked_at: importedAt,
         conference_record: conference.name,
+        actual_start: conference.startTime,
+        actual_end: conference.endTime ?? null,
+        duration_minutes: durationMinutes,
+        participants: participants.map((participant) => ({
+          name:
+            participant.anonymousUser?.displayName ??
+            participant.phoneUser?.displayName ??
+            participant.email ??
+            participant.name,
+          email: participant.email ?? null,
+          start: participant.earliestStartTime ?? null,
+          end: participant.latestEndTime ?? null,
+        })),
         transcript_document_id: transcriptId ?? null,
         transcript_url: transcriptId
           ? `https://docs.google.com/document/d/${transcriptId}/view`
@@ -205,14 +239,111 @@ export async function importRecentMeetArtifacts(): Promise<{
         transcript_text: transcript || null,
         summary: summary || notes || null,
       }
-      const { error: updateError } = await supabase
+      const { data: updatedRows, error: updateError } = await supabase
         .from('lead_interactions')
         .update({
           body: typeof row.body === 'string' ? row.body : null,
           payload: { ...payload, meet_artifacts: meetingArtifacts },
         })
         .eq('id', row.id)
+        .is('payload->meet_artifacts->>processed_at', null)
+        .select('id')
       if (updateError) throw new Error(updateError.message)
+      if (!updatedRows?.length) continue
+
+      let meetingTasks: Array<{
+        id: string
+        assignee_id: string | null
+        created_by: string | null
+      }> = []
+      if (payload.calendar_event_id) {
+        const { data } = await supabase
+          .from('tasks')
+          .select('id, assignee_id, created_by')
+          .eq('lead_id', row.lead_id)
+          .eq('kind', 'reminder')
+          .eq('action_type', 'meeting')
+          .is('completed_at', null)
+          .gte('start_at', new Date(start.getTime() - 60 * 60_000).toISOString())
+          .lte('start_at', new Date(start.getTime() + 60 * 60_000).toISOString())
+        meetingTasks = data ?? []
+      }
+      const taskIds = meetingTasks.map((task) => task.id)
+      const completedTaskIds: string[] = []
+      if (taskIds.length) {
+        const { data: completed } = await supabase
+          .from('tasks')
+          .update({ status: 'done', completed_at: importedAt })
+          .in('id', taskIds)
+          .is('completed_at', null)
+          .select('id')
+        completedTaskIds.push(...(completed ?? []).map((task) => task.id))
+      }
+
+      const { data: taskMembers } = completedTaskIds.length
+        ? await supabase.from('task_members').select('member_id').in('task_id', completedTaskIds)
+        : { data: [] }
+      if (!completedTaskIds.length) continue
+      const { data: leadOwner } = await supabase
+        .from('leads')
+        .select('assigned_to')
+        .eq('id', row.lead_id)
+        .maybeSingle()
+      const participantEmails = new Set(
+        participants
+          .map((participant) => participant.email)
+          .filter((email): email is string => Boolean(email))
+          .map((email) => email.toLowerCase()),
+      )
+      const { data: team } = await supabase.from('team_members').select('id, email, name')
+      const normalizedParticipantNames = participants.map((participant) =>
+        (
+          participant.anonymousUser?.displayName ??
+          participant.phoneUser?.displayName ??
+          participant.email ??
+          participant.name
+        )
+          .toLocaleLowerCase('es-ES')
+          .replace(/[^\p{L}\p{N}]+/gu, ' ')
+          .trim(),
+      )
+      const internalParticipantIds = (team ?? [])
+        .filter(
+          (member) =>
+            participantEmails.has(member.email.toLowerCase()) ||
+            normalizedParticipantNames.includes(
+              member.name
+                .toLocaleLowerCase('es-ES')
+                .replace(/[^\p{L}\p{N}]+/gu, ' ')
+                .trim(),
+            ),
+        )
+        .map((member) => member.id)
+      const recipientIds = Array.from(
+        new Set(
+          [
+            ...internalParticipantIds,
+            ...(taskMembers ?? []).map((member) => member.member_id),
+            ...meetingTasks
+              .filter((task) => completedTaskIds.includes(task.id))
+              .flatMap((task) => [task.assignee_id, task.created_by]),
+            row.performed_by,
+            leadOwner?.assigned_to,
+          ].filter((id): id is string => Boolean(id)),
+        ),
+      )
+      if (recipientIds.length) {
+        await dispatchNotifications({
+          recipientIds,
+          actorId: null,
+          eventType: 'meeting_synced',
+          entityType: 'lead',
+          entityId: row.lead_id,
+          body: `Meet está listo: ${durationMinutes ?? 'duración no disponible'} min · ${participants.length} participante(s)${summary ? ' · resumen disponible' : ''}.`,
+          link: `/leads/${row.lead_id}`,
+          data: { interactionId: row.id, meetingUrl: meetUrl },
+        })
+      }
       imported++
     } catch (err) {
       failed++
