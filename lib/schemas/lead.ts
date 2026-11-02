@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import { todayIsoLocal } from '@/lib/utils/date'
 
-import { assignableUuid, optionalEmail, optionalText, requiredText } from './common'
+import { assignableUuid, optionalEmail, optionalText, optionalUuid, requiredText } from './common'
 
 /**
  * Zod schemas for the `leads` domain.
@@ -205,6 +205,28 @@ export const LogNoteInput = z.object({
 })
 
 export type LogNoteInputType = z.infer<typeof LogNoteInput>
+
+export const LeadContactInput = z.object({
+  leadId: z.string().uuid(),
+  name: requiredText(160, 'El nombre es obligatorio'),
+  email: optionalEmail,
+  phone: optionalText(40),
+  role: optionalText(120),
+  company: optionalText(160),
+  notes: optionalText(2000),
+  source: z.enum(['manual', 'meet']).default('manual'),
+  sourceInteractionId: optionalUuid,
+})
+
+export const UpdateLeadContactInput = LeadContactInput.extend({
+  contactId: z.string().uuid(),
+  expectedVersion: z.coerce.number().int().positive(),
+})
+
+export const ArchiveLeadContactInput = z.object({
+  leadId: z.string().uuid(),
+  contactId: z.string().uuid(),
+})
 
 export const LogWhatsAppInput = z.object({
   leadId: z.string().uuid(),

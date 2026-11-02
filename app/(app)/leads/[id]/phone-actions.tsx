@@ -194,24 +194,29 @@ export function PhoneQuickActions({
 }) {
   const normalized = normalizePhone(phone)
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
       {leadId ? (
         <LeadCallLink
           leadId={leadId}
           phone={phone}
-          className="truncate text-primary underline-offset-2 hover:underline"
+          className="min-h-10 max-w-full truncate py-2 text-primary underline-offset-2 hover:underline sm:min-h-0 sm:py-0"
         >
           {phone}
         </LeadCallLink>
       ) : (
         <a
           href={`tel:${normalized}`}
-          className="truncate text-primary underline-offset-2 hover:underline"
+          className="min-h-10 max-w-full truncate py-2 text-primary underline-offset-2 hover:underline sm:min-h-0 sm:py-0"
         >
           {phone}
         </a>
       )}
-      <CopyButton text={normalized} successMessage="Teléfono copiado" label="Copiar teléfono" />
+      <CopyButton
+        text={normalized}
+        successMessage="Teléfono copiado"
+        label="Copiar teléfono"
+        className="size-10 shrink-0 sm:size-6"
+      />
       {leadId && leadName && (
         <LeadContactButton
           leadId={leadId}
@@ -284,7 +289,7 @@ function LeadContactButton({
           size="icon-sm"
           aria-label="Guardar en contactos"
           title="Guardar en contactos"
-          className="size-6 text-muted-foreground"
+          className="size-10 text-muted-foreground sm:size-6"
         >
           <Contact className="size-3.5" />
         </Button>
@@ -378,7 +383,7 @@ export function LeadWhatsAppButton({
           size="icon-sm"
           aria-label="Preparar WhatsApp"
           title="Preparar WhatsApp"
-          className="size-6 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-500/10"
+          className="size-10 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 sm:size-6 dark:hover:bg-emerald-500/10"
         >
           <WhatsAppIcon className="size-3.5" />
         </Button>

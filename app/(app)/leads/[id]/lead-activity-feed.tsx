@@ -415,7 +415,7 @@ function InteractionRow({
   const Icon = interactionIcon(type)
 
   return (
-    <li className="py-2.5">
+    <li id={`interaction-${interaction.id}`} className="scroll-mt-24 py-2.5">
       <article className="flex items-start gap-3">
         <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
           <Icon className="size-4" aria-hidden />

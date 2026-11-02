@@ -69,12 +69,12 @@ export function LeadQuickActionGroups({
   const hasTools = googleEnabled || Boolean(aiEnabled && createTaskAction)
 
   return (
-    <section aria-label="Acciones rápidas" className="grid grid-cols-2 gap-1.5">
+    <section aria-label="Acciones rápidas" className="grid grid-cols-2 gap-2 sm:gap-1.5">
       {leadPhone && (
         <LeadCallLink
           leadId={leadId}
           phone={leadPhone}
-          className="flex h-8 w-full min-w-0 items-center justify-start gap-2 rounded-md border border-border/80 bg-card/60 px-2.5 text-left text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted/60"
+          className="flex min-h-11 w-full min-w-0 items-center justify-start gap-2 rounded-md border border-border/80 bg-card/60 px-3 text-left text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted/60 sm:h-8 sm:min-h-0 sm:px-2.5"
         >
           <Phone className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate">Llamar</span>

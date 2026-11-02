@@ -365,6 +365,7 @@ export async function getLeadDetail(
     { data: tasks },
     { data: reminders },
     { data: attachments },
+    { data: contactRows, error: contactsError },
     { data: auditRows, error: auditTimelineError },
   ] = await Promise.all([
     notDeleted(supabase.from('leads').select(DETAIL_COLUMNS).eq('id', id)).maybeSingle(),
@@ -412,6 +413,15 @@ export async function getLeadDetail(
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(LEAD_RELATED_LIMIT),
+    supabase
+      .from('lead_contacts')
+      .select(
+        'id, name, email, phone, role, company, notes, source, source_interaction_id, version, created_at',
+      )
+      .eq('lead_id', id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(LEAD_RELATED_LIMIT),
     supabase.rpc('list_entity_audit_timeline', {
       p_entity_type: 'leads',
       p_entity_id: id,
@@ -434,6 +444,10 @@ export async function getLeadDetail(
 
   if (auditTimelineError) {
     log.warn({ leadId: id, err: auditTimelineError.message }, 'lead_audit_timeline_query_failed')
+  }
+  if (contactsError) {
+    log.error({ leadId: id, err: contactsError.message }, 'lead_contacts_query_failed')
+    throw new Error('No se pudieron cargar los contactos relacionados.')
   }
 
   const [campaignNames, marketingAdName] = await Promise.all([
@@ -559,6 +573,19 @@ export async function getLeadDetail(
       status: (i.status as string | null) ?? null,
       total: i.total == null ? null : Number(i.total),
       issue_date: (i.issue_date as string | null) ?? null,
+    })),
+    contacts: (contactRows ?? []).map((contact) => ({
+      id: contact.id as string,
+      name: contact.name as string,
+      email: (contact.email as string | null) ?? null,
+      phone: (contact.phone as string | null) ?? null,
+      role: (contact.role as string | null) ?? null,
+      company: (contact.company as string | null) ?? null,
+      notes: (contact.notes as string | null) ?? null,
+      source: contact.source as 'manual' | 'meet',
+      source_interaction_id: (contact.source_interaction_id as string | null) ?? null,
+      version: Number(contact.version),
+      created_at: contact.created_at as string,
     })),
     tasks: (tasks ?? []).map((t) => ({
       id: t.id as string,

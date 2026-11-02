@@ -36,6 +36,7 @@ import {
 import { scopedLogger } from '@/lib/logger'
 import {
   AssignLeadOwnerInput,
+  ArchiveLeadContactInput,
   CheckMeetingSlotInput,
   CallSessionInput,
   ConvertLeadInput,
@@ -44,6 +45,7 @@ import {
   LogCallInput,
   LogEmailInput,
   LogNoteInput,
+  LeadContactInput,
   LogWhatsAppInput,
   LeadStatus,
   type MomTestSignal,
@@ -52,6 +54,7 @@ import {
   StartLeadCallInput,
   SyncLeadGmailInput,
   UpdateLeadCallInput,
+  UpdateLeadContactInput,
   UpdateLeadInput,
   UpdateLeadMomTestInput,
   UpdateLeadStatusInput,
@@ -1514,6 +1517,233 @@ export const logLeadNote = defineAction({
       performed_by: user.id,
     })
     if (error) throw new Error(error.message)
+  },
+})
+
+function normalizeLeadContactPhone(value: string | undefined): string {
+  const digits = (value ?? '').replace(/\D/g, '')
+  return digits.length === 11 && digits.startsWith('34') ? digits.slice(2) : digits
+}
+
+async function ensureLeadContactIsUnique(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  input: { leadId: string; email?: string; phone?: string; excludeContactId?: string },
+) {
+  let query = supabase
+    .from('lead_contacts')
+    .select('id, name, email, phone')
+    .eq('lead_id', input.leadId)
+    .is('deleted_at', null)
+  if (input.excludeContactId) query = query.neq('id', input.excludeContactId)
+  const { data: existing, error } = await query
+  if (error) throw new Error(error.message)
+  const email = input.email?.trim().toLowerCase()
+  const phone = normalizeLeadContactPhone(input.phone)
+  const duplicate = (existing ?? []).find(
+    (contact) =>
+      (email && contact.email?.toLowerCase() === email) ||
+      (phone && normalizeLeadContactPhone(contact.phone ?? '') === phone),
+  )
+  if (duplicate) throw new Error(`Ya existe un contacto relacionado: ${duplicate.name}.`)
+}
+
+async function recordLeadContactHistory(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  input: {
+    leadId: string
+    contactId: string
+    name: string
+    action: string
+    sourceInteractionId?: string
+  },
+  userId: string,
+) {
+  const { error } = await supabase.from('lead_interactions').insert({
+    lead_id: input.leadId,
+    type: 'note',
+    subject: `Contacto relacionado ${input.action}`,
+    body: `${input.name} · contacto ${input.action} en el historial comercial.`,
+    payload: {
+      related_contact_id: input.contactId,
+      source_interaction_id: input.sourceInteractionId ?? null,
+    },
+    performed_by: userId,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export const createLeadContact = defineAction({
+  name: 'leads.createContact',
+  schema: LeadContactInput,
+  roles: ['owner', 'admin', 'member'],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (input, { user }) => {
+    const supabase = await createServerClient()
+    if (input.sourceInteractionId) {
+      const { data: source } = await supabase
+        .from('lead_interactions')
+        .select('id, type')
+        .eq('id', input.sourceInteractionId)
+        .eq('lead_id', input.leadId)
+        .maybeSingle()
+      if (source?.type !== 'meeting') throw new Error('No se encontró la reunión de origen.')
+    }
+    await ensureLeadContactIsUnique(supabase, {
+      leadId: input.leadId,
+      email: input.email,
+      phone: input.phone,
+    })
+
+    const { data: contact, error } = await supabase
+      .from('lead_contacts')
+      .insert({
+        lead_id: input.leadId,
+        name: input.name.trim(),
+        email: input.email?.trim() || null,
+        phone: input.phone?.trim() || null,
+        role: input.role?.trim() || null,
+        company: input.company?.trim() || null,
+        notes: input.notes?.trim() || null,
+        source: input.source,
+        source_interaction_id: input.sourceInteractionId ?? null,
+        created_by: user.id,
+      })
+      .select('id')
+      .single()
+    if (error) throw new Error(error.message)
+    try {
+      await recordLeadContactHistory(
+        supabase,
+        {
+          leadId: input.leadId,
+          contactId: contact.id,
+          name: input.name.trim(),
+          action: 'añadido',
+          sourceInteractionId: input.sourceInteractionId,
+        },
+        user.id,
+      )
+    } catch (historyError) {
+      await supabase
+        .from('lead_contacts')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', contact.id)
+        .eq('lead_id', input.leadId)
+      throw historyError
+    }
+    return { id: contact.id }
+  },
+})
+
+export const updateLeadContact = defineAction({
+  name: 'leads.updateContact',
+  schema: UpdateLeadContactInput,
+  roles: ['owner', 'admin', 'member'],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (input, { user }) => {
+    const supabase = await createServerClient()
+    await ensureLeadContactIsUnique(supabase, {
+      leadId: input.leadId,
+      email: input.email,
+      phone: input.phone,
+      excludeContactId: input.contactId,
+    })
+    const { data: previous, error: readError } = await supabase
+      .from('lead_contacts')
+      .select('name, email, phone, role, company, notes, version')
+      .eq('id', input.contactId)
+      .eq('lead_id', input.leadId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (readError) throw new Error(readError.message)
+    if (!previous) throw new Error('No se encontró el contacto relacionado.')
+    const { data: updated, error } = await supabase
+      .from('lead_contacts')
+      .update({
+        name: input.name.trim(),
+        email: input.email?.trim() || null,
+        phone: input.phone?.trim() || null,
+        role: input.role?.trim() || null,
+        company: input.company?.trim() || null,
+        notes: input.notes?.trim() || null,
+        version: input.expectedVersion + 1,
+      })
+      .eq('id', input.contactId)
+      .eq('lead_id', input.leadId)
+      .eq('version', input.expectedVersion)
+      .is('deleted_at', null)
+      .select('id')
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!updated)
+      throw new Error('El contacto cambió en otra sesión. Recarga e inténtalo de nuevo.')
+    try {
+      await recordLeadContactHistory(
+        supabase,
+        {
+          leadId: input.leadId,
+          contactId: input.contactId,
+          name: input.name.trim(),
+          action: 'actualizado',
+        },
+        user.id,
+      )
+    } catch (historyError) {
+      await supabase
+        .from('lead_contacts')
+        .update({
+          ...previous,
+          version: Number(previous.version),
+        })
+        .eq('id', input.contactId)
+        .eq('lead_id', input.leadId)
+        .eq('version', input.expectedVersion + 1)
+      throw historyError
+    }
+  },
+})
+
+export const archiveLeadContact = defineAction({
+  name: 'leads.archiveContact',
+  schema: ArchiveLeadContactInput,
+  roles: ['owner', 'admin', 'member'],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async (input, { user }) => {
+    const supabase = await createServerClient()
+    const { data: contact } = await supabase
+      .from('lead_contacts')
+      .select('name')
+      .eq('id', input.contactId)
+      .eq('lead_id', input.leadId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (!contact) throw new Error('No se encontró el contacto relacionado.')
+    const { error } = await supabase
+      .from('lead_contacts')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', input.contactId)
+      .eq('lead_id', input.leadId)
+      .is('deleted_at', null)
+    if (error) throw new Error(error.message)
+    try {
+      await recordLeadContactHistory(
+        supabase,
+        {
+          leadId: input.leadId,
+          contactId: input.contactId,
+          name: contact.name,
+          action: 'retirado',
+        },
+        user.id,
+      )
+    } catch (historyError) {
+      await supabase
+        .from('lead_contacts')
+        .update({ deleted_at: null })
+        .eq('id', input.contactId)
+        .eq('lead_id', input.leadId)
+      throw historyError
+    }
   },
 })
 

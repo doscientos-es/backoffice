@@ -14,12 +14,14 @@ function escapeVCardValue(value: string): string {
 
 export function buildLeadVCard({
   leadId,
+  contactId,
   name,
   phone,
   email,
   company,
 }: {
   leadId: string
+  contactId?: string
   name: string
   phone: string
   email?: string | null
@@ -32,11 +34,11 @@ export function buildLeadVCard({
   return [
     'BEGIN:VCARD',
     'VERSION:3.0',
-    `UID:urn:doscientos:lead:${leadId}`,
-    'CATEGORIES:Lead',
+    `UID:urn:doscientos:${contactId ? `contact:${contactId}` : `lead:${leadId}`}`,
+    contactId ? 'CATEGORIES:Contacto Doscientos' : 'CATEGORIES:Lead',
     `N:${escapeVCardValue(familyName)};${escapeVCardValue(givenName)};;;`,
     `FN:${escapeVCardValue(fullName)}`,
-    `TEL;TYPE=CELL:${escapeVCardValue(normalizeLeadPhone(phone))}`,
+    ...(phone.trim() ? [`TEL;TYPE=CELL:${escapeVCardValue(normalizeLeadPhone(phone))}`] : []),
     ...(email?.trim() ? [`EMAIL;TYPE=INTERNET:${escapeVCardValue(email.trim())}`] : []),
     ...(company?.trim() ? [`ORG:${escapeVCardValue(company.trim())}`] : []),
     'END:VCARD',

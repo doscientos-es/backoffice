@@ -49,6 +49,7 @@ import { LeadNextMove } from './lead-next-move'
 import { LeadNotesDialog } from './lead-notes-dialog'
 import { LeadPriceSuggestion } from './lead-price-suggestion'
 import { LeadRecentInteractions } from './lead-recent-interactions'
+import { LeadRelatedContacts } from './lead-related-contacts'
 import { MomTestChecklist } from './mom-test-checklist'
 import { PhoneQuickActions } from './phone-actions'
 import { LeadStatusSelect } from './status-select'
@@ -104,6 +105,7 @@ export default async function LeadDetailPage({
     proposals,
     projects,
     invoices,
+    contacts,
     tasks,
     reminders,
     attachments,
@@ -273,7 +275,7 @@ export default async function LeadDetailPage({
         current={tab}
         counts={{
           actividad: interactions?.length ?? 0,
-          comercial: proposals.length + projects.length + invoices.length,
+          comercial: proposals.length + projects.length + invoices.length + contacts.length,
         }}
       />
 
@@ -533,6 +535,15 @@ export default async function LeadDetailPage({
 
           {tab === 'actividad' ? (
             <>
+              <LeadRelatedContacts
+                leadId={lead.id as string}
+                leadName={displayName}
+                leadCompany={(lead.company as string | null) ?? null}
+                interactions={interactions ?? []}
+                contacts={contacts}
+                teamNames={members.map((member) => member.name)}
+                canEdit={canEdit}
+              />
               <LeadActivityFeed
                 leadId={lead.id as string}
                 leadEmail={(lead.email as string | null) ?? null}
@@ -554,6 +565,15 @@ export default async function LeadDetailPage({
 
           {tab === 'comercial' ? (
             <>
+              <LeadRelatedContacts
+                leadId={lead.id as string}
+                leadName={displayName}
+                leadCompany={(lead.company as string | null) ?? null}
+                interactions={interactions ?? []}
+                contacts={contacts}
+                teamNames={members.map((member) => member.name)}
+                canEdit={canEdit}
+              />
               <LeadCommercial
                 leadId={lead.id as string}
                 linkedClientId={linkedClientId}

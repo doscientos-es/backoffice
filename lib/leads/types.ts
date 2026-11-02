@@ -279,6 +279,20 @@ export type LeadRelatedInvoice = {
   issue_date: string | null
 }
 
+export type LeadRelatedContact = {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  role: string | null
+  company: string | null
+  notes: string | null
+  source: 'manual' | 'meet'
+  source_interaction_id: string | null
+  version: number
+  created_at: string
+}
+
 export type LeadRelatedTask = {
   id: string
   title: string
@@ -309,6 +323,7 @@ export type LeadDetailResult = {
   proposals: LeadRelatedProposal[]
   projects: LeadRelatedProject[]
   invoices: LeadRelatedInvoice[]
+  contacts: LeadRelatedContact[]
   /** Tasks directly associated with this lead, newest first. */
   tasks: LeadRelatedTask[]
   /** Pending reminders scheduled against this lead, soonest first. */
