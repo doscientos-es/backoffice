@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.151",
+      "date": "2026-11-02",
+      "title": "v0.1.151",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Manage related Meet contacts"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "9ea2088e7ef0e982e8b026b341a939c8012d3d66",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Manage related Meet contacts"
+        }
+      ]
+    },
+    {
       "version": "0.1.150",
       "date": "2026-11-02",
       "title": "v0.1.150",

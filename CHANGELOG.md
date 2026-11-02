@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-02 — v0.1.151
+
+### Nuevas funciones
+
+- Manage related Meet contacts
+
 ## 2026-11-02 — v0.1.150
 
 ### Correcciones
