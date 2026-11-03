@@ -5,11 +5,11 @@ export const MAX_STORED_TRANSCRIPT_CHARS = 100_000
 export const MAX_SUMMARIZED_TRANSCRIPT_CHARS = 240_000
 
 const FILLER_ONLY =
-  /^(?:[\p{L} .'-]{1,40}:\s*)?(?:(?:m{2,}|eh+|ah+|uh+|um+|ajá|aja|hm+)[\s.,;:!?¡¿…-]*)+$/iu
+  /^(?:[\p{L} .'-]{1,40}:\s*)?(?:m{2,}|eh+|ah+|uh+|um+|hm+)(?:[\s.,;:!?¡¿…-]+(?:m{2,}|eh+|ah+|uh+|um+|hm+))*[\s.,;:!?¡¿…-]*$/iu
 
 /**
  * Removes noise that carries no information: blank runs, repeated lines and lines made only of
- * hesitation sounds ("mm", "eh", "ajá"…), with or without a "Speaker:" prefix.
+ * hesitation sounds ("mm", "eh"…), with or without a "Speaker:" prefix.
  * Short answers such as "sí", "no" and "vale" are kept: they can carry decisions.
  */
 export function cleanTranscript(text: string): string {
