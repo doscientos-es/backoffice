@@ -19,9 +19,9 @@ export type InvoiceExtractionMeta = {
   warning: string | null
 }
 
-type LargeFileReview = {
+type InvoiceAnalysisReview = {
   reason: string
-  sizeBytes: number
+  sizeBytes: number | null
   pageCount: number | null
 }
 
@@ -38,6 +38,14 @@ interface Props {
 type Phase = 'idle' | 'uploading' | 'extracting' | 'done'
 
 const EXTRACTION_TIMEOUT_MS = 45_000
+
+function formatInvoiceSize(bytes: number | null): string {
+  if (bytes === null || !Number.isFinite(bytes) || bytes <= 0) return 'Tamaño no disponible'
+  if (bytes < 1024) return `${bytes} B`
+  const inMegabytes = bytes >= 1024 * 1024
+  const size = bytes / (inMegabytes ? 1024 * 1024 : 1024)
+  return `${size.toLocaleString('es-ES', { maximumFractionDigits: 1 })} ${inMegabytes ? 'MB' : 'KB'}`
+}
 
 async function readJson<T>(response: Response): Promise<T> {
   const contentType = response.headers.get('content-type') ?? ''
@@ -71,7 +79,7 @@ export function ExpenseInvoiceUpload({
   const [error, setError] = useState<string | null>(null)
   const [suggestion, setSuggestion] = useState<ExpenseInvoiceSuggestion | null>(null)
   const [scanOpen, setScanOpen] = useState(false)
-  const [largeFileReview, setLargeFileReview] = useState<LargeFileReview | null>(null)
+  const [analysisReview, setAnalysisReview] = useState<InvoiceAnalysisReview | null>(null)
 
   const busy = phase === 'uploading' || phase === 'extracting'
 
@@ -101,9 +109,10 @@ export function ExpenseInvoiceUpload({
 
       if (extractRes.status === 409 && extractJson.requires_confirmation) {
         setScanOpen(false)
-        setLargeFileReview({
-          reason: extractJson.reason ?? 'Este documento puede tener un coste de análisis elevado.',
-          sizeBytes: extractJson.size_bytes ?? 0,
+        setAnalysisReview({
+          reason:
+            extractJson.reason ?? 'Este documento necesita confirmación para analizarlo con IA.',
+          sizeBytes: extractJson.size_bytes ?? null,
           pageCount: extractJson.page_count ?? null,
         })
         return
@@ -145,7 +154,7 @@ export function ExpenseInvoiceUpload({
     setExtractFailed(false)
     setSuggestion(null)
     onReviewChange(false)
-    setLargeFileReview(null)
+    setAnalysisReview(null)
     setPhase('uploading')
     onPendingChange(true)
     try {
@@ -183,7 +192,7 @@ export function ExpenseInvoiceUpload({
     setError(null)
     setSuggestion(null)
     onReviewChange(false)
-    setLargeFileReview(null)
+    setAnalysisReview(null)
     setScanOpen(false)
     setPhase('idle')
     onAttached(null)
@@ -388,32 +397,34 @@ export function ExpenseInvoiceUpload({
         </DialogContent>
       </Dialog>
       <Dialog
-        open={largeFileReview !== null}
+        open={analysisReview !== null}
         onOpenChange={(open) => {
-          if (!open) setLargeFileReview(null)
+          if (!open) setAnalysisReview(null)
         }}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Documento de análisis costoso</DialogTitle>
-            <DialogDescription>
-              {largeFileReview?.reason} El archivo seguirá adjunto y no se analizará con IA hasta
-              que lo confirmes.
-            </DialogDescription>
+        <DialogContent className="w-full max-w-sm sm:max-w-sm">
+          <DialogHeader className="pr-6">
+            <DialogTitle>Confirmar análisis con IA</DialogTitle>
+            <DialogDescription>{analysisReview?.reason}</DialogDescription>
           </DialogHeader>
-          <div className="rounded-lg bg-muted/40 p-3 text-sm">
-            {largeFileReview?.pageCount ? `${largeFileReview.pageCount} páginas · ` : ''}
-            {largeFileReview ? `${(largeFileReview.sizeBytes / 1024 / 1024).toFixed(1)} MB` : ''}
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setLargeFileReview(null)}>
+          <p className="text-xs text-muted-foreground">
+            {analysisReview?.pageCount
+              ? `${analysisReview.pageCount} ${analysisReview.pageCount === 1 ? 'página' : 'páginas'} · `
+              : ''}
+            {analysisReview ? formatInvoiceSize(analysisReview.sizeBytes) : ''}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            La factura seguirá adjunta aunque prefieras rellenar los datos a mano.
+          </p>
+          <DialogFooter className="sm:flex-col-reverse sm:items-stretch">
+            <Button type="button" variant="outline" onClick={() => setAnalysisReview(null)}>
               Rellenar a mano
             </Button>
             <Button
               type="button"
               onClick={() => {
                 if (!attachmentId) return
-                setLargeFileReview(null)
+                setAnalysisReview(null)
                 onPendingChange(true)
                 void extractAttachment(attachmentId, true)
                   .catch((err) => {
@@ -427,7 +438,7 @@ export function ExpenseInvoiceUpload({
               }}
               disabled={!attachmentId || busy}
             >
-              Analizar igualmente
+              Analizar con IA
             </Button>
           </DialogFooter>
         </DialogContent>

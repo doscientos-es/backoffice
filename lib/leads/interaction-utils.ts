@@ -188,17 +188,36 @@ export function getCallInteractionDetails(payload: unknown): CallInteractionDeta
   }
 }
 
-/** Returns the business date of an interaction, falling back to its audit timestamp. */
+const callCalendarDate = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Madrid',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** Preserve the registration time unless the call was explicitly logged for another day. */
 export function interactionDate(interaction: LeadInteractionForAI): string {
   if (interaction.type !== 'call') return interaction.created_at
-  return getCallInteractionDetails(interaction.payload).callDate ?? interaction.created_at
+  const callDate = getCallInteractionDetails(interaction.payload).callDate
+  if (!callDate) return interaction.created_at
+
+  const registeredAt = new Date(interaction.created_at)
+  if (Number.isNaN(registeredAt.getTime())) return callDate
+  return callCalendarDate.format(registeredAt) === callDate ? interaction.created_at : callDate
+}
+
+/** Date-only context must retain the selected call day, including around midnight UTC. */
+function interactionDay(interaction: LeadInteractionForAI): string {
+  const callDate =
+    interaction.type === 'call' ? getCallInteractionDetails(interaction.payload).callDate : null
+  return callDate ?? interaction.created_at.slice(0, 10)
 }
 
 function describeInteractionAge(
   interaction: LeadInteractionForAI,
   relativeTo: Date,
 ): string | null {
-  const occurredAt = new Date(interactionDate(interaction))
+  const occurredAt = new Date(interactionDay(interaction))
   if (Number.isNaN(occurredAt.getTime()) || Number.isNaN(relativeTo.getTime())) return null
 
   const dayMs = 24 * 60 * 60 * 1000
@@ -227,7 +246,7 @@ function describeInteractionAge(
 }
 
 function formatInteraction(interaction: LeadInteractionForAI, relativeTo?: Date): string {
-  const date = interactionDate(interaction).slice(0, 10)
+  const date = interactionDay(interaction)
   const age = relativeTo ? describeInteractionAge(interaction, relativeTo) : null
   const subject = interaction.subject?.trim()
   const notes = interaction.body?.trim()?.slice(0, 300)

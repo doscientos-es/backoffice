@@ -283,7 +283,7 @@ export async function extractExpenseInvoice(
         requiresConfirmation: true,
         source: 'rules',
         warning:
-          'No se pudo leer la capa de texto ni calcular las páginas. El análisis visual con IA puede consumir más recursos; confirma para continuar.',
+          'No se pudo leer el texto del PDF ni comprobar cuántas páginas tiene. Podemos intentar leerlo visualmente con IA.',
         sizeBytes,
         pageCount: null,
       }

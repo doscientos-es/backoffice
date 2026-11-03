@@ -59,7 +59,6 @@ export function MomTestChecklist({
   }, [scoreSlotId])
 
   const score = SIGNALS.filter((s) => values[s.key] === s.positiveWhen).length
-  const answered = SIGNALS.filter((s) => values[s.key] !== null).length
   const nextQuestionKey = (
     [
       'real_problem',
@@ -88,11 +87,6 @@ export function MomTestChecklist({
       <Badge variant={score >= 4 ? 'success' : score >= 2 ? 'warning' : 'neutral'}>
         {score}/{SIGNALS.length} señales positivas
       </Badge>
-      {answered < SIGNALS.length ? (
-        <span className="text-xs text-muted-foreground">
-          {SIGNALS.length - answered} por validar
-        </span>
-      ) : null}
     </div>
   )
   return (

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { LeadActivityFeed } from './lead-activity-feed'
@@ -88,6 +88,71 @@ describe('LeadActivityFeed', () => {
 
     expect(screen.getByText('Hoy')).toBeDefined()
     expect(screen.getByText('Ayer')).toBeDefined()
+  })
+
+  it('keeps same-day call times and orders recent calls after the intake email', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-03T10:00:00.000Z'))
+    render(
+      <LeadActivityFeed
+        {...props}
+        interactions={[
+          {
+            id: 'earlier-call',
+            type: 'call',
+            subject: 'Primer intento',
+            body: null,
+            created_at: '2026-11-03T09:00:00.000Z',
+            performer: null,
+            payload: { call_date: '2026-11-03', outcome: 'no_answer' },
+            resend_email_id: null,
+          },
+          {
+            id: 'intake-email',
+            type: 'email_sent',
+            subject: 'Solicitud recibida',
+            body: null,
+            created_at: '2026-11-03T07:00:00.000Z',
+            performer: null,
+            payload: {},
+            resend_email_id: null,
+          },
+          {
+            id: 'latest-call',
+            type: 'call',
+            subject: 'Segundo intento',
+            body: null,
+            created_at: '2026-11-03T09:50:00.000Z',
+            performer: null,
+            payload: { call_date: '2026-11-03', outcome: 'no_answer' },
+            resend_email_id: null,
+          },
+        ]}
+        auditEvents={[
+          {
+            id: 'audit-1',
+            entityType: 'leads',
+            occurredAt: '2026-11-03T09:24:00.000Z',
+            actorId: null,
+            actorName: null,
+            action: 'update',
+            changedFields: ['estimated_value'],
+            origin: 'system',
+          },
+        ]}
+      />,
+    )
+
+    const rows = screen.getAllByRole('listitem')
+    expect(rows[0]?.textContent).toContain('Segundo intento')
+    expect(within(rows[0] as HTMLElement).getByText('hace 10 minutos')).toBeDefined()
+    expect(rows[1]?.textContent).toContain('Ficha actualizada')
+    expect(rows[2]?.textContent).toContain('Primer intento')
+    expect(within(rows[2] as HTMLElement).getByText('hace 1 hora')).toBeDefined()
+    expect(rows[3]?.textContent).toContain('Solicitud recibida')
+    expect(within(rows[3] as HTMLElement).getByText('hace 3 horas')).toBeDefined()
+    expect(screen.getByText('Última hace 10 minutos')).toBeDefined()
+    expect(screen.queryByText('hace 10 horas')).toBeNull()
   })
 
   it('warns when a call is missing notes or its result, but not when both are recorded', () => {

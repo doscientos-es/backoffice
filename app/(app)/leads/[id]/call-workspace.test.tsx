@@ -24,7 +24,13 @@ const context = {
     estimatedValue: 4000,
     summary: 'Necesita automatizar las reservas.',
     summaryOrigin: 'ai' as const,
-    questions: [{ question: '¿Quién confirma el alcance?', status: 'open' }],
+    questions: [
+      {
+        question: '¿Quién confirma el alcance?',
+        status: 'open',
+        rationale: 'Aclarar quién participa en la aprobación.',
+      },
+    ],
     proposals: [{ title: 'Reservas', status: 'sent', total: 3000 }],
     invoiceCount: null,
     paidTotal: null,
@@ -62,6 +68,7 @@ describe('during-call workspace', () => {
     render(<CallWorkspace {...props} />)
     await screen.findByText('Necesita automatizar las reservas.')
     expect(screen.getByText('¿Quién confirma el alcance?')).toBeTruthy()
+    expect(screen.getByText('Aclarar quién participa en la aprobación.')).toBeTruthy()
     expect(screen.getByText('Contexto comercial')).toBeTruthy()
 
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Asistente' }), { button: 0 })

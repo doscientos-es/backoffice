@@ -78,6 +78,53 @@ describe('call interaction dates', () => {
     expect(interactionDate({ ...interaction, payload: {} })).toBe(interaction.created_at)
   })
 
+  it.each([
+    ['2026-11-03T09:50:00.000Z', '2026-11-03'],
+    ['2026-08-16T22:10:00.000Z', '2026-08-17'],
+    ['2026-11-02T23:10:00.000Z', '2026-11-03'],
+  ])(
+    'preserves %s when the call date matches the registration day in Madrid',
+    (createdAt, callDate) => {
+      expect(
+        interactionDate({
+          type: 'call',
+          subject: 'Llamada',
+          body: null,
+          created_at: createdAt,
+          payload: { call_date: callDate },
+        }),
+      ).toBe(createdAt)
+    },
+  )
+
+  it('does not apply call dates to emails', () => {
+    const createdAt = '2026-11-03T07:00:00.000Z'
+    expect(
+      interactionDate({
+        type: 'email_sent',
+        subject: 'Confirmación',
+        body: null,
+        created_at: createdAt,
+        payload: { call_date: '2026-10-01' },
+      }),
+    ).toBe(createdAt)
+  })
+
+  it('keeps the selected call day in AI context across the UTC day boundary', () => {
+    expect(
+      formatDatedInteractionForAI(
+        {
+          type: 'call',
+          subject: 'Llamada',
+          body: null,
+          created_at: '2026-11-02T23:10:00.000Z',
+          payload: { call_date: '2026-11-03' },
+        },
+        new Date('2026-11-03T10:00:00.000Z'),
+      ),
+    ).toContain('2026-11-03 (hoy) | call')
+  })
+
   it("makes recent and old calls' elapsed time explicit when a reference date is provided", () => {
     const baseInteraction = {
       type: 'call',

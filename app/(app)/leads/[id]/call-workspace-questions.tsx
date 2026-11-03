@@ -24,7 +24,7 @@ export function CallWorkspaceQuestions({
   canCall: boolean
 }) {
   const prepared = questions.length > 0
-  const items = prepared
+  const items: CallBriefing['questions'] = prepared
     ? questions
     : GENERAL_QUESTIONS.map((question) => ({ question, status: 'open' }))
   return (
@@ -89,7 +89,7 @@ export function CallWorkspaceQuestions({
               {item.status === 'needs_review' ? (
                 <p className="text-xs font-medium text-muted-foreground">Respuesta por confirmar</p>
               ) : null}
-              {'rationale' in item && item.rationale ? (
+              {item.rationale ? (
                 <p className="text-xs leading-5 text-muted-foreground">{item.rationale}</p>
               ) : null}
             </div>

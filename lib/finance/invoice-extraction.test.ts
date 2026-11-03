@@ -144,7 +144,13 @@ describe('extractExpenseInvoice PDF visual fallback', () => {
 
     const firstResult = await extractExpenseInvoice(bytes)
 
-    expect(firstResult).toMatchObject({ requiresConfirmation: true, pageCount: null })
+    expect(firstResult).toMatchObject({
+      requiresConfirmation: true,
+      pageCount: null,
+      sizeBytes: 16,
+      warning:
+        'No se pudo leer el texto del PDF ni comprobar cuántas páginas tiene. Podemos intentar leerlo visualmente con IA.',
+    })
     expect(runAIObject).not.toHaveBeenCalled()
 
     runAIObject.mockResolvedValueOnce(readableSuggestion)

@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopyButton } from '@/components/ui/copy-button'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
 import { SectionBoundary } from '@/components/ui/error-boundary'
@@ -669,11 +669,9 @@ export default async function LeadDetailPage({
 
             <SectionBoundary label="No se pudo actualizar la calificación">
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Calificación</CardTitle>
-                  <CardAction>
-                    <div id="mom-test-score" />
-                  </CardAction>
+                <CardHeader className="flex flex-wrap items-center justify-between gap-2 pb-3">
+                  <CardTitle className="shrink-0 text-base">Calificación</CardTitle>
+                  <div id="mom-test-score" className="max-w-full min-w-0" />
                 </CardHeader>
                 <CardContent className="pt-0">
                   <MomTestChecklist
