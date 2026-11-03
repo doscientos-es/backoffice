@@ -1,3 +1,4 @@
+import { parseISO } from 'date-fns'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { calendarNavigation } from '@/lib/calendar/navigation'
@@ -15,9 +16,8 @@ describe('calendar period navigation', () => {
   it('keeps consecutive weekly steps reversible across year boundaries', () => {
     const anchor = new Date(2026, 11, 31)
     const next = calendarNavigation(anchor, 'week').next
-    const [year, month, day] = next.split('-').map(Number)
     expect(next).toBe('2027-01-07')
-    expect(calendarNavigation(new Date(year, month - 1, day), 'week').previous).toBe('2026-12-31')
+    expect(calendarNavigation(parseISO(next), 'week').previous).toBe('2026-12-31')
     expect(anchor.getDate()).toBe(31)
   })
 
