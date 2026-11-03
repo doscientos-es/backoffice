@@ -24,8 +24,9 @@ export const loadMeetingArtifact = defineAction({
       .maybeSingle()
     if (error) throw error
     if (!data) throw new Error('Documento no disponible o sin permisos para leerlo.')
+    const text = 'transcript_text' in data ? data.transcript_text : data.notes_text
     return {
-      text: typeof data[column] === 'string' ? data[column] : '',
+      text: typeof text === 'string' ? text : '',
       truncated: kind === 'transcript' && data.transcript_truncated === true,
     }
   },

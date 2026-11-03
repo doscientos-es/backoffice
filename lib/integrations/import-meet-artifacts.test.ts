@@ -119,8 +119,10 @@ describe('importRecentMeetArtifacts storage', () => {
         }),
       }),
     )
-    expect(db.finalize.mock.calls[0][1].p_artifacts).not.toHaveProperty('transcript_text')
-    expect(db.finalize.mock.calls[0][1].p_artifacts).not.toHaveProperty('notes_text')
+    const artifacts = db.finalize.mock.calls[0]?.[1]?.p_artifacts
+    expect(artifacts).toBeDefined()
+    expect(artifacts).not.toHaveProperty('transcript_text')
+    expect(artifacts).not.toHaveProperty('notes_text')
     expect(db.writes).toEqual([])
   })
 

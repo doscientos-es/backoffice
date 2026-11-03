@@ -78,7 +78,7 @@ describe('lead assistant panel', () => {
     fireEvent.change(screen.getByLabelText('Pregunta sobre el lead'), {
       target: { value: 'Prepara un email' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Consultar', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Consultar' }))
     await screen.findByText('Borrador preparado.')
     expect(screen.getByRole('heading', { name: 'Resumen' })).toBeTruthy()
     const source = screen.getByRole('link', { name: 'Ficha del lead' })
@@ -143,7 +143,7 @@ describe('lead assistant panel', () => {
     fireEvent.change(screen.getByLabelText('Pregunta sobre el lead'), {
       target: { value: '¿Qué falta?' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Consultar', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Consultar' }))
     await screen.findByRole('alert')
     await waitFor(() =>
       expect((screen.getByLabelText('Pregunta sobre el lead') as HTMLTextAreaElement).value).toBe(
