@@ -1,4 +1,4 @@
-import { Mail, Phone, StickyNote, Calendar, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
@@ -9,11 +9,9 @@ import {
   interactionDate,
 } from '@/lib/leads/interaction-utils'
 import type { LeadDetailInteraction } from '@/lib/leads/types'
-import { relativeTime } from '@/lib/utils'
 
 import { QCallDialog, QEmailDialog, QNoteDialog } from '../lead-quick-action-dialogs'
-import { CallInteractionDetails, CallInteractionWarning } from './call-interaction-details'
-import { LeadInteractionDetails } from './lead-interaction-details'
+import { LeadInteractionTimeline, type TimelineItem } from './lead-interaction-timeline'
 
 const LABEL: Record<string, string> = {
   email_sent: 'Email enviado',
@@ -38,13 +36,6 @@ type LeadRecentInteractionsProps = {
   limit?: number
   /** Total events available in the full activity tab, to show the history link. */
   totalActivityEvents?: number
-}
-
-function icon(type: string) {
-  if (type === 'call') return Phone
-  if (type === 'note') return StickyNote
-  if (type === 'meeting') return Calendar
-  return Mail
 }
 
 function label(interaction: LeadDetailInteraction): string {
@@ -74,24 +65,35 @@ export function LeadRecentInteractions({
   limit = 5,
   totalActivityEvents,
 }: LeadRecentInteractionsProps) {
-  const recent = groupResendInteractions(interactions)
+  const items: TimelineItem[] = groupResendInteractions(interactions)
     .map(({ interaction, latestInteraction }) => ({
       interaction,
       date: interactionDate(latestInteraction),
+      label: label(interaction),
+      snippet: excerptInteractionBody(interaction.body, 220),
     }))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, limit)
 
-  const hasMoreHistory = totalActivityEvents != null && totalActivityEvents > recent.length
+  const showHistoryLink = totalActivityEvents != null && totalActivityEvents > 0
 
   return (
     <Card>
       <CardHeader className="flex flex-col items-start gap-3">
-        <div>
-          <CardTitle className="text-base">Últimas interacciones</CardTitle>
-          <p className="mt-1 text-sm font-normal text-muted-foreground">
-            Llamadas, emails y notas más recientes con este lead.
-          </p>
+        <div className="flex w-full items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-base">Últimas interacciones</CardTitle>
+            <p className="mt-1 text-sm font-normal text-muted-foreground">
+              Llamadas, emails y notas más recientes con este lead.
+            </p>
+          </div>
+          {showHistoryLink ? (
+            <Button asChild variant="ghost" size="sm" className="shrink-0 text-muted-foreground">
+              <Link href={`/leads/${leadId}?tab=actividad`}>
+                Ver todo
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
+          ) : null}
         </div>
         {canEdit ? (
           <fieldset
@@ -114,73 +116,19 @@ export function LeadRecentInteractions({
         ) : null}
       </CardHeader>
       <CardContent>
-        {recent.length === 0 ? (
+        {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">Sin interacciones todavía.</p>
         ) : (
-          <>
-            <ul className="divide-y divide-border">
-              {recent.map(({ interaction, date }) => {
-                const Icon = icon(interaction.type)
-                const snippet = excerptInteractionBody(interaction.body, 140)
-                return (
-                  <li key={interaction.id} className="flex items-start gap-3 py-2.5">
-                    <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                      <Icon className="size-4" aria-hidden />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold">{label(interaction)}</p>
-                      {interaction.subject ? (
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                          {interaction.subject}
-                        </p>
-                      ) : null}
-                      {snippet ? (
-                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground/90">
-                          {snippet}
-                        </p>
-                      ) : null}
-                      {interaction.type === 'call' ? (
-                        <CallInteractionWarning interaction={interaction} />
-                      ) : null}
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-muted-foreground">
-                      <span className="tabular-nums">{relativeTime(date)}</span>
-                      {interaction.type === 'call' ? (
-                        <CallInteractionDetails
-                          interaction={interaction}
-                          leadId={leadId}
-                          canEdit={canEdit}
-                        />
-                      ) : (
-                        <LeadInteractionDetails
-                          interaction={interaction}
-                          label={label(interaction)}
-                          leadId={leadId}
-                          leadEmail={leadEmail}
-                          leadLanguage={leadLanguage}
-                          canReply={canEdit}
-                          aiEnabled={aiEnabled}
-                        />
-                      )}
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-            {hasMoreHistory ? (
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="mt-2 w-full text-muted-foreground"
-              >
-                <Link href={`/leads/${leadId}?tab=actividad`}>
-                  Ver todo el historial
-                  <ArrowRight className="size-3.5" />
-                </Link>
-              </Button>
-            ) : null}
-          </>
+          <LeadInteractionTimeline
+            items={items}
+            initialCount={limit}
+            step={limit}
+            leadId={leadId}
+            leadEmail={leadEmail}
+            leadLanguage={leadLanguage}
+            canEdit={canEdit}
+            aiEnabled={aiEnabled}
+          />
         )}
       </CardContent>
     </Card>
