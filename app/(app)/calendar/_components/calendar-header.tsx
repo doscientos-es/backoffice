@@ -1,6 +1,6 @@
 'use client'
 
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, startOfWeek } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Check, ChevronLeft, ChevronRight, Copy, Plus, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { calendarNavigation } from '@/lib/calendar/navigation'
 import type { CalendarEventKind, CalendarView } from '@/lib/calendar/types'
 import { ALL_LAYERS, CALENDAR_LAYER_COLORS, CALENDAR_LAYER_LABELS } from '@/lib/calendar/types'
 import { serializeCalendarViewCookie } from '@/lib/calendar/view-preference'
@@ -27,8 +28,6 @@ import { useCalendarCreate } from './calendar-grid'
 type Props = {
   anchor: string
   view: CalendarView
-  prevMonth: string
-  nextMonth: string
   teamMembers: TeamMember[]
   activeLayers: Set<CalendarEventKind>
   onToggleLayer: (l: CalendarEventKind) => void
@@ -61,8 +60,6 @@ function memberInitials(name: string) {
 export function CalendarHeader({
   anchor,
   view,
-  prevMonth,
-  nextMonth,
   teamMembers,
   activeLayers,
   onToggleLayer,
@@ -86,11 +83,10 @@ export function CalendarHeader({
 
   const title =
     view === 'week'
-      ? `Semana del ${format(anchorDate, 'd MMM yyyy', { locale: es })}`
+      ? `Semana del ${format(startOfWeek(anchorDate, { weekStartsOn: 1 }), 'd MMM yyyy', { locale: es })}`
       : format(anchorDate, 'MMMM yyyy', { locale: es })
 
-  const prevAnchor = parseISO(prevMonth).toISOString().slice(0, 10)
-  const nextAnchor = parseISO(nextMonth).toISOString().slice(0, 10)
+  const { previous, next } = calendarNavigation(anchorDate, view)
 
   return (
     <div className="flex flex-col border-b border-border">
@@ -99,9 +95,9 @@ export function CalendarHeader({
         {/* Left: arrows + title */}
         <div className="flex min-w-0 flex-1 items-center gap-1 sm:flex-none">
           <Link
-            href={navHref(sp, { date: prevAnchor })}
+            href={navHref(sp, { date: previous })}
             className="inline-flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-secondary"
-            aria-label="Anterior"
+            aria-label={view === 'week' ? 'Semana anterior' : 'Mes anterior'}
           >
             <ChevronLeft className="h-4 w-4" />
           </Link>
@@ -109,9 +105,9 @@ export function CalendarHeader({
             {title}
           </h1>
           <Link
-            href={navHref(sp, { date: nextAnchor })}
+            href={navHref(sp, { date: next })}
             className="inline-flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-secondary"
-            aria-label="Siguiente"
+            aria-label={view === 'week' ? 'Semana siguiente' : 'Mes siguiente'}
           >
             <ChevronRight className="h-4 w-4" />
           </Link>

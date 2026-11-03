@@ -84,8 +84,6 @@ type Props = {
   teamMembers: TeamMember[]
   leads: LeadOption[]
   projects: ProjectOption[]
-  prevMonth: string
-  nextMonth: string
   calendarToken: string | null
 }
 
@@ -126,8 +124,6 @@ export function CalendarGrid({
   teamMembers,
   leads,
   projects,
-  prevMonth,
-  nextMonth,
   calendarToken,
 }: Props) {
   const anchorDate = parseISO(anchor)
@@ -218,8 +214,6 @@ export function CalendarGrid({
   const headerProps = {
     anchor,
     view,
-    prevMonth,
-    nextMonth,
     teamMembers,
     activeLayers,
     onToggleLayer: toggleLayer,

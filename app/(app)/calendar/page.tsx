@@ -1,4 +1,4 @@
-import { addMonths, endOfMonth, endOfWeek, startOfMonth, startOfWeek, subMonths } from 'date-fns'
+import { addMonths, endOfMonth, endOfWeek, startOfMonth, startOfWeek } from 'date-fns'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 
@@ -159,8 +159,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
       teamMembers={teamMembers}
       leads={leads}
       projects={projects}
-      prevMonth={subMonths(anchor, 1).toISOString()}
-      nextMonth={addMonths(anchor, 1).toISOString()}
       calendarToken={calendarToken}
     />
   )
