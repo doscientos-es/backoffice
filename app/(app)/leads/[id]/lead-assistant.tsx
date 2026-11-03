@@ -33,8 +33,9 @@ export function LeadAssistant({ leadId }: { leadId: string }) {
   const end = useRef<HTMLDivElement>(null)
   useEffect(() => () => request.current?.abort(), [])
   useEffect(() => {
+    if (messages.length === 0 && !loading) return
     end.current?.scrollIntoView?.({ block: 'nearest' })
-  }, [messages, loading])
+  }, [messages.length, loading])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
