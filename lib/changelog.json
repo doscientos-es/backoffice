@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.166",
+      "date": "2026-11-03",
+      "title": "v0.1.166",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Enhance assistant session management and local storage handling",
+            "Add assistant session provider and conversation management"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "8bc7bdcde3634e2e63cc7034748e7dac467b331f",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Enhance assistant session management and local storage handling"
+        },
+        {
+          "sha": "6fbb46b0675b1a5e77dc19b2bcec5fd229f5a869",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add assistant session provider and conversation management"
+        }
+      ]
+    },
+    {
       "version": "0.1.163",
       "date": "2026-11-03",
       "title": "v0.1.163",

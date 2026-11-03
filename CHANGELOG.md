@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.166
+
+### Nuevas funciones
+
+- Enhance assistant session management and local storage handling
+- Add assistant session provider and conversation management
+
 ## 2026-11-03 — v0.1.163
 
 ### Nuevas funciones
