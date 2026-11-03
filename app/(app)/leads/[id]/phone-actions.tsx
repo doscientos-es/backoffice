@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
-import { CheckCircle2, Contact, Phone, PhoneOff } from 'lucide-react'
+import { Contact, Phone } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
@@ -24,6 +24,7 @@ export { buildLeadVCard } from '@/lib/leads/vcard'
 
 import { finishLeadCall, getLeadCallSession, markLeadCallDialed, startLeadCall } from '../actions'
 import { WhatsAppComposer } from '../whatsapp-composer'
+import { CallWorkspace } from './call-workspace'
 
 const TERMINAL_CALL_STATUSES = new Set(['awaiting_log', 'logged', 'abandoned'])
 const CALL_SESSION_POLL_INTERVAL_MS = 15_000
@@ -426,6 +427,7 @@ function CallTrackingDialog({
 }) {
   const [qr, setQr] = useState<string | null>(null)
   const [status, setStatus] = useState('started')
+  const [qrError, setQrError] = useState(false)
   const [completion, setCompletion] = useState<{
     durationMinutes: number
     defaultOutcome: 'connected' | 'no_answer'
@@ -436,6 +438,7 @@ function CallTrackingDialog({
   useEffect(() => {
     let cancelled = false
     setQr(null)
+    setQrError(false)
     const url = new URL(`/p/call/${session.mobileToken}`, window.location.origin).toString()
     import('qrcode')
       .then(({ toDataURL }) => toDataURL(url, { width: 200, margin: 1 }))
@@ -443,7 +446,7 @@ function CallTrackingDialog({
         if (!cancelled) setQr(url)
       })
       .catch(() => {
-        if (!cancelled) setQr(null)
+        if (!cancelled) setQrError(true)
       })
     return () => {
       cancelled = true
@@ -512,71 +515,20 @@ function CallTrackingDialog({
     window.location.assign(`/leads/${leadId}?${params.toString()}`)
   }
 
-  const isFinished = status === 'awaiting_log' || status === 'logged'
-
   return (
-    <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Llamando a {normalizePhone(phone)}</DialogTitle>
-          <DialogDescription>
-            La duración es estimada. Confirma siempre el resultado y las notas.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex size-[200px] items-center justify-center rounded-md bg-muted">
-            {qr ? (
-              <Image
-                src={qr}
-                alt="QR para continuar la llamada desde el móvil"
-                width={200}
-                height={200}
-                unoptimized
-              />
-            ) : (
-              <span className="text-xs text-muted-foreground">Generando…</span>
-            )}
-          </div>
-          <p className="text-center text-xs text-muted-foreground">
-            Escanea el QR para abrir el teléfono móvil sin perder el seguimiento.
-          </p>
-        </div>
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        )}
-        {status === 'logged' ? (
-          <p className="flex items-center gap-2 text-sm font-medium">
-            <CheckCircle2 className="size-4 text-emerald-600" /> Resultado ya registrado
-          </p>
-        ) : isFinished ? (
-          <div className="flex flex-col gap-2">
-            <p className="flex items-center gap-2 text-sm font-medium">
-              <CheckCircle2 className="size-4 text-emerald-600" /> Llamada finalizada
-              {completion ? ` · ${completion.durationMinutes} min estimados` : ''}
-            </p>
-            <Button type="button" onClick={registerCall}>
-              Registrar resultado
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={callFromThisDevice}
-              disabled={pending}
-              className="gap-2"
-            >
-              <Phone className="size-4" /> Llamar aquí
-            </Button>
-            <Button type="button" onClick={finishCall} disabled={pending} className="gap-2">
-              <PhoneOff className="size-4" /> Terminar
-            </Button>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+    <CallWorkspace
+      leadId={leadId}
+      phone={normalizePhone(phone)}
+      status={status}
+      pending={pending}
+      error={error}
+      qr={qr}
+      qrError={qrError}
+      completion={completion}
+      onOpenChange={onOpenChange}
+      onCall={callFromThisDevice}
+      onFinish={finishCall}
+      onRegister={registerCall}
+    />
   )
 }

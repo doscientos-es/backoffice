@@ -15,6 +15,9 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 vi.mock('@/lib/env', () => ({ publicEnv: { NEXT_PUBLIC_CAL_LINK: '' } }))
 vi.mock('@/lib/recovery/utils', () => ({ buildBookingUrl: vi.fn(() => null) }))
 vi.mock('../actions', () => ({ startLeadCall: vi.fn(), getLeadCallSession: vi.fn() }))
+vi.mock('./call-workspace-actions', () => ({
+  getLeadCallBriefing: vi.fn(async () => ({ ok: false, error: 'Synthetic context unavailable' })),
+}))
 
 afterEach(() => {
   cleanup()

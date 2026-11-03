@@ -3,25 +3,15 @@
 import { CheckCircle2, Phone, PhoneOff } from 'lucide-react'
 import { useState } from 'react'
 
+import { CallBriefingCard } from '@/components/leads/call-briefing-card'
 import { Button } from '@/components/ui/button'
+import type { CallBriefing } from '@/lib/leads/call-briefing'
 import type { CallSessionStatus } from '@/lib/leads/call-session'
 import { buildLeadVCard } from '@/lib/leads/vcard'
-import { formatEUR } from '@/lib/utils'
 
 type Completion = { durationMinutes: number; defaultOutcome: 'connected' | 'no_answer' }
 type Action = 'dial' | 'finish'
 type ActionResponse = { error?: string } & Partial<Completion>
-type CallBriefing = {
-  name: string
-  company: string | null
-  leadStatus: string | null
-  estimatedValue: number | null
-  questions: Array<{ question: string; status: string }>
-  proposals: Array<{ title: string; status: string; total: number }>
-  invoiceCount: number
-  paidTotal: number
-  outstandingTotal: number
-}
 
 function normalizePhone(phone: string): string {
   const cleaned = phone.replace(/[^\d+]/g, '')
@@ -138,65 +128,7 @@ export function MobileCallSession({
         </a>
       </div>
       <div className="rounded-xl border bg-card p-4 text-left shadow-sm">
-        <h2 className="text-sm font-semibold">Información rápida</h2>
-        <div className="mt-3 space-y-3 text-sm">
-          <div>
-            <p className="font-medium">{briefing.name}</p>
-            {briefing.company && <p className="text-muted-foreground">{briefing.company}</p>}
-            <p className="mt-1 text-xs text-muted-foreground">
-              {[
-                briefing.leadStatus && `Estado: ${briefing.leadStatus}`,
-                briefing.estimatedValue != null &&
-                  `Valor estimado: ${formatEUR(briefing.estimatedValue)}`,
-              ]
-                .filter(Boolean)
-                .join(' · ') || 'Sin resumen comercial registrado'}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/50 p-3 text-xs">
-            <p>
-              Facturas: <span className="font-semibold">{briefing.invoiceCount}</span>
-            </p>
-            <p>
-              Pagado: <span className="font-semibold">{formatEUR(briefing.paidTotal)}</span>
-            </p>
-            <p className="col-span-2">
-              Pendiente de cobro:{' '}
-              <span className="font-semibold">{formatEUR(briefing.outstandingTotal)}</span>
-            </p>
-          </div>
-          {briefing.proposals.length > 0 && (
-            <div>
-              <p className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Propuestas
-              </p>
-              <ul className="space-y-1">
-                {briefing.proposals.map((proposal, index) => (
-                  <li key={`${proposal.title}-${index}`} className="flex justify-between gap-3">
-                    <span className="truncate">
-                      {proposal.title} · {proposal.status}
-                    </span>
-                    <span className="shrink-0 font-medium">{formatEUR(proposal.total)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div>
-            <p className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              Preguntas para la llamada
-            </p>
-            {briefing.questions.length ? (
-              <ul className="list-disc space-y-1 pl-4">
-                {briefing.questions.map((item, index) => (
-                  <li key={`${item.question}-${index}`}>{item.question}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs text-muted-foreground">Aún no hay preguntas preparadas.</p>
-            )}
-          </div>
-        </div>
+        <CallBriefingCard briefing={briefing} />
       </div>
       {error && (
         <p

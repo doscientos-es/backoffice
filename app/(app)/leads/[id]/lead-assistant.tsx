@@ -19,7 +19,13 @@ type Message = {
   result?: AssistantResponse
 }
 
-export function LeadAssistant({ leadId, leadName }: { leadId: string; leadName?: string }) {
+export function LeadAssistantConversation({
+  leadId,
+  duringCall = false,
+}: {
+  leadId: string
+  duringCall?: boolean
+}) {
   const [messages, setMessages] = useState<Message[]>([])
   const [question, setQuestion] = useState('')
   const [loading, setLoading] = useState(false)
@@ -86,6 +92,68 @@ export function LeadAssistant({ leadId, leadName }: { leadId: string; leadName?:
   }
 
   return (
+    <div className="flex h-full min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6">
+        {messages.length === 0 ? (
+          <LeadAssistantWelcome
+            duringCall={duringCall}
+            onSelect={(value) => {
+              setQuestion(value)
+              input.current?.focus()
+            }}
+          />
+        ) : null}
+        <div
+          role="log"
+          aria-label="Conversación del lead"
+          aria-busy={loading}
+          className="space-y-7"
+        >
+          {messages.map((item) =>
+            item.result ? (
+              <LeadAssistantMessage key={item.id} result={item.result} />
+            ) : (
+              <div key={item.id} className="flex justify-end">
+                <div className="max-w-[90%] min-w-0 space-y-1.5">
+                  <p className="pr-1 text-right text-xs font-medium text-muted-foreground">Tú</p>
+                  <p className="rounded-2xl rounded-tr-sm bg-primary px-4 py-3 text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-primary-foreground">
+                    {item.content}
+                  </p>
+                </div>
+              </div>
+            ),
+          )}
+          {loading ? (
+            <div role="status" className="flex items-center gap-3 py-2">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
+                <LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden />
+              </span>
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">Buscando en el historial</p>
+                <p className="text-xs text-muted-foreground">
+                  Reuniendo contexto para responderte…
+                </p>
+              </div>
+            </div>
+          ) : null}
+          <div ref={end} />
+        </div>
+      </div>
+      <LeadAssistantComposer
+        question={question}
+        loading={loading}
+        error={error}
+        duringCall={duringCall}
+        inputRef={input}
+        onQuestionChange={setQuestion}
+        onSubmit={submit}
+      />
+    </div>
+  )
+}
+
+export function LeadAssistant({ leadId, leadName }: { leadId: string; leadName?: string }) {
+  return (
     <Drawer
       trigger={
         <Button
@@ -97,7 +165,7 @@ export function LeadAssistant({ leadId, leadName }: { leadId: string; leadName?:
           Preguntar sobre este lead
         </Button>
       }
-      className="gap-0 overflow-hidden bg-background data-[side=right]:w-full data-[side=right]:sm:max-w-2xl"
+      className="gap-0 overflow-hidden bg-background data-[side=right]:w-full data-[side=right]:sm:max-w-xl"
     >
       <div className="flex h-full min-h-0 flex-col">
         <DrawerHeader className="shrink-0 gap-4 border-b border-border/60 bg-card px-4 py-5 pr-14 sm:px-6 sm:pr-14">
@@ -122,59 +190,7 @@ export function LeadAssistant({ leadId, leadName }: { leadId: string; leadName?:
             Solo consulta y borradores. Nada se envía automáticamente.
           </p>
         </DrawerHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6">
-          {messages.length === 0 ? (
-            <LeadAssistantWelcome
-              onSelect={(value) => {
-                setQuestion(value)
-                input.current?.focus()
-              }}
-            />
-          ) : null}
-          <div
-            role="log"
-            aria-label="Conversación del lead"
-            aria-busy={loading}
-            className="space-y-7"
-          >
-            {messages.map((item) =>
-              item.result ? (
-                <LeadAssistantMessage key={item.id} result={item.result} />
-              ) : (
-                <div key={item.id} className="flex justify-end">
-                  <div className="max-w-[90%] min-w-0 space-y-1.5">
-                    <p className="pr-1 text-right text-xs font-medium text-muted-foreground">Tú</p>
-                    <p className="rounded-2xl rounded-tr-sm bg-primary px-4 py-3 text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-primary-foreground">
-                      {item.content}
-                    </p>
-                  </div>
-                </div>
-              ),
-            )}
-            {loading ? (
-              <div role="status" className="flex items-center gap-3 py-2">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
-                  <LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden />
-                </span>
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium">Buscando en el historial</p>
-                  <p className="text-xs text-muted-foreground">
-                    Reuniendo contexto para responderte…
-                  </p>
-                </div>
-              </div>
-            ) : null}
-            <div ref={end} />
-          </div>
-        </div>
-        <LeadAssistantComposer
-          question={question}
-          loading={loading}
-          error={error}
-          inputRef={input}
-          onQuestionChange={setQuestion}
-          onSubmit={submit}
-        />
+        <LeadAssistantConversation leadId={leadId} />
       </div>
     </Drawer>
   )

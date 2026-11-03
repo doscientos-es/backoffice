@@ -10,6 +10,7 @@ type ComposerProps = {
   question: string
   loading: boolean
   error: string | null
+  duringCall?: boolean
   inputRef: RefObject<HTMLTextAreaElement | null>
   onQuestionChange: (question: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
@@ -19,6 +20,7 @@ export function LeadAssistantComposer({
   question,
   loading,
   error,
+  duringCall = false,
   inputRef,
   onQuestionChange,
   onSubmit,
@@ -48,7 +50,11 @@ export function LeadAssistantComposer({
         <Textarea
           id={inputId}
           ref={inputRef}
-          placeholder="¿Qué te gustaría saber de este lead?"
+          placeholder={
+            duringCall
+              ? 'Cuéntame qué te ha dicho: ¿qué le respondo?'
+              : '¿Qué te gustaría saber de este lead?'
+          }
           aria-describedby={hintId}
           aria-keyshortcuts="Control+Enter Meta+Enter"
           value={question}
@@ -95,7 +101,9 @@ export function LeadAssistantComposer({
         </div>
       </form>
       <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
-        La IA puede equivocarse. La conversación se pierde al salir de la ficha.
+        {duringCall
+          ? 'No escucha la llamada. IA con contexto parcial; el chat no se guarda.'
+          : 'La IA puede equivocarse. La conversación se pierde al salir de la ficha.'}
       </p>
     </div>
   )
