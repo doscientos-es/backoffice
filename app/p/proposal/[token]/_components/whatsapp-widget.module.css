@@ -1,0 +1,12 @@
+.floating {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 30;
+}
+
+@media (max-width: 63.999rem) {
+  .withMobileCta {
+    bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
+}

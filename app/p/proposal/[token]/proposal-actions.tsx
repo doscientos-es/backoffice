@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Markdown } from '@/components/ui/markdown'
 import { Textarea } from '@/components/ui/textarea'
 
+import { PROPOSAL_ACTION_CLASS } from './_components/primitives'
 import { acceptProposal, rejectProposal, trackSignIntent } from './actions'
 
 type FiscalForm = {
@@ -273,7 +274,7 @@ export function ProposalActions({
   if (showAccept) {
     return (
       <>
-        <Card>
+        <Card className="border-0 bg-transparent shadow-none ring-0">
           <CardHeader>
             <CardTitle>{copy.signTitle}</CardTitle>
           </CardHeader>
@@ -458,7 +459,11 @@ export function ProposalActions({
               >
                 {copy.cancel}
               </Button>
-              <Button className="w-full" onClick={onAccept} disabled={feedback.pending}>
+              <Button
+                className={`w-full ${PROPOSAL_ACTION_CLASS}`}
+                onClick={onAccept}
+                disabled={feedback.pending}
+              >
                 {feedback.pending ? copy.processing : copy.signAccept}
               </Button>
             </div>
@@ -479,7 +484,7 @@ export function ProposalActions({
 
   if (showReject) {
     return (
-      <Card>
+      <Card className="border-0 bg-transparent shadow-none ring-0">
         <CardHeader>
           <CardTitle>{copy.reject}</CardTitle>
         </CardHeader>
@@ -521,24 +526,28 @@ export function ProposalActions({
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-0 bg-transparent shadow-none ring-0">
+      <CardHeader className="text-center">
         <CardTitle>{copy.response}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground">{copy.responseIntro}</p>
+        <p className="text-center text-sm text-muted-foreground">{copy.responseIntro}</p>
         <div className="flex flex-col gap-2">
           <FormFeedback state={feedback.state} pendingLabel={copy.processing} />
           <Button
-            className="w-full"
-            variant="outline"
+            className={`w-full ${PROPOSAL_ACTION_CLASS}`}
+            onClick={openAccept}
+            disabled={feedback.pending}
+          >
+            {feedback.pending ? copy.processing : copy.sign}
+          </Button>
+          <Button
+            className="w-full rounded-full"
+            variant="ghost"
             onClick={() => setShowReject(true)}
             disabled={feedback.pending}
           >
             {copy.reject}
-          </Button>
-          <Button className="w-full" onClick={openAccept} disabled={feedback.pending}>
-            {feedback.pending ? copy.processing : copy.sign}
           </Button>
         </div>
       </CardContent>

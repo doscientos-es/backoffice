@@ -67,19 +67,16 @@ export function NextSteps({
   ]
 
   return (
-    <div
-      id="siguientes-pasos"
-      className="scroll-mt-16 border-t border-zinc-200 px-6 py-6 sm:px-8 dark:border-zinc-800"
-    >
-      <SectionLabel as="h2" className="mb-4">
+    <div id="siguientes-pasos" className="mx-auto max-w-3xl scroll-mt-20 px-2 py-10 sm:px-6">
+      <SectionLabel as="h2" className="mb-8 text-center">
         {tr('Qué ocurre al aceptar', 'Què passa en acceptar', 'What happens when you accept')}
       </SectionLabel>
-      <ol className="grid gap-4 sm:grid-cols-3">
+      <ol className="grid gap-8 sm:grid-cols-3">
         {steps.map((step, index) => (
-          <li key={step.title} className="flex gap-3">
+          <li key={step.title} className="flex flex-col items-center gap-3 text-center">
             <span
               aria-hidden
-              className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2A4227] text-xs font-bold text-white dark:bg-[#9CC196] dark:text-zinc-900"
+              className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#BDFF7B] text-sm font-bold text-zinc-950"
             >
               {index + 1}
             </span>

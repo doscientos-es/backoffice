@@ -163,7 +163,6 @@ let acceptProposal: typeof import('./actions').acceptProposal
 let initiateProposalPayment: typeof import('./actions').initiateProposalPayment
 let rejectProposal: typeof import('./actions').rejectProposal
 let selectProposalMaintenance: typeof import('./actions').selectProposalMaintenance
-let sendProposalQuestion: typeof import('./actions').sendProposalQuestion
 
 beforeAll(async () => {
   const actions = await import('./actions')
@@ -171,7 +170,6 @@ beforeAll(async () => {
   initiateProposalPayment = actions.initiateProposalPayment
   rejectProposal = actions.rejectProposal
   selectProposalMaintenance = actions.selectProposalMaintenance
-  sendProposalQuestion = actions.sendProposalQuestion
 }, 30_000)
 
 describe('portal proposal actions', () => {
@@ -196,11 +194,6 @@ describe('portal proposal actions', () => {
     const result = await acceptProposal('short', SIGNATURE)
     expect(result).toEqual({ ok: false, error: 'Token inválido' })
     expect(state.lastPatch).toBeNull()
-
-    await expect(sendProposalQuestion('short', '¿Incluye soporte?')).resolves.toEqual({
-      ok: false,
-      error: 'La consulta no es válida',
-    })
   })
 
   it('returns not-found when the proposal does not exist', async () => {
@@ -266,10 +259,6 @@ describe('portal proposal actions', () => {
       error: 'Vuelve a introducir la contraseña del portal',
     })
     await expect(selectProposalMaintenance(VALID_TOKEN, 'growth')).resolves.toEqual({
-      ok: false,
-      error: 'Vuelve a introducir la contraseña del portal',
-    })
-    await expect(sendProposalQuestion(VALID_TOKEN, '¿Incluye soporte?')).resolves.toEqual({
       ok: false,
       error: 'Vuelve a introducir la contraseña del portal',
     })

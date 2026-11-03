@@ -27,7 +27,7 @@ describe('ProposalOverview', () => {
         maintenanceSelectedPlanId={null}
         attachments={[]}
         team={[]}
-        sidebar={<div data-testid="proposal-sidebar">Consultas del cliente</div>}
+        sidebar={<div data-testid="proposal-sidebar">Aperturas recientes</div>}
       />,
     )
 

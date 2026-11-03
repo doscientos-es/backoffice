@@ -3,7 +3,7 @@ import { Clock, Download } from 'lucide-react'
 import { formatPortalDate } from '@/lib/portal/language'
 
 import { makeTr, type PortalCopy, type PortalLanguage } from '../_lib/i18n'
-import { SectionLabel, StatusPill } from './primitives'
+import { StatusPill } from './primitives'
 
 export function DocumentHeader({
   token,
@@ -40,42 +40,38 @@ export function DocumentHeader({
       : null
   const urgent = daysLeft !== null && daysLeft <= 2
   return (
-    <header className="border-b border-zinc-200 px-6 py-6 sm:px-8 dark:border-zinc-800">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 flex-col gap-1">
-          <SectionLabel as="p">
-            {copy.proposal} · {proposalNumber}
-          </SectionLabel>
-        </div>
+    <header className="rounded-[2rem] bg-[#BDFF7B] px-6 py-10 text-center text-zinc-950 sm:px-12 sm:py-16">
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <p className="text-sm font-medium">
+          {copy.proposal} · {proposalNumber}
+        </p>
         <StatusPill status={status} label={statusLabel} />
       </div>
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl dark:text-zinc-100">
-            {title}
-          </h1>
-          {validUntil ? (
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-              <span>
-                {copy.validUntil}{' '}
-                <strong className="text-zinc-700 dark:text-zinc-300">
-                  {formatPortalDate(validUntil, language)}
-                </strong>
+      <h1 className="mx-auto mt-7 max-w-3xl text-3xl leading-[1.08] font-semibold tracking-tight break-words sm:text-5xl lg:text-6xl">
+        {title}
+      </h1>
+      <div className="mt-7 flex flex-col items-center justify-center gap-5">
+        {validUntil ? (
+          <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-sm text-zinc-800">
+            <span>
+              {copy.validUntil}{' '}
+              <strong className="font-semibold text-zinc-950">
+                {formatPortalDate(validUntil, language)}
+              </strong>
+            </span>
+            {countdown ? (
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${urgent ? 'bg-zinc-950 text-white' : 'bg-white/70 text-zinc-950'}`}
+              >
+                <Clock aria-hidden className="size-3" />
+                {countdown}
               </span>
-              {countdown ? (
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold ${urgent ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300' : 'border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'}`}
-                >
-                  <Clock aria-hidden className="size-3" />
-                  {countdown}
-                </span>
-              ) : null}
-            </p>
-          ) : null}
-        </div>
+            ) : null}
+          </p>
+        ) : null}
         <a
           href={`/p/proposal/${token}/pdf?lang=${language}`}
-          className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-[#2A4227] transition-colors hover:border-[#2A4227] hover:bg-[#2A4227]/5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-[#9CC196] dark:hover:border-[#9CC196]"
+          className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-white/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950"
         >
           <Download className="size-3.5" />
           {copy.download}
@@ -95,16 +91,18 @@ export function RecipientBlock({
   logoUrl: string | null
 }) {
   return (
-    <div className="border-b border-zinc-100 bg-zinc-50 px-6 py-5 sm:px-8 dark:border-zinc-800/60 dark:bg-zinc-900/50">
-      <SectionLabel as="p" className="mb-2">
-        {label}
-      </SectionLabel>
-      <div className="flex items-center gap-3">
+    <div className="flex items-center justify-center gap-3 px-6 pt-8">
+      <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#BDFF7B] text-lg font-semibold text-zinc-950">
         {logoUrl ? (
           // biome-ignore lint/performance/noImgElement: URL externa del logo del cliente, no compatible con next/image
-          <img src={logoUrl} alt={`Logo ${name}`} className="size-8 rounded object-contain" />
-        ) : null}
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{name}</p>
+          <img src={logoUrl} alt={`Logo ${name}`} className="size-full object-contain p-1.5" />
+        ) : (
+          <span aria-hidden>{name.trim().slice(0, 1).toUpperCase()}</span>
+        )}
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">{label}</p>
+        <p className="text-sm font-semibold break-words text-zinc-900 dark:text-zinc-100">{name}</p>
       </div>
     </div>
   )

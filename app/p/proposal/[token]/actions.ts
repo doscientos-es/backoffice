@@ -110,7 +110,7 @@ export type PaymentInitResult =
 /** Best-effort: notifies all owners/admins in-app and by background Push. */
 async function notifyAdmins(
   admin: ReturnType<typeof createAdminClient>,
-  eventType: string,
+  eventType: 'proposal_accepted' | 'proposal_rejected',
   body: string,
   link: string,
 ): Promise<void> {
@@ -122,7 +122,7 @@ async function notifyAdmins(
   if (!recipients?.length) return
   await dispatchNotifications({
     recipientIds: recipients.map((r) => r.id as string),
-    eventType: eventType as 'proposal_accepted' | 'proposal_rejected' | 'proposal_question',
+    eventType,
     entityType: 'proposal',
     entityId: link.split('/').pop() ?? 'unknown',
     body,
@@ -521,54 +521,6 @@ export async function selectProposalMaintenance(
 
   if (planId) await recordProposalEngagement(viewedProposal(proposal), 'maintenance_selected')
   revalidatePath(`/p/proposal/${parsedToken.data}`)
-  return { ok: true }
-}
-
-export async function sendProposalQuestion(token: string, body: string): Promise<ActionResult> {
-  const parsedToken = ProposalPortalToken.safeParse(token)
-  const parsedBody = z.string().trim().min(1).max(2000).safeParse(body)
-  if (!parsedToken.success || !parsedBody.success) {
-    return { ok: false, error: 'La consulta no es válida' }
-  }
-
-  const admin = createAdminClient()
-  const { data: proposal, error } = await admin
-    .from('proposals')
-    .select(
-      'id, number, lead_id, client_id, created_by, status, valid_until, title, is_client_visible, portal_password_hash, clients(name), leads(name)',
-    )
-    .eq('portal_token', parsedToken.data)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (error || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
-  const access = await requirePublicPortalAccess(parsedToken.data, proposal)
-  if (!access.ok) return access
-  if (isProposalExpired(proposal.valid_until)) {
-    return { ok: false, error: 'Esta propuesta ya no admite consultas' }
-  }
-  if (!['sent', 'viewed'].includes(proposal.status as string)) {
-    return { ok: false, error: 'Esta propuesta ya no admite consultas' }
-  }
-
-  const client = (proposal as unknown as { clients: { name: string } | null }).clients
-  const lead = (proposal as unknown as { leads: { name: string } | null }).leads
-  const { error: insertError } = await admin.from('proposal_messages').insert({
-    proposal_id: proposal.id,
-    author_type: 'client',
-    author_name: client?.name ?? lead?.name ?? 'Cliente',
-    body: parsedBody.data,
-  })
-  if (insertError) return { ok: false, error: 'No se pudo enviar la consulta' }
-
-  void notifyAdmins(
-    admin,
-    'proposal_question',
-    `${proposal.title as string}: ${parsedBody.data.slice(0, 120)}`,
-    `/proposals/${proposal.id}`,
-  )
-  await recordProposalEngagement(viewedProposal(proposal), 'question_sent')
-  revalidatePath(`/p/proposal/${parsedToken.data}`)
-  revalidatePath(`/proposals/${proposal.id}`)
   return { ok: true }
 }
 

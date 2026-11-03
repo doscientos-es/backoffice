@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 
-/** Small uppercase section label. Dark enough to pass WCAG AA on white. */
+export const PROPOSAL_ACTION_CLASS =
+  'rounded-full bg-[#BDFF7B] text-zinc-950 shadow-none hover:bg-[#a9ef65] focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-white'
+
+/** Section heading; spacing replaces decorative rules between sections. */
 export function SectionLabel({
   children,
   as: Tag = 'h2',
@@ -12,7 +15,7 @@ export function SectionLabel({
 }) {
   return (
     <Tag
-      className={`text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400 ${className}`}
+      className={`text-lg font-semibold tracking-tight text-zinc-950 dark:text-white ${className}`}
     >
       {children}
     </Tag>
@@ -27,8 +30,7 @@ const STATUS_PILL: Record<string, string> = {
   expired:
     'border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
 }
-const STATUS_PILL_PENDING =
-  'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300'
+const STATUS_PILL_PENDING = 'border-transparent bg-white/80 text-zinc-950'
 
 export function StatusPill({ status, label }: { status: string; label: string }) {
   return (

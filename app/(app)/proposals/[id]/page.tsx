@@ -14,10 +14,6 @@ import { BackLink } from '@/components/layout/back-link'
 import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
 import { PageHeader } from '@/components/layout/page-header'
 import { PortalAccessControls } from '@/components/portal/portal-access-controls'
-import {
-  type ProposalMessage,
-  ProposalMessageThread,
-} from '@/components/proposals/proposal-message-thread'
 import type { AttachmentItem } from '@/components/ui/attachment-section'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -57,7 +53,6 @@ import { type DeliveryNote, DeliveryNoteCard } from './delivery-note-card'
 import { GenerateInvoiceButton } from './generate-invoice-button'
 import { LinkProjectButton } from './link-project-button'
 import { MarkAcceptedButton } from './mark-accepted-button'
-import { replyToProposalMessage } from './message-actions'
 import { type EditableItem, ProposalEditor } from './proposal-editor'
 import { ProposalFollowUpAssistant } from './proposal-follow-up-assistant'
 import { ProposalOverview } from './proposal-overview'
@@ -83,7 +78,6 @@ function ProposalSidebar({
   leadPhone,
   clientId,
   aiEnabled,
-  messages,
   views,
   viewStats,
   awaitingReply,
@@ -94,12 +88,10 @@ function ProposalSidebar({
   leadPhone: string | null
   clientId: string | null
   aiEnabled: boolean
-  messages: ProposalMessage[]
   views: ProposalViewRow[]
   viewStats: ProposalViewStats
   awaitingReply: boolean
 }) {
-  const needsReply = messages.at(-1)?.author_type === 'client'
   // Only proposals still waiting for an answer deserve a call.
   const heat = awaitingReply ? proposalHeat(viewStats) : 'none'
   const callable = heat === 'hot' && leadId !== null && leadPhone !== null
@@ -214,24 +206,6 @@ function ProposalSidebar({
           )}
         </CardContent>
       </Card>
-
-      <Card className={needsReply ? 'border-primary/40 shadow-sm' : undefined}>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle>Consultas del cliente</CardTitle>
-            {needsReply ? <Badge variant="warning">Pendiente</Badge> : null}
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <ProposalMessageThread
-            messages={messages}
-            submit={replyToProposalMessage.bind(null, proposalId)}
-            sticky={false}
-            embedded
-            showHeader={false}
-          />
-        </CardContent>
-      </Card>
     </>
   )
 }
@@ -335,11 +309,6 @@ export default async function ProposalDetailPage({
     .eq('proposal_id', id)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
-  const { data: messages } = await supabase
-    .from('proposal_messages')
-    .select('id, author_type, author_name, body, created_at')
-    .eq('proposal_id', id)
-    .order('created_at', { ascending: true })
   const { data: latestAcceptance } = await supabase
     .from('proposal_acceptances')
     .select('signer_name, signer_role, accepted_at, document_hash')
@@ -953,7 +922,6 @@ export default async function ProposalDetailPage({
               leadPhone={lead?.phone ?? null}
               clientId={client?.id ?? null}
               aiEnabled={isAIEnabled() && ['sent', 'viewed'].includes(status)}
-              messages={(messages ?? []) as unknown as ProposalMessage[]}
               views={viewRows}
               viewStats={clientViewStats}
               awaitingReply={['sent', 'viewed'].includes(status)}

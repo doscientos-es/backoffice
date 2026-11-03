@@ -43,17 +43,17 @@ export function TermsSection({
 }) {
   if (!paymentTerms && !changeManagementTerms) return null
   return (
-    <div className="border-t border-zinc-100 bg-zinc-50 px-8 py-6 dark:border-zinc-800/60 dark:bg-zinc-900/50">
-      <SectionLabel as="p" className="mb-4">
+    <div className="mx-auto max-w-3xl px-2 py-10 sm:px-6">
+      <SectionLabel className="mb-6 text-center">
         {tr('Condiciones', 'Condicions', 'Terms')}
       </SectionLabel>
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-8 sm:grid-cols-2">
         {paymentTerms ? (
           <div>
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               {tr('Forma de pago', 'Forma de pagament', 'Payment method')}
             </p>
-            <p className="mt-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
+            <p className="mt-2 w-fit rounded-lg bg-[#BDFF7B] px-2.5 py-1 text-xs font-medium text-zinc-950">
               {paymentScheduleLabel(tr, paymentSchedule)}
             </p>
             <Markdown
@@ -81,7 +81,7 @@ export function TermsSection({
 export function NotesSection({ notes, tr }: { notes: string | null; tr: Tr }) {
   if (!notes) return null
   return (
-    <div className="border-t border-zinc-100 bg-zinc-50 px-8 py-5 dark:border-zinc-800/60 dark:bg-zinc-900/50">
+    <div className="mx-auto max-w-3xl px-2 py-8 sm:px-6">
       <SectionLabel as="p" className="mb-2">
         {tr('Notas', 'Notes', 'Notes')}
       </SectionLabel>
@@ -101,7 +101,7 @@ export function SpecsSection({
 }) {
   if (specs.length === 0) return null
   return (
-    <div className="flex flex-col gap-4 border-t border-zinc-200 px-8 py-6 dark:border-zinc-800">
+    <div className="mx-auto flex max-w-3xl flex-col gap-4 px-2 py-8 sm:px-6">
       <SectionLabel as="p">
         {tr('Documentación técnica', 'Documentació tècnica', 'Technical documentation')}
       </SectionLabel>

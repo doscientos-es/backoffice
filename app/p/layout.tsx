@@ -31,12 +31,8 @@ export default async function PortalLayout({ children }: { children: React.React
     : ''
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-clip bg-[#f6f7f3] dark:bg-[#111410]">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[32rem] bg-[radial-gradient(circle_at_15%_0%,rgba(189,255,123,0.14),transparent_34%),radial-gradient(circle_at_85%_8%,rgba(42,66,39,0.12),transparent_30%)] dark:bg-[radial-gradient(circle_at_15%_0%,rgba(189,255,123,0.08),transparent_34%),radial-gradient(circle_at_85%_8%,rgba(189,255,123,0.05),transparent_30%)]"
-      />
-      <header className="relative border-b border-black/[0.06] bg-white/70 backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#111410]/80">
+    <div className="relative flex min-h-screen flex-col overflow-x-clip bg-white text-zinc-950 dark:bg-zinc-950 dark:text-white">
+      <header className="relative bg-white dark:bg-zinc-950">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
             <LogoMark size={30} variant="auto" />
@@ -46,7 +42,7 @@ export default async function PortalLayout({ children }: { children: React.React
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-1.5 rounded-full border border-emerald-900/10 bg-emerald-950/[0.04] px-2.5 py-1.5 text-[11px] font-medium text-emerald-900 max-sm:sr-only dark:border-emerald-200/10 dark:bg-emerald-200/[0.06] dark:text-emerald-200">
+            <div className="flex items-center gap-1.5 rounded-full bg-[#BDFF7B] px-2.5 py-1.5 text-[11px] font-medium text-zinc-950 max-sm:sr-only">
               <ShieldCheck className="size-3.5" aria-hidden="true" />
               Acceso privado
             </div>
@@ -61,7 +57,7 @@ export default async function PortalLayout({ children }: { children: React.React
         <div className="mx-auto w-full max-w-6xl">{children}</div>
       </main>
 
-      <footer className="relative border-t border-black/[0.06] bg-white/40 dark:border-white/[0.08] dark:bg-black/10">
+      <footer className="relative bg-white dark:bg-zinc-950">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 text-xs text-zinc-500 sm:px-6 dark:text-zinc-400">
           <div className="flex flex-col justify-between gap-2 sm:flex-row">
             <span>© {new Date().getFullYear()} doscientos</span>

@@ -12,10 +12,10 @@ import type { KeyPoint } from '@/lib/proposals/key-points'
 
 export function PortalNarrativeBlock({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <section className="px-6 py-6 sm:px-8">
-      <p className="mb-3 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+    <section className="px-2 py-6 sm:px-6">
+      <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
         {label}
-      </p>
+      </h2>
       {children}
     </section>
   )
@@ -34,14 +34,14 @@ export function PortalKeyPointsList({
 }) {
   const isProblems = variant === 'problems'
   const badgeClass = isProblems
-    ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
-    : 'bg-[#2A4227] text-white dark:bg-[#9CC196] dark:text-[#1a2b18]'
+    ? 'bg-white text-zinc-950 ring-1 ring-inset ring-[#BDFF7B] dark:bg-zinc-950 dark:text-white'
+    : 'bg-[#BDFF7B] text-zinc-950'
   return (
-    <ol className="flex flex-col gap-3">
+    <ol className="flex flex-col gap-6">
       {items.map((kp, i) => (
-        <li key={kp.id} className="flex gap-3">
+        <li key={kp.id} className="flex gap-4">
           <span
-            className={`mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums ${badgeClass}`}
+            className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums ${badgeClass}`}
             aria-hidden
           >
             {String(i + 1).padStart(2, '0')}

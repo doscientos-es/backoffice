@@ -5,20 +5,23 @@ import type { computeProposalTotals } from '@/lib/finance'
 import { formatPortalEUR } from '@/lib/portal/language'
 
 import type { PortalLanguage, Tr } from '../_lib/i18n'
+import { PROPOSAL_ACTION_CLASS } from './primitives'
 import { RespondButton } from './respond-controls'
 
 type Totals = ReturnType<typeof computeProposalTotals>
 
 function Stat({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <dt className="text-[11px] font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
-        {label}
-      </dt>
-      <dd className="text-lg font-bold tracking-tight text-zinc-900 sm:text-xl dark:text-zinc-100">
+    <div className="flex min-w-0 flex-col items-center text-center">
+      <dt className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{label}</dt>
+      <dd className="mt-2 text-2xl font-semibold tracking-tight break-words text-zinc-950 tabular-nums sm:text-4xl dark:text-white">
         {children}
+        {hint ? (
+          <span className="mt-1 block text-xs leading-relaxed font-normal tracking-normal text-zinc-500 dark:text-zinc-400">
+            {hint}
+          </span>
+        ) : null}
       </dd>
-      {hint ? <p className="text-xs text-zinc-600 dark:text-zinc-400">{hint}</p> : null}
     </div>
   )
 }
@@ -54,9 +57,9 @@ export function DecisionSummary({
   return (
     <section
       aria-label={tr('Resumen de la propuesta', 'Resum de la proposta', 'Proposal summary')}
-      className="border-b border-zinc-200 bg-gradient-to-b from-[#2A4227]/[0.06] to-transparent px-6 py-6 sm:px-8 dark:border-zinc-800 dark:from-[#9CC196]/[0.07]"
+      className="mx-auto max-w-3xl px-2 py-10 sm:px-6 sm:py-12"
     >
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
+      <dl className="flex flex-wrap justify-center gap-x-10 gap-y-8 sm:gap-x-16">
         <Stat
           label={tr('Inversión', 'Inversió', 'Investment')}
           hint={tr('IVA incluido', 'IVA inclòs', 'VAT included')}
@@ -96,12 +99,14 @@ export function DecisionSummary({
         ) : null}
       </dl>
       {canRespond ? (
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <RespondButton className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2A4227] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1f3320] focus-visible:ring-2 focus-visible:ring-[#2A4227] focus-visible:ring-offset-2 focus-visible:outline-none">
+        <div className="mt-8 flex flex-col items-center gap-3 text-center">
+          <RespondButton
+            className={`inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold ${PROPOSAL_ACTION_CLASS}`}
+          >
             {tr('Revisar y aceptar', 'Revisar i acceptar', 'Review and accept')}
             <ArrowRight aria-hidden className="size-4" />
           </RespondButton>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+          <p className="max-w-sm text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
             {tr(
               'Sin compromiso hasta que firmes. Puedes preguntarnos lo que quieras antes.',
               'Sense compromís fins que signis. Ens pots preguntar el que vulguis abans.',

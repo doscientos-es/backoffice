@@ -14,7 +14,6 @@ export async function loadProposalData(proposal: ProposalRow) {
   const [
     { data: items },
     { data: specs },
-    { data: messages },
     { data: settings },
     { data: payments },
     { data: depositInvoice },
@@ -33,11 +32,6 @@ export async function loadProposalData(proposal: ProposalRow) {
       .eq('proposal_id', proposalId)
       .eq('is_client_visible', true)
       .not('portal_token', 'is', null),
-    admin
-      .from('proposal_messages')
-      .select('id, author_type, author_name, body, created_at')
-      .eq('proposal_id', proposalId)
-      .order('created_at', { ascending: true }),
     admin.from('settings').select('company_name, iban').eq('id', 1).maybeSingle(),
     // Confirmed payments for this proposal (signal/deposit)
     admin
@@ -60,12 +54,12 @@ export async function loadProposalData(proposal: ProposalRow) {
     typeof proposal.created_by === 'string'
       ? admin
           .from('team_members')
-          .select('name, email, avatar_url')
+          .select('name, email')
           .eq('id', proposal.created_by)
           .is('deleted_at', null)
           .maybeSingle()
       : Promise.resolve({ data: null }),
   ])
 
-  return { items, specs, messages, settings, payments, depositInvoice, contact }
+  return { items, specs, settings, payments, depositInvoice, contact }
 }

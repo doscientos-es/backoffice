@@ -22,7 +22,7 @@ function LineSubtotal({ item, language }: { item: ProposalItem; language: Portal
   )
 }
 
-const TH = 'py-3 text-xs font-semibold text-zinc-600 dark:text-zinc-400'
+const TH = 'py-3 text-xs font-semibold text-zinc-950'
 
 function LineItemsTable({
   items,
@@ -35,14 +35,18 @@ function LineItemsTable({
   language: PortalLanguage
   tr: Tr
 }) {
+  const showUnitPrice = items.some(
+    (item) => Number(item.quantity) !== 1 || Number(item.discount_percent ?? 0) > 0,
+  )
+
   return (
     <div className="hidden overflow-x-auto sm:block">
       <table className="w-full text-sm">
         <caption className="sr-only">
           {tr('Líneas de la propuesta', 'Línies de la proposta', 'Proposal line items')}
         </caption>
-        <thead className="bg-zinc-50 dark:bg-zinc-900/60">
-          <tr className="border-y border-zinc-200 dark:border-zinc-800">
+        <thead className="bg-[#BDFF7B] text-zinc-950">
+          <tr>
             <th scope="col" className={`${TH} px-8 text-left`}>
               {tr('Descripción', 'Descripció', 'Description')}
             </th>
@@ -54,9 +58,11 @@ function LineItemsTable({
             <th scope="col" className={`${TH} px-4 text-right`}>
               {tr('Cant.', 'Quant.', 'Qty.')}
             </th>
-            <th scope="col" className={`${TH} px-4 text-right`}>
-              {tr('Precio', 'Preu', 'Price')}
-            </th>
+            {showUnitPrice ? (
+              <th scope="col" className={`${TH} px-4 text-right`}>
+                {tr('Precio unitario', 'Preu unitari', 'Unit price')}
+              </th>
+            ) : null}
             <th scope="col" className={`${TH} px-4 text-right`}>
               {tr('IVA', 'IVA', 'VAT')}
             </th>
@@ -83,7 +89,7 @@ function LineItemsTable({
                         {tr('Único', 'Únic', 'One-time')}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-[#2A4227]/10 px-2.5 py-0.5 font-medium text-[#2A4227] dark:bg-[#9CC196]/10 dark:text-[#9CC196]">
+                      <span className="inline-flex items-center rounded-full bg-[#BDFF7B] px-2.5 py-0.5 font-medium text-zinc-950">
                         {billingCycleText(tr, cycle)}
                       </span>
                     )}
@@ -92,9 +98,11 @@ function LineItemsTable({
                 <td className="px-4 py-4 text-right text-zinc-700 tabular-nums dark:text-zinc-300">
                   {item.quantity}
                 </td>
-                <td className="px-4 py-4 text-right text-zinc-700 tabular-nums dark:text-zinc-300">
-                  {formatPortalEUR(item.unit_price, language)}
-                </td>
+                {showUnitPrice ? (
+                  <td className="px-4 py-4 text-right text-zinc-700 tabular-nums dark:text-zinc-300">
+                    {formatPortalEUR(item.unit_price, language)}
+                  </td>
+                ) : null}
                 <td className="px-4 py-4 text-right text-zinc-700 tabular-nums dark:text-zinc-300">
                   {item.vat_rate}%
                 </td>
@@ -131,8 +139,11 @@ function LineItemsList({
             </p>
             <div className="mt-2 flex items-end justify-between gap-4">
               <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-                {item.quantity} × {formatPortalEUR(item.unit_price, language)}
-                {' · '}
+                {Number(item.quantity) !== 1 || Number(item.discount_percent ?? 0) > 0 ? (
+                  <>
+                    {item.quantity} × {formatPortalEUR(item.unit_price, language)} {' · '}
+                  </>
+                ) : null}
                 {tr('IVA', 'IVA', 'VAT')} {item.vat_rate}%
                 {cycle !== 'none' ? ` · ${billingCycleText(tr, cycle)}` : ''}
               </p>
@@ -159,10 +170,7 @@ export function LineItems({
   tr: Tr
 }) {
   return (
-    <section
-      aria-labelledby="proposal-investment"
-      className="border-t border-zinc-200 dark:border-zinc-800"
-    >
+    <section aria-labelledby="proposal-investment" className="py-6">
       <SectionLabel className="px-6 pt-6 pb-3 sm:px-8">
         <span id="proposal-investment">
           {tr('Detalle de la inversión', 'Detall de la inversió', 'Investment breakdown')}

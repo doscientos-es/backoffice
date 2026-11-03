@@ -19,7 +19,6 @@ export const EXPORTABLE_TABLES = [
   'task_tag_assignments',
   'proposals',
   'proposal_items',
-  'proposal_messages',
   'proposal_specs',
   'proposal_team_members',
   'proposal_views',

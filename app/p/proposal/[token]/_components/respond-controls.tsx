@@ -3,6 +3,7 @@
 import { type AnchorHTMLAttributes, type ReactNode, useEffect, useState } from 'react'
 
 import { trackPortalEngagement } from '../actions'
+import { PROPOSAL_ACTION_CLASS } from './primitives'
 
 type ReportableEngagement = 'pricing_viewed' | 'terms_viewed' | 'whatsapp_click'
 
@@ -98,10 +99,7 @@ export function TrackedLink({
 /** Attribute that marks every rendering of the accept/decline panel. */
 const RESPONSE_PANEL_ATTR = 'data-proposal-response'
 
-/**
- * The panel is rendered twice (sidebar on desktop, below the document on
- * mobile) and CSS hides one of them, so pick the one that is actually visible.
- */
+/** Ignore any hidden panels so shortcuts always reach the visible form. */
 function visibleResponsePanel(): HTMLElement | null {
   const panels = document.querySelectorAll<HTMLElement>(`[${RESPONSE_PANEL_ATTR}]`)
   return Array.from(panels).find((panel) => panel.getClientRects().length > 0) ?? null
@@ -173,7 +171,9 @@ export function MobileCtaBar({
           </p>
           <p className="truncate text-base font-bold text-zinc-900 dark:text-zinc-100">{total}</p>
         </div>
-        <RespondButton className="shrink-0 rounded-full bg-[#2A4227] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1f3320] focus-visible:ring-2 focus-visible:ring-[#2A4227] focus-visible:ring-offset-2 focus-visible:outline-none">
+        <RespondButton
+          className={`shrink-0 px-5 py-2.5 text-sm font-semibold ${PROPOSAL_ACTION_CLASS}`}
+        >
           {cta}
         </RespondButton>
       </div>
@@ -209,15 +209,15 @@ export function SectionNav({ items }: { items: NavItem[] }) {
   return (
     <nav
       aria-label="Secciones"
-      className="sticky top-0 z-30 -mx-1 overflow-x-auto border-b border-zinc-200 bg-white/90 px-1 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90"
+      className="sticky top-0 z-30 overflow-x-auto bg-white/95 py-2 backdrop-blur dark:bg-zinc-950/95"
     >
-      <ul className="flex min-w-max gap-1 py-1.5">
+      <ul className="mx-auto flex w-max min-w-max gap-1 py-1.5">
         {items.map((item) => (
           <li key={item.id}>
             <a
               href={`#${item.id}`}
               aria-current={active === item.id ? 'true' : undefined}
-              className={`block rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${active === item.id ? 'bg-[#2A4227] text-white dark:bg-[#9CC196] dark:text-zinc-900' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'}`}
+              className={`block rounded-full px-4 py-2 text-xs font-semibold ${active === item.id ? 'bg-[#BDFF7B] text-zinc-950' : 'text-zinc-600 hover:bg-[#BDFF7B]/25 dark:text-zinc-300'}`}
             >
               {item.label}
             </a>

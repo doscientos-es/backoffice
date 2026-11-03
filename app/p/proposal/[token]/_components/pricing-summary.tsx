@@ -40,21 +40,21 @@ function PaymentTimeline({
   amounts[amounts.length - 1] = roundCurrency(total - paidBefore)
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3">
       <SectionLabel as="p">{tr('Cómo se paga', 'Com es paga', 'How it is paid')}</SectionLabel>
       <div aria-hidden className="flex h-2 w-full max-w-md gap-1">
         {plan.map((item, index) => (
           <span
             key={item.id}
             style={{ flexGrow: item.percentage }}
-            className={`rounded-full ${index === 0 ? 'bg-[#2A4227] dark:bg-[#9CC196]' : 'bg-[#2A4227]/30 dark:bg-[#9CC196]/30'}`}
+            className={`rounded-full ${index === 0 ? 'bg-[#BDFF7B]' : 'bg-[#BDFF7B]/40'}`}
           />
         ))}
       </div>
       <ol className="flex max-w-md flex-col gap-2">
         {plan.map((item, index) => (
           <li key={item.id} className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="text-zinc-700 dark:text-zinc-300">
+            <span className="min-w-0 break-words text-zinc-700 dark:text-zinc-300">
               <strong className="font-semibold text-zinc-900 dark:text-zinc-100">
                 {item.percentage} %
               </strong>{' '}
@@ -66,7 +66,7 @@ function PaymentTimeline({
                 </span>
               ) : null}
             </span>
-            <span className="font-semibold text-zinc-900 tabular-nums dark:text-zinc-100">
+            <span className="shrink-0 font-semibold whitespace-nowrap text-zinc-900 tabular-nums dark:text-zinc-100">
               {formatPortalEUR(amounts[index] ?? 0, language)}
             </span>
           </li>
@@ -97,18 +97,8 @@ export function PricingSummary({
   ].filter(({ bucket }) => bucket.total > 0)
 
   return (
-    <div className="flex flex-col gap-6 border-t border-zinc-200 px-8 py-5 sm:flex-row sm:items-start sm:justify-between dark:border-zinc-800">
-      {paymentPlan.length > 1 && totals.oneTime.total > 0 ? (
-        <PaymentTimeline
-          plan={paymentPlan}
-          total={totals.oneTime.total}
-          language={language}
-          tr={tr}
-        />
-      ) : (
-        <div className="hidden sm:block" />
-      )}
-      <div className="flex w-full flex-col gap-3 sm:ml-auto sm:w-64 sm:shrink-0">
+    <div className="mx-auto flex max-w-xl flex-col gap-8 px-6 py-8 sm:px-8">
+      <div className="flex min-w-0 flex-col gap-3">
         <ProposalPriceBreakdown
           title={tr('Inversión inicial', 'Inversió inicial', 'Initial investment')}
           subtotal={totals.oneTime.subtotal}
@@ -137,6 +127,14 @@ export function PricingSummary({
           </div>
         ) : null}
       </div>
+      {paymentPlan.length > 1 && totals.oneTime.total > 0 ? (
+        <PaymentTimeline
+          plan={paymentPlan}
+          total={totals.oneTime.total}
+          language={language}
+          tr={tr}
+        />
+      ) : null}
     </div>
   )
 }

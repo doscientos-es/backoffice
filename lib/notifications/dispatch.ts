@@ -21,7 +21,6 @@ type NotificationEvent =
   | 'invoice_draft_ready'
   | 'proposal_accepted'
   | 'proposal_rejected'
-  | 'proposal_question'
   | 'proposal_viewed'
   | 'proposal_deck_completed'
 
@@ -45,7 +44,6 @@ const TITLES: Record<NotificationEvent, string> = {
   invoice_draft_ready: '🧾 Factura lista para emitir',
   proposal_accepted: '✅ Propuesta aceptada',
   proposal_rejected: '❌ Propuesta rechazada',
-  proposal_question: '💬 Consulta sobre propuesta',
   proposal_viewed: '👀 Presupuesto abierto',
   proposal_deck_completed: '👀 Propuesta visualizada',
 }

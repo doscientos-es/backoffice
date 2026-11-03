@@ -3,10 +3,6 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { PortalPasswordGate } from '@/components/portal/password-gate'
-import {
-  type ProposalMessage,
-  ProposalMessageThread,
-} from '@/components/proposals/proposal-message-thread'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Markdown } from '@/components/ui/markdown'
 import { formatAddress } from '@/lib/address'
@@ -32,7 +28,6 @@ import {
 import type { ProposalStatus } from '@/lib/status'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-import { ContactCard } from './_components/contact-card'
 import { DecisionSummary } from './_components/decision-summary'
 import { DocumentHeader, RecipientBlock } from './_components/document-header'
 import { LineItems } from './_components/line-items'
@@ -48,12 +43,13 @@ import {
 import { ResponseArea } from './_components/response-area'
 import { ScopeSection } from './_components/scope-section'
 import { NotesSection, SpecsSection, TermsSection } from './_components/terms-section'
+import { ProposalWhatsAppWidget } from './_components/whatsapp-widget'
 import { getPortalCopy, getStatusLabel, makeTr } from './_lib/i18n'
 import { loadProposalData } from './_lib/load-proposal-data'
 import { daysUntilExpiry, estimatedTotalWeeks } from './_lib/summary'
 import { trackProposalView } from './_lib/track-view'
 import type { ProposalItem, ProposalSpec } from './_lib/types'
-import { sendProposalQuestion, unlockProposalPortal } from './actions'
+import { unlockProposalPortal } from './actions'
 import { PortalKeyPointsList, PortalNarrativeBlock } from './narrative'
 import { ProposalActions } from './proposal-actions'
 import { ProposalMaintenanceOptions } from './proposal-maintenance-options'
@@ -137,7 +133,6 @@ export default async function PortalProposalPage({
   const {
     items,
     specs,
-    messages,
     settings,
     payments: proposalPayments,
     depositInvoice,
@@ -236,7 +231,6 @@ export default async function PortalProposalPage({
     subtotal: computeLineSubtotal(item),
   }))
   const safeSpecs = (specs ?? []) as unknown as ProposalSpec[]
-  const proposalMessages = (messages ?? []) as unknown as ProposalMessage[]
   const contextMarkdown = ((proposal.context_markdown as string | null) ?? '').trim()
   const problems = parseKeyPoints(proposal.problems)
   const solutions = parseKeyPoints(proposal.solutions)
@@ -311,11 +305,9 @@ export default async function PortalProposalPage({
     },
   ].filter((item): item is NavItem => item !== false)
 
-  // Accept/decline panel: rendered in the sidebar on desktop and below the
-  // document on mobile. Each rendering is marked so the "accept" shortcuts can
-  // scroll to whichever one is visible.
+  // A single acceptance panel for every screen size; shortcuts scroll here.
   const actions = (
-    <div data-proposal-response className="scroll-mt-24">
+    <div data-proposal-response className="mx-auto w-full max-w-xl scroll-mt-24">
       <ProposalActions
         token={token}
         language={portalLanguage}
@@ -328,7 +320,9 @@ export default async function PortalProposalPage({
   )
 
   return (
-    <div className={`flex flex-col gap-4 pt-4 lg:pt-6 ${canRespond ? 'pb-24 lg:pb-0' : ''}`}>
+    <div
+      className={`mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pt-4 sm:px-6 ${canRespond ? 'pb-24 lg:pb-16' : 'pb-16'}`}
+    >
       {isDraft && (
         <div className="flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
           <span className="tracking-wider uppercase">{copy.draft}</span>
@@ -366,160 +360,147 @@ export default async function PortalProposalPage({
       )}
       {canRespond && !isTeam ? <EngagementTracker token={token} /> : null}
       <SectionNav items={navItems} />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-        <article className="overflow-hidden border-y border-zinc-200 dark:border-zinc-800">
-          <DocumentHeader
-            token={token}
-            language={portalLanguage}
-            copy={copy}
-            proposalNumber={proposalNumber}
-            title={proposal.title as string}
-            validUntil={validUntil}
-            daysLeft={daysLeft}
-            status={status}
-            statusLabel={statusLabel}
-          />
-          <RecipientBlock
-            label={copy.recipient}
-            name={recipientName}
-            logoUrl={client?.logo_url ?? null}
-          />
-          {!responded && !expired ? (
-            <DecisionSummary
+      <div className="min-w-0">
+        <div className="flex min-w-0 flex-col gap-10">
+          <article className="min-w-0">
+            <DocumentHeader
+              token={token}
               language={portalLanguage}
-              tr={tr}
-              totals={totals}
+              copy={copy}
+              proposalNumber={proposalNumber}
+              title={proposal.title as string}
+              validUntil={validUntil}
+              daysLeft={daysLeft}
+              status={status}
+              statusLabel={statusLabel}
+            />
+            <RecipientBlock
+              label={copy.recipient}
+              name={recipientName}
+              logoUrl={client?.logo_url ?? null}
+            />
+            {!responded && !expired ? (
+              <DecisionSummary
+                language={portalLanguage}
+                tr={tr}
+                totals={totals}
+                depositAmount={depositAmount}
+                initialPaymentPercentage={initialPaymentPercentage}
+                totalWeeks={estimatedTotalWeeks(scopeModules)}
+                canRespond={canRespond}
+              />
+            ) : null}
+
+            {/* Narrative: Context → Problems → Solutions (always before price) */}
+            {hasNarrative ? (
+              <div id="contexto" className="mx-auto flex max-w-3xl scroll-mt-20 flex-col gap-6">
+                {contextMarkdown ? (
+                  <PortalNarrativeBlock label={tr('Contexto', 'Context', 'Context')}>
+                    <Markdown source={contextMarkdown} />
+                  </PortalNarrativeBlock>
+                ) : null}
+                {problems.length > 0 ? (
+                  <PortalNarrativeBlock
+                    label={tr('Problemas detectados', 'Reptes detectats', 'Challenges identified')}
+                  >
+                    <PortalKeyPointsList items={problems} variant="problems" />
+                  </PortalNarrativeBlock>
+                ) : null}
+                {solutions.length > 0 ? (
+                  <PortalNarrativeBlock
+                    label={tr('Cómo lo abordamos', 'Com ho abordem', 'Our approach')}
+                  >
+                    <PortalKeyPointsList items={solutions} variant="solutions" />
+                  </PortalNarrativeBlock>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div id="alcance" className="scroll-mt-16">
+              <ScopeSection
+                modules={scopeModules}
+                deliverables={deliverables}
+                acceptanceCriteria={acceptanceCriteria}
+                tr={tr}
+              />
+            </div>
+            <div id="inversion" className="scroll-mt-16">
+              <LineItems
+                items={safeItems}
+                hasRecurring={hasRecurring}
+                language={portalLanguage}
+                tr={tr}
+              />
+              <PricingSummary
+                totals={totals}
+                paymentPlan={paymentPlan}
+                globalDiscountReason={globalDiscountReason}
+                language={portalLanguage}
+                tr={tr}
+              />
+            </div>
+            <div id="condiciones" className="scroll-mt-16">
+              <TermsSection
+                paymentTerms={paymentTerms}
+                paymentSchedule={paymentSchedule}
+                changeManagementTerms={changeManagementTerms}
+                tr={tr}
+              />
+            </div>
+            <NotesSection notes={(proposal.notes as string | null) ?? null} tr={tr} />
+            <SpecsSection specs={safeSpecs} language={portalLanguage} tr={tr} />
+            {canRespond ? (
+              <NextSteps
+                language={portalLanguage}
+                tr={tr}
+                needsFiscal={needsFiscal}
+                depositAmount={depositAmount}
+              />
+            ) : null}
+          </article>
+          {maintenanceOffer.enabled ? (
+            <ProposalMaintenanceOptions
+              token={token}
+              offer={maintenanceOffer}
+              selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
+              disabled={isDraft || responded || expired || isTeam}
+              language={portalLanguage}
+            />
+          ) : null}
+          {/* Response area — hidden for draft previews */}
+          {!isDraft && (responded || expired) ? (
+            <ResponseArea
+              token={token}
+              language={portalLanguage}
+              status={status}
+              isTeam={isTeam}
+              expired={expired}
+              contactEmail={contact?.email ?? null}
+              respondedAt={(proposal.responded_at as string | null) ?? null}
+              proposalId={proposal.id as string}
+              proposalNumber={proposalNumber}
+              signalPaid={signalPaid}
+              firstPayment={confirmedPayments[0]}
               depositAmount={depositAmount}
               initialPaymentPercentage={initialPaymentPercentage}
-              totalWeeks={estimatedTotalWeeks(scopeModules)}
-              canRespond={canRespond}
+              companyName={(settings?.company_name as string | null) ?? null}
+              iban={(settings?.iban as string | null) ?? null}
             />
+          ) : canRespond ? (
+            actions
           ) : null}
-
-          {/* Narrative: Context → Problems → Solutions (always before price) */}
-          {hasNarrative ? (
-            <div
-              id="contexto"
-              className="flex scroll-mt-16 flex-col divide-y divide-zinc-100 border-b border-zinc-100 dark:divide-zinc-800/60 dark:border-zinc-800/60"
-            >
-              {contextMarkdown ? (
-                <PortalNarrativeBlock label={tr('Contexto', 'Context', 'Context')}>
-                  <Markdown source={contextMarkdown} />
-                </PortalNarrativeBlock>
-              ) : null}
-              {problems.length > 0 ? (
-                <PortalNarrativeBlock
-                  label={tr('Problemas detectados', 'Reptes detectats', 'Challenges identified')}
-                >
-                  <PortalKeyPointsList items={problems} variant="problems" />
-                </PortalNarrativeBlock>
-              ) : null}
-              {solutions.length > 0 ? (
-                <PortalNarrativeBlock
-                  label={tr('Cómo lo abordamos', 'Com ho abordem', 'Our approach')}
-                >
-                  <PortalKeyPointsList items={solutions} variant="solutions" />
-                </PortalNarrativeBlock>
-              ) : null}
-            </div>
-          ) : null}
-
-          <div id="alcance" className="scroll-mt-16">
-            <ScopeSection
-              modules={scopeModules}
-              deliverables={deliverables}
-              acceptanceCriteria={acceptanceCriteria}
-              tr={tr}
-            />
+          <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+            <PresentationCard token={token} language={portalLanguage} />
           </div>
-          <div id="inversion" className="scroll-mt-16">
-            <LineItems
-              items={safeItems}
-              hasRecurring={hasRecurring}
-              language={portalLanguage}
-              tr={tr}
-            />
-            <PricingSummary
-              totals={totals}
-              paymentPlan={paymentPlan}
-              globalDiscountReason={globalDiscountReason}
-              language={portalLanguage}
-              tr={tr}
-            />
-          </div>
-          <div id="condiciones" className="scroll-mt-16">
-            <TermsSection
-              paymentTerms={paymentTerms}
-              paymentSchedule={paymentSchedule}
-              changeManagementTerms={changeManagementTerms}
-              tr={tr}
-            />
-          </div>
-          <NotesSection notes={(proposal.notes as string | null) ?? null} tr={tr} />
-          <SpecsSection specs={safeSpecs} language={portalLanguage} tr={tr} />
-          {canRespond ? (
-            <NextSteps
-              language={portalLanguage}
-              tr={tr}
-              needsFiscal={needsFiscal}
-              depositAmount={depositAmount}
-            />
-          ) : null}
-          {!responded && !expired ? (
-            <ContactCard
-              token={token}
-              contact={contact ?? null}
-              proposalNumber={proposalNumber}
-              tr={tr}
-            />
-          ) : null}
-        </article>
-        <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
-          {canRespond ? <div className="max-lg:hidden">{actions}</div> : null}
-          <ProposalMessageThread
-            messages={proposalMessages}
-            submit={sendProposalQuestion.bind(null, token)}
-            disabled={isDraft || responded || expired || isTeam}
-            sticky={false}
-            language={portalLanguage}
-          />
-          <PresentationCard token={token} language={portalLanguage} className="max-lg:hidden" />
-        </aside>
-
-        {maintenanceOffer.enabled ? (
-          <ProposalMaintenanceOptions
-            token={token}
-            offer={maintenanceOffer}
-            selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
-            disabled={isDraft || responded || expired || isTeam}
-            language={portalLanguage}
-          />
-        ) : null}
-        <PresentationCard token={token} language={portalLanguage} className="lg:hidden" />
+        </div>
       </div>
-
-      {/* Response area — hidden for draft previews */}
-      {!isDraft && (responded || expired) ? (
-        <ResponseArea
-          token={token}
-          language={portalLanguage}
-          status={status}
-          isTeam={isTeam}
-          expired={expired}
-          contactEmail={contact?.email ?? null}
-          respondedAt={(proposal.responded_at as string | null) ?? null}
-          proposalId={proposal.id as string}
-          proposalNumber={proposalNumber}
-          signalPaid={signalPaid}
-          firstPayment={confirmedPayments[0]}
-          depositAmount={depositAmount}
-          initialPaymentPercentage={initialPaymentPercentage}
-          companyName={(settings?.company_name as string | null) ?? null}
-          iban={(settings?.iban as string | null) ?? null}
-        />
-      ) : canRespond ? (
-        <div className="lg:hidden">{actions}</div>
-      ) : null}
+      <ProposalWhatsAppWidget
+        token={token}
+        proposalNumber={proposalNumber}
+        phone="34671171525"
+        hasMobileCta={canRespond}
+        tr={tr}
+      />
       {canRespond ? (
         <MobileCtaBar
           totalLabel={tr('Inversión', 'Inversió', 'Investment')}
