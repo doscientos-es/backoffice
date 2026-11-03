@@ -1,6 +1,41 @@
 {
   "releases": [
     {
+      "version": "0.1.156",
+      "date": "2026-11-03",
+      "title": "v0.1.156",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add vertical timeline for lead interactions"
+          ]
+        },
+        {
+          "title": "Correcciones",
+          "items": [
+            "Adjust button sizes for better UI consistency"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "9714eecf4fc3fe2deb5227721a5e304af8d7d056",
+          "type": "feat",
+          "scope": "interaction-timeline",
+          "breaking": false,
+          "description": "Add vertical timeline for lead interactions"
+        },
+        {
+          "sha": "a40047c2cee6e7189c14c1f786f2bce2e94da6a8",
+          "type": "fix",
+          "scope": "phone-actions",
+          "breaking": false,
+          "description": "Adjust button sizes for better UI consistency"
+        }
+      ]
+    },
+    {
       "version": "0.1.155",
       "date": "2026-11-03",
       "title": "v0.1.155",

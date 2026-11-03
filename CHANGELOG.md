@@ -2,6 +2,16 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.156
+
+### Nuevas funciones
+
+- Add vertical timeline for lead interactions
+
+### Correcciones
+
+- Adjust button sizes for better UI consistency
+
 ## 2026-11-03 — v0.1.155
 
 ### Correcciones
