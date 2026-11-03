@@ -24,7 +24,7 @@ export function AvisosPanel({
   }
 
   return (
-    <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/[0.07] via-card to-card shadow-sm">
+    <Card className="border-amber-500/20 bg-linear-to-br from-amber-500/[0.07] via-card to-card shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BellRing className="size-4" /> Avisos
