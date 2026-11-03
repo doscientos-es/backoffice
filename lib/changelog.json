@@ -1,6 +1,44 @@
 {
   "releases": [
     {
+      "version": "0.1.158",
+      "date": "2026-11-03",
+      "title": "v0.1.158",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Implement automatic task creation and summary handling",
+            "Add loading and error handling for meeting documents",
+            "Add functions to clean, truncate, and chunk transcripts"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "795f02cda454247a95dbd05165844ecb743d1b28",
+          "type": "feat",
+          "scope": "meeting",
+          "breaking": false,
+          "description": "Implement automatic task creation and summary handling"
+        },
+        {
+          "sha": "c6823c2eae1522ee4f7e48e782a2706c8da3bead",
+          "type": "feat",
+          "scope": "meeting-artifacts",
+          "breaking": false,
+          "description": "Add loading and error handling for meeting documents"
+        },
+        {
+          "sha": "f326d6b2e3107109a0a4f57ba4cbb8ae14302508",
+          "type": "feat",
+          "scope": "transcript",
+          "breaking": false,
+          "description": "Add functions to clean, truncate, and chunk transcripts"
+        }
+      ]
+    },
+    {
       "version": "0.1.157",
       "date": "2026-11-03",
       "title": "v0.1.157",

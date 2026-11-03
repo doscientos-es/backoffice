@@ -2,6 +2,14 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.158
+
+### Nuevas funciones
+
+- Implement automatic task creation and summary handling
+- Add loading and error handling for meeting documents
+- Add functions to clean, truncate, and chunk transcripts
+
 ## 2026-11-03 — v0.1.157
 
 ### Nuevas funciones
