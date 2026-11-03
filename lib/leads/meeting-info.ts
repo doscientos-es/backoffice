@@ -18,6 +18,14 @@ export type MeetingInfo = {
   summary: string | null
   notes: string | null
   transcript: string | null
+  organizerEmail: string | null
+  actualStart: string | null
+  actualEnd: string | null
+  notesUrl: string | null
+  transcriptUrl: string | null
+  recordingUrl: string | null
+  /** Stored at import time. `null` means it was never computed (meetings imported before). */
+  storedNoShow: boolean | null
 }
 
 function rec(value: unknown): Record<string, unknown> | null {
@@ -56,7 +64,19 @@ export function parseMeetingInfo(payload: unknown): MeetingInfo {
     summary: str(artifacts?.summary),
     notes: str(artifacts?.notes_text),
     transcript: str(artifacts?.transcript_text),
+    organizerEmail: str(data?.organizer_email),
+    actualStart: str(artifacts?.actual_start),
+    actualEnd: str(artifacts?.actual_end),
+    notesUrl: str(artifacts?.notes_url),
+    transcriptUrl: str(artifacts?.transcript_url),
+    recordingUrl: str(artifacts?.recording_url),
+    storedNoShow: typeof artifacts?.lead_no_show === 'boolean' ? artifacts.lead_no_show : null,
   }
+}
+
+/** The stored mark wins (the importer sets it, a person can clear it); otherwise compute it. */
+export function isNoShow(info: MeetingInfo, leadEmail: string | null): boolean {
+  return info.storedNoShow ?? leadDidNotShow(info, leadEmail)
 }
 
 /**
@@ -89,7 +109,7 @@ export function meetingChips(
     ]
   }
   const chips: MeetingChip[] = []
-  if (leadDidNotShow(info, opts.leadEmail))
+  if (isNoShow(info, opts.leadEmail))
     chips.push({ text: 'El lead no se presentó', tone: 'warning' })
   if (info.durationMinutes !== null)
     chips.push({ text: `${info.durationMinutes} min`, tone: 'muted' })
@@ -115,7 +135,7 @@ export function extractNextSteps(text: string | null, max = 8): string[] {
   const steps: string[] = []
   for (const line of lines.slice(start + 1)) {
     const bullet = /^\s*(?:[-*•]|\d+[.)])\s+(.*\S)\s*$/.exec(line)
-    if (bullet) {
+    if (bullet?.[1]) {
       steps.push(bullet[1].replace(/\*\*/g, '').trim())
       if (steps.length >= max) break
     } else if (/^\s*#{1,6}\s/.test(line) || (steps.length > 0 && !line.trim())) break

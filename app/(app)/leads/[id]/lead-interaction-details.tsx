@@ -17,12 +17,11 @@ import { Button } from '@/components/ui/button'
 import { CopyButton } from '@/components/ui/copy-button'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { interactionBodyText } from '@/lib/leads/interaction-utils'
-import { extractNextSteps, leadDidNotShow, parseMeetingInfo } from '@/lib/leads/meeting-info'
+import { parseMeetingInfo } from '@/lib/leads/meeting-info'
 import type { LeadDetailInteraction } from '@/lib/leads/types'
 
 import { EmailComposer } from './email-composer'
-import { MeetingNextSteps, MeetingNoShowAlert } from './meeting-insights'
-import { MeetingTranscriptViewer } from './meeting-transcript-viewer'
+import { hasMeetingContent, MeetingDetailsSection, MeetingFacts } from './meeting-details-section'
 
 function payloadText(payload: unknown, key: string): string | null {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null
@@ -87,59 +86,9 @@ export function LeadInteractionDetails({
   const body = interactionBodyText(interaction.body)
   const isEmail = interaction.type.startsWith('email_')
   const metadata = isEmail ? emailMetadata(interaction.payload) : []
-  const meetingData =
-    interaction.type === 'meeting' && interaction.payload && typeof interaction.payload === 'object'
-      ? (interaction.payload as Record<string, unknown>)
-      : null
-  const meetingArtifactsValue = meetingData?.meet_artifacts
-  const meetingDetails =
-    meetingArtifactsValue && typeof meetingArtifactsValue === 'object'
-      ? (meetingArtifactsValue as Record<string, unknown>)
-      : null
-  const meetUrl = typeof meetingData?.meet_url === 'string' ? meetingData.meet_url : null
-  const meetingSummary =
-    typeof meetingDetails?.summary === 'string' ? meetingDetails.summary.trim() : null
-  const meetingNotes =
-    typeof meetingDetails?.notes_text === 'string' ? meetingDetails.notes_text.trim() : null
-  const transcript =
-    typeof meetingDetails?.transcript_text === 'string'
-      ? meetingDetails.transcript_text.trim()
-      : null
-  const transcriptUrl =
-    typeof meetingDetails?.transcript_url === 'string' ? meetingDetails.transcript_url : null
-  const notesUrl = typeof meetingDetails?.notes_url === 'string' ? meetingDetails.notes_url : null
-  const importedAt =
-    typeof meetingDetails?.processed_at === 'string' ? meetingDetails.processed_at : null
-  const lastCheckedAt =
-    typeof meetingDetails?.last_checked_at === 'string' ? meetingDetails.last_checked_at : null
-  const meetingStart = typeof meetingData?.start === 'string' ? meetingData.start : null
-  const actualStart =
-    typeof meetingDetails?.actual_start === 'string' ? meetingDetails.actual_start : null
-  const actualEnd =
-    typeof meetingDetails?.actual_end === 'string' ? meetingDetails.actual_end : null
-  const actualDuration =
-    typeof meetingDetails?.duration_minutes === 'number' ? meetingDetails.duration_minutes : null
-  const meetingParticipants = Array.isArray(meetingDetails?.participants)
-    ? (meetingDetails.participants as Array<{
-        name?: string
-        email?: string | null
-        start?: string | null
-        end?: string | null
-      }>)
-    : []
-  const meetingStarted = meetingStart ? new Date(meetingStart).getTime() <= Date.now() : false
-  const meetingAttendees = Array.isArray(meetingData?.attendees)
-    ? meetingData.attendees.filter((value): value is string => typeof value === 'string')
-    : []
-  const organizerEmail =
-    typeof meetingData?.organizer_email === 'string' ? meetingData.organizer_email : null
-  const showMeetingSection =
-    interaction.type === 'meeting' &&
-    Boolean(meetUrl || meetingSummary || meetingNotes || transcript || notesUrl || transcriptUrl)
-  const meetingInfo = parseMeetingInfo(meetingData)
-  const noShow = leadDidNotShow(meetingInfo, leadEmail)
-  const nextSteps = extractNextSteps(meetingSummary ?? meetingNotes)
-  const meetingDisplayStart = actualStart ?? meetingStart
+  const meetingInfo = parseMeetingInfo(interaction.type === 'meeting' ? interaction.payload : null)
+  const showMeetingSection = interaction.type === 'meeting' && hasMeetingContent(meetingInfo)
+  const meetingDisplayStart = meetingInfo.actualStart ?? meetingInfo.start
   const meetingDate = meetingDisplayStart
     ? new Date(meetingDisplayStart).toLocaleString('es-ES')
     : null
@@ -264,131 +213,13 @@ export function LeadInteractionDetails({
                 </section>
               ) : null}
               {showMeetingSection ? (
-                <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/20 px-4 py-3">
-                    <div className="flex min-w-0 items-start gap-2.5">
-                      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Video className="size-4" aria-hidden />
-                      </span>
-                      <div>
-                        <h3 className="text-sm font-medium">Resumen de la reunión</h3>
-                        <p className="text-xs text-muted-foreground">
-                          {importedAt
-                            ? `Sincronizado el ${new Date(importedAt).toLocaleString('es-ES')}`
-                            : meetingStarted
-                              ? lastCheckedAt
-                                ? `Esperando los documentos de Google Meet · última búsqueda ${new Date(lastCheckedAt).toLocaleString('es-ES')}`
-                                : 'Meet ha terminado; el backoffice espera a que Google genere los documentos.'
-                              : 'Al terminar la reunión, el backoffice buscará aquí los documentos de Google Meet.'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {meetUrl ? (
-                        <Button asChild type="button" variant="outline" size="sm">
-                          <a href={meetUrl} target="_blank" rel="noopener noreferrer">
-                            Abrir Meet
-                          </a>
-                        </Button>
-                      ) : null}
-                      {notesUrl ? (
-                        <Button asChild type="button" variant="outline" size="sm">
-                          <a href={notesUrl} target="_blank" rel="noopener noreferrer">
-                            Documento de notas
-                          </a>
-                        </Button>
-                      ) : null}
-                      {transcriptUrl ? (
-                        <Button asChild type="button" variant="outline" size="sm">
-                          <a href={transcriptUrl} target="_blank" rel="noopener noreferrer">
-                            Documento de transcripción
-                          </a>
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="space-y-4 p-4 sm:p-5">
-                    {importedAt ? (
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        <div className="rounded-lg border bg-background/70 px-3 py-2">
-                          <p className="text-xs text-muted-foreground">Duración real</p>
-                          <p className="mt-1 text-sm font-semibold">
-                            {actualDuration !== null ? `${actualDuration} min` : 'No disponible'}
-                          </p>
-                        </div>
-                        <div className="rounded-lg border bg-background/70 px-3 py-2">
-                          <p className="text-xs text-muted-foreground">Participantes</p>
-                          <p className="mt-1 text-sm font-semibold">{meetingParticipants.length}</p>
-                        </div>
-                        <div className="rounded-lg border bg-background/70 px-3 py-2">
-                          <p className="text-xs text-muted-foreground">Estado</p>
-                          <p className="mt-1 text-sm font-semibold">Información sincronizada</p>
-                        </div>
-                      </div>
-                    ) : null}
-                    {meetingParticipants.length ? (
-                      <div>
-                        <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                          Quién estuvo en la llamada
-                        </h4>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {meetingParticipants.map((participant) => (
-                            <Badge
-                              key={`${participant.email ?? participant.name ?? 'participante'}-${participant.start ?? ''}`}
-                              variant="secondary"
-                            >
-                              {participant.name ?? participant.email ?? 'Participante'}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                    {noShow ? <MeetingNoShowAlert leadId={leadId} /> : null}
-                    {meetingSummary ? (
-                      <div>
-                        <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                          Resumen de la reunión
-                        </h4>
-                        <p className="mt-2 text-sm leading-7 break-words whitespace-pre-wrap">
-                          {meetingSummary}
-                        </p>
-                      </div>
-                    ) : null}
-                    {nextSteps.length > 0 && canReply ? (
-                      <MeetingNextSteps leadId={leadId} steps={nextSteps} />
-                    ) : null}
-                    {meetingNotes && meetingNotes !== meetingSummary ? (
-                      <details className="rounded-lg border border-border/70">
-                        <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
-                          Notas completas de Google Meet
-                        </summary>
-                        <pre className="max-h-[50vh] overflow-auto border-t p-3 text-sm leading-6 whitespace-pre-wrap">
-                          {meetingNotes}
-                        </pre>
-                      </details>
-                    ) : null}
-                    {transcript ? (
-                      <details className="rounded-lg border border-border/70">
-                        <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
-                          Ver transcripción íntegra
-                        </summary>
-                        <div className="border-t p-2">
-                          <MeetingTranscriptViewer transcript={transcript} />
-                        </div>
-                      </details>
-                    ) : importedAt ? (
-                      <p className="text-sm text-muted-foreground">
-                        Google no generó una transcripción para esta reunión.
-                      </p>
-                    ) : null}
-                    {!importedAt && !meetingSummary && !meetingNotes && !transcript ? (
-                      <p className="text-sm text-muted-foreground">
-                        No hace falta reenviar ni copiar el email de Google: los documentos se
-                        asociarán a esta ficha cuando estén listos.
-                      </p>
-                    ) : null}
-                  </div>
-                </section>
+                <MeetingDetailsSection
+                  info={meetingInfo}
+                  interactionId={interaction.id}
+                  leadId={leadId}
+                  leadEmail={leadEmail}
+                  canEdit={canReply}
+                />
               ) : null}
             </div>
 
@@ -404,30 +235,7 @@ export function LeadInteractionDetails({
                       <dd className="mt-0.5 leading-snug font-medium break-words">{value}</dd>
                     </div>
                   ))}
-                  {organizerEmail ? (
-                    <div>
-                      <dt className="text-xs text-muted-foreground">Organizador</dt>
-                      <dd className="mt-0.5 leading-snug font-medium break-words">
-                        {organizerEmail}
-                      </dd>
-                    </div>
-                  ) : null}
-                  {meetingAttendees.length > 0 ? (
-                    <div>
-                      <dt className="text-xs text-muted-foreground">Invitados</dt>
-                      <dd className="mt-0.5 leading-snug font-medium break-words">
-                        {meetingAttendees.join(', ')}
-                      </dd>
-                    </div>
-                  ) : null}
-                  {actualEnd ? (
-                    <div>
-                      <dt className="text-xs text-muted-foreground">Fin real</dt>
-                      <dd className="mt-0.5 leading-snug font-medium break-words">
-                        {new Date(actualEnd).toLocaleString('es-ES')}
-                      </dd>
-                    </div>
-                  ) : null}
+                  <MeetingFacts info={meetingInfo} />
                   <div>
                     <dt className="text-xs text-muted-foreground">Registrado por</dt>
                     <dd className="mt-1">

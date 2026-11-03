@@ -203,6 +203,11 @@ export const LogNoteInput = z.object({
   content: requiredText(8000, 'La nota no puede estar vacía'),
 })
 
+export const DismissMeetingNoShowInput = z.object({
+  leadId: z.string().uuid(),
+  interactionId: z.string().uuid(),
+})
+
 export const LeadContactInput = z.object({
   leadId: z.string().uuid(),
   name: requiredText(160, 'El nombre es obligatorio'),

@@ -43,6 +43,7 @@ import {
   DeleteLeadInteractionInput,
   LogCallInput,
   LogEmailInput,
+  DismissMeetingNoShowInput,
   LogNoteInput,
   LeadContactInput,
   LogWhatsAppInput,
@@ -1599,6 +1600,33 @@ export const logLeadNote = defineAction({
       performed_by: user.id,
     })
     if (error) throw new Error(error.message)
+  },
+})
+
+/** Clears the automatic "lead did not show" mark, e.g. when they joined with another account. */
+export const dismissMeetingNoShow = defineAction({
+  name: 'leads.dismissMeetingNoShow',
+  schema: DismissMeetingNoShowInput,
+  roles: ['owner', 'admin', 'member'],
+  revalidate: (_payload, input) => [`/leads/${input.leadId}`],
+  handler: async ({ leadId, interactionId }) => {
+    const supabase = await createServerClient()
+    const { data, error } = await supabase
+      .from('lead_interactions')
+      .select('payload')
+      .eq('id', interactionId)
+      .eq('lead_id', leadId)
+      .eq('type', 'meeting')
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!data) throw new Error('Reunión no encontrada')
+    const payload = (data.payload ?? {}) as Record<string, unknown>
+    const artifacts = (payload.meet_artifacts ?? {}) as Record<string, unknown>
+    const { error: updateError } = await supabase
+      .from('lead_interactions')
+      .update({ payload: { ...payload, meet_artifacts: { ...artifacts, lead_no_show: false } } })
+      .eq('id', interactionId)
+    if (updateError) throw new Error(updateError.message)
   },
 })
 

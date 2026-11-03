@@ -1,16 +1,40 @@
 'use client'
 
 import { CalendarClock, CircleCheck, ListPlus, LoaderCircle, UserX } from 'lucide-react'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 
 import { createTask } from '../../tasks/actions'
+import { dismissMeetingNoShow } from '../actions'
 
 /** Shown when the lead was invited to an imported meeting but never joined. */
-export function MeetingNoShowAlert({ leadId }: { leadId: string }) {
+export function MeetingNoShowAlert({
+  leadId,
+  interactionId,
+  canEdit,
+}: {
+  leadId: string
+  interactionId: string
+  canEdit: boolean
+}) {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+
+  function dismiss() {
+    startTransition(async () => {
+      const result = await dismissMeetingNoShow({ leadId, interactionId })
+      if (!result.ok) {
+        sileo.error({ title: result.error })
+        return
+      }
+      router.refresh()
+    })
+  }
+
   return (
     <div
       role="status"
@@ -20,12 +44,19 @@ export function MeetingNoShowAlert({ leadId }: { leadId: string }) {
         <UserX className="size-4 shrink-0 text-warning" aria-hidden />
         El lead no entró en la reunión.
       </p>
-      <Button asChild size="sm" variant="outline">
-        <a href={`/leads/${leadId}?feedback=schedule`}>
-          <CalendarClock className="size-3.5" aria-hidden />
-          Reagendar
-        </a>
-      </Button>
+      <div className="flex items-center gap-2">
+        {canEdit ? (
+          <Button type="button" size="sm" variant="ghost" onClick={dismiss} disabled={pending}>
+            Sí entró
+          </Button>
+        ) : null}
+        <Button asChild size="sm" variant="outline">
+          <a href={`/leads/${leadId}?feedback=schedule`}>
+            <CalendarClock className="size-3.5" aria-hidden />
+            Reagendar
+          </a>
+        </Button>
+      </div>
     </div>
   )
 }

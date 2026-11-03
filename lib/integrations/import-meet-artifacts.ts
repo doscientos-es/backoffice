@@ -7,6 +7,7 @@ import {
   listConferenceArtifacts,
   listConferenceRecords,
 } from '@/lib/google/meet'
+import { leadDidNotShow, parseMeetingInfo } from '@/lib/leads/meeting-info'
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -212,7 +213,26 @@ export async function importRecentMeetArtifacts(): Promise<{
             ),
           )
         : null
+      const { data: leadRow } = await supabase
+        .from('leads')
+        .select('email')
+        .eq('id', row.lead_id)
+        .maybeSingle()
+      const leadNoShow = leadDidNotShow(
+        parseMeetingInfo({
+          attendees: payload.attendees,
+          meet_artifacts: {
+            processed_at: importedAt,
+            participants: participants.map((participant) => ({
+              name: participant.signedinUser?.displayName ?? participant.anonymousUser?.displayName,
+              email: participant.email ?? null,
+            })),
+          },
+        }),
+        leadRow?.email ?? null,
+      )
       const meetingArtifacts = {
+        lead_no_show: leadNoShow,
         processed_at: importedAt,
         last_checked_at: importedAt,
         conference_record: conference.name,

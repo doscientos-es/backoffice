@@ -4,6 +4,7 @@ import { Calendar, ChevronDown, Mail, Phone, StickyNote } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { type MeetingChip, meetingChips, parseMeetingInfo } from '@/lib/leads/meeting-info'
 import type { LeadDetailInteraction } from '@/lib/leads/types'
 import { cn, formatDateTime, relativeTime } from '@/lib/utils'
 
@@ -23,6 +24,11 @@ const KIND: Record<string, { icon: typeof Mail; tone: string }> = {
   note: { icon: StickyNote, tone: 'bg-warning/10 text-warning' },
 }
 const EMAIL_KIND = { icon: Mail, tone: 'bg-info/10 text-info' }
+const CHIP_TONE: Record<MeetingChip['tone'], string> = {
+  success: 'bg-success/10 text-success',
+  warning: 'bg-warning/15 text-warning',
+  muted: 'bg-muted text-muted-foreground',
+}
 
 type Props = {
   items: TimelineItem[]
@@ -95,6 +101,23 @@ export function LeadInteractionTimeline({
                 ) : null}
                 {interaction.type === 'call' ? (
                   <CallInteractionWarning interaction={interaction} />
+                ) : null}
+                {interaction.type === 'meeting' ? (
+                  <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Estado de la reunión">
+                    {meetingChips(parseMeetingInfo(interaction.payload), { leadEmail }).map(
+                      (chip) => (
+                        <li
+                          key={chip.text}
+                          className={cn(
+                            'rounded-full px-2 py-0.5 text-[11px] font-medium',
+                            CHIP_TONE[chip.tone],
+                          )}
+                        >
+                          {chip.text}
+                        </li>
+                      ),
+                    )}
+                  </ul>
                 ) : null}
                 <div className="mt-2 flex justify-end">
                   {interaction.type === 'call' ? (
