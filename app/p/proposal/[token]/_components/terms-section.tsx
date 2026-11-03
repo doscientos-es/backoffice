@@ -5,7 +5,7 @@ import type { PaymentSchedule } from '@/lib/proposals/scope'
 
 import type { PortalLanguage, Tr } from '../_lib/i18n'
 import type { ProposalSpec } from '../_lib/types'
-import { SectionLabel } from './primitives'
+import { PROPOSAL_SURFACE_CLASS, SectionLabel } from './primitives'
 
 function paymentScheduleLabel(tr: Tr, schedule: PaymentSchedule): string {
   const labels: Record<PaymentSchedule, string> = {
@@ -43,7 +43,7 @@ export function TermsSection({
 }) {
   if (!paymentTerms && !changeManagementTerms) return null
   return (
-    <div className="mx-auto max-w-3xl px-2 py-10 sm:px-6">
+    <div className={`${PROPOSAL_SURFACE_CLASS} px-6 py-10 sm:px-10`}>
       <SectionLabel className="mb-6 text-center">
         {tr('Condiciones', 'Condicions', 'Terms')}
       </SectionLabel>
@@ -81,7 +81,7 @@ export function TermsSection({
 export function NotesSection({ notes, tr }: { notes: string | null; tr: Tr }) {
   if (!notes) return null
   return (
-    <div className="mx-auto max-w-3xl px-2 py-8 sm:px-6">
+    <div className={`${PROPOSAL_SURFACE_CLASS} px-6 py-8 sm:px-10`}>
       <SectionLabel as="p" className="mb-2">
         {tr('Notas', 'Notes', 'Notes')}
       </SectionLabel>
@@ -101,7 +101,7 @@ export function SpecsSection({
 }) {
   if (specs.length === 0) return null
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 px-2 py-8 sm:px-6">
+    <div className={`${PROPOSAL_SURFACE_CLASS} flex flex-col gap-4 px-6 py-8 sm:px-10`}>
       <SectionLabel as="p">
         {tr('Documentación técnica', 'Documentació tècnica', 'Technical documentation')}
       </SectionLabel>

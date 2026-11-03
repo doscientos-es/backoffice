@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 import { Markdown } from '@/components/ui/markdown'
 import type { KeyPoint } from '@/lib/proposals/key-points'
 
+import { PROPOSAL_SURFACE_CLASS } from './_components/primitives'
+
 /**
  * Portal-side rendering primitives for the proposal narrative
  * (Context / Problems / Solutions). Co-located with the portal page
@@ -12,7 +14,7 @@ import type { KeyPoint } from '@/lib/proposals/key-points'
 
 export function PortalNarrativeBlock({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <section className="px-2 py-6 sm:px-6">
+    <section className={`${PROPOSAL_SURFACE_CLASS} px-6 py-10 sm:px-10`}>
       <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
         {label}
       </h2>

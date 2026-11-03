@@ -1,6 +1,13 @@
 'use client'
 
-import { type AnchorHTMLAttributes, type ReactNode, useEffect, useState } from 'react'
+import {
+  type AnchorHTMLAttributes,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import { trackPortalEngagement } from '../actions'
 import { PROPOSAL_ACTION_CLASS } from './primitives'
@@ -186,6 +193,9 @@ export type NavItem = { id: string; label: string }
 /** Sticky index of the document sections; highlights the one being read. */
 export function SectionNav({ items }: { items: NavItem[] }) {
   const [active, setActive] = useState(items[0]?.id ?? '')
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null)
+  const navRef = useRef<HTMLElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
 
   useEffect(() => {
     const targets = items
@@ -205,19 +215,52 @@ export function SectionNav({ items }: { items: NavItem[] }) {
     return () => observer.disconnect()
   }, [items])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: remeasure the current link when the active section or available items change
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    const list = listRef.current
+    if (!nav || !list) return
+
+    const updateIndicator = () => {
+      const current = list.querySelector<HTMLAnchorElement>('a[aria-current="true"]')
+      if (!current) return
+      setIndicator({ left: current.offsetLeft, width: current.offsetWidth })
+
+      const navRect = nav.getBoundingClientRect()
+      const currentRect = current.getBoundingClientRect()
+      if (currentRect.left < navRect.left) nav.scrollLeft += currentRect.left - navRect.left
+      else if (currentRect.right > navRect.right)
+        nav.scrollLeft += currentRect.right - navRect.right
+    }
+
+    updateIndicator()
+    const observer = new ResizeObserver(updateIndicator)
+    observer.observe(list)
+    for (const link of list.querySelectorAll('a')) observer.observe(link)
+    return () => observer.disconnect()
+  }, [active, items])
+
   if (items.length < 2) return null
   return (
     <nav
+      ref={navRef}
       aria-label="Secciones"
-      className="sticky top-0 z-30 overflow-x-auto bg-white/95 py-2 backdrop-blur dark:bg-zinc-950/95"
+      className="sticky top-2 z-30 w-fit max-w-full self-center overflow-x-auto rounded-full bg-white/95 backdrop-blur dark:bg-zinc-950/95"
     >
-      <ul className="mx-auto flex w-max min-w-max gap-1 py-1.5">
+      <ul ref={listRef} className="relative flex w-max gap-1 p-1">
+        {indicator ? (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-1 left-0 rounded-full bg-[#BDFF7B] motion-safe:transition-[transform,width] motion-safe:duration-[160ms] motion-safe:ease-out"
+            style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
+          />
+        ) : null}
         {items.map((item) => (
           <li key={item.id}>
             <a
               href={`#${item.id}`}
               aria-current={active === item.id ? 'true' : undefined}
-              className={`block rounded-full px-4 py-2 text-xs font-semibold ${active === item.id ? 'bg-[#BDFF7B] text-zinc-950' : 'text-zinc-600 hover:bg-[#BDFF7B]/25 dark:text-zinc-300'}`}
+              className={`relative block rounded-full px-4 py-2 text-xs font-semibold ${active === item.id ? `${indicator ? '' : 'bg-[#BDFF7B]'} text-zinc-950` : 'text-zinc-600 hover:bg-[#BDFF7B]/25 dark:text-zinc-300'}`}
             >
               {item.label}
             </a>

@@ -30,13 +30,21 @@ export function ProposalWhatsAppWidget({
       href={`https://wa.me/${phone}?text=${encodeURIComponent(message)}`}
       target="_blank"
       rel="noopener noreferrer"
-      className={`${styles.floating} ${hasMobileCta ? styles.withMobileCta : ''} inline-flex size-14 items-center justify-center rounded-full bg-[#BDFF7B] text-zinc-950 shadow-lg hover:bg-[#a9ef65] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950`}
+      className={`${styles.floating} ${hasMobileCta ? styles.withMobileCta : ''} inline-flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full bg-zinc-950 py-2 pr-5 pl-2 text-left text-white shadow-lg hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950`}
     >
-      <span aria-hidden>
-        <WhatsAppIcon size={26} />
+      <span
+        aria-hidden
+        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#BDFF7B] text-zinc-950"
+      >
+        <WhatsAppIcon size={22} />
       </span>
-      <span className="sr-only">
-        {tr('Escribir por WhatsApp', 'Escriure per WhatsApp', 'Message on WhatsApp')}
+      <span className="min-w-0">
+        <span className="block text-sm leading-tight font-semibold">
+          {tr('¿Tienes dudas?', 'Tens dubtes?', 'Questions?')}
+        </span>
+        <span className="block text-xs leading-tight text-zinc-300">
+          {tr('Escríbenos por WhatsApp', 'Escriu-nos per WhatsApp', 'Message us on WhatsApp')}
+        </span>
       </span>
     </TrackedLink>
   )

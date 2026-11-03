@@ -24,28 +24,35 @@ const baseProps = {
 }
 
 describe('ProposalWhatsAppWidget', () => {
-  it.each<{ language: PortalLanguage; label: string; message: string }>([
+  it.each<{ language: PortalLanguage; label: string; prompt: string; message: string }>([
     {
       language: 'es',
-      label: 'Escribir por WhatsApp',
+      label: 'Escríbenos por WhatsApp',
+      prompt: '¿Tienes dudas?',
       message: 'Hola, tengo una duda sobre la propuesta',
     },
     {
       language: 'ca',
-      label: 'Escriure per WhatsApp',
+      label: 'Escriu-nos per WhatsApp',
+      prompt: 'Tens dubtes?',
       message: 'Hola, tinc un dubte sobre la proposta',
     },
     {
       language: 'en',
-      label: 'Message on WhatsApp',
+      label: 'Message us on WhatsApp',
+      prompt: 'Questions?',
       message: 'Hi, I have a question about proposal',
     },
   ])(
     'opens the company conversation with an encoded proposal reference in $language',
-    ({ language, label, message }) => {
+    ({ language, label, prompt, message }) => {
       render(<ProposalWhatsAppWidget {...baseProps} tr={makeTr(language)} />)
 
-      const link = screen.getByRole('link', { name: label })
+      const link = screen.getByRole('link', { name: new RegExp(label) })
+      const promptElement = screen.getByText(prompt)
+      expect(link.contains(promptElement)).toBe(true)
+      expect(link.contains(screen.getByText(label))).toBe(true)
+      expect(link.querySelector('svg')).not.toBeNull()
       const url = new URL(link.getAttribute('href')!)
       expect(url.origin).toBe('https://wa.me')
       expect(url.pathname).toBe(`/${baseProps.phone}`)
@@ -59,7 +66,7 @@ describe('ProposalWhatsAppWidget', () => {
 
   it('renders only the floating link and reserves space for the mobile action bar when present', () => {
     const { rerender } = render(<ProposalWhatsAppWidget {...baseProps} tr={makeTr('es')} />)
-    const link = screen.getByRole('link', { name: 'Escribir por WhatsApp' })
+    const link = screen.getByRole('link', { name: /Escríbenos por WhatsApp/ })
     expect(screen.queryByRole('complementary')).toBeNull()
     expect(link.className).toContain('withMobileCta')
 
@@ -69,7 +76,7 @@ describe('ProposalWhatsAppWidget', () => {
 
   it('tracks a WhatsApp click once per session without sending an internal message', () => {
     render(<ProposalWhatsAppWidget {...baseProps} tr={makeTr('es')} />)
-    const link = screen.getByRole('link', { name: 'Escribir por WhatsApp' })
+    const link = screen.getByRole('link', { name: /Escríbenos por WhatsApp/ })
     link.addEventListener('click', (event) => event.preventDefault())
 
     fireEvent.click(link)

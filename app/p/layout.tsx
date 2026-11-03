@@ -31,8 +31,11 @@ export default async function PortalLayout({ children }: { children: React.React
     : ''
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-clip bg-white text-zinc-950 dark:bg-zinc-950 dark:text-white">
-      <header className="relative bg-white dark:bg-zinc-950">
+    <div
+      data-portal-shell
+      className="relative flex min-h-screen flex-col overflow-x-clip bg-white text-zinc-950 dark:bg-zinc-950 dark:text-white"
+    >
+      <header data-portal-header className="relative bg-white dark:bg-zinc-950">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
             <LogoMark size={30} variant="auto" />
@@ -57,7 +60,7 @@ export default async function PortalLayout({ children }: { children: React.React
         <div className="mx-auto w-full max-w-6xl">{children}</div>
       </main>
 
-      <footer className="relative bg-white dark:bg-zinc-950">
+      <footer data-portal-footer className="relative bg-white dark:bg-zinc-950">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 text-xs text-zinc-500 sm:px-6 dark:text-zinc-400">
           <div className="flex flex-col justify-between gap-2 sm:flex-row">
             <span>© {new Date().getFullYear()} doscientos</span>

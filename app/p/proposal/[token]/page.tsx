@@ -34,6 +34,7 @@ import { LineItems } from './_components/line-items'
 import { NextSteps } from './_components/next-steps'
 import { PresentationCard } from './_components/presentation-card'
 import { PricingSummary } from './_components/pricing-summary'
+import { PROPOSAL_SURFACE_CLASS } from './_components/primitives'
 import {
   EngagementTracker,
   MobileCtaBar,
@@ -46,7 +47,7 @@ import { NotesSection, SpecsSection, TermsSection } from './_components/terms-se
 import { ProposalWhatsAppWidget } from './_components/whatsapp-widget'
 import { getPortalCopy, getStatusLabel, makeTr } from './_lib/i18n'
 import { loadProposalData } from './_lib/load-proposal-data'
-import { daysUntilExpiry, estimatedTotalWeeks } from './_lib/summary'
+import { daysUntilExpiry } from './_lib/summary'
 import { trackProposalView } from './_lib/track-view'
 import type { ProposalItem, ProposalSpec } from './_lib/types'
 import { unlockProposalPortal } from './actions'
@@ -105,7 +106,7 @@ export default async function PortalProposalPage({
   const isDraft = proposal.status === 'draft'
   const portalLanguage = resolvePortalLanguage(
     (proposal.leads as { language?: string | null } | null)?.language ??
-      (proposal.clients as { leads?: { language?: string | null } | null } | null)?.leads?.language,
+    (proposal.clients as { leads?: { language?: string | null } | null } | null)?.leads?.language,
     lang,
   )
   const copy = getPortalCopy(portalLanguage)
@@ -191,31 +192,31 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-        street: client.billing_address_street,
-        zip: client.billing_address_zip,
-        city: client.billing_address_city,
-        province: client.billing_address_province,
-        country: client.billing_address_country,
-      })
+      street: client.billing_address_street,
+      zip: client.billing_address_zip,
+      city: client.billing_address_city,
+      province: client.billing_address_province,
+      country: client.billing_address_country,
+    })
     : ''
   const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim()
   const fiscalPrefill = client
     ? {
-        name: client.name ?? '',
-        nif: client.nif ?? '',
-        billing_address: clientBillingAddress,
-        contact_person: client.contact_person ?? '',
-        email: client.email ?? '',
-        phone: client.phone ?? '',
-      }
+      name: client.name ?? '',
+      nif: client.nif ?? '',
+      billing_address: clientBillingAddress,
+      contact_person: client.contact_person ?? '',
+      email: client.email ?? '',
+      phone: client.phone ?? '',
+    }
     : {
-        name: lead?.company ?? lead?.name ?? '',
-        nif: '',
-        billing_address: '',
-        contact_person: lead?.name ?? '',
-        email: lead?.email ?? '',
-        phone: lead?.phone ?? '',
-      }
+      name: lead?.company ?? lead?.name ?? '',
+      nif: '',
+      billing_address: '',
+      contact_person: lead?.name ?? '',
+      email: lead?.email ?? '',
+      phone: lead?.phone ?? '',
+    }
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? '—'
   const proposalNumber = (proposal.number as string | null) ?? 'Borrador'
   const rawItems = (items ?? []) as unknown as ProposalItem[]
@@ -223,9 +224,9 @@ export default async function PortalProposalPage({
     proposal.status === 'accepted'
       ? rawItems
       : (ensureCalendarYearProration(
-          rawItems,
-          (proposal.created_at as string | null) ?? null,
-        ) as ProposalItem[])
+        rawItems,
+        (proposal.created_at as string | null) ?? null,
+      ) as ProposalItem[])
   const displayBaseItems = baseItems.map((item) => ({
     ...item,
     subtotal: computeLineSubtotal(item),
@@ -252,9 +253,9 @@ export default async function PortalProposalPage({
   )
   const safeItems: ProposalItem[] = maintenancePlan
     ? [
-        ...displayBaseItems,
-        maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle),
-      ]
+      ...displayBaseItems,
+      maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle),
+    ]
     : displayBaseItems
 
   // Recompute totals on the fly so we can show separate buckets for one-time
@@ -307,7 +308,10 @@ export default async function PortalProposalPage({
 
   // A single acceptance panel for every screen size; shortcuts scroll here.
   const actions = (
-    <div data-proposal-response className="mx-auto w-full max-w-xl scroll-mt-24">
+    <div
+      data-proposal-response
+      className={`${PROPOSAL_SURFACE_CLASS} mx-auto w-full max-w-xl scroll-mt-24`}
+    >
       <ProposalActions
         token={token}
         language={portalLanguage}
@@ -359,10 +363,9 @@ export default async function PortalProposalPage({
         </Alert>
       )}
       {canRespond && !isTeam ? <EngagementTracker token={token} /> : null}
-      <SectionNav items={navItems} />
       <div className="min-w-0">
         <div className="flex min-w-0 flex-col gap-10">
-          <article className="min-w-0">
+          <article className="flex min-w-0 flex-col gap-6">
             <DocumentHeader
               token={token}
               language={portalLanguage}
@@ -374,26 +377,26 @@ export default async function PortalProposalPage({
               status={status}
               statusLabel={statusLabel}
             />
-            <RecipientBlock
-              label={copy.recipient}
-              name={recipientName}
-              logoUrl={client?.logo_url ?? null}
-            />
-            {!responded && !expired ? (
-              <DecisionSummary
-                language={portalLanguage}
-                tr={tr}
-                totals={totals}
-                depositAmount={depositAmount}
-                initialPaymentPercentage={initialPaymentPercentage}
-                totalWeeks={estimatedTotalWeeks(scopeModules)}
-                canRespond={canRespond}
+            <SectionNav items={navItems} />
+            <div className={PROPOSAL_SURFACE_CLASS}>
+              <RecipientBlock
+                label={copy.recipient}
+                name={recipientName}
+                logoUrl={client?.logo_url ?? null}
               />
-            ) : null}
+              {!responded && !expired ? (
+                <DecisionSummary
+                  language={portalLanguage}
+                  tr={tr}
+                  totals={totals}
+                  canRespond={canRespond}
+                />
+              ) : null}
+            </div>
 
             {/* Narrative: Context → Problems → Solutions (always before price) */}
             {hasNarrative ? (
-              <div id="contexto" className="mx-auto flex max-w-3xl scroll-mt-20 flex-col gap-6">
+              <div id="contexto" className="flex scroll-mt-20 flex-col gap-6">
                 {contextMarkdown ? (
                   <PortalNarrativeBlock label={tr('Contexto', 'Context', 'Context')}>
                     <Markdown source={contextMarkdown} />
@@ -424,7 +427,10 @@ export default async function PortalProposalPage({
                 tr={tr}
               />
             </div>
-            <div id="inversion" className="scroll-mt-16">
+            <div
+              id="inversion"
+              className={`${PROPOSAL_SURFACE_CLASS} scroll-mt-16 overflow-hidden`}
+            >
               <LineItems
                 items={safeItems}
                 hasRecurring={hasRecurring}
@@ -459,38 +465,46 @@ export default async function PortalProposalPage({
             ) : null}
           </article>
           {maintenanceOffer.enabled ? (
-            <ProposalMaintenanceOptions
-              token={token}
-              offer={maintenanceOffer}
-              selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
-              disabled={isDraft || responded || expired || isTeam}
-              language={portalLanguage}
-            />
+            <div className={`${PROPOSAL_SURFACE_CLASS} overflow-hidden`}>
+              <ProposalMaintenanceOptions
+                token={token}
+                offer={maintenanceOffer}
+                selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
+                disabled={isDraft || responded || expired || isTeam}
+                language={portalLanguage}
+              />
+            </div>
           ) : null}
           {/* Response area — hidden for draft previews */}
           {!isDraft && (responded || expired) ? (
-            <ResponseArea
-              token={token}
-              language={portalLanguage}
-              status={status}
-              isTeam={isTeam}
-              expired={expired}
-              contactEmail={contact?.email ?? null}
-              respondedAt={(proposal.responded_at as string | null) ?? null}
-              proposalId={proposal.id as string}
-              proposalNumber={proposalNumber}
-              signalPaid={signalPaid}
-              firstPayment={confirmedPayments[0]}
-              depositAmount={depositAmount}
-              initialPaymentPercentage={initialPaymentPercentage}
-              companyName={(settings?.company_name as string | null) ?? null}
-              iban={(settings?.iban as string | null) ?? null}
-            />
+            <div className={`${PROPOSAL_SURFACE_CLASS} px-4 py-4`}>
+              <ResponseArea
+                token={token}
+                language={portalLanguage}
+                status={status}
+                isTeam={isTeam}
+                expired={expired}
+                contactEmail={contact?.email ?? null}
+                respondedAt={(proposal.responded_at as string | null) ?? null}
+                proposalId={proposal.id as string}
+                proposalNumber={proposalNumber}
+                signalPaid={signalPaid}
+                firstPayment={confirmedPayments[0]}
+                depositAmount={depositAmount}
+                initialPaymentPercentage={initialPaymentPercentage}
+                companyName={(settings?.company_name as string | null) ?? null}
+                iban={(settings?.iban as string | null) ?? null}
+              />
+            </div>
           ) : canRespond ? (
             actions
           ) : null}
           <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
-            <PresentationCard token={token} language={portalLanguage} />
+            <PresentationCard
+              token={token}
+              language={portalLanguage}
+              className={PROPOSAL_SURFACE_CLASS}
+            />
           </div>
         </div>
       </div>
@@ -503,8 +517,8 @@ export default async function PortalProposalPage({
       />
       {canRespond ? (
         <MobileCtaBar
-          totalLabel={tr('Inversión', 'Inversió', 'Investment')}
-          total={formatPortalEUR(totals.oneTime.total, portalLanguage)}
+          totalLabel={tr('Inversión sin IVA', 'Inversió sense IVA', 'Investment excl. VAT')}
+          total={formatPortalEUR(totals.oneTime.subtotal, portalLanguage)}
           cta={tr('Revisar y aceptar', 'Revisar i acceptar', 'Review and accept')}
         />
       ) : null}

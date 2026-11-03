@@ -4,7 +4,7 @@ import { Markdown } from '@/components/ui/markdown'
 import { type parseScopeModules, scopeModuleDurationText } from '@/lib/proposals/scope'
 
 import type { Tr } from '../_lib/i18n'
-import { SectionLabel } from './primitives'
+import { PROPOSAL_SURFACE_CLASS, SectionLabel } from './primitives'
 
 type ScopeModule = ReturnType<typeof parseScopeModules>[number]
 
@@ -120,7 +120,7 @@ export function ScopeSection({
 }) {
   if (modules.length === 0 && !deliverables && !acceptanceCriteria) return null
   return (
-    <div className="mx-auto max-w-3xl px-2 py-10 sm:px-6">
+    <div className={`${PROPOSAL_SURFACE_CLASS} px-6 py-10 sm:px-10`}>
       <SectionLabel className="text-center">
         {tr('Alcance del proyecto', 'Abast del projecte', 'Project scope')}
       </SectionLabel>

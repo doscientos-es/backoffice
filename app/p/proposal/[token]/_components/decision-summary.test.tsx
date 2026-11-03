@@ -1,10 +1,10 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { computeProposalTotals } from '@/lib/finance'
 import { formatPortalEUR } from '@/lib/portal/language'
 
-import { makeTr } from '../_lib/i18n'
+import { makeTr, type PortalLanguage } from '../_lib/i18n'
 import { DecisionSummary } from './decision-summary'
 
 vi.mock('../actions', () => ({ trackPortalEngagement: vi.fn() }))
@@ -21,44 +21,58 @@ const baseProps = {
     { quantity: 1, unit_price: 1000, vat_rate: 21, billing_cycle: 'none' },
     { quantity: 1, unit_price: 100, vat_rate: 21, billing_cycle: 'monthly' },
   ]),
-  depositAmount: 605,
-  initialPaymentPercentage: 50,
-  totalWeeks: 4,
   canRespond: true,
 }
 
 describe('DecisionSummary', () => {
-  it('keeps investment, deposit, timeline and recurring charges distinct', () => {
-    render(<DecisionSummary {...baseProps} />)
+  it.each<{ language: PortalLanguage; label: string; detail: string }>([
+    { language: 'es', label: 'Inversión inicial', detail: 'Sin IVA · Ver desglose' },
+    { language: 'ca', label: 'Inversió inicial', detail: 'Sense IVA · Veure desglossament' },
+    { language: 'en', label: 'Initial investment', detail: 'Excl. VAT · View breakdown' },
+  ])(
+    'links the initial investment before tax to its breakdown in $language',
+    ({ language, label, detail }) => {
+      render(<DecisionSummary {...baseProps} language={language} tr={makeTr(language)} />)
 
-    const stat = (label: string) => within(screen.getByText(label).closest('div')!)
-    expect(stat('Inversión').getByRole('definition').textContent).toContain(
-      formatPortalEUR(1210, 'es'),
+      expect(screen.getByText(label)).toBeDefined()
+      const link = screen.getByRole('link', { name: new RegExp(detail) })
+      expect(link.getAttribute('href')).toBe('#inversion')
+      expect(link.textContent).toContain(formatPortalEUR(1000, language))
+      expect(link.textContent).not.toContain(formatPortalEUR(1210, language))
+      expect(screen.queryByText('Para empezar')).toBeNull()
+      expect(screen.queryByText('Plazo estimado')).toBeNull()
+      expect(screen.queryByText('Después')).toBeNull()
+    },
+  )
+
+  it('shows the initial amount after line and global discounts, excluding recurring charges', () => {
+    const totals = computeProposalTotals(
+      [
+        {
+          quantity: 1,
+          unit_price: 1000,
+          vat_rate: 21,
+          billing_cycle: 'none',
+          discount_percent: 20,
+        },
+        { quantity: 1, unit_price: 100, vat_rate: 21, billing_cycle: 'monthly' },
+      ],
+      { type: 'percent', value: 10 },
     )
-    expect(stat('Para empezar').getByRole('definition').textContent).toContain(
-      formatPortalEUR(605, 'es'),
+    render(<DecisionSummary {...baseProps} totals={totals} />)
+
+    expect(screen.getByRole('link', { name: /Sin IVA/ }).textContent).toContain(
+      formatPortalEUR(720, 'es'),
     )
-    expect(stat('Plazo estimado').getByText('hasta 4 sem.')).toBeDefined()
-    expect(stat('Después').getByRole('definition').textContent).toContain(
-      formatPortalEUR(121, 'es'),
-    )
-    expect(stat('Después').getByText('/mes')).toBeDefined()
-    expect(stat('Inversión').getByText('IVA incluido')).toBeDefined()
   })
 
   it('does not invent a deposit, timeline or recurring cost when they are absent', () => {
-    render(
-      <DecisionSummary
-        {...baseProps}
-        totals={computeProposalTotals([])}
-        depositAmount={null}
-        initialPaymentPercentage={null}
-        totalWeeks={null}
-        canRespond={false}
-      />,
-    )
+    render(<DecisionSummary {...baseProps} totals={computeProposalTotals([])} canRespond={false} />)
 
-    expect(screen.getByText('Inversión')).toBeDefined()
+    expect(screen.getByText('Inversión inicial')).toBeDefined()
+    expect(screen.getByRole('link', { name: /Sin IVA/ }).textContent).toContain(
+      formatPortalEUR(0, 'es'),
+    )
     expect(screen.queryByText('Para empezar')).toBeNull()
     expect(screen.queryByText('Plazo estimado')).toBeNull()
     expect(screen.queryByText('Después')).toBeNull()

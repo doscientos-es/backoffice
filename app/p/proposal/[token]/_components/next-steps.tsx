@@ -1,7 +1,7 @@
 import { formatPortalEUR } from '@/lib/portal/language'
 
 import type { PortalLanguage, Tr } from '../_lib/i18n'
-import { SectionLabel } from './primitives'
+import { PROPOSAL_SURFACE_CLASS, SectionLabel } from './primitives'
 
 /** "What happens when I accept" in three plain steps, to lower the fear of the unknown. */
 export function NextSteps({
@@ -67,7 +67,10 @@ export function NextSteps({
   ]
 
   return (
-    <div id="siguientes-pasos" className="mx-auto max-w-3xl scroll-mt-20 px-2 py-10 sm:px-6">
+    <div
+      id="siguientes-pasos"
+      className={`${PROPOSAL_SURFACE_CLASS} scroll-mt-20 px-6 py-10 sm:px-10`}
+    >
       <SectionLabel as="h2" className="mb-8 text-center">
         {tr('Qué ocurre al aceptar', 'Què passa en acceptar', 'What happens when you accept')}
       </SectionLabel>

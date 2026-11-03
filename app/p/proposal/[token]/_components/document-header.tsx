@@ -40,7 +40,7 @@ export function DocumentHeader({
       : null
   const urgent = daysLeft !== null && daysLeft <= 2
   return (
-    <header className="rounded-[2rem] bg-[#BDFF7B] px-6 py-10 text-center text-zinc-950 sm:px-12 sm:py-16">
+    <header className="px-6 py-10 text-center text-zinc-950 sm:px-12 sm:py-16">
       <div className="flex flex-wrap items-center justify-center gap-3">
         <p className="text-sm font-medium">
           {copy.proposal} · {proposalNumber}

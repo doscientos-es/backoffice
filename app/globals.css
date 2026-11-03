@@ -129,7 +129,7 @@ html[data-startup-splash-seen] #startup-splash {
   }
 }
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *):where(:not([data-proposal-portal], [data-proposal-portal] *)));
 
 :root {
   --radius: 0.625rem;
@@ -175,6 +175,39 @@ html[data-startup-splash-seen] #startup-splash {
   --info: #3b82f6;
   --border: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+}
+
+/* Proposal pages keep their bright brand palette without changing other portals. */
+[data-portal-shell]:has([data-proposal-portal]) {
+  background: #dfffc2;
+  color: #18181b;
+}
+
+[data-portal-shell]:has([data-proposal-portal]) > :is([data-portal-header], [data-portal-footer]) {
+  background: transparent;
+  color: #18181b;
+}
+
+[data-portal-shell]:has([data-proposal-portal]) > [data-portal-header] p,
+[data-portal-shell]:has([data-proposal-portal]) > [data-portal-footer] > div {
+  color: #18181b;
+}
+
+[data-proposal-portal] {
+  --background: #fafafa;
+  --foreground: #171717;
+  --card: #fff;
+  --background-foreground: #2d2d2d;
+  --primary: #2a4227;
+  --primary-foreground: #fff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --border: #d4d4d4;
+  --ring: oklch(0.871 0.006 286.286);
+  color: #18181b;
+  color-scheme: light;
 }
 
 @theme inline {

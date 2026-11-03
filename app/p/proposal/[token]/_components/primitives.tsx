@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 export const PROPOSAL_ACTION_CLASS =
   'rounded-full bg-[#BDFF7B] text-zinc-950 shadow-none hover:bg-[#a9ef65] focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-white'
 
+export const PROPOSAL_SURFACE_CLASS = 'rounded-[2rem] bg-white text-zinc-950'
+
 /** Section heading; spacing replaces decorative rules between sections. */
 export function SectionLabel({
   children,
