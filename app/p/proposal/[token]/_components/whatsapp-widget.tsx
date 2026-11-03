@@ -8,21 +8,23 @@ import styles from './whatsapp-widget.module.css'
 export function ProposalWhatsAppWidget({
   token,
   proposalNumber,
+  proposalUrl,
   phone,
   hasMobileCta,
   tr,
 }: {
   token: string
   proposalNumber: string
+  proposalUrl: string
   phone: string
   hasMobileCta: boolean
   tr: Tr
 }) {
-  const message = tr(
+  const message = `${tr(
     `Hola, tengo una duda sobre la propuesta ${proposalNumber}`,
     `Hola, tinc un dubte sobre la proposta ${proposalNumber}`,
     `Hi, I have a question about proposal ${proposalNumber}`,
-  )
+  )}\n\n${proposalUrl}`
   return (
     <TrackedLink
       token={token}

@@ -7,6 +7,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Markdown } from '@/components/ui/markdown'
 import { formatAddress } from '@/lib/address'
 import { getCurrentUser } from '@/lib/auth'
+import { externalAppUrl } from '@/lib/email/app-url'
+import { publicEnv } from '@/lib/env'
 import { computeLineSubtotal, computeProposalTotals, type DiscountType } from '@/lib/finance'
 import { scopedLogger } from '@/lib/logger'
 import { isPortalUnlocked } from '@/lib/portal/access'
@@ -518,6 +520,7 @@ export default async function PortalProposalPage({
       <ProposalWhatsAppWidget
         token={token}
         proposalNumber={proposalNumber}
+        proposalUrl={`${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${encodeURIComponent(token)}?lang=${portalLanguage}`}
         phone="34671171525"
         hasMobileCta={canRespond}
         tr={tr}

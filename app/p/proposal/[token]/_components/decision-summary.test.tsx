@@ -26,9 +26,9 @@ const baseProps = {
 
 describe('DecisionSummary', () => {
   it.each<{ language: PortalLanguage; label: string; detail: string }>([
-    { language: 'es', label: 'Inversión inicial', detail: 'Sin IVA · Ver desglose' },
-    { language: 'ca', label: 'Inversió inicial', detail: 'Sense IVA · Veure desglossament' },
-    { language: 'en', label: 'Initial investment', detail: 'Excl. VAT · View breakdown' },
+    { language: 'es', label: 'Inversión', detail: 'Ver desglose de la inversión' },
+    { language: 'ca', label: 'Inversió', detail: 'Veure desglossament de la inversió' },
+    { language: 'en', label: 'Investment', detail: 'View investment breakdown' },
   ])(
     'links the initial investment before tax to its breakdown in $language',
     ({ language, label, detail }) => {
@@ -37,7 +37,8 @@ describe('DecisionSummary', () => {
       expect(screen.getByText(label)).toBeDefined()
       const link = screen.getByRole('link', { name: new RegExp(detail) })
       expect(link.getAttribute('href')).toBe('#inversion')
-      expect(link.textContent).toContain(formatPortalEUR(1000, language))
+      expect(link.getAttribute('title')).toBe(detail)
+      expect(link.textContent).toBe(formatPortalEUR(1000, language))
       expect(link.textContent).not.toContain(formatPortalEUR(1210, language))
       expect(screen.queryByText('Para empezar')).toBeNull()
       expect(screen.queryByText('Plazo estimado')).toBeNull()
@@ -61,18 +62,18 @@ describe('DecisionSummary', () => {
     )
     render(<DecisionSummary {...baseProps} totals={totals} />)
 
-    expect(screen.getByRole('link', { name: /Sin IVA/ }).textContent).toContain(
-      formatPortalEUR(720, 'es'),
-    )
+    expect(
+      screen.getByRole('link', { name: /Ver desglose de la inversión/ }).textContent,
+    ).toContain(formatPortalEUR(720, 'es'))
   })
 
   it('does not invent a deposit, timeline or recurring cost when they are absent', () => {
     render(<DecisionSummary {...baseProps} totals={computeProposalTotals([])} canRespond={false} />)
 
-    expect(screen.getByText('Inversión inicial')).toBeDefined()
-    expect(screen.getByRole('link', { name: /Sin IVA/ }).textContent).toContain(
-      formatPortalEUR(0, 'es'),
-    )
+    expect(screen.getByText('Inversión')).toBeDefined()
+    expect(
+      screen.getByRole('link', { name: /Ver desglose de la inversión/ }).textContent,
+    ).toContain(formatPortalEUR(0, 'es'))
     expect(screen.queryByText('Para empezar')).toBeNull()
     expect(screen.queryByText('Plazo estimado')).toBeNull()
     expect(screen.queryByText('Después')).toBeNull()

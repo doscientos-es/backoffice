@@ -19,6 +19,7 @@ afterEach(cleanup)
 const baseProps = {
   token: 'example-proposal',
   proposalNumber: 'P-2026-0046 / A&B',
+  proposalUrl: 'https://example.test/p/proposal/example-proposal?lang=es',
   phone: '15550100000',
   hasMobileCta: true,
 }
@@ -44,7 +45,7 @@ describe('ProposalWhatsAppWidget', () => {
       message: 'Hi, I have a question about proposal',
     },
   ])(
-    'opens the company conversation with an encoded proposal reference in $language',
+    'opens the company conversation with the proposal reference and link in $language',
     ({ language, label, prompt, message }) => {
       render(<ProposalWhatsAppWidget {...baseProps} tr={makeTr(language)} />)
 
@@ -56,8 +57,9 @@ describe('ProposalWhatsAppWidget', () => {
       const url = new URL(link.getAttribute('href')!)
       expect(url.origin).toBe('https://wa.me')
       expect(url.pathname).toBe(`/${baseProps.phone}`)
-      expect(url.searchParams.get('text')).toBe(`${message} ${baseProps.proposalNumber}`)
-      expect(url.href).not.toContain(baseProps.token)
+      expect(url.searchParams.get('text')).toBe(
+        `${message} ${baseProps.proposalNumber}\n\n${baseProps.proposalUrl}`,
+      )
       expect(link.getAttribute('target')).toBe('_blank')
       expect(link.getAttribute('rel')).toBe('noopener noreferrer')
       expect(screen.queryByRole('textbox')).toBeNull()
