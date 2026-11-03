@@ -1,0 +1,116 @@
+'use client'
+
+import { CalendarClock, CircleCheck, ListPlus, LoaderCircle, UserX } from 'lucide-react'
+import { useState } from 'react'
+import { sileo } from 'sileo'
+
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+
+import { createTask } from '../../tasks/actions'
+
+/** Shown when the lead was invited to an imported meeting but never joined. */
+export function MeetingNoShowAlert({ leadId }: { leadId: string }) {
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5"
+    >
+      <p className="flex items-center gap-2 text-sm font-medium">
+        <UserX className="size-4 shrink-0 text-warning" aria-hidden />
+        El lead no entró en la reunión.
+      </p>
+      <Button asChild size="sm" variant="outline">
+        <a href={`/leads/${leadId}?feedback=schedule`}>
+          <CalendarClock className="size-3.5" aria-hidden />
+          Reagendar
+        </a>
+      </Button>
+    </div>
+  )
+}
+
+/** Next steps taken from the meeting summary, with a one-click "create tasks" action. */
+export function MeetingNextSteps({ leadId, steps }: { leadId: string; steps: string[] }) {
+  const [selected, setSelected] = useState<Set<number>>(() => new Set(steps.map((_, i) => i)))
+  const [pending, setPending] = useState(false)
+  const [created, setCreated] = useState(false)
+
+  function toggle(index: number) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
+
+  async function create() {
+    const chosen = steps.filter((_, index) => selected.has(index))
+    if (chosen.length === 0) return
+    setPending(true)
+    const results = await Promise.all(
+      chosen.map((title) =>
+        createTask({
+          title: title.slice(0, 200),
+          lead_id: leadId,
+          description: 'Creada desde el resumen de la reunión.',
+        }),
+      ),
+    )
+    setPending(false)
+    const failed = results.filter((result) => !result.ok).length
+    if (failed > 0) {
+      sileo.error({ title: `No se pudieron crear ${failed} de ${chosen.length} tareas` })
+      return
+    }
+    setCreated(true)
+    sileo.success({
+      title: chosen.length === 1 ? 'Tarea creada' : `${chosen.length} tareas creadas`,
+    })
+  }
+
+  return (
+    <div className="rounded-lg border border-border/70 bg-muted/20 p-3">
+      <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        Próximos pasos
+      </h4>
+      <ul className="mt-2 space-y-1.5">
+        {steps.map((step, index) => (
+          <li key={step} className="flex items-start gap-2">
+            <Checkbox
+              id={`next-step-${index}`}
+              isSelected={selected.has(index)}
+              onChange={() => toggle(index)}
+              isDisabled={created || pending}
+            />
+            <label htmlFor={`next-step-${index}`} className="text-sm leading-snug">
+              {step}
+            </label>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-3 flex justify-end">
+        {created ? (
+          <span className="flex items-center gap-1.5 text-sm font-medium text-success">
+            <CircleCheck className="size-4" aria-hidden /> Tareas creadas
+          </span>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            onClick={create}
+            disabled={pending || selected.size === 0}
+          >
+            {pending ? (
+              <LoaderCircle className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+              <ListPlus className="size-3.5" aria-hidden />
+            )}
+            Crear {selected.size === 1 ? '1 tarea' : `${selected.size} tareas`}
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}

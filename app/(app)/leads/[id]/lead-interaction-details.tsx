@@ -17,9 +17,12 @@ import { Button } from '@/components/ui/button'
 import { CopyButton } from '@/components/ui/copy-button'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { interactionBodyText } from '@/lib/leads/interaction-utils'
+import { extractNextSteps, leadDidNotShow, parseMeetingInfo } from '@/lib/leads/meeting-info'
 import type { LeadDetailInteraction } from '@/lib/leads/types'
 
 import { EmailComposer } from './email-composer'
+import { MeetingNextSteps, MeetingNoShowAlert } from './meeting-insights'
+import { MeetingTranscriptViewer } from './meeting-transcript-viewer'
 
 function payloadText(payload: unknown, key: string): string | null {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null
@@ -133,6 +136,9 @@ export function LeadInteractionDetails({
   const showMeetingSection =
     interaction.type === 'meeting' &&
     Boolean(meetUrl || meetingSummary || meetingNotes || transcript || notesUrl || transcriptUrl)
+  const meetingInfo = parseMeetingInfo(meetingData)
+  const noShow = leadDidNotShow(meetingInfo, leadEmail)
+  const nextSteps = extractNextSteps(meetingSummary ?? meetingNotes)
   const meetingDisplayStart = actualStart ?? meetingStart
   const meetingDate = meetingDisplayStart
     ? new Date(meetingDisplayStart).toLocaleString('es-ES')
@@ -337,6 +343,7 @@ export function LeadInteractionDetails({
                         </div>
                       </div>
                     ) : null}
+                    {noShow ? <MeetingNoShowAlert leadId={leadId} /> : null}
                     {meetingSummary ? (
                       <div>
                         <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -346,6 +353,9 @@ export function LeadInteractionDetails({
                           {meetingSummary}
                         </p>
                       </div>
+                    ) : null}
+                    {nextSteps.length > 0 && canReply ? (
+                      <MeetingNextSteps leadId={leadId} steps={nextSteps} />
                     ) : null}
                     {meetingNotes && meetingNotes !== meetingSummary ? (
                       <details className="rounded-lg border border-border/70">
@@ -362,9 +372,9 @@ export function LeadInteractionDetails({
                         <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
                           Ver transcripción íntegra
                         </summary>
-                        <pre className="max-h-[60vh] overflow-auto border-t p-3 text-sm leading-6 whitespace-pre-wrap">
-                          {transcript}
-                        </pre>
+                        <div className="border-t p-2">
+                          <MeetingTranscriptViewer transcript={transcript} />
+                        </div>
                       </details>
                     ) : importedAt ? (
                       <p className="text-sm text-muted-foreground">

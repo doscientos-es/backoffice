@@ -14,7 +14,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const log = scopedLogger('integrations.meet-artifacts')
 const WINDOW_DAYS = 30
 const BATCH_SIZE = 100
-const SUMMARY_PROMPT = `Resume notas y transcripciones de reuniones comerciales en español. Conserva necesidades, decisiones, objeciones, presupuesto/plazos si aparecen y próximos pasos con responsables. No inventes datos. Devuelve un resumen práctico, sin introducción genérica y con un máximo de 7.700 caracteres.`
+const SUMMARY_PROMPT = `Resume notas y transcripciones de reuniones comerciales en español. Conserva necesidades, decisiones, objeciones y presupuesto/plazos si aparecen. No inventes datos. Devuelve un resumen práctico, sin introducción genérica y con un máximo de 7.700 caracteres. Termina siempre con una sección titulada exactamente "Próximos pasos", con una viñeta (- ) por paso y el responsable si se menciona; si no hay pasos, omite la sección.`
 
 type MeetingPayload = Record<string, unknown> & {
   meet_url?: string
