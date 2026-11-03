@@ -1,6 +1,41 @@
 {
   "releases": [
     {
+      "version": "0.1.162",
+      "date": "2026-11-03",
+      "title": "v0.1.162",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Implement call reminders and enhance next actions handling"
+          ]
+        },
+        {
+          "title": "Correcciones",
+          "items": [
+            "Update status to cancelled for redundant automatic reminders"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "ce022145f532a806521727763fc4bc02e40e87c6",
+          "type": "fix",
+          "scope": "tasks",
+          "breaking": false,
+          "description": "Update status to cancelled for redundant automatic reminders"
+        },
+        {
+          "sha": "6810b3bc1673eeeeb95a449aa3514ab5fddd0590",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Implement call reminders and enhance next actions handling"
+        }
+      ]
+    },
+    {
       "version": "0.1.161",
       "date": "2026-11-03",
       "title": "v0.1.161",

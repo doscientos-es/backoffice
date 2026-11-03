@@ -2,6 +2,16 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.162
+
+### Nuevas funciones
+
+- Implement call reminders and enhance next actions handling
+
+### Correcciones
+
+- Update status to cancelled for redundant automatic reminders
+
 ## 2026-11-03 — v0.1.161
 
 ### Nuevas funciones
