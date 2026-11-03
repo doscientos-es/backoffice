@@ -18,7 +18,7 @@ export type NewLeadEmailProps = {
 }
 
 /**
- * Internal transactional email sent to every admin/owner when a new lead is ingested.
+ * Internal email sent to sales and active members with leads enabled on lead intake.
  *
  * Usage:
  *   const html = await renderEmail(NewLeadEmail({ ...props }));

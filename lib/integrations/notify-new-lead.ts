@@ -24,8 +24,8 @@ const SALES_EMAIL = 'sales@doscientos.es'
  * Notifies the team when a new lead is created.
  *
  * - Inserts an in-app `notifications` row (event_type: "lead_new") for each active
- *   owner/admin so the bell icon lights up in real-time via Supabase Realtime.
- * - Sends one transactional email via Resend to the shared sales@doscientos.es mailbox.
+ *   member with leads enabled so the bell icon lights up via Supabase Realtime.
+ * - Emails those members directly, plus the shared sales@doscientos.es mailbox.
  *
  * Errors inside this function are logged but never propagate — callers should
  * invoke with `.catch(() => {})` so lead creation is never blocked.
@@ -35,20 +35,19 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
   const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
   const leadUrl = `${appUrl}/leads/${input.leadId}`
 
-  // ── 1. Fetch active owners and admins ────────────────────────────────────
-  const { data: recipients, error: fetchError } = await supabase
+  // ── 1. Fetch active members with “Leads: sí” in team settings ─────────────
+  const { data: members, error: fetchError } = await supabase
     .from('team_members')
-    .select('id, name, email')
-    .in('role', ['owner', 'admin'])
+    .select('id, email')
+    .eq('leads_assignable', true)
     .is('deleted_at', null)
 
   if (fetchError) {
-    log.error({ err: fetchError }, 'failed to fetch admin/owner recipients')
-    return
+    log.error({ err: fetchError }, 'failed to fetch lead notification recipients')
   }
-  if (!recipients?.length) {
-    log.warn('no admin/owner recipients to notify for lead_new')
-    return
+  const recipients = fetchError ? [] : (members ?? [])
+  if (!recipients.length) {
+    log.warn('no active members with leads enabled to notify for lead_new')
   }
 
   // Short summary line used as the in-app notification body
@@ -80,6 +79,8 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
       whatsappUrl,
       feedbackUrl: `/leads/${input.leadId}?feedback=call`,
     },
+  }).catch((e) => {
+    log.error({ err: e, leadId: input.leadId }, 'lead_new in-app/push notification failed')
   })
 
   // ── 3. Email (render once, send to all) ──────────────────────────────────
@@ -103,24 +104,36 @@ export async function notifyNewLead(input: NotifyNewLeadInput): Promise<void> {
 
   const subject = `Nuevo lead: ${input.leadName}${input.leadCompany ? ` · ${input.leadCompany}` : ''}`
 
-  // A single send to the shared sales mailbox reaches the whole sales team.
-  let emailFailed = false
-  try {
-    await sendEmail({
-      fromName: 'doscientos',
-      fromAlias: 'notificaciones',
-      to: SALES_EMAIL,
-      subject,
-      html,
-      tags: { lead_id: input.leadId },
-    })
-  } catch (e) {
-    emailFailed = true
-    log.error({ err: e, leadId: input.leadId }, 'lead_new email to sales failed to send')
+  // Send separately so delivery does not depend on sales mailbox forwarding.
+  const emailRecipients = [
+    ...new Set([
+      SALES_EMAIL,
+      ...recipients
+        .map((r) => r.email?.trim().toLowerCase())
+        .filter((email): email is string => Boolean(email)),
+    ]),
+  ]
+  const results = await Promise.allSettled(
+    emailRecipients.map((to) =>
+      sendEmail({
+        fromName: 'doscientos',
+        fromAlias: 'notificaciones',
+        to,
+        subject,
+        html,
+        tags: { lead_id: input.leadId },
+      }),
+    ),
+  )
+  const emailFailedCount = results.filter((result) => result.status === 'rejected').length
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      log.error({ err: result.reason, leadId: input.leadId }, 'lead_new email failed to send')
+    }
   }
 
   log.info(
-    { leadId: input.leadId, recipientCount: recipients.length, emailFailed },
+    { leadId: input.leadId, recipientCount: recipients.length, emailFailedCount },
     'lead_new notifications dispatched',
   )
 }
