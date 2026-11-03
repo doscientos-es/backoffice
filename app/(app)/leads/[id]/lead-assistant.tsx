@@ -1,9 +1,10 @@
 'use client'
 
 import { Drawer, DrawerDescription, DrawerHeader, DrawerTitle } from '@doscientos/ui'
-import { LoaderCircle, ShieldCheck, Sparkles } from 'lucide-react'
+import { LoaderCircle, Plus, ShieldCheck, Sparkles } from 'lucide-react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 
+import { useAssistantConversation } from '@/components/leads/assistant-session-provider'
 import { Button } from '@/components/ui/button'
 import type { AssistantResponse } from '@/lib/leads/assistant-contract'
 import { readJsonResponse } from '@/lib/utils/http'
@@ -12,13 +13,6 @@ import { LeadAssistantComposer } from './lead-assistant-composer'
 import { LeadAssistantMessage } from './lead-assistant-message'
 import { LeadAssistantWelcome } from './lead-assistant-welcome'
 
-type Message = {
-  id: number
-  role: 'user' | 'assistant'
-  content: string
-  result?: AssistantResponse
-}
-
 export function LeadAssistantConversation({
   leadId,
   duringCall = false,
@@ -26,15 +20,24 @@ export function LeadAssistantConversation({
   leadId: string
   duringCall?: boolean
 }) {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [question, setQuestion] = useState('')
+  const { messages, question, ready, persisted, generation, update, reset } =
+    useAssistantConversation(leadId)
+  const setQuestion = (value: string) => update((current) => ({ ...current, question: value }))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const request = useRef<AbortController | null>(null)
-  const sequence = useRef(0)
   const end = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
-  useEffect(() => () => request.current?.abort(), [])
+  // Reset/expiry, cross-tab updates and logout invalidate pending answers too.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: generation and leadId identify the active conversation, not its individual messages.
+  useEffect(() => {
+    setLoading(false)
+    setError(null)
+    return () => {
+      request.current?.abort()
+      request.current = null
+    }
+  }, [generation, leadId])
   useEffect(() => {
     if (messages.length === 0 && !loading) return
     end.current?.scrollIntoView?.({ block: 'nearest' })
@@ -43,21 +46,23 @@ export function LeadAssistantConversation({
   async function submit(event: FormEvent) {
     event.preventDefault()
     const message = question.trim()
-    if (!message || request.current) return
+    if (!ready || !message || request.current) return
     const controller = new AbortController()
     request.current = controller
     setLoading(true)
     setError(null)
     const history = messages.slice(-6).map((item) => ({
       role: item.role,
-      content: (item.result?.draft
+      content: (item.role === 'assistant' && item.result.draft
         ? `${item.content}\nBorrador: ${item.result.draft.title}\n${item.result.draft.body}`
         : item.content
       ).slice(0, 5000),
     }))
-    const userMessageId = ++sequence.current
-    setMessages((current) => [...current, { id: userMessageId, role: 'user', content: message }])
-    setQuestion('')
+    const userMessageId = Math.max(0, ...messages.map((item) => item.id)) + 1
+    update((current) => ({
+      question: '',
+      messages: [...current.messages, { id: userMessageId, role: 'user', content: message }],
+    }))
     try {
       const response = await fetch('/api/crm/ai/lead-assistant', {
         method: 'POST',
@@ -69,30 +74,57 @@ export function LeadAssistantConversation({
         response,
         'No se pudo consultar al asistente.',
       )
+      if (controller.signal.aborted) return
       if (!response.ok) throw new Error(result.error || 'No se pudo consultar al asistente.')
-      const assistantMessageId = ++sequence.current
-      setMessages((current) => [
+      update((current) => ({
         ...current,
-        {
-          id: assistantMessageId,
-          role: 'assistant',
-          content: result.answer,
-          result,
-        },
-      ])
+        messages: [
+          ...current.messages,
+          {
+            id: Math.max(0, ...current.messages.map((item) => item.id)) + 1,
+            role: 'assistant',
+            content: result.answer,
+            result,
+          },
+        ],
+      }))
     } catch (err) {
       if (!controller.signal.aborted) {
         setError(err instanceof Error ? err.message : 'No se pudo consultar al asistente.')
-        setQuestion(message)
+        update((current) => ({
+          messages: current.messages.filter((item) => item.id !== userMessageId),
+          question: message,
+        }))
       }
     } finally {
-      request.current = null
-      setLoading(false)
+      if (request.current === controller) {
+        request.current = null
+        setLoading(false)
+      }
     }
   }
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border/60 px-4 py-2 sm:px-6">
+        <p className="text-xs text-muted-foreground">
+          Historial local · 7 días · hasta 50 mensajes
+        </p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={!ready || (!messages.length && !question && !loading)}
+          onClick={() => {
+            reset()
+            input.current?.focus()
+          }}
+          className="gap-1.5"
+        >
+          <Plus className="size-3.5" aria-hidden />
+          Nueva conversación
+        </Button>
+      </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6">
         {messages.length === 0 ? (
           <LeadAssistantWelcome
@@ -110,8 +142,21 @@ export function LeadAssistantConversation({
           className="space-y-7"
         >
           {messages.map((item) =>
-            item.result ? (
-              <LeadAssistantMessage key={item.id} result={item.result} />
+            item.role === 'assistant' ? (
+              <LeadAssistantMessage
+                key={item.id}
+                result={item.result}
+                onDraftChange={(draft) =>
+                  update((current) => ({
+                    ...current,
+                    messages: current.messages.map((message) =>
+                      message.id === item.id && message.role === 'assistant'
+                        ? { ...message, result: { ...message.result, draft } }
+                        : message,
+                    ),
+                  }))
+                }
+              />
             ) : (
               <div key={item.id} className="flex justify-end">
                 <div className="max-w-[90%] min-w-0 space-y-1.5">
@@ -144,6 +189,8 @@ export function LeadAssistantConversation({
         loading={loading}
         error={error}
         duringCall={duringCall}
+        ready={ready}
+        persisted={persisted}
         inputRef={input}
         onQuestionChange={setQuestion}
         onSubmit={submit}

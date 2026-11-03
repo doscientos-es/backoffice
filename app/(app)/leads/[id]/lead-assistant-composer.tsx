@@ -11,6 +11,8 @@ type ComposerProps = {
   loading: boolean
   error: string | null
   duringCall?: boolean
+  ready: boolean
+  persisted: boolean
   inputRef: RefObject<HTMLTextAreaElement | null>
   onQuestionChange: (question: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
@@ -21,6 +23,8 @@ export function LeadAssistantComposer({
   loading,
   error,
   duringCall = false,
+  ready,
+  persisted,
   inputRef,
   onQuestionChange,
   onSubmit,
@@ -71,7 +75,7 @@ export function LeadAssistantComposer({
           }}
           maxLength={2000}
           rows={2}
-          disabled={loading}
+          disabled={loading || !ready}
           className="max-h-44 min-h-20 resize-none border-0 bg-transparent p-1 text-base shadow-none focus-visible:ring-0 dark:bg-transparent"
         />
         <div className="mt-2 flex items-center justify-between gap-3">
@@ -87,7 +91,7 @@ export function LeadAssistantComposer({
             ) : null}
             <Button
               type="submit"
-              disabled={loading || !question.trim()}
+              disabled={loading || !ready || !question.trim()}
               className="min-h-11 gap-2 rounded-xl px-4 motion-reduce:transform-none motion-reduce:transition-none sm:min-h-10"
             >
               Consultar
@@ -101,9 +105,10 @@ export function LeadAssistantComposer({
         </div>
       </form>
       <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
-        {duringCall
-          ? 'No escucha la llamada. IA con contexto parcial; el chat no se guarda.'
-          : 'La IA puede equivocarse. La conversación se pierde al salir de la ficha.'}
+        {duringCall ? 'No escucha la llamada. ' : 'La IA puede equivocarse. '}
+        {persisted
+          ? 'Solo en este navegador; caduca tras 7 días sin cambios y se borra al cerrar sesión.'
+          : 'No se puede guardar en este navegador. El chat solo se conserva en memoria.'}
       </p>
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { ArrowUpRight, ChevronDown, FileText, Info, Mail, Sparkles } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useId } from 'react'
 
 import { CopyButton } from '@/components/ui/copy-button'
 import { Input } from '@/components/ui/input'
@@ -10,9 +10,15 @@ import { Textarea } from '@/components/ui/textarea'
 import type { AssistantResponse } from '@/lib/leads/assistant-contract'
 import { formatDate } from '@/lib/utils'
 
-export function LeadAssistantMessage({ result }: { result: AssistantResponse }) {
-  const [title, setTitle] = useState(result.draft?.title ?? '')
-  const [body, setBody] = useState(result.draft?.body ?? '')
+export function LeadAssistantMessage({
+  result,
+  onDraftChange,
+}: {
+  result: AssistantResponse
+  onDraftChange: (draft: NonNullable<AssistantResponse['draft']>) => void
+}) {
+  const title = result.draft?.title ?? ''
+  const body = result.draft?.body ?? ''
   const titleId = useId()
   const bodyId = useId()
 
@@ -115,7 +121,9 @@ export function LeadAssistantMessage({ result }: { result: AssistantResponse }) 
                 id={titleId}
                 aria-label="Título del borrador"
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={(event) =>
+                  result.draft && onDraftChange({ ...result.draft, title: event.target.value })
+                }
                 maxLength={200}
                 className="min-h-11 bg-background text-base font-medium sm:text-sm"
               />
@@ -128,7 +136,9 @@ export function LeadAssistantMessage({ result }: { result: AssistantResponse }) 
                 id={bodyId}
                 aria-label="Texto del borrador"
                 value={body}
-                onChange={(event) => setBody(event.target.value)}
+                onChange={(event) =>
+                  result.draft && onDraftChange({ ...result.draft, body: event.target.value })
+                }
                 rows={8}
                 maxLength={6000}
                 className="min-h-48 bg-background text-base leading-relaxed sm:text-sm"
