@@ -215,7 +215,7 @@ export function PhoneQuickActions({
         text={normalized}
         successMessage="Teléfono copiado"
         label="Copiar teléfono"
-        className="size-10 shrink-0 sm:size-6"
+        className="size-8 shrink-0 sm:size-6"
       />
       {leadId && leadName && (
         <LeadContactButton
@@ -289,7 +289,7 @@ function LeadContactButton({
           size="icon-sm"
           aria-label="Guardar en contactos"
           title="Guardar en contactos"
-          className="size-10 text-muted-foreground sm:size-6"
+          className="size-8 text-muted-foreground sm:size-6"
         >
           <Contact className="size-3.5" />
         </Button>
@@ -383,7 +383,7 @@ export function LeadWhatsAppButton({
           size="icon-sm"
           aria-label="Preparar WhatsApp"
           title="Preparar WhatsApp"
-          className="size-10 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 sm:size-6 dark:hover:bg-emerald-500/10"
+          className="size-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 sm:size-6 dark:hover:bg-emerald-500/10"
         >
           <WhatsAppIcon className="size-3.5" />
         </Button>
