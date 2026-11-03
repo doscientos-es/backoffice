@@ -265,6 +265,7 @@ async function loadLeadReminders(leadIds: string[]): Promise<{
     .from('tasks')
     .select('id, lead_id, title, start_at, action_type')
     .eq('kind', 'reminder')
+    .in('status', ['todo', 'in_progress', 'in_review'])
     .in('lead_id', leadIds)
     .is('completed_at', null)
     .is('deleted_at', null)
@@ -393,7 +394,9 @@ export async function getLeadDetail(
         .select(
           'id, title, status, due_date, description, priority, kind, action_type, start_at, completed_at',
         )
-        .in('kind', ['task', 'reminder'])
+        .eq('kind', 'task')
+        .in('status', ['todo', 'in_progress', 'in_review'])
+        .is('completed_at', null)
         .eq('lead_id', id),
     )
       .order('created_at', { ascending: false })
@@ -402,6 +405,7 @@ export async function getLeadDetail(
       .from('tasks')
       .select('id, title, start_at')
       .eq('kind', 'reminder')
+      .in('status', ['todo', 'in_progress', 'in_review'])
       .eq('lead_id', id)
       .is('completed_at', null)
       .is('deleted_at', null)

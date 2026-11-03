@@ -325,7 +325,7 @@ export type LeadDetailResult = {
   invoices: LeadRelatedInvoice[]
   contacts: LeadRelatedContact[]
   dismissedMeetContactSuggestionKeys: string[]
-  /** Tasks directly associated with this lead, newest first. */
+  /** Open standard tasks directly associated with this lead, newest first. */
   tasks: LeadRelatedTask[]
   /** Pending reminders scheduled against this lead, soonest first. */
   reminders: ReminderRow[]

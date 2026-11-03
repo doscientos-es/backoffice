@@ -556,6 +556,11 @@ describe('logLeadCall', () => {
           ),
       ),
     ).toMatchObject({ status: 'done', completed_at: expect.any(String) })
+    const completed = db.updatedRows.find((row) => row.table === 'tasks' && row.status === 'done')
+    expect(completed?.filters).toContainEqual([
+      'description',
+      ['CALL_PENDING', 'CALL_PENDING_NOTIFIED', 'CALL_AUTO_FOLLOW_UP', 'AUTO_LEAD_FIRST_TOUCH'],
+    ])
   })
 
   it('never overwrites a manually decided accessibility signal', async () => {

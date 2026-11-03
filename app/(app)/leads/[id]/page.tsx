@@ -17,13 +17,14 @@ import { isAIEnabled, serverEnv } from '@/lib/env'
 import { formatLeadBriefingForAI } from '@/lib/leads/ai-context'
 import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
 import { suggestedCallDurationMinutes } from '@/lib/leads/meeting-duration'
+import { buildLeadNextActions } from '@/lib/leads/next-actions'
 import { suggestLeadOwner } from '@/lib/leads/owner-suggestion'
 import { getLeadDetail } from '@/lib/leads/queries'
 import type { LeadCompanyResearch as LeadCompanyResearchData } from '@/lib/leads/types'
 import { leadDisplayName } from '@/lib/leads/utils'
 import { listActiveMembers } from '@/lib/members/queries'
 import { can } from '@/lib/permissions'
-import { LEAD_STATUS, type TaskStatus } from '@/lib/status'
+import { LEAD_STATUS } from '@/lib/status'
 import { formatDate, formatEUR } from '@/lib/utils'
 
 import { buildAdsManagerUrl } from '../../marketing/_components/marketing-format'
@@ -44,7 +45,7 @@ import { LeadDetailTabs, resolveLeadTab } from './lead-detail-tabs'
 import { LeadDiscoveryQuestionsPanel } from './lead-discovery-questions-panel'
 import { LeadEditDialog } from './lead-edit-dialog'
 import { LeadLanguageSelect } from './lead-language-select'
-import { type NextAction, NextActionsCard } from './lead-next-actions-card'
+import { NextActionsCard } from './lead-next-actions-card'
 import { LeadNotesDialog } from './lead-notes-dialog'
 import { LeadOwnerSuggestionCard } from './lead-owner-suggestion'
 import { LeadPriceSuggestion } from './lead-price-suggestion'
@@ -115,26 +116,7 @@ export default async function LeadDetailPage({
         currentAssigneeId: lead.assigned_to,
       })
     : null
-  const nextActions: NextAction[] = [
-    ...tasks.map((task) => ({
-      id: task.id as string,
-      title: task.title as string,
-      kind: 'task' as const,
-      when: (task.due_date as string | null) ?? null,
-      status: task.status as TaskStatus,
-    })),
-    ...reminders.map((reminder) => ({
-      id: reminder.id as string,
-      title: reminder.title as string,
-      kind: 'reminder' as const,
-      when: reminder.remind_at,
-      status: 'todo' as TaskStatus,
-    })),
-  ].sort((a, b) => {
-    if (!a.when) return 1
-    if (!b.when) return -1
-    return new Date(a.when).getTime() - new Date(b.when).getTime()
-  })
+  const nextActions = buildLeadNextActions({ tasks, reminders })
 
   const displayName = leadDisplayName(lead)
   const alias = (lead.alias as string | null)?.trim() || null

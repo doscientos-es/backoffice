@@ -14,6 +14,7 @@ import { addEmailTracking } from '@/lib/email/tracking'
 import { isGoogleEnabled, publicEnv, serverEnv } from '@/lib/env'
 import { pushMetaQualifiedLeadStage } from '@/lib/integrations/meta-capi'
 import { isAutomaticallyAccessible, summarizeCallOutcomes } from '@/lib/leads/call-qualification'
+import { ensureCallReminder } from '@/lib/leads/call-reminders'
 import { CALL_SESSION_TTL_HOURS, completeCallSession } from '@/lib/leads/call-session'
 import {
   CALL_AUTO_FOLLOW_UP,
@@ -954,22 +955,13 @@ export const startLeadCall = defineAction<
     if (sessionError || !session)
       throw new Error(sessionError?.message ?? 'No se pudo iniciar el seguimiento de llamada')
 
-    const { data: reminder, error } = await supabase
-      .from('tasks')
-      .insert({
-        kind: 'reminder',
-        title: `Registrar llamada · ${lead.name as string}`,
-        description: CALL_REMINDER_DESCRIPTION,
-        start_at: new Date(Date.now() + CALL_REMINDER_DELAY_MS).toISOString(),
-        lead_id: input.leadId,
-        created_by: user.id,
-        assignee_id: user.id,
-        status: 'todo',
-        priority: 'medium',
-      })
-      .select('id')
-      .single()
-    if (error || !reminder) throw new Error(error?.message ?? 'No se pudo programar el aviso')
+    await ensureCallReminder(supabase, {
+      leadId: input.leadId,
+      memberId: user.id,
+      title: `Registrar llamada · ${lead.name as string}`,
+      description: CALL_REMINDER_DESCRIPTION,
+      startAt: new Date(Date.now() + CALL_REMINDER_DELAY_MS).toISOString(),
+    })
     return { id: session.id as string, mobileToken: session.mobile_token as string }
   },
 })
@@ -1100,6 +1092,8 @@ export const notifyDueCallReminders = defineAction({
       .eq('kind', 'reminder')
       .eq('assignee_id', user.id)
       .eq('status', 'todo')
+      .is('completed_at', null)
+      .is('deleted_at', null)
       .eq('description', CALL_REMINDER_DESCRIPTION)
       .lte('start_at', new Date().toISOString())
       .not('lead_id', 'is', null)
@@ -1111,6 +1105,9 @@ export const notifyDueCallReminders = defineAction({
         .update({ description: CALL_REMINDER_NOTIFIED_DESCRIPTION })
         .eq('id', task.id)
         .eq('description', CALL_REMINDER_DESCRIPTION)
+        .eq('status', 'todo')
+        .is('completed_at', null)
+        .is('deleted_at', null)
         .select('id')
         .maybeSingle()
       if (!claimed || !task.lead_id) continue
@@ -1322,26 +1319,24 @@ export const logLeadCall = defineAction<
       .in('description', [
         CALL_REMINDER_DESCRIPTION,
         CALL_REMINDER_NOTIFIED_DESCRIPTION,
+        CALL_AUTO_FOLLOW_UP,
         FIRST_TOUCH_REMINDER_MARKER,
       ])
       .eq('status', 'todo')
       .is('completed_at', null)
+      .is('deleted_at', null)
 
     // Keep the next attempt alive even when the rep closes the backoffice.
     // This is a durable reminder, not a cron: it becomes visible/pushable the
     // next time the app is open, and never sends anything to the lead.
     const followUpHours = followUpDelayHours(outcome)
     if (followUpHours !== null) {
-      await supabase.from('tasks').insert({
-        kind: 'reminder',
-        title: `Reintentar llamada · lead`,
+      await ensureCallReminder(supabase, {
+        leadId,
+        memberId: user.id,
+        title: 'Reintentar llamada',
         description: CALL_AUTO_FOLLOW_UP,
-        start_at: new Date(Date.now() + followUpHours * 60 * 60 * 1000).toISOString(),
-        lead_id: leadId,
-        created_by: user.id,
-        assignee_id: user.id,
-        status: 'todo',
-        priority: 'medium',
+        startAt: new Date(Date.now() + followUpHours * 60 * 60 * 1000).toISOString(),
       })
     }
 

@@ -3,21 +3,16 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/status-badge'
+import type { NextAction } from '@/lib/leads/next-actions'
 import type { listActiveMembers } from '@/lib/members/queries'
-import { TASK_STATUS, type TaskStatus } from '@/lib/status'
+import { TASK_STATUS } from '@/lib/status'
 import { relativeTime } from '@/lib/utils'
 
 import { TaskCreateDialog } from '../../tasks/task-create-dialog'
 import { LeadNextActionReminderItem } from './lead-next-action-reminder-item'
 import { LeadNextActionTaskItem } from './lead-next-action-task-item'
 
-export type NextAction = {
-  id: string
-  title: string
-  kind: 'task' | 'reminder'
-  when: string | null
-  status: TaskStatus
-}
+export type { NextAction } from '@/lib/leads/next-actions'
 
 type NextActionsCardProps = {
   canEdit: boolean
