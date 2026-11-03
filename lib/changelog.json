@@ -1,6 +1,49 @@
 {
   "releases": [
     {
+      "version": "0.1.159",
+      "date": "2026-11-03",
+      "title": "v0.1.159",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Update lead notification process for clarity",
+            "Add lead assistant feature for enhanced lead interaction"
+          ]
+        },
+        {
+          "title": "Correcciones",
+          "items": [
+            "Prevent unnecessary scrolling when messages are empty"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "100f015a19f6e1e8baa7fc97a3ce31ac27134a0f",
+          "type": "feat",
+          "scope": "notifications",
+          "breaking": false,
+          "description": "Update lead notification process for clarity"
+        },
+        {
+          "sha": "182dd81ceed5225ed6b0fba12b387906edcea7d6",
+          "type": "fix",
+          "scope": "lead-assistant",
+          "breaking": false,
+          "description": "Prevent unnecessary scrolling when messages are empty"
+        },
+        {
+          "sha": "b235ac8f75a21ab204a12f7d802a6199c66cbcbd",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add lead assistant feature for enhanced lead interaction"
+        }
+      ]
+    },
+    {
       "version": "0.1.158",
       "date": "2026-11-03",
       "title": "v0.1.158",

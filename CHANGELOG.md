@@ -2,6 +2,17 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.159
+
+### Nuevas funciones
+
+- Update lead notification process for clarity
+- Add lead assistant feature for enhanced lead interaction
+
+### Correcciones
+
+- Prevent unnecessary scrolling when messages are empty
+
 ## 2026-11-03 — v0.1.158
 
 ### Nuevas funciones
