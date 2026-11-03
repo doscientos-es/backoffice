@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.154",
+      "date": "2026-11-03",
+      "title": "v0.1.154",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add member selection component for calendar invites"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "f0a4319bbee303c15d9a1f4e0a876705eb3f3ded",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add member selection component for calendar invites"
+        }
+      ]
+    },
+    {
       "version": "0.1.153",
       "date": "2026-11-03",
       "title": "v0.1.153",
