@@ -30,6 +30,7 @@ import { buildAdsManagerUrl } from '../../marketing/_components/marketing-format
 import { AdPreviewDialog } from '../../marketing/ad-preview-dialog'
 import { LeadActivityFeed, countActivityEvents } from './lead-activity-feed'
 import { LeadAiPanel } from './lead-ai-panel'
+import { LeadAssistant } from './lead-assistant'
 import { LeadCommercial } from './lead-commercial'
 import { LeadCompanyResearch } from './lead-company-research'
 import { LeadDeleteDangerZone } from './lead-delete-danger-zone'
@@ -195,6 +196,9 @@ export default async function LeadDetailPage({
         ]}
         actions={
           <>
+            {aiEnabled && can(user.role, 'leads.read') ? (
+              <LeadAssistant key={id} leadId={id} />
+            ) : null}
             <CopySummaryButton
               lines={(() => {
                 const parts: string[] = []
