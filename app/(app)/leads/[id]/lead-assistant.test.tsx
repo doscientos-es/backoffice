@@ -1,6 +1,21 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render as renderComponent,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { AssistantSessionProvider } from '@/components/leads/assistant-session-provider'
+import { assistantStorageKey } from '@/lib/leads/assistant-storage'
+
+vi.mock('@/lib/supabase/browser', () => ({
+  getBrowserClient: () => ({
+    auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) },
+  }),
+}))
 
 vi.mock('@doscientos/ui', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@doscientos/ui')>()),
@@ -24,7 +39,19 @@ vi.mock('@/components/ui/copy-button', () => ({
 
 import { LeadAssistant } from './lead-assistant'
 
+const USER = { id: 'synthetic-user', role: 'member', accessScope: 'all' } as const
+function render(assistant: ReactNode) {
+  return renderComponent(assistant, {
+    wrapper: ({ children }) => (
+      <AssistantSessionProvider user={USER}>{children}</AssistantSessionProvider>
+    ),
+  })
+}
+
 describe('lead assistant panel', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
   afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
@@ -73,7 +100,7 @@ describe('lead assistant panel', () => {
       ),
     )
     vi.stubGlobal('fetch', fetch)
-    render(<LeadAssistant leadId="synthetic" />)
+    const panel = render(<LeadAssistant leadId="synthetic" />)
     expect(fetch).not.toHaveBeenCalled()
     fireEvent.change(screen.getByLabelText('Pregunta sobre el lead'), {
       target: { value: 'Prepara un email' },
@@ -103,6 +130,40 @@ describe('lead assistant panel', () => {
     expect(fetch).toHaveBeenCalledTimes(1)
     expect(fetch.mock.calls[0]![0]).toBe('/api/crm/ai/lead-assistant')
     expect(screen.queryByRole('button', { name: /enviar/i })).toBeNull()
+
+    fireEvent.change(screen.getByLabelText('Pregunta sobre el lead'), {
+      target: { value: 'Pregunta sin enviar' },
+    })
+    const key = assistantStorageKey(
+      { userId: USER.id, permissions: 'member:all:true:false' },
+      'synthetic',
+    )
+    const saved = localStorage.getItem(key)
+    panel.unmount()
+    render(<LeadAssistant leadId="synthetic" />)
+    expect(screen.getByText('Borrador preparado.')).toBeTruthy()
+    expect((screen.getByLabelText('Título del borrador') as HTMLInputElement).value).toBe(
+      'Asunto revisado',
+    )
+    expect((screen.getByLabelText('Texto del borrador') as HTMLTextAreaElement).value).toBe(
+      'Texto revisado',
+    )
+    expect((screen.getByLabelText('Pregunta sobre el lead') as HTMLTextAreaElement).value).toBe(
+      'Pregunta sin enviar',
+    )
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(localStorage.getItem(key)).toBe(saved)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Consultar' }))
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
+    const history = JSON.parse(fetch.mock.calls[1]![1].body).history
+    expect(history).toEqual([
+      { role: 'user', content: 'Prepara un email' },
+      {
+        role: 'assistant',
+        content: '## Resumen\n\n**Borrador preparado.**\nBorrador: Asunto revisado\nTexto revisado',
+      },
+    ])
   })
 
   it.each([
@@ -151,5 +212,78 @@ describe('lead assistant panel', () => {
       ),
     )
     expect(fetch).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('log').textContent).not.toContain('¿Qué falta?')
+  })
+
+  it('isolates leads and restores the unfinished question when returning to a lead', () => {
+    const panel = render(<LeadAssistant leadId="lead-one" />)
+    fireEvent.change(screen.getByLabelText('Pregunta sobre el lead'), {
+      target: { value: 'Solo lead uno' },
+    })
+    panel.rerender(<LeadAssistant leadId="lead-two" />)
+    expect((screen.getByLabelText('Pregunta sobre el lead') as HTMLTextAreaElement).value).toBe('')
+    fireEvent.change(screen.getByLabelText('Pregunta sobre el lead'), {
+      target: { value: 'Solo lead dos' },
+    })
+    panel.rerender(<LeadAssistant leadId="lead-one" />)
+    expect((screen.getByLabelText('Pregunta sobre el lead') as HTMLTextAreaElement).value).toBe(
+      'Solo lead uno',
+    )
+  })
+
+  it('clears saved history and ignores an answer arriving after starting a new conversation', async () => {
+    let resolveResponse!: (response: Response) => void
+    const fetch = vi.fn().mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveResponse = resolve
+        }),
+    )
+    vi.stubGlobal('fetch', fetch)
+    render(<LeadAssistant leadId="synthetic" />)
+    fireEvent.change(screen.getByLabelText('Pregunta sobre el lead'), {
+      target: { value: 'Consulta anterior' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Consultar' }))
+    const signal = fetch.mock.calls[0]![1].signal as AbortSignal
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva conversación' }))
+    expect(signal.aborted).toBe(true)
+    expect(screen.queryByText('Consulta anterior')).toBeNull()
+    expect(localStorage.length).toBe(0)
+    resolveResponse(
+      new Response(
+        JSON.stringify({
+          answer: 'Respuesta obsoleta',
+          sources: [],
+          sourceIds: [],
+          draft: null,
+          coverage: 'Partial',
+        }),
+      ),
+    )
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull())
+    expect(screen.queryByText('Respuesta obsoleta')).toBeNull()
+    expect(localStorage.length).toBe(0)
+  })
+
+  it('keeps working and explains when local storage is blocked', () => {
+    const storage = vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new Error('Storage unavailable')
+    })
+    try {
+      render(<LeadAssistant leadId="synthetic" />)
+      fireEvent.change(screen.getByLabelText('Pregunta sobre el lead'), {
+        target: { value: 'Pregunta en memoria' },
+      })
+      expect(screen.getByText(/No se puede guardar en este navegador/)).toBeTruthy()
+      expect((screen.getByLabelText('Pregunta sobre el lead') as HTMLTextAreaElement).value).toBe(
+        'Pregunta en memoria',
+      )
+      expect(
+        (screen.getByRole('button', { name: 'Consultar' }) as HTMLButtonElement).disabled,
+      ).toBe(false)
+    } finally {
+      storage.mockRestore()
+    }
   })
 })

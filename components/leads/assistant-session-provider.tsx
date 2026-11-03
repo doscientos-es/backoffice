@@ -48,7 +48,11 @@ export function AssistantSessionProvider({
       }
     })
     function onStorage(event: StorageEvent) {
-      if (event.storageArea === window.localStorage) session.reload(event.key)
+      try {
+        if (event.storageArea === window.localStorage) session.reload(event.key)
+      } catch {
+        // Storage access can be revoked while the app is open.
+      }
     }
     window.addEventListener('storage', onStorage)
     return () => {

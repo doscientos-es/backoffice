@@ -1,11 +1,25 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render as renderComponent,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { AssistantSessionProvider } from '@/components/leads/assistant-session-provider'
+
 import { CallWorkspace } from './call-workspace'
 import { getLeadCallBriefing } from './call-workspace-actions'
+import { LeadAssistantConversation } from './lead-assistant'
 
 vi.mock('./call-workspace-actions', () => ({ getLeadCallBriefing: vi.fn() }))
+vi.mock('@/lib/supabase/browser', () => ({
+  getBrowserClient: () => ({
+    auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) },
+  }),
+}))
 vi.mock('@doscientos/ui', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@doscientos/ui')>()),
   Drawer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -52,7 +66,18 @@ const props = {
   onRegister: vi.fn(),
 }
 
+function render(workspace: ReactNode) {
+  return renderComponent(workspace, {
+    wrapper: ({ children }) => (
+      <AssistantSessionProvider user={{ id: 'synthetic-user', role: 'member', accessScope: 'all' }}>
+        {children}
+      </AssistantSessionProvider>
+    ),
+  })
+}
+
 beforeEach(() => {
+  localStorage.clear()
   vi.clearAllMocks()
   vi.mocked(getLeadCallBriefing).mockResolvedValue(context)
 })
@@ -65,7 +90,7 @@ describe('during-call workspace', () => {
   it('keeps the briefing and assistant input when switching tabs without AI requests', async () => {
     const fetch = vi.fn()
     vi.stubGlobal('fetch', fetch)
-    render(<CallWorkspace {...props} />)
+    const { rerender } = render(<CallWorkspace {...props} />)
     await screen.findByText('Necesita automatizar las reservas.')
     expect(screen.getByText('¿Quién confirma el alcance?')).toBeTruthy()
     expect(screen.getByText('Aclarar quién participa en la aprobación.')).toBeTruthy()
@@ -83,6 +108,11 @@ describe('during-call workspace', () => {
     expect(input.value).toBe('Me pregunta por el plazo, ¿qué le digo?')
     expect(fetch).not.toHaveBeenCalled()
     expect(getLeadCallBriefing).toHaveBeenCalledTimes(1)
+    rerender(<LeadAssistantConversation leadId={props.leadId} />)
+    expect((screen.getByLabelText('Pregunta sobre el lead') as HTMLTextAreaElement).value).toBe(
+      'Me pregunta por el plazo, ¿qué le digo?',
+    )
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('preserves call controls and only offers registration after finishing', async () => {

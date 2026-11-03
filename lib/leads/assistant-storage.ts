@@ -24,7 +24,10 @@ const ResponseSchema = AssistantResultSchema.extend({
           .max(500)
           .refine(
             (href) =>
-              href.startsWith('/') && !href.startsWith('//') && !/[\\\u0000-\u001f]/.test(href),
+              href.startsWith('/') &&
+              !href.startsWith('//') &&
+              !href.includes('\\') &&
+              Array.from(href).every((character) => character.charCodeAt(0) >= 32),
           ),
         createdAt: z.string().datetime({ offset: true }).nullable(),
       }),
@@ -115,7 +118,7 @@ export function removeAssistantConversation(scope: AssistantStorageScope, leadId
 
 function assistantKeys(storage: Storage): string[] {
   return Array.from({ length: storage.length }, (_, index) => storage.key(index)).filter(
-    (key): key is string => key !== null && key.startsWith(ASSISTANT_STORAGE_PREFIX),
+    (key): key is string => key?.startsWith(ASSISTANT_STORAGE_PREFIX) === true,
   )
 }
 
