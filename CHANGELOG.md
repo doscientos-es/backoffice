@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.155
+
+### Correcciones
+
+- Correct background gradient class for card component
+
 ## 2026-11-03 — v0.1.154
 
 ### Nuevas funciones
