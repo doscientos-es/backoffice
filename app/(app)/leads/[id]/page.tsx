@@ -197,7 +197,7 @@ export default async function LeadDetailPage({
         actions={
           <>
             {aiEnabled && can(user.role, 'leads.read') ? (
-              <LeadAssistant key={id} leadId={id} />
+              <LeadAssistant key={id} leadId={id} leadName={displayName} />
             ) : null}
             <CopySummaryButton
               lines={(() => {

@@ -1,15 +1,16 @@
 'use client'
 
 import { Drawer, DrawerDescription, DrawerHeader, DrawerTitle } from '@doscientos/ui'
-import { MessageCircle } from 'lucide-react'
+import { LoaderCircle, ShieldCheck, Sparkles } from 'lucide-react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import type { AssistantResponse } from '@/lib/leads/assistant-contract'
 import { readJsonResponse } from '@/lib/utils/http'
 
+import { LeadAssistantComposer } from './lead-assistant-composer'
 import { LeadAssistantMessage } from './lead-assistant-message'
+import { LeadAssistantWelcome } from './lead-assistant-welcome'
 
 type Message = {
   id: number
@@ -17,13 +18,8 @@ type Message = {
   content: string
   result?: AssistantResponse
 }
-const QUESTIONS = [
-  '¿Qué quería este lead y qué quedó pendiente?',
-  '¿Qué sabemos de su presupuesto y sus plazos?',
-  'Prepara un email para retomar el contacto con lo que sabemos.',
-]
 
-export function LeadAssistant({ leadId }: { leadId: string }) {
+export function LeadAssistant({ leadId, leadName }: { leadId: string; leadName?: string }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [question, setQuestion] = useState('')
   const [loading, setLoading] = useState(false)
@@ -31,6 +27,7 @@ export function LeadAssistant({ leadId }: { leadId: string }) {
   const request = useRef<AbortController | null>(null)
   const sequence = useRef(0)
   const end = useRef<HTMLDivElement>(null)
+  const input = useRef<HTMLTextAreaElement>(null)
   useEffect(() => () => request.current?.abort(), [])
   useEffect(() => {
     if (messages.length === 0 && !loading) return
@@ -91,84 +88,93 @@ export function LeadAssistant({ leadId }: { leadId: string }) {
   return (
     <Drawer
       trigger={
-        <Button variant="outline" size="sm">
-          <MessageCircle className="size-4" aria-hidden />
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 border-primary/20 bg-primary/5 text-primary"
+        >
+          <Sparkles className="size-4" aria-hidden />
           Preguntar sobre este lead
         </Button>
       }
-      className="w-full sm:max-w-xl"
+      className="gap-0 overflow-hidden bg-background data-[side=right]:w-full data-[side=right]:sm:max-w-2xl"
     >
-      <div className="flex h-full min-h-0 flex-col gap-4">
-        <DrawerHeader className="pr-8">
-          <DrawerTitle>Preguntar sobre este lead</DrawerTitle>
-          <DrawerDescription>
-            Consulta su historial y prepara borradores con fuentes. Nada se envía automáticamente.
-          </DrawerDescription>
-        </DrawerHeader>
-        <div
-          role="log"
-          aria-label="Conversación del lead"
-          aria-busy={loading}
-          className="min-h-0 flex-1 space-y-3 overflow-y-auto px-1"
-        >
-          {messages.length === 0 ? (
-            <div className="space-y-2">
-              {QUESTIONS.map((text) => (
-                <Button
-                  key={text}
-                  variant="outline"
-                  className="h-auto w-full justify-start text-left whitespace-normal"
-                  onClick={() => setQuestion(text)}
-                >
-                  {text}
-                </Button>
-              ))}
+      <div className="flex h-full min-h-0 flex-col">
+        <DrawerHeader className="shrink-0 gap-4 border-b border-border/60 bg-card px-4 py-5 pr-14 sm:px-6 sm:pr-14">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+              <Sparkles className="size-5" aria-hidden />
+            </span>
+            <div className="min-w-0 space-y-0.5">
+              <DrawerTitle className="flex items-center gap-2">
+                Asistente del lead
+                <span className="rounded-md bg-accent/40 px-1.5 py-0.5 text-xs font-medium text-accent-foreground">
+                  IA
+                </span>
+              </DrawerTitle>
+              <DrawerDescription className="block truncate" title={leadName}>
+                {leadName || 'Historial, reuniones y acuerdos'}
+              </DrawerDescription>
             </div>
-          ) : null}
-          {messages.map((item) =>
-            item.result ? (
-              <LeadAssistantMessage key={item.id} result={item.result} />
-            ) : (
-              <p
-                key={item.id}
-                className="ml-6 rounded-lg bg-primary/10 p-3 text-sm whitespace-pre-wrap"
-              >
-                {item.content}
-              </p>
-            ),
-          )}
-          {loading ? (
-            <p role="status" className="text-sm text-muted-foreground">
-              Consultando historial y preparando respuesta…
-            </p>
-          ) : null}
-          <div ref={end} />
-        </div>
-        {error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        ) : null}
-        <form onSubmit={submit} className="space-y-2 border-t pt-3">
-          <Textarea
-            aria-label="Pregunta sobre el lead"
-            placeholder="Pregunta por una reunión, un acuerdo o un email antiguo…"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            maxLength={2000}
-            rows={3}
-            disabled={loading}
-          />
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              IA: puede equivocarse. Contexto parcial y conversación temporal; se pierde al salir de
-              la ficha.
-            </p>
-            <Button type="submit" disabled={loading || !question.trim()}>
-              Consultar
-            </Button>
           </div>
-        </form>
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ShieldCheck className="size-3.5 shrink-0" aria-hidden />
+            Solo consulta y borradores. Nada se envía automáticamente.
+          </p>
+        </DrawerHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6">
+          {messages.length === 0 ? (
+            <LeadAssistantWelcome
+              onSelect={(value) => {
+                setQuestion(value)
+                input.current?.focus()
+              }}
+            />
+          ) : null}
+          <div
+            role="log"
+            aria-label="Conversación del lead"
+            aria-busy={loading}
+            className="space-y-7"
+          >
+            {messages.map((item) =>
+              item.result ? (
+                <LeadAssistantMessage key={item.id} result={item.result} />
+              ) : (
+                <div key={item.id} className="flex justify-end">
+                  <div className="max-w-[90%] min-w-0 space-y-1.5">
+                    <p className="pr-1 text-right text-xs font-medium text-muted-foreground">Tú</p>
+                    <p className="rounded-2xl rounded-tr-sm bg-primary px-4 py-3 text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-primary-foreground">
+                      {item.content}
+                    </p>
+                  </div>
+                </div>
+              ),
+            )}
+            {loading ? (
+              <div role="status" className="flex items-center gap-3 py-2">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
+                  <LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden />
+                </span>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">Buscando en el historial</p>
+                  <p className="text-xs text-muted-foreground">
+                    Reuniendo contexto para responderte…
+                  </p>
+                </div>
+              </div>
+            ) : null}
+            <div ref={end} />
+          </div>
+        </div>
+        <LeadAssistantComposer
+          question={question}
+          loading={loading}
+          error={error}
+          inputRef={input}
+          onQuestionChange={setQuestion}
+          onSubmit={submit}
+        />
       </div>
     </Drawer>
   )
