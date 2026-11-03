@@ -56,7 +56,7 @@ export function ProposalPriceBreakdown({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <p className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+      <p className="text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
         {title}
       </p>
       {hasDiscount && discounts ? (
@@ -87,16 +87,16 @@ export function ProposalPriceBreakdown({
         </div>
       ) : null}
       <p
-        className={`${compact ? 'text-lg' : 'text-2xl'} font-semibold text-zinc-900 tabular-nums dark:text-zinc-100`}
+        className={`${compact ? 'text-lg' : 'text-3xl'} font-semibold text-zinc-900 tabular-nums dark:text-zinc-100`}
       >
         {formatPortalEUR(subtotal, language)}
       </p>
-      <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{copy.beforeTax}</p>
-      <div className="mt-1 flex justify-between gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="text-xs text-zinc-600 dark:text-zinc-400">{copy.beforeTax}</p>
+      <div className="mt-2 flex justify-between gap-3 text-sm text-zinc-600 dark:text-zinc-400">
         <span>{copy.tax}</span>
         <span className="tabular-nums">{formatPortalEUR(taxAmount, language)}</span>
       </div>
-      <div className="flex justify-between gap-3 border-t border-zinc-200 pt-2 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
+      <div className="flex justify-between gap-3 border-t border-zinc-200 pt-3 text-sm font-semibold text-zinc-900 dark:border-zinc-700 dark:text-zinc-100">
         <span>{copy.total}</span>
         <span className="tabular-nums">{formatPortalEUR(total, language)}</span>
       </div>

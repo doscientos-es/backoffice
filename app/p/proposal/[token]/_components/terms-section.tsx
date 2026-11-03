@@ -82,9 +82,7 @@ export function NotesSection({ notes, tr }: { notes: string | null; tr: Tr }) {
   if (!notes) return null
   return (
     <div className={`${PROPOSAL_SURFACE_CLASS} px-6 py-8 sm:px-10`}>
-      <SectionLabel as="p" className="mb-2">
-        {tr('Notas', 'Notes', 'Notes')}
-      </SectionLabel>
+      <SectionLabel className="mb-2">{tr('Notas', 'Notes', 'Notes')}</SectionLabel>
       <Markdown source={notes} className="text-zinc-700 dark:text-zinc-300" />
     </div>
   )
@@ -102,7 +100,7 @@ export function SpecsSection({
   if (specs.length === 0) return null
   return (
     <div className={`${PROPOSAL_SURFACE_CLASS} flex flex-col gap-4 px-6 py-8 sm:px-10`}>
-      <SectionLabel as="p">
+      <SectionLabel>
         {tr('Documentación técnica', 'Documentació tècnica', 'Technical documentation')}
       </SectionLabel>
       <ul className="flex flex-col gap-2">

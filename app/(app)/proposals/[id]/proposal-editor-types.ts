@@ -11,6 +11,7 @@ export type ProposalEditorProps = {
   initialTitle: string
   initialValidUntil: string | null
   initialNotes: string | null
+  initialDemoUrl: string | null
   initialContextMarkdown: string | null
   initialProblems: EditableKeyPoint[]
   initialSolutions: EditableKeyPoint[]

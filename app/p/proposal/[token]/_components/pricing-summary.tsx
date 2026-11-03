@@ -4,7 +4,6 @@ import type { PaymentPlanItem } from '@/lib/proposals/scope'
 
 import type { PortalLanguage, Tr } from '../_lib/i18n'
 import { ProposalPriceBreakdown } from '../proposal-price-breakdown'
-import { SectionLabel } from './primitives'
 
 type Totals = ReturnType<typeof computeProposalTotals>
 
@@ -41,8 +40,10 @@ function PaymentTimeline({
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <SectionLabel as="p">{tr('Cómo se paga', 'Com es paga', 'How it is paid')}</SectionLabel>
-      <div aria-hidden className="flex h-2 w-full max-w-md gap-1">
+      <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+        {tr('Cómo se paga', 'Com es paga', 'How it is paid')}
+      </h3>
+      <div aria-hidden className="flex h-2 w-full gap-1">
         {plan.map((item, index) => (
           <span
             key={item.id}
@@ -51,7 +52,7 @@ function PaymentTimeline({
           />
         ))}
       </div>
-      <ol className="flex max-w-md flex-col gap-2">
+      <ol className="flex w-full flex-col gap-2">
         {plan.map((item, index) => (
           <li key={item.id} className="flex items-baseline justify-between gap-3 text-sm">
             <span className="min-w-0 break-words text-zinc-700 dark:text-zinc-300">
@@ -97,7 +98,7 @@ export function PricingSummary({
   ].filter(({ bucket }) => bucket.total > 0)
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-8 px-6 py-8 sm:px-8">
+    <div className="flex w-full min-w-0 flex-col gap-8 px-6 pb-8 sm:px-8">
       <div className="flex min-w-0 flex-col gap-3">
         <ProposalPriceBreakdown
           title={tr('Inversión inicial', 'Inversió inicial', 'Initial investment')}
@@ -110,9 +111,9 @@ export function PricingSummary({
 
         {recurringBuckets.length > 0 ? (
           <div className="flex flex-col gap-1.5 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-            <SectionLabel as="p">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
               {tr('Mantenimiento recurrente', 'Manteniment recurrent', 'Recurring maintenance')}
-            </SectionLabel>
+            </h3>
             {recurringBuckets.map(({ title, bucket }) => (
               <ProposalPriceBreakdown
                 key={title}

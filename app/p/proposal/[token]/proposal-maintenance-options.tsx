@@ -8,6 +8,7 @@ import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { formatPortalEUR } from '@/lib/portal/language'
 import { type MaintenanceOffer, recommendedMaintenancePlanId } from '@/lib/proposals/maintenance'
 
+import { SectionLabel } from './_components/primitives'
 import { selectProposalMaintenance } from './actions'
 
 export function ProposalMaintenanceOptions({
@@ -102,9 +103,7 @@ export function ProposalMaintenanceOptions({
         <p className="text-[11px] font-semibold tracking-widest text-[#2A4227] uppercase dark:text-[#9CC196]">
           {offer.heading}
         </p>
-        <h2 className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          {copy.choose}
-        </h2>
+        <SectionLabel className="mt-2">{copy.choose}</SectionLabel>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{offer.intro}</p>
         <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
           {copy.intro}
@@ -121,7 +120,7 @@ export function ProposalMaintenanceOptions({
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{plan.name}</h2>
+                  <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{plan.name}</h3>
                   <p className="mt-1 text-lg font-bold text-[#2A4227] dark:text-[#9CC196]">
                     {money(plan.monthly_price)}{' '}
                     <span className="text-xs font-medium">{copy.month}</span>

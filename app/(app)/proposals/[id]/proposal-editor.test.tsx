@@ -28,6 +28,7 @@ const props = {
   id: ID,
   initialTitle: 'Propuesta inicial',
   initialValidUntil: null,
+  initialDemoUrl: null,
   initialNotes: null,
   initialContextMarkdown: null,
   initialProblems: [],
@@ -85,6 +86,23 @@ describe('ProposalEditor', () => {
       ),
     )
   })
+
+  it.each(['https://example.test/new-demo', ''])(
+    'saves an edited or removed demo URL',
+    async (value) => {
+      render(<ProposalEditor {...props} initialDemoUrl="https://example.test/old-demo" />)
+      const field = screen.getByLabelText('Enlace de la demo')
+      expect((field as HTMLInputElement).value).toBe('https://example.test/old-demo')
+      fireEvent.change(field, { target: { value } })
+      fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
+      await waitFor(() =>
+        expect(saveProposal).toHaveBeenCalledWith(
+          expect.objectContaining({ demo_url: value || null }),
+        ),
+      )
+    },
+  )
 
   it('persists a proposal without maintenance', async () => {
     render(

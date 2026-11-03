@@ -75,6 +75,28 @@ describe('saveProposalEditorDraft', () => {
       { proposal_id: ID, member_id: MEMBER, position: 0 },
     ])
   })
+  it.each(['https://example.test/demo', null])(
+    'persists demo URL %s in the atomic save',
+    async (demo_url) => {
+      expect(await saveProposalEditorDraft({ ...input, demo_url })).toEqual({
+        ok: true,
+        version: 2,
+      })
+      expect(db.rpc).toHaveBeenCalledWith(
+        'update_proposal_items_versioned',
+        expect.objectContaining({ p_patch: expect.objectContaining({ demo_url }) }),
+      )
+    },
+  )
+  it('rejects an invalid demo before writing', async () => {
+    expect(
+      await saveProposalEditorDraft({ ...input, demo_url: 'javascript:alert(1)' }),
+    ).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('Enlace de la demo'),
+    })
+    expect(db.rpc).not.toHaveBeenCalled()
+  })
   it('does not write the team when the proposal has a version conflict', async () => {
     db.rpc.mockResolvedValue({ data: null, error: { message: 'VERSION_CONFLICT' } })
     expect(await saveProposalEditorDraft(input)).toMatchObject({ ok: false, code: 'conflict' })

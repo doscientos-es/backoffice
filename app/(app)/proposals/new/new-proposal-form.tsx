@@ -58,6 +58,7 @@ export function NewProposalForm({
   const [title, setTitle] = useState('')
   const [validUntil, setValidUntil] = useState('')
   const [notes, setNotes] = useState('')
+  const [demoUrl, setDemoUrl] = useState('')
   const [projectId, setProjectId] = useState('')
 
   // Projects available for the selected client
@@ -114,6 +115,7 @@ export function NewProposalForm({
         title: title.trim() || defaultTitle,
         valid_until: validUntil || undefined,
         notes: notes || undefined,
+        demo_url: demoUrl || undefined,
         items: proposalItems.map((it) => ({
           description: it.description,
           quantity: it.quantity,
@@ -205,6 +207,20 @@ export function NewProposalForm({
                 hint="Fecha límite de aceptación."
               >
                 <DateField id="valid_until" value={validUntil} onChange={setValidUntil} />
+              </FormRow>
+              <FormRow
+                label="Enlace de la demo"
+                htmlFor="demo_url"
+                hint="Opcional. Se mostrará al cliente en la propuesta pública."
+              >
+                <Input
+                  id="demo_url"
+                  type="url"
+                  maxLength={2048}
+                  placeholder="https://ejemplo.com/demo"
+                  value={demoUrl}
+                  onChange={(event) => setDemoUrl(event.target.value)}
+                />
               </FormRow>
               {clientProjects.length > 0 && (
                 <FormRow

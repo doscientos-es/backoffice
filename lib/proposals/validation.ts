@@ -6,6 +6,7 @@ const FIELD_LABELS: Record<string, string> = {
   acceptance_criteria: 'Criterios de aceptación',
   change_management_terms: 'Gestión de cambios',
   context_markdown: 'Contexto',
+  demo_url: 'Enlace de la demo',
   deliverables: 'Entregables',
   notes: 'Notas',
   payment_schedule: 'Forma de pago',

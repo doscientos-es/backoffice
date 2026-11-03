@@ -66,7 +66,7 @@ function ScopeModuleCard({ module, index, tr }: { module: ScopeModule; index: nu
       </div>
       <h3
         id={`module-${module.id}`}
-        className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100"
+        className="mt-4 text-base font-semibold text-zinc-900 dark:text-zinc-100"
       >
         {module.title}
       </h3>

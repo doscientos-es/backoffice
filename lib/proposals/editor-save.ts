@@ -69,6 +69,7 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
   if (rest.title !== undefined) patch.title = rest.title
   if (rest.valid_until !== undefined) patch.valid_until = rest.valid_until
   if (rest.notes !== undefined) patch.notes = rest.notes
+  if (rest.demo_url !== undefined) patch.demo_url = rest.demo_url
   if (rest.context_markdown !== undefined) patch.context_markdown = rest.context_markdown
   if (rest.problems !== undefined) {
     patch.problems = rest.problems && rest.problems.length > 0 ? rest.problems : null

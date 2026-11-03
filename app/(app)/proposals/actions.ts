@@ -153,6 +153,7 @@ async function insertDraftProposal(
       ...totals,
       valid_until: data.valid_until ?? null,
       notes: data.notes ?? null,
+      demo_url: data.demo_url ?? null,
       legal_terms: DEFAULT_PROPOSAL_LEGAL_TERMS,
       ...(automaticPaymentTerms
         ? { payment_schedule: 'custom', payment_terms: automaticPaymentTerms }
@@ -240,7 +241,7 @@ export async function duplicateProposal(
   const { data: source, error: readError } = await supabase
     .from('proposals')
     .select(
-      'client_id, lead_id, title, valid_until, notes, context_markdown, problems, solutions, terms, legal_terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, change_management_terms, currency',
+      'client_id, lead_id, title, valid_until, notes, demo_url, context_markdown, problems, solutions, terms, legal_terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, change_management_terms, currency',
     )
     .eq('id', parsed.data.id)
     .is('deleted_at', null)
@@ -279,6 +280,7 @@ export async function duplicateProposal(
       ...duplicatedTotals,
       valid_until: null,
       notes: source.notes,
+      demo_url: source.demo_url,
       context_markdown: source.context_markdown,
       problems: source.problems,
       solutions: source.solutions,

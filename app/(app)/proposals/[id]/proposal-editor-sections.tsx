@@ -74,6 +74,22 @@ export function ProposalDetailsSection({
         />
       </FormRow>
 
+      <FormRow
+        label="Enlace de la demo"
+        htmlFor="proposal-demo-url"
+        hint="Opcional. Se mostrará al cliente en la propuesta pública."
+      >
+        <Input
+          id="proposal-demo-url"
+          type="url"
+          maxLength={2048}
+          placeholder="https://ejemplo.com/demo"
+          value={draft.demoUrl}
+          onChange={(event) => setField('demoUrl')(event.target.value)}
+          disabled={locked}
+        />
+      </FormRow>
+
       {aiEnabled && leadId && hasEmptyDraftFields && !locked ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
           <div>

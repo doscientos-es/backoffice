@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { isProposalDemoUrl } from '@/lib/proposals/demo-url'
 import { KEY_POINTS_LIMITS } from '@/lib/proposals/key-points'
 import { maintenanceOfferInput } from '@/lib/proposals/maintenance'
 import { paymentPlanInput, paymentScheduleInput, scopeModulesInput } from '@/lib/proposals/scope'
@@ -47,6 +48,14 @@ const proposalLegalTermsField = z
   .max(20_000)
   .optional()
 
+const demoUrlField = z
+  .string()
+  .trim()
+  .max(2048)
+  .refine((value) => !value || isProposalDemoUrl(value), 'Introduce una URL HTTP o HTTPS válida')
+  .nullish()
+  .transform((value) => (value === undefined ? undefined : value || null))
+
 /**
  * Zod schemas for the `proposals` domain.
  *
@@ -71,6 +80,7 @@ export const CreateProposalInput = z
     title: z.string().min(1, 'Título obligatorio').max(200),
     valid_until: z.string().optional().or(emptyToUndef),
     notes: z.string().max(4000).optional(),
+    demo_url: demoUrlField,
     items: z.array(lineItemInput).min(1, 'Añade al menos una línea'),
   })
   .refine((v) => Boolean(v.client_id) !== Boolean(v.lead_id), {
@@ -101,6 +111,7 @@ export const UpdateProposalInput = z.object({
     .or(z.literal('').transform(() => null))
     .nullable(),
   notes: proposalMarkdownField(4_000),
+  demo_url: demoUrlField,
   context_markdown: proposalMarkdownField(20_000),
   problems: keyPointListField,
   solutions: keyPointListField,

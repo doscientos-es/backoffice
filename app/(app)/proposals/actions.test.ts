@@ -70,6 +70,7 @@ vi.mock('@/lib/supabase/server', () => ({
           if (table === 'proposal_prices') return { data: { payment_terms: null }, error: null }
           return { data: null, error: null }
         },
+        single: async () => ({ data: { id: state.proposal.id }, error: null }),
         // biome-ignore lint/suspicious/noThenProperty: intentional Supabase builder mock
         then: (resolve: (value: unknown) => unknown) =>
           Promise.resolve({ data: table === 'proposals' ? [] : null, error: null }).then(resolve),
@@ -90,6 +91,7 @@ vi.mock('@/lib/email/render', () => ({ renderEmail: vi.fn() }))
 vi.mock('@/lib/email/resend', () => ({ sendEmail: vi.fn() }))
 
 import {
+  createProposalAction,
   markProposalAsAccepted,
   markProposalAsRejected,
   markProposalAsSent,
@@ -97,6 +99,25 @@ import {
 } from './actions'
 
 const ID = '494d62cb-fd56-4650-b131-9e3a927a20ad'
+
+describe('createProposalAction', () => {
+  it('persists the optional demo URL in the draft', async () => {
+    state.inserts = []
+    const result = await createProposalAction({
+      lead_id: ID,
+      title: 'Propuesta',
+      demo_url: ' https://example.test/demo ',
+      items: [{ description: 'Servicio', quantity: 1, unit_price: 100 }],
+    })
+    expect(result).toEqual({ ok: true, id: ID })
+    expect(state.inserts).toContainEqual(
+      expect.objectContaining({
+        table: 'proposals',
+        demo_url: 'https://example.test/demo',
+      }),
+    )
+  })
+})
 
 describe('updateProposal', () => {
   beforeEach(() => {

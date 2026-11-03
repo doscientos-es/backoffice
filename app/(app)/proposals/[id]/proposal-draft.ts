@@ -18,6 +18,7 @@ export type InitialProposalDraft = Pick<
   | 'initialTitle'
   | 'initialValidUntil'
   | 'initialNotes'
+  | 'initialDemoUrl'
   | 'initialContextMarkdown'
   | 'initialProblems'
   | 'initialSolutions'
@@ -44,6 +45,7 @@ export function createProposalDraft({
   initialTitle,
   initialValidUntil,
   initialNotes,
+  initialDemoUrl,
   initialContextMarkdown,
   initialProblems,
   initialSolutions,
@@ -80,6 +82,7 @@ export function createProposalDraft({
     title: initialTitle,
     validUntil: initialValidUntil ?? '',
     notes: initialNotes ?? '',
+    demoUrl: initialDemoUrl ?? '',
     contextMarkdown: initialContextMarkdown ?? '',
     pairs: zipKeyPoints(initialProblems, initialSolutions),
     terms: initialTerms ?? '',
@@ -122,6 +125,7 @@ export type ProposalDraft = {
   title: string
   validUntil: string
   notes: string
+  demoUrl: string
   contextMarkdown: string
   pairs: ReturnType<typeof zipKeyPoints>
   terms: string
@@ -148,6 +152,7 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
     title,
     validUntil,
     notes,
+    demoUrl,
     contextMarkdown,
     pairs,
     terms,
@@ -174,6 +179,7 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
     title,
     valid_until: validUntil || null,
     notes: notes || null,
+    demo_url: demoUrl || null,
     context_markdown: contextMarkdown || null,
     problems: serializeKeyPoints(problems),
     solutions: serializeKeyPoints(solutions),

@@ -23,10 +23,14 @@ describe('PricingSummary', () => {
   it('shows the investment and payment schedule in separate stacked blocks', () => {
     const { container } = render(<PricingSummary {...props} />)
     const investment = screen.getByText('Inversión inicial')
-    const schedule = screen.getByText('Cómo se paga')
+    const schedule = screen.getByRole('heading', { level: 3, name: 'Cómo se paga' })
     const blocks = container.firstElementChild!
 
     expect(blocks.classList.contains('flex-col')).toBe(true)
+    expect(blocks.classList.contains('w-full')).toBe(true)
+    expect(blocks.className).not.toContain('max-w-')
+    expect(blocks.children[1]!.querySelector('ol')?.className).not.toContain('max-w-')
+    expect(blocks.children[1]!.querySelector('[aria-hidden]')?.className).not.toContain('max-w-')
     expect(blocks.querySelector('[class*="flex-row"]')).toBeNull()
     expect(blocks.children[0]!.contains(investment)).toBe(true)
     expect(blocks.children[1]!.contains(schedule)).toBe(true)
