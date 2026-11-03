@@ -7,9 +7,11 @@ const { WEBHOOK_SECRET, state } = vi.hoisted(() => {
   const maybeSingle = vi.fn()
   const upsert = vi.fn()
   const from = vi.fn(() => ({
+    update: () => ({ eq: async () => ({ error: null }) }),
     select: () => ({
       eq: () => ({
         limit: () => ({ maybeSingle }),
+        maybeSingle,
       }),
       ilike: () => ({
         is: () => ({

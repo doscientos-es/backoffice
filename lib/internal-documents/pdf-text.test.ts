@@ -1,7 +1,6 @@
 // @vitest-environment node
 
 import { execFileSync } from 'node:child_process'
-import { readFile } from 'node:fs/promises'
 
 import { describe, expect, it } from 'vitest'
 
@@ -26,15 +25,21 @@ describe('extractPdfPages', () => {
     expect(result.trim()).toBe('loaded')
   })
   it('extracts page-aware native text without OCR', async () => {
-    const bytes = await readFile('docs/diagnostico-lead-ejemplo.pdf')
+    const { PDFDocument, StandardFonts } = await import('pdf-lib')
+    const pdf = await PDFDocument.create()
+    const font = await pdf.embedFont(StandardFonts.Helvetica)
+    const text =
+      'Informe de diagnostico comercial del lead con texto nativo suficiente para extraer. '
+    pdf.addPage().drawText(text, { x: 20, y: 700, size: 10, font })
+    pdf.addPage().drawText(text, { x: 20, y: 700, size: 10, font })
+    const bytes = await pdf.save()
     const result = await extractPdfPages(
-      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
     )
 
-    expect(result.pageCount).toBeGreaterThan(0)
-    expect(result.pages).not.toHaveLength(0)
+    expect(result.pageCount).toBe(2)
     expect(result.pages[0]?.pageNumber).toBe(1)
-    expect(result.pages.some((page) => page.content.length > 100)).toBe(true)
+    expect(result.pages.every((page) => page.content.includes('diagnostico'))).toBe(true)
     expect(result.truncated).toBe(false)
   })
 })

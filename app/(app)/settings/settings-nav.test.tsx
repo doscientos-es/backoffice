@@ -74,9 +74,9 @@ describe('SettingsNav – item visibility', () => {
     expect(desktopNav(container).getAllByRole('link')).toHaveLength(4)
   })
 
-  it('renders 11 links for admin after adding Novedades', () => {
+  it('renders 10 links for admin', () => {
     const { container } = renderNav(true)
-    expect(desktopNav(container).getAllByRole('link')).toHaveLength(11)
+    expect(desktopNav(container).getAllByRole('link')).toHaveLength(10)
   })
 
   it('shows Novedades to all roles', () => {
