@@ -1,4 +1,3 @@
-import { AI_MODELS, isAIEnabled, runAIChat } from '@/lib/ai'
 import { isGoogleEnabled } from '@/lib/env'
 import { resolveSubject } from '@/lib/google/client'
 import { readDocumentText } from '@/lib/google/drive'
@@ -8,6 +7,12 @@ import {
   listConferenceRecords,
 } from '@/lib/google/meet'
 import { leadDidNotShow, parseMeetingInfo } from '@/lib/leads/meeting-info'
+import { summarizeMeeting } from '@/lib/leads/meeting-summary'
+import {
+  cleanTranscript,
+  MAX_STORED_TRANSCRIPT_CHARS,
+  truncateAtLine,
+} from '@/lib/leads/transcript'
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -15,7 +20,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const log = scopedLogger('integrations.meet-artifacts')
 const WINDOW_DAYS = 30
 const BATCH_SIZE = 100
-const SUMMARY_PROMPT = `Resume notas y transcripciones de reuniones comerciales en español. Conserva necesidades, decisiones, objeciones y presupuesto/plazos si aparecen. No inventes datos. Devuelve un resumen práctico, sin introducción genérica y con un máximo de 7.700 caracteres. Termina siempre con una sección titulada exactamente "Próximos pasos", con una viñeta (- ) por paso y el responsable si se menciona; si no hay pasos, omite la sección.`
 
 type MeetingPayload = Record<string, unknown> & {
   meet_url?: string
@@ -52,26 +56,6 @@ function closestConference<T extends { startTime: string }>(records: T[], target
 
 function cleanText(value: string): string {
   return value.replaceAll(String.fromCharCode(0), '').trim()
-}
-
-async function summarize(notes: string, transcript: string): Promise<string> {
-  if (notes.trim()) return notes.trim().slice(0, 8_000)
-  if (!transcript.trim() || !isAIEnabled()) return ''
-  try {
-    return (
-      await runAIChat({
-        model: AI_MODELS.summarizer,
-        system: SUMMARY_PROMPT,
-        user: transcript.slice(0, 50_000),
-        maxOutputTokens: 1_800,
-      })
-    )
-      .trim()
-      .slice(0, 8_000)
-  } catch (err) {
-    log.warn({ err }, 'meet_artifact_summary_failed')
-    return ''
-  }
 }
 
 /** Polls recent CRM meetings and imports Google Meet's generated artifacts once ready. */
@@ -195,14 +179,16 @@ export async function importRecentMeetArtifacts(): Promise<{
       if (notesResult.status === 'rejected') {
         log.warn({ err: notesResult.reason, interactionId: row.id }, 'meet_notes_read_failed')
       }
-      const transcript = cleanText(transcriptRaw).slice(0, 100_000)
+      const fullTranscript = cleanTranscript(cleanText(transcriptRaw))
+      const stored = truncateAtLine(fullTranscript, MAX_STORED_TRANSCRIPT_CHARS)
+      const transcript = stored.text
       const notes = cleanText(notesRaw).slice(0, 50_000)
       if (!transcript && !notes) {
         throw new Error(
           'Los documentos de Meet están generados, pero no se pudo leer su contenido.',
         )
       }
-      const summary = await summarize(notes, transcript)
+      const summary = await summarizeMeeting(cleanText(notesRaw), fullTranscript)
       const importedAt = new Date().toISOString()
       const durationMinutes = conference.endTime
         ? Math.max(
@@ -257,10 +243,24 @@ export async function importRecentMeetArtifacts(): Promise<{
           : null,
         notes_document_id: notesId ?? null,
         notes_url: notesId ? `https://docs.google.com/document/d/${notesId}/view` : null,
-        notes_text: notes || null,
-        transcript_text: transcript || null,
-        summary: summary || notes || null,
+        has_notes: Boolean(notes),
+        has_transcript: Boolean(transcript),
+        transcript_truncated: stored.truncated,
+        summary_truncated: summary.truncated,
+        summary: summary.text || null,
       }
+      // Persist the texts before marking the interaction as processed, so failures can retry.
+      const { error: artifactsError } = await supabase.from('lead_interaction_artifacts').upsert(
+        {
+          interaction_id: row.id,
+          lead_id: row.lead_id,
+          transcript_text: transcript || null,
+          notes_text: notes || null,
+          transcript_truncated: stored.truncated,
+        },
+        { onConflict: 'interaction_id' },
+      )
+      if (artifactsError) throw new Error(artifactsError.message)
       const { data: updatedRows, error: updateError } = await supabase
         .from('lead_interactions')
         .update({
@@ -362,7 +362,7 @@ export async function importRecentMeetArtifacts(): Promise<{
           eventType: 'meeting_synced',
           entityType: 'lead',
           entityId: row.lead_id,
-          body: `Meet está listo: ${durationMinutes ?? 'duración no disponible'} min · ${participants.length} participante(s)${summary ? ' · resumen disponible' : ''}.`,
+          body: `Meet está listo: ${durationMinutes ?? 'duración no disponible'} min · ${participants.length} participante(s)${summary.text ? ' · resumen disponible' : ''}.`,
           link: `/leads/${row.lead_id}`,
           data: { interactionId: row.id, meetingUrl: meetUrl },
         })

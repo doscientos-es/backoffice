@@ -9,7 +9,7 @@ describe('cleanTranscript', () => {
       '',
       '',
       'Ana: mm',
-      'Ana: vale.',
+      'Ana: eh.',
       'Ana: Necesitamos un CRM para 12 comerciales.',
       'Ana: Necesitamos un CRM para 12 comerciales.',
       'eh...',
@@ -29,6 +29,11 @@ describe('cleanTranscript', () => {
       'Ana: No, el presupuesto es 5000',
     )
   })
+
+  it('keeps short approvals and refusals', () => {
+    const text = 'Ana: Sí.\nPol: No.\nAna: Vale.\nPol: claro\nSin cambios'
+    expect(cleanTranscript(text)).toBe(text)
+  })
 })
 
 describe('truncateAtLine', () => {
@@ -47,6 +52,18 @@ describe('chunkTranscript', () => {
     const chunks = chunkTranscript(lines.join('\n'), 200)
     expect(chunks.length).toBeGreaterThan(1)
     expect(chunks.every((chunk) => chunk.length <= 200)).toBe(true)
-    expect(chunks.join('\n')).toBe(lines.join('\n'))
+    expect(chunks.join('')).toBe(lines.join('\n'))
+  })
+
+  it('preserves oversized lines, empty lines and the end of the meeting', () => {
+    const text = `Inicio\n\n${'x'.repeat(123)}\nDecisión final\n`
+    const chunks = chunkTranscript(text, 20)
+    expect(chunks.every((chunk) => chunk.length <= 20)).toBe(true)
+    expect(chunks.join('')).toBe(text)
+  })
+
+  it('rejects invalid sizes instead of looping forever', () => {
+    expect(() => chunkTranscript('text', 0)).toThrow(RangeError)
+    expect(() => chunkTranscript('text', -1)).toThrow(RangeError)
   })
 })

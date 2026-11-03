@@ -16,8 +16,10 @@ export type MeetingInfo = {
   durationMinutes: number | null
   participants: MeetingParticipant[]
   summary: string | null
-  notes: string | null
-  transcript: string | null
+  hasNotes: boolean
+  hasTranscript: boolean
+  transcriptTruncated: boolean
+  summaryTruncated: boolean
   organizerEmail: string | null
   actualStart: string | null
   actualEnd: string | null
@@ -62,8 +64,10 @@ export function parseMeetingInfo(payload: unknown): MeetingInfo {
       }
     }),
     summary: str(artifacts?.summary),
-    notes: str(artifacts?.notes_text),
-    transcript: str(artifacts?.transcript_text),
+    hasNotes: artifacts?.has_notes === true,
+    hasTranscript: artifacts?.has_transcript === true,
+    transcriptTruncated: artifacts?.transcript_truncated === true,
+    summaryTruncated: artifacts?.summary_truncated === true,
     organizerEmail: str(data?.organizer_email),
     actualStart: str(artifacts?.actual_start),
     actualEnd: str(artifacts?.actual_end),
@@ -118,7 +122,7 @@ export function meetingChips(
     chips.push({ text: `${n} ${n === 1 ? 'participante' : 'participantes'}`, tone: 'muted' })
   }
   if (info.summary) chips.push({ text: 'Resumen listo', tone: 'success' })
-  else if (info.transcript) chips.push({ text: 'Transcripción lista', tone: 'success' })
+  else if (info.hasTranscript) chips.push({ text: 'Transcripción lista', tone: 'success' })
   else chips.push({ text: 'Sin transcripción', tone: 'muted' })
   return chips
 }

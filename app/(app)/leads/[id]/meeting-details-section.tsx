@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { extractNextSteps, isNoShow, type MeetingInfo } from '@/lib/leads/meeting-info'
 
+import { MeetingArtifactDetails } from './meeting-artifact-details'
 import { MeetingNextSteps, MeetingNoShowAlert } from './meeting-insights'
-import { MeetingTranscriptViewer } from './meeting-transcript-viewer'
 
 const fmt = (iso: string) => new Date(iso).toLocaleString('es-ES')
 
@@ -36,8 +36,8 @@ export function hasMeetingContent(info: MeetingInfo): boolean {
   return Boolean(
     info.meetUrl ||
     info.summary ||
-    info.notes ||
-    info.transcript ||
+    info.hasNotes ||
+    info.hasTranscript ||
     info.notesUrl ||
     info.transcriptUrl ||
     info.recordingUrl,
@@ -72,8 +72,8 @@ export function MeetingDetailsSection({
   leadEmail: string | null
   canEdit: boolean
 }) {
-  const nextSteps = extractNextSteps(info.summary ?? info.notes)
-  const noArtifacts = !info.importedAt && !info.summary && !info.notes && !info.transcript
+  const nextSteps = extractNextSteps(info.summary)
+  const noArtifacts = !info.importedAt && !info.summary && !info.hasNotes && !info.hasTranscript
 
   return (
     <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
@@ -116,28 +116,33 @@ export function MeetingDetailsSection({
         {info.summary ? (
           <p className="text-sm leading-7 break-words whitespace-pre-wrap">{info.summary}</p>
         ) : null}
+        {info.summaryTruncated ? (
+          <p className="text-xs text-muted-foreground">
+            El resumen puede ser parcial. Consulta los documentos de Google para ver todo el
+            contenido.
+          </p>
+        ) : null}
         {nextSteps.length > 0 && canEdit ? (
           <MeetingNextSteps leadId={leadId} steps={nextSteps} />
         ) : null}
-        {info.notes && info.notes !== info.summary ? (
-          <details className="rounded-lg border border-border/70">
-            <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
-              Notas completas de Google Meet
-            </summary>
-            <pre className="max-h-[50vh] overflow-auto border-t p-3 text-sm leading-6 whitespace-pre-wrap">
-              {info.notes}
-            </pre>
-          </details>
+        {info.hasNotes ? (
+          <MeetingArtifactDetails
+            key={`${interactionId}-notes`}
+            leadId={leadId}
+            interactionId={interactionId}
+            kind="notes"
+            documentUrl={info.notesUrl}
+          />
         ) : null}
-        {info.transcript ? (
-          <details className="rounded-lg border border-border/70">
-            <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
-              Ver transcripción íntegra
-            </summary>
-            <div className="border-t p-2">
-              <MeetingTranscriptViewer transcript={info.transcript} />
-            </div>
-          </details>
+        {info.hasTranscript ? (
+          <MeetingArtifactDetails
+            key={`${interactionId}-transcript`}
+            leadId={leadId}
+            interactionId={interactionId}
+            kind="transcript"
+            truncated={info.transcriptTruncated}
+            documentUrl={info.transcriptUrl}
+          />
         ) : info.importedAt ? (
           <p className="text-sm text-muted-foreground">
             Google no generó una transcripción para esta reunión.

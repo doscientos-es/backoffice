@@ -55,6 +55,27 @@ describe('meetingChips', () => {
     const texts = meetingChips(info, { leadEmail: 'otro@x.com', now }).map((c) => c.text)
     expect(texts).toEqual(['42 min', '1 participante', 'Resumen listo'])
   })
+
+  it('reads availability and truncation without the heavy texts', () => {
+    const info = parseMeetingInfo(
+      imported({
+        has_transcript: true,
+        has_notes: true,
+        transcript_truncated: true,
+        summary_truncated: true,
+      }),
+    )
+    expect(info).toMatchObject({
+      hasTranscript: true,
+      hasNotes: true,
+      transcriptTruncated: true,
+      summaryTruncated: true,
+    })
+    expect(meetingChips(info, { leadEmail: null, now }).map((chip) => chip.text)).toContain(
+      'Transcripción lista',
+    )
+    expect(parseMeetingInfo(null)).toMatchObject({ hasTranscript: false, hasNotes: false })
+  })
 })
 
 describe('extractNextSteps', () => {

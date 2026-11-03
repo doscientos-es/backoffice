@@ -250,19 +250,11 @@ function formatInteraction(interaction: LeadInteractionForAI, relativeTo?: Date)
       : null
   const meetingSummary =
     typeof meetingArtifacts?.summary === 'string' ? meetingArtifacts.summary.slice(0, 2000) : ''
-  const meetingTranscript =
-    typeof meetingArtifacts?.transcript_text === 'string'
-      ? meetingArtifacts.transcript_text.slice(0, 2000)
-      : ''
   const meetingTime = meetingData?.start
     ? `Reunión: ${String(meetingData.start)}${meetingData.end ? ` → ${String(meetingData.end)}` : ''}`
     : ''
   const notesDetail = notes ? ` | Notas: ${notes}` : ''
-  const transcriptDetail = transcript
-    ? ` | Transcripción: ${transcript}`
-    : meetingTranscript
-      ? ` | Transcripción: ${meetingTranscript}`
-      : ''
+  const transcriptDetail = transcript ? ` | Transcripción: ${transcript}` : ''
   const meetingSummaryDetail = meetingSummary ? ` | Resumen de reunión: ${meetingSummary}` : ''
 
   return `- ${date}${age ? ` (${age})` : ''} | ${interaction.type}${subject ? ` | "${subject}"` : ''}${notesDetail}${callMetadata ? ` | ${callMetadata}` : ''}${meetingTime ? ` | ${meetingTime}` : ''}${meetingSummaryDetail}${transcriptDetail}`
