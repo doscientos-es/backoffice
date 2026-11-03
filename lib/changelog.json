@@ -1,6 +1,41 @@
 {
   "releases": [
     {
+      "version": "0.1.157",
+      "date": "2026-11-03",
+      "title": "v0.1.157",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add meeting chips display for interactions"
+          ]
+        },
+        {
+          "title": "Correcciones",
+          "items": [
+            "Adjust button height and padding for UI"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "9e9f6ffb561f033a2d12d6e714ddb39dabaf6128",
+          "type": "feat",
+          "scope": "lead-interaction-timeline",
+          "breaking": false,
+          "description": "Add meeting chips display for interactions"
+        },
+        {
+          "sha": "f447f9aec3582bab1656983af28d2b9c83839790",
+          "type": "fix",
+          "scope": "lead-quick-action-groups",
+          "breaking": false,
+          "description": "Adjust button height and padding for UI"
+        }
+      ]
+    },
+    {
       "version": "0.1.156",
       "date": "2026-11-03",
       "title": "v0.1.156",

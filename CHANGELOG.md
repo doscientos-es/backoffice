@@ -2,6 +2,16 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.157
+
+### Nuevas funciones
+
+- Add meeting chips display for interactions
+
+### Correcciones
+
+- Adjust button height and padding for UI
+
 ## 2026-11-03 — v0.1.156
 
 ### Nuevas funciones
