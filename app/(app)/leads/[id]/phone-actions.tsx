@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
-import { Contact, Phone } from 'lucide-react'
+import { Contact } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 

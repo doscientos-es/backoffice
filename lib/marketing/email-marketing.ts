@@ -329,7 +329,7 @@ export async function processDueEmailMarketing(): Promise<{
     body_markdown: string
     sequence: { id: string; list_id: string; name: string; status: string } | null
   }[]) {
-    if (!raw.sequence || raw.sequence.status !== 'active') continue
+    if (raw.sequence?.status !== 'active') continue
     const { data: claimed } = await supabase
       .from('email_marketing_sequence_steps')
       .update({ status: 'sending', last_error: null })

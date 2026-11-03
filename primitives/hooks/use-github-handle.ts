@@ -111,6 +111,6 @@ export function useGithubHandle(handle: string, options: Options = {}): GithubHa
 }
 
 /** Synchronous regex check. */
-function isValidGithubHandleShape(handle: string): boolean {
+function _isValidGithubHandleShape(handle: string): boolean {
   return HANDLE_RE.test(handle.trim())
 }

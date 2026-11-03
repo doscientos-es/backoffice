@@ -39,7 +39,7 @@ export function maskDate(value: string): string {
  * Maps a cursor position inside the raw (pre-mask) string to the
  * equivalent position inside the masked string.
  */
-function mapCursorToMasked(rawCursor: number, rawValue: string, masked: string): number {
+function _mapCursorToMasked(rawCursor: number, rawValue: string, masked: string): number {
   const digitsBeforeCursor = rawValue.slice(0, rawCursor).replace(/[^0-9]/g, '').length
   let digitsSeen = 0
   for (let i = 0; i < masked.length; i++) {

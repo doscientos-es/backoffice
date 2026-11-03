@@ -29,6 +29,7 @@ import type { ProposalStatus } from '@/lib/status'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 import { DecisionSummary } from './_components/decision-summary'
+import { DemoLink } from './_components/demo-link'
 import { DocumentHeader, RecipientBlock } from './_components/document-header'
 import { LineItems } from './_components/line-items'
 import { NextSteps } from './_components/next-steps'
@@ -43,6 +44,7 @@ import {
 } from './_components/respond-controls'
 import { ResponseArea } from './_components/response-area'
 import { ScopeSection } from './_components/scope-section'
+import { TeamSection } from './_components/team-section'
 import { NotesSection, SpecsSection, TermsSection } from './_components/terms-section'
 import { ProposalWhatsAppWidget } from './_components/whatsapp-widget'
 import { getPortalCopy, getStatusLabel, makeTr } from './_lib/i18n'
@@ -106,7 +108,7 @@ export default async function PortalProposalPage({
   const isDraft = proposal.status === 'draft'
   const portalLanguage = resolvePortalLanguage(
     (proposal.leads as { language?: string | null } | null)?.language ??
-    (proposal.clients as { leads?: { language?: string | null } | null } | null)?.leads?.language,
+      (proposal.clients as { leads?: { language?: string | null } | null } | null)?.leads?.language,
     lang,
   )
   const copy = getPortalCopy(portalLanguage)
@@ -138,6 +140,7 @@ export default async function PortalProposalPage({
     payments: proposalPayments,
     depositInvoice,
     contact,
+    team,
   } = await loadProposalData(proposal)
 
   if (!isDraft) {
@@ -192,31 +195,31 @@ export default async function PortalProposalPage({
   // back-office for prospects that never went through onboarding.
   const clientBillingAddress = client
     ? formatAddress({
-      street: client.billing_address_street,
-      zip: client.billing_address_zip,
-      city: client.billing_address_city,
-      province: client.billing_address_province,
-      country: client.billing_address_country,
-    })
+        street: client.billing_address_street,
+        zip: client.billing_address_zip,
+        city: client.billing_address_city,
+        province: client.billing_address_province,
+        country: client.billing_address_country,
+      })
     : ''
   const needsFiscal = !client?.nif?.trim() || !clientBillingAddress || !client.name?.trim()
   const fiscalPrefill = client
     ? {
-      name: client.name ?? '',
-      nif: client.nif ?? '',
-      billing_address: clientBillingAddress,
-      contact_person: client.contact_person ?? '',
-      email: client.email ?? '',
-      phone: client.phone ?? '',
-    }
+        name: client.name ?? '',
+        nif: client.nif ?? '',
+        billing_address: clientBillingAddress,
+        contact_person: client.contact_person ?? '',
+        email: client.email ?? '',
+        phone: client.phone ?? '',
+      }
     : {
-      name: lead?.company ?? lead?.name ?? '',
-      nif: '',
-      billing_address: '',
-      contact_person: lead?.name ?? '',
-      email: lead?.email ?? '',
-      phone: lead?.phone ?? '',
-    }
+        name: lead?.company ?? lead?.name ?? '',
+        nif: '',
+        billing_address: '',
+        contact_person: lead?.name ?? '',
+        email: lead?.email ?? '',
+        phone: lead?.phone ?? '',
+      }
   const recipientName = client?.name ?? lead?.company ?? lead?.name ?? '—'
   const proposalNumber = (proposal.number as string | null) ?? 'Borrador'
   const rawItems = (items ?? []) as unknown as ProposalItem[]
@@ -224,9 +227,9 @@ export default async function PortalProposalPage({
     proposal.status === 'accepted'
       ? rawItems
       : (ensureCalendarYearProration(
-        rawItems,
-        (proposal.created_at as string | null) ?? null,
-      ) as ProposalItem[])
+          rawItems,
+          (proposal.created_at as string | null) ?? null,
+        ) as ProposalItem[])
   const displayBaseItems = baseItems.map((item) => ({
     ...item,
     subtotal: computeLineSubtotal(item),
@@ -253,9 +256,9 @@ export default async function PortalProposalPage({
   )
   const safeItems: ProposalItem[] = maintenancePlan
     ? [
-      ...displayBaseItems,
-      maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle),
-    ]
+        ...displayBaseItems,
+        maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle),
+      ]
     : displayBaseItems
 
   // Recompute totals on the fly so we can show separate buckets for one-time
@@ -295,6 +298,7 @@ export default async function PortalProposalPage({
   const navItems: NavItem[] = [
     hasNarrative && { id: 'contexto', label: tr('Contexto', 'Context', 'Context') },
     hasScope && { id: 'alcance', label: tr('Alcance', 'Abast', 'Scope') },
+    team.length > 0 && { id: 'equipo', label: tr('Equipo', 'Equip', 'Team') },
     { id: 'inversion', label: tr('Inversión', 'Inversió', 'Investment') },
     Boolean(paymentTerms || changeManagementTerms) && {
       id: 'condiciones',
@@ -394,6 +398,8 @@ export default async function PortalProposalPage({
               ) : null}
             </div>
 
+            <DemoLink url={(proposal.demo_url as string | null) ?? null} tr={tr} />
+
             {/* Narrative: Context → Problems → Solutions (always before price) */}
             {hasNarrative ? (
               <div id="contexto" className="flex scroll-mt-20 flex-col gap-6">
@@ -427,6 +433,7 @@ export default async function PortalProposalPage({
                 tr={tr}
               />
             </div>
+            <TeamSection team={team} tr={tr} />
             <div
               id="inversion"
               className={`${PROPOSAL_SURFACE_CLASS} scroll-mt-16 overflow-hidden`}

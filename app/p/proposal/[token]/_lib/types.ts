@@ -17,3 +17,11 @@ export type ProposalSpec = {
   title: string
   portal_token: string
 }
+
+export type ProposalTeamMember = {
+  id: string
+  name: string
+  job_title: string | null
+  avatar_url: string | null
+  contactEmail: string | null
+}

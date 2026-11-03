@@ -1,4 +1,4 @@
-import { type VerifactuConfig, type VerifactuSubmitResult } from '@doscientos/verifactu'
+import type { VerifactuConfig, VerifactuSubmitResult } from '@doscientos/verifactu'
 import {
   formatVerifactuDeliveryError,
   isRetryableVerifactuDelivery,

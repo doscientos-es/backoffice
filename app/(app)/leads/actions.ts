@@ -1430,7 +1430,7 @@ export const updateLeadCall = defineAction({
       .eq('lead_id', data.leadId)
       .maybeSingle()
     if (readError) throw new Error(readError.message)
-    if (!interaction || interaction.type !== 'call') throw new Error('Llamada no encontrada')
+    if (interaction?.type !== 'call') throw new Error('Llamada no encontrada')
 
     const { error } = await supabase
       .from('lead_interactions')

@@ -1,6 +1,8 @@
 import { effectivePaymentPlan } from '@/lib/proposals/scope'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+import type { ProposalTeamMember } from './types'
+
 type ProposalRow = Record<string, unknown> & { id: unknown }
 
 /**
@@ -18,6 +20,7 @@ export async function loadProposalData(proposal: ProposalRow) {
     { data: payments },
     { data: depositInvoice },
     { data: contact },
+    { data: assignedTeam },
   ] = await Promise.all([
     admin
       .from('proposal_items')
@@ -59,7 +62,34 @@ export async function loadProposalData(proposal: ProposalRow) {
           .is('deleted_at', null)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    admin
+      .from('proposal_team_members')
+      .select('team_members!inner(id, name, job_title, avatar_url, contact_email, email_alias)')
+      .eq('proposal_id', proposalId)
+      .is('team_members.deleted_at', null)
+      .order('position'),
   ])
 
-  return { items, specs, settings, payments, depositInvoice, contact }
+  const team: ProposalTeamMember[] = (assignedTeam ?? []).flatMap((assignment) => {
+    const member = assignment.team_members as unknown as {
+      id: string
+      name: string
+      job_title: string | null
+      avatar_url: string | null
+      contact_email: string | null
+      email_alias: string | null
+    } | null
+    if (!member) return []
+    return [
+      {
+        id: member.id,
+        name: member.name,
+        job_title: member.job_title,
+        avatar_url: member.avatar_url,
+        contactEmail: member.contact_email?.trim() || member.email_alias?.trim() || null,
+      },
+    ]
+  })
+
+  return { items, specs, settings, payments, depositInvoice, contact, team }
 }

@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-function formatEUR(value: number | string | null | undefined): string {
+function _formatEUR(value: number | string | null | undefined): string {
   if (value == null) return '—'
   const n = typeof value === 'string' ? Number.parseFloat(value) : value
   if (!Number.isFinite(n)) return '—'
@@ -16,7 +16,7 @@ function formatEUR(value: number | string | null | undefined): string {
   }).format(n)
 }
 
-function formatDate(value: string | Date | null | undefined): string {
+function _formatDate(value: string | Date | null | undefined): string {
   if (!value) return '—'
   const d = typeof value === 'string' ? new Date(value) : value
   return new Intl.DateTimeFormat('es-ES', {
@@ -25,7 +25,7 @@ function formatDate(value: string | Date | null | undefined): string {
   }).format(d)
 }
 
-function formatDateTime(value: string | Date | null | undefined): string {
+function _formatDateTime(value: string | Date | null | undefined): string {
   if (!value) return '—'
   const d = typeof value === 'string' ? new Date(value) : value
   return new Intl.DateTimeFormat('es-ES', {
@@ -35,7 +35,7 @@ function formatDateTime(value: string | Date | null | undefined): string {
   }).format(d)
 }
 
-function relativeTime(value: string | Date | null | undefined): string {
+function _relativeTime(value: string | Date | null | undefined): string {
   if (!value) return '—'
   const d = typeof value === 'string' ? new Date(value) : value
   const diff = (Date.now() - d.getTime()) / 1000
@@ -49,7 +49,7 @@ function relativeTime(value: string | Date | null | undefined): string {
   return rtf.format(Math.round(-diff / 31536000), 'year')
 }
 
-function truncate(s: string | null | undefined, max: number): string {
+function _truncate(s: string | null | undefined, max: number): string {
   if (!s) return ''
   return s.length <= max ? s : `${s.slice(0, max - 1)}…`
 }

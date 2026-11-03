@@ -1,7 +1,7 @@
 'use client'
 
 import { createBrowserClient } from '@supabase/ssr'
-import { FormEvent, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 
 export default function ClientPortalLoginPage() {
   const [email, setEmail] = useState('')
