@@ -122,8 +122,12 @@ export function MeetingDetailsSection({
             contenido.
           </p>
         ) : null}
-        {nextSteps.length > 0 && canEdit ? (
-          <MeetingNextSteps leadId={leadId} steps={nextSteps} />
+        {nextSteps.length > 0 && (canEdit || info.automaticTaskIds !== null) ? (
+          <MeetingNextSteps
+            leadId={leadId}
+            steps={nextSteps}
+            automaticTaskIds={info.automaticTaskIds}
+          />
         ) : null}
         {info.hasNotes ? (
           <MeetingArtifactDetails
@@ -145,7 +149,11 @@ export function MeetingDetailsSection({
           />
         ) : info.importedAt ? (
           <p className="text-sm text-muted-foreground">
-            Google no generó una transcripción para esta reunión.
+            {info.summaryOnly
+              ? 'Guardamos solo las notas importantes y las tareas. Los documentos originales siguen en Google.'
+              : info.transcriptUrl
+                ? 'La transcripción está disponible en el documento de Google.'
+                : 'Google no generó una transcripción para esta reunión.'}
           </p>
         ) : null}
         {noArtifacts ? (

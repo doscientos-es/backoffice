@@ -1,6 +1,5 @@
 /** Pure helpers to keep meeting transcripts small and summarizable. */
 
-export const MAX_STORED_TRANSCRIPT_CHARS = 100_000
 /** Upper bound of text sent to the summarizer, so one huge meeting cannot cost unbounded calls. */
 export const MAX_SUMMARIZED_TRANSCRIPT_CHARS = 240_000
 

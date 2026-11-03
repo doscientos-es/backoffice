@@ -78,6 +78,26 @@ describe('meetingChips', () => {
   })
 })
 
+describe('summary-only meetings', () => {
+  it('distinguishes auto-created tasks from historical manual extraction', () => {
+    const info = parseMeetingInfo(
+      imported({
+        storage_mode: 'summary_only',
+        summary: 'Notas importantes',
+        task_ids: ['task-1', null, 'task-2'],
+      }),
+    )
+    expect(info).toMatchObject({
+      summaryOnly: true,
+      automaticTaskIds: ['task-1', 'task-2'],
+      hasTranscript: false,
+      hasNotes: false,
+    })
+    expect(parseMeetingInfo(imported({ task_ids: [] })).automaticTaskIds).toEqual([])
+    expect(parseMeetingInfo(imported()).automaticTaskIds).toBeNull()
+  })
+})
+
 describe('extractNextSteps', () => {
   it('reads the bullets under the heading and stops at the next section', () => {
     const text = [

@@ -1,6 +1,7 @@
 'use client'
 
 import { CalendarClock, CircleCheck, ListPlus, LoaderCircle, UserX } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { sileo } from 'sileo'
@@ -61,11 +62,45 @@ export function MeetingNoShowAlert({
   )
 }
 
-/** Next steps taken from the meeting summary, with a one-click "create tasks" action. */
-export function MeetingNextSteps({ leadId, steps }: { leadId: string; steps: string[] }) {
+/** Auto-created tasks for new imports; manual creation remains available for older meetings. */
+export function MeetingNextSteps({
+  leadId,
+  steps,
+  automaticTaskIds = null,
+}: {
+  leadId: string
+  steps: string[]
+  automaticTaskIds?: string[] | null
+}) {
   const [selected, setSelected] = useState<Set<number>>(() => new Set(steps.map((_, i) => i)))
   const [pending, setPending] = useState(false)
   const [created, setCreated] = useState(false)
+
+  if (automaticTaskIds !== null) {
+    return (
+      <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">
+        <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          Próximos pasos
+        </h4>
+        <ul className="list-inside list-disc space-y-1 text-sm">
+          {steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ul>
+        <p className="flex items-center gap-1.5 text-sm font-medium text-success">
+          <CircleCheck className="size-4" aria-hidden />
+          {automaticTaskIds.length} tareas creadas automáticamente
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {automaticTaskIds.map((id, index) => (
+            <Button key={id} asChild variant="outline" size="sm">
+              <Link href={`/tasks/${id}`}>Ver tarea {index + 1}</Link>
+            </Button>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   function toggle(index: number) {
     setSelected((prev) => {

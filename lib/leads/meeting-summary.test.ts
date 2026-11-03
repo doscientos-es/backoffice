@@ -17,13 +17,11 @@ beforeEach(() => {
 })
 
 describe('summarizeMeeting', () => {
-  it('includes both notes and the transcript for a short meeting', async () => {
+  it('prioritizes Gemini notes without adding transcript noise', async () => {
     const result = await summarizeMeeting('Notas', 'Decisión final')
     expect(result.truncated).toBe(false)
     expect(runAIChat).toHaveBeenCalledOnce()
-    expect(runAIChat).toHaveBeenCalledWith(
-      expect.objectContaining({ user: 'Notas\n\nDecisión final' }),
-    )
+    expect(runAIChat).toHaveBeenCalledWith(expect.objectContaining({ user: 'Notas' }))
   })
 
   it('summarizes every chunk including the last decision, then merges the partials', async () => {

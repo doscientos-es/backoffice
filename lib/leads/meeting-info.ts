@@ -20,6 +20,9 @@ export type MeetingInfo = {
   hasTranscript: boolean
   transcriptTruncated: boolean
   summaryTruncated: boolean
+  summaryOnly: boolean
+  /** null for older meetings; an array means automatic task creation completed. */
+  automaticTaskIds: string[] | null
   organizerEmail: string | null
   actualStart: string | null
   actualEnd: string | null
@@ -68,6 +71,10 @@ export function parseMeetingInfo(payload: unknown): MeetingInfo {
     hasTranscript: artifacts?.has_transcript === true,
     transcriptTruncated: artifacts?.transcript_truncated === true,
     summaryTruncated: artifacts?.summary_truncated === true,
+    summaryOnly: artifacts?.storage_mode === 'summary_only',
+    automaticTaskIds: Array.isArray(artifacts?.task_ids)
+      ? artifacts.task_ids.filter((id): id is string => typeof id === 'string')
+      : null,
     organizerEmail: str(data?.organizer_email),
     actualStart: str(artifacts?.actual_start),
     actualEnd: str(artifacts?.actual_end),

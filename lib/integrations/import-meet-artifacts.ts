@@ -6,13 +6,9 @@ import {
   listConferenceArtifacts,
   listConferenceRecords,
 } from '@/lib/google/meet'
-import { leadDidNotShow, parseMeetingInfo } from '@/lib/leads/meeting-info'
+import { extractNextSteps, leadDidNotShow, parseMeetingInfo } from '@/lib/leads/meeting-info'
 import { summarizeMeeting } from '@/lib/leads/meeting-summary'
-import {
-  cleanTranscript,
-  MAX_STORED_TRANSCRIPT_CHARS,
-  truncateAtLine,
-} from '@/lib/leads/transcript'
+import { cleanTranscript } from '@/lib/leads/transcript'
 import { scopedLogger } from '@/lib/logger'
 import { dispatchNotifications } from '@/lib/notifications/dispatch'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -164,31 +160,28 @@ export async function importRecentMeetArtifacts(): Promise<{
         continue
       }
 
-      const [transcriptResult, notesResult] = await Promise.allSettled([
-        transcriptId ? readDocumentText(subject, transcriptId) : Promise.resolve(''),
-        notesId ? readDocumentText(subject, notesId) : Promise.resolve(''),
-      ])
-      const transcriptRaw = transcriptResult.status === 'fulfilled' ? transcriptResult.value : ''
-      const notesRaw = notesResult.status === 'fulfilled' ? notesResult.value : ''
-      if (transcriptResult.status === 'rejected') {
-        log.warn(
-          { err: transcriptResult.reason, interactionId: row.id },
-          'meet_transcript_read_failed',
-        )
+      let notes = ''
+      if (notesId) {
+        try {
+          notes = cleanText(await readDocumentText(subject, notesId))
+        } catch (err) {
+          log.warn({ err, interactionId: row.id }, 'meet_notes_read_failed')
+        }
       }
-      if (notesResult.status === 'rejected') {
-        log.warn({ err: notesResult.reason, interactionId: row.id }, 'meet_notes_read_failed')
-      }
-      const fullTranscript = cleanTranscript(cleanText(transcriptRaw))
-      const stored = truncateAtLine(fullTranscript, MAX_STORED_TRANSCRIPT_CHARS)
-      const transcript = stored.text
-      const notes = cleanText(notesRaw).slice(0, 50_000)
+      // The source stays in memory only. Do not even download the transcript when notes exist.
+      const transcript =
+        !notes && transcriptId
+          ? cleanTranscript(cleanText(await readDocumentText(subject, transcriptId)))
+          : ''
       if (!transcript && !notes) {
         throw new Error(
           'Los documentos de Meet están generados, pero no se pudo leer su contenido.',
         )
       }
-      const summary = await summarizeMeeting(cleanText(notesRaw), fullTranscript)
+      const summary = await summarizeMeeting(notes, transcript)
+      if (!summary.text.trim()) {
+        throw new Error('No se pudo generar el resumen de Meet; se reintentará la importación.')
+      }
       const importedAt = new Date().toISOString()
       const durationMinutes = conference.endTime
         ? Math.max(
@@ -243,35 +236,24 @@ export async function importRecentMeetArtifacts(): Promise<{
           : null,
         notes_document_id: notesId ?? null,
         notes_url: notesId ? `https://docs.google.com/document/d/${notesId}/view` : null,
-        has_notes: Boolean(notes),
-        has_transcript: Boolean(transcript),
-        transcript_truncated: stored.truncated,
+        storage_mode: 'summary_only',
+        has_notes: false,
+        has_transcript: false,
+        transcript_truncated: false,
         summary_truncated: summary.truncated,
         summary: summary.text || null,
       }
-      // Persist the texts before marking the interaction as processed, so failures can retry.
-      const { error: artifactsError } = await supabase.from('lead_interaction_artifacts').upsert(
+      // Row locking and a transaction keep summary + tasks atomic and safe on retries.
+      const { data: finalized, error: updateError } = await supabase.rpc(
+        'finalize_lead_meeting_summary',
         {
-          interaction_id: row.id,
-          lead_id: row.lead_id,
-          transcript_text: transcript || null,
-          notes_text: notes || null,
-          transcript_truncated: stored.truncated,
+          p_interaction_id: row.id,
+          p_artifacts: meetingArtifacts,
+          p_steps: extractNextSteps(summary.text),
         },
-        { onConflict: 'interaction_id' },
       )
-      if (artifactsError) throw new Error(artifactsError.message)
-      const { data: updatedRows, error: updateError } = await supabase
-        .from('lead_interactions')
-        .update({
-          body: typeof row.body === 'string' ? row.body : null,
-          payload: { ...payload, meet_artifacts: meetingArtifacts },
-        })
-        .eq('id', row.id)
-        .is('payload->meet_artifacts->>processed_at', null)
-        .select('id')
       if (updateError) throw new Error(updateError.message)
-      if (!updatedRows?.length) continue
+      if (!record(finalized).processed) continue
 
       let meetingTasks: Array<{
         id: string
@@ -382,6 +364,7 @@ export async function importRecentMeetArtifacts(): Promise<{
           },
         })
         .eq('id', row.id)
+        .is('payload->meet_artifacts->>processed_at', null)
       log.error({ err, interactionId: row.id, leadId: row.lead_id }, 'meet_artifact_import_failed')
     }
   }
