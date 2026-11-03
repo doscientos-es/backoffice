@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.161
+
+### Nuevas funciones
+
+- Add call workspace with briefing and questions handling
+
 ## 2026-11-03 — v0.1.160
 
 ### Nuevas funciones
