@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.153",
+      "date": "2026-11-03",
+      "title": "v0.1.153",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add lead owner suggestion card and dismissal handling"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "4b720eff9e236e07f028fa5499402eec56b728fa",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add lead owner suggestion card and dismissal handling"
+        }
+      ]
+    },
+    {
       "version": "0.1.152",
       "date": "2026-11-02",
       "title": "v0.1.152",

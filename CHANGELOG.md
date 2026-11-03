@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.153
+
+### Nuevas funciones
+
+- Add lead owner suggestion card and dismissal handling
+
 ## 2026-11-02 — v0.1.152
 
 ### Nuevas funciones
