@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.160",
+      "date": "2026-11-03",
+      "title": "v0.1.160",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Enhance lead assistant with new composer and welcome features"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "5b6f37b7c0264995859db50261e01f89081074bc",
+          "type": "feat",
+          "scope": "lead-assistant",
+          "breaking": false,
+          "description": "Enhance lead assistant with new composer and welcome features"
+        }
+      ]
+    },
+    {
       "version": "0.1.159",
       "date": "2026-11-03",
       "title": "v0.1.159",

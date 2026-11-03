@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.160
+
+### Nuevas funciones
+
+- Enhance lead assistant with new composer and welcome features
+
 ## 2026-11-03 — v0.1.159
 
 ### Nuevas funciones
