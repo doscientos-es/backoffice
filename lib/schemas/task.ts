@@ -28,8 +28,6 @@ export const CreateTaskInput = z.object({
   is_client_visible: z.boolean().optional().default(true),
 })
 
-export type CreateTaskInputType = z.infer<typeof CreateTaskInput>
-
 export const UpdateTaskInput = z.object({
   id: z.string().uuid(),
   expected_version: z.coerce.number().int().positive(),
@@ -45,8 +43,6 @@ export const UpdateTaskInput = z.object({
   is_client_visible: z.boolean().optional().default(false),
 })
 
-export type UpdateTaskInputType = z.infer<typeof UpdateTaskInput>
-
 export const UpdateTaskStatusInput = z.object({
   taskId: z.string().uuid(),
   status: TaskStatus,
@@ -60,5 +56,3 @@ export const MoveTaskInput = z.object({
   /** Task id immediately below the dropped position (null = bottom). */
   afterId: z.string().uuid().nullable().optional(),
 })
-
-export type MoveTaskInputType = z.infer<typeof MoveTaskInput>

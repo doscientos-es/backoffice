@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 
 type VisibleNavigationGroup = NavigationGroup & { items: NavigationItem[] }
 
-export const NAVIGATION_PINS_STORAGE_KEY = 'doscientos:navigation-pins'
+const NAVIGATION_PINS_STORAGE_KEY = 'doscientos:navigation-pins'
 
 function readStringList(key: string): string[] {
   if (typeof window === 'undefined') return []

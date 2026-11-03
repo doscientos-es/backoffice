@@ -29,7 +29,7 @@ import {
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useId, useOptimistic, useRef, useState, useTransition } from 'react'
+import { useEffect, useId, useOptimistic, useState, useTransition } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { EntityAvatar } from '@/components/ui/entity-avatar'

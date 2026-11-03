@@ -43,7 +43,7 @@ import { DayCell } from './day-cell'
 
 // Context so EventChip/DayCell can open the detail dialog without prop drilling
 const CalendarDialogContext = createContext<(e: CalendarEvent) => void>(() => undefined)
-export function useCalendarDialog() {
+function useCalendarDialog() {
   return useContext(CalendarDialogContext)
 }
 

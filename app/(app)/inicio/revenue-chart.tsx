@@ -13,15 +13,8 @@ import {
   YAxis,
 } from 'recharts'
 
-import type {
-  RevenueBreakdown,
-  RevenueChartData,
-  RevenueMetricData,
-  RevenuePoint,
-} from '@/lib/dashboard/types'
+import type { RevenueBreakdown, RevenueChartData, RevenueMetricData } from '@/lib/dashboard/types'
 import { formatEUR } from '@/lib/utils'
-
-export type { RevenuePoint }
 
 const SERIES_LABEL: Record<string, string> = {
   current: 'Periodo seleccionado',

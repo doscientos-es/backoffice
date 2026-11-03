@@ -45,7 +45,6 @@ export const CreateVaultItemInput = z.object({
   expires_at: optionalDate,
   client_id: optionalUuid,
 })
-export type CreateVaultItemInputType = z.infer<typeof CreateVaultItemInput>
 
 export const UpdateVaultItemInput = CreateVaultItemInput.extend({
   id: z.string().uuid(),
@@ -56,7 +55,6 @@ export const UpdateVaultItemInput = CreateVaultItemInput.extend({
     .optional()
     .or(z.literal('').transform(() => undefined)),
 })
-export type UpdateVaultItemInputType = z.infer<typeof UpdateVaultItemInput>
 
 export const VaultPasswordInput = z.object({
   password: passwordField,
@@ -65,7 +63,6 @@ export const VaultPasswordInput = z.object({
     .optional()
     .or(z.literal('').transform(() => undefined)),
 })
-export type VaultPasswordInputType = z.infer<typeof VaultPasswordInput>
 
 export const VaultUnlockInput = z.object({
   password: z.string().min(1, 'Introduce la contraseña'),

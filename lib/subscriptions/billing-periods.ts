@@ -22,7 +22,7 @@ export type PeriodRow = {
 const MAX_PERIODS = 600
 
 /** Mirrors the date math of `generate_subscription_invoice` in the database. */
-export function nextPeriodStart(start: string, cycle: BillingCycle): string {
+function nextPeriodStart(start: string, cycle: BillingCycle): string {
   const [y, m, d] = start.split('-').map(Number) as [number, number, number]
   if (cycle === 'yearly') return `${y + 1}-01-01`
   const months = cycle === 'quarterly' ? 3 : 1

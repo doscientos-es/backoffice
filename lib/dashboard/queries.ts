@@ -294,7 +294,7 @@ export type RevenueInvoiceRow = {
     | null
 }
 
-export type RevenuePaymentRow = {
+type RevenuePaymentRow = {
   invoice_id?: string | null
   confirmed_at: string
   amount: number | string | null

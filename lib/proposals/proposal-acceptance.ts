@@ -36,19 +36,19 @@ export const DEFAULT_PROPOSAL_LEGAL_TERMS = `1. **Contrato, partes y alcance.** 
 
 17. **Servicios recurrentes, facturación anual y actualización.** Las cuotas recurrentes se facturarán según la cadencia indicada en la propuesta. Esta regla de facturación anual, el anclaje al 1 de enero y el prorrateo de la primera cuota solo se aplican cuando la cadencia contratada sea anual. En ese caso, el periodo completo se facturará cada 1 de enero; si el servicio comienza durante el año, la primera cuota se calculará automáticamente de forma proporcional al periodo restante hasta el 31 de diciembre, y después se aplicará la cuota anual completa. Las cuotas anuales se actualizarán cada 1 de enero conforme a la variación interanual positiva del IPC general publicada por el INE, comunicando el porcentaje y el importe resultante antes de la renovación, sin perjuicio de los límites y derechos imperativos que resulten aplicables.`
 
-export const PROPOSAL_ACCEPTANCE_CONSENT =
+const PROPOSAL_ACCEPTANCE_CONSENT =
   'Declaro que tengo capacidad suficiente para representar al Cliente y acepto íntegramente la propuesta, sus condiciones particulares y el anexo contractual.'
 
-export const PROPOSAL_ACCEPTANCE_DOCUMENT_NOTICE =
+const PROPOSAL_ACCEPTANCE_DOCUMENT_NOTICE =
   'He podido leer, descargar y guardar la propuesta y el anexo contractual antes de firmar, y recibiré confirmación de la aceptación por correo electrónico.'
 
-export const PROPOSAL_CONSUMER_EARLY_START_CONSENT =
+const PROPOSAL_CONSUMER_EARLY_START_CONSENT =
   'Actúo como consumidor y solicito expresamente que los servicios comiencen durante el plazo de desistimiento de 14 días naturales. Reconozco que, si desisto, abonaré la parte proporcional ya prestada y que perderé el derecho de desistimiento cuando el servicio se haya ejecutado completamente.'
 
-export const PROPOSAL_CONSUMER_STANDARD_START =
+const PROPOSAL_CONSUMER_STANDARD_START =
   'Actúo como consumidor y no solicito el inicio anticipado: los servicios comenzarán una vez transcurrido el plazo de desistimiento de 14 días naturales, durante el cual puedo desistir sin indicar el motivo.'
 
-export type ProposalClientCapacity = 'business' | 'consumer'
+type ProposalClientCapacity = 'business' | 'consumer'
 
 export type ProposalAcceptanceContract = {
   client_capacity: ProposalClientCapacity

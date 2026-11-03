@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { getBrowserClient } from '@/lib/supabase/browser'
 import { cn } from '@/lib/utils'
 
-export type CommentAuthor = {
+type CommentAuthor = {
   id: string
   name: string
   avatar_url: string | null

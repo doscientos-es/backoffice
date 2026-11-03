@@ -68,7 +68,7 @@ export function friendlyErrorMessage(err: unknown): string {
   return message || 'Algo ha fallado. Inténtalo de nuevo.'
 }
 
-export type ActionContext = { user: CurrentUser }
+type ActionContext = { user: CurrentUser }
 
 export type DefineActionOptions<TSchema extends z.ZodTypeAny, TPayload> = {
   /** Stable name used for the scoped logger (e.g. "clients.update"). */

@@ -8,7 +8,7 @@
 
 export * from './errors'
 export type { CaptionByPlatform } from './orchestrator'
-export { computeAggregateStatus, fanOutPublish } from './orchestrator'
+export { fanOutPublish } from './orchestrator'
 export * from './publisher'
 export { PublisherRegistry } from './registry'
 export * from './types'

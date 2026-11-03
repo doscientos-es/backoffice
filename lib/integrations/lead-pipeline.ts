@@ -95,7 +95,7 @@ const PAID_MEDIUMS = new Set(['paid_social', 'paid', 'cpc', 'cpm', 'ppc', 'paids
  * Company size         (+8):   ≥200 +8, ≥50 +5, ≥10 +3
  * Paid attribution     (+7):   paid medium +4, campaign present +3
  */
-export function scoreLeadIntake(input: LeadIntake): number {
+function scoreLeadIntake(input: LeadIntake): number {
   let score = 0
 
   // Contact completeness

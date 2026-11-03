@@ -1,7 +1,7 @@
 import { type PushPayload, sendWebPushToMembers } from '@/lib/push/web-push'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-export type NotificationEvent =
+type NotificationEvent =
   | 'lead_new'
   | 'lead_assigned'
   | 'lead_uncontacted'

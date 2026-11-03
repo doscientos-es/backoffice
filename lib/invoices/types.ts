@@ -6,7 +6,7 @@ export const INVOICE_LIST_PAGE_SIZE = 25
 
 // ─── List ─────────────────────────────────────────────────────────────────────
 
-export type InvoiceListItem = {
+type InvoiceListItem = {
   id: string
   client_id: string
   full_number: string | null
@@ -24,7 +24,7 @@ export type InvoiceListItem = {
   proposal_url: string | null
 }
 
-export type InvoiceStats = {
+type InvoiceStats = {
   pendingTotal: number
   pendingCount: number
   overdueTotal: number
@@ -61,18 +61,18 @@ export type InvoiceListResult = {
 
 // ─── Detail ────────────────────────────────────────────────────────────────────
 
-export type InvoiceDetailClient = {
+type InvoiceDetailClient = {
   id: string
   name: string
   logo_url: string | null
 }
 
-export type InvoiceDetailProject = {
+type InvoiceDetailProject = {
   id: string
   name: string
 }
 
-export type InvoiceLineItem = {
+type InvoiceLineItem = {
   id: string
   position: number | null
   description: string | null
@@ -82,7 +82,7 @@ export type InvoiceLineItem = {
   subtotal: number | null
 }
 
-export type InvoiceSettings = {
+type InvoiceSettings = {
   company_name: string | null
   company_nif: string | null
   company_address: string | null
@@ -90,7 +90,7 @@ export type InvoiceSettings = {
   payment_terms: string | null
 }
 
-export type InvoiceDetail = {
+type InvoiceDetail = {
   id: string
   full_number: string | null
   idfact: string | null
@@ -121,47 +121,6 @@ export type InvoiceDetailResult = {
 } | null
 
 // ─── Query-level shapes (read) ────────────────────────────────────────────────
-
-/** Minimal timestamps fetched before a status transition. */
-export type InvoiceTimestamps = { issued_at: string | null; client_id: string | null }
-
-/** Payload fetched before submitting to Verifactu. */
-export type InvoiceForVerifactu = {
-  id: string
-  client_id: string | null
-  status: string
-  verifactu_status: string
-  full_number: string
-  invoice_type: string
-  issue_date: string
-  tax_amount: number
-  total: number
-  previous_hash: string | null
-  chain_sequence: number | null
-  client_nif: string | null
-  client_name: string | null
-}
-
-/** Last accepted invoice in the Verifactu hash chain. */
-export type VerifactuChainEntry = {
-  current_hash: string
-  chain_sequence: number
-  full_number: string
-  issue_date: string
-}
-
-/** Line item stripped to what the VAT breakdown calculation needs. */
-export type VatLineItem = {
-  vat_rate: number
-  subtotal: number
-  description: string | null
-}
-
-/** Company-level settings consumed during Verifactu submission. */
-export type CompanySettings = {
-  company_nif: string | null
-  company_name: string
-}
 
 /** Proposal header needed when creating a derived invoice. */
 export type ProposalForInvoice = {
@@ -194,22 +153,6 @@ export type ClientInfo = {
   billing_address_city: string | null
   billing_address_province: string | null
   billing_address_country: string | null
-}
-
-/** Project data needed to create a monthly hourly invoice. */
-export type ProjectForHourlyBilling = {
-  id: string
-  client_id: string
-  name: string
-  billing_type: string
-  hourly_rate: number
-  hourly_vat_rate: number
-}
-
-/** Work-log row used when aggregating hours for a monthly invoice. */
-export type WorkLogEntry = {
-  id: string
-  hours: number
 }
 
 /** Invoice row used to prefill and send the client portal email. */
@@ -245,36 +188,6 @@ export type InvoiceDelivery = {
 
 // ─── Query-level shapes (write) ───────────────────────────────────────────────
 
-/**
- * All fields needed to read an invoice before creating a rectification.
- * Includes items so the caller can clone them onto the new invoice.
- */
-export type InvoiceForRectification = {
-  id: string
-  status: string
-  verifactu_status: string
-  invoice_type: string
-  full_number: string
-  series: string
-  number: number
-  issue_date: string
-  client_id: string
-  project_id: string | null
-  client_nif: string | null
-  client_name: string | null
-  client_address_street: string | null
-  client_address_zip: string | null
-  client_address_city: string | null
-  client_address_province: string | null
-  client_address_country: string | null
-  notes: string | null
-  payment_terms: string | null
-  subtotal: number
-  tax_amount: number
-  total: number
-  is_rectification: boolean
-}
-
 /** Fields patched when an invoice's status changes. */
 export type InvoiceStatusPatch = {
   status: string
@@ -290,21 +203,6 @@ export type InvoiceStatusPatch = {
   client_address_city?: string | null
   client_address_province?: string | null
   client_address_country?: string | null
-}
-
-/** Fields patched after a Verifactu submission attempt. */
-export type VerifactuPatch = {
-  idfact: string
-  previous_hash: string | null
-  current_hash: string
-  chain_sequence: number | null
-  hash_generated_at: string
-  verifactu_status: string
-  verifactu_submitted_at: string
-  verifactu_csv: string | null
-  verifactu_response: unknown
-  verifactu_error: string | null
-  qr_url: string
 }
 
 /** Data required to insert a new invoice row. */
@@ -339,16 +237,4 @@ export type InvoiceItemInsert = {
   quantity: number
   unit_price: number
   vat_rate: number
-}
-
-/** Fields that can be patched on a draft invoice header. */
-export type InvoiceHeaderPatch = {
-  updated_at: string
-  issue_date?: string
-  due_date?: string | null
-  notes?: string | null
-  payment_terms?: string | null
-  subtotal?: number
-  tax_amount?: number
-  total?: number
 }

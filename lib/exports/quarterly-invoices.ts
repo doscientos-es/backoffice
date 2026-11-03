@@ -8,7 +8,7 @@ export type QuarterlyPeriod = {
   label: string
 }
 
-export type ZipEntry = {
+type ZipEntry = {
   name: string
   body: Uint8Array
   modifiedAt?: Date
@@ -35,7 +35,7 @@ export function quarterlyPeriod(
   return { year, quarter, start, end, label: `T${quarter} ${year}` }
 }
 
-export function safeFilePart(value: string | null | undefined, fallback: string): string {
+function safeFilePart(value: string | null | undefined, fallback: string): string {
   const sanitized = (value ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -104,7 +104,7 @@ function archiveName(name: string): Buffer {
 }
 
 /** Creates a standards-compliant ZIP using only Node built-ins. */
-export function createZip(entries: ReadonlyArray<ZipEntry>): Buffer {
+function createZip(entries: ReadonlyArray<ZipEntry>): Buffer {
   if (entries.length > MAX_UINT16) throw new Error('La exportación contiene demasiados archivos')
 
   const localRecords: Buffer[] = []

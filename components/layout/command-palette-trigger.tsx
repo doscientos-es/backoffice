@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 /** Evento global para abrir el command palette desde cualquier botón. */
 export const OPEN_COMMAND_PALETTE_EVENT = 'command-palette:open'
 
-export function openCommandPalette() {
+function openCommandPalette() {
   window.dispatchEvent(new Event(OPEN_COMMAND_PALETTE_EVENT))
 }
 

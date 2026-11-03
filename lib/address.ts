@@ -36,10 +36,6 @@ export function formatAddress(addr: StructuredAddress): string {
 }
 
 /** Returns true only if at least one address part is filled. */
-export function hasAddress(addr: StructuredAddress): boolean {
-  return !!(addr.street || addr.zip || addr.city || addr.province)
-}
-
 /**
  * ISO 3166-1 alpha-2 country codes with their Spanish names.
  * Focused on the most common countries for a Spanish-market app.

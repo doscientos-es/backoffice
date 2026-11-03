@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 import { InvoiceEmail } from '@/components/email'
 import { defineAction } from '@/lib/actions/define-action'
-import { requirePermission, requireRole } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { ensureInvoiceRecipientVerified } from '@/lib/clients/fiscal-verification'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
 import { hasCompleteFiscalData } from '@/lib/crm/conversion'
@@ -60,7 +60,6 @@ import {
   SendInvoiceEmailInput,
   SendInvoiceInput,
   UpdateInvoiceInput as UpdateInvoiceInputSchema,
-  type UpdateInvoiceInputType,
   UpdateInvoiceStatusInput,
 } from '@/lib/schemas/invoice'
 import { UpdatePortalAccessInput } from '@/lib/schemas/portal'
@@ -79,8 +78,6 @@ import {
 } from '@/lib/verifactu/outbox'
 
 const log = scopedLogger('invoices.actions')
-
-export type UpdateInvoiceInput = UpdateInvoiceInputType
 
 function outboxIdFromRpc(data: unknown): string {
   const row = Array.isArray(data) ? data[0] : data
@@ -470,84 +467,6 @@ export const regularizeVerifactu = defineAction<
 })
 
 // ─── Invoice creation ─────────────────────────────────────────────────────────
-
-/**
- * Creates a draft invoice from an accepted proposal, cloning the one-time line
- * items, totals, and client/project references.
- */
-export const createInvoiceFromProposal = defineAction<
-  typeof CreateInvoiceFromProposalInput,
-  { id: string }
->({
-  name: 'invoices.createFromProposal',
-  schema: CreateInvoiceFromProposalInput,
-  revalidate: (_p, input) => ['/invoices', `/proposals/${input.proposalId}`],
-  handler: async (input, { user }) => {
-    const { proposalId } = input
-    const proposal = await findProposalForInvoice(proposalId)
-    if (!proposal) throw new Error('Propuesta no encontrada')
-    if (proposal.status !== 'accepted')
-      throw new Error('Solo se puede facturar una propuesta aceptada')
-    if (!proposal.client_id)
-      throw new Error(
-        'La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar',
-      )
-
-    const allItems = await findProposalItems(proposalId)
-    if (allItems.length === 0) throw new Error('La propuesta no tiene líneas para facturar')
-
-    // Only bill one-time lines; recurring lines are handled by periodic invoicing.
-    const items = allItems.filter((it) => (it.billing_cycle ?? 'none') === 'none')
-    if (items.length === 0) {
-      throw new Error(
-        'Esta propuesta solo contiene líneas recurrentes; crea la factura manualmente',
-      )
-    }
-
-    const [client, series] = await Promise.all([
-      findClientInfo(proposal.client_id),
-      findInvoiceSeries(),
-    ])
-    if (!client || !hasCompleteFiscalData(client)) {
-      throw new Error(
-        'La propuesta aceptada no tiene datos fiscales; completa la ficha fiscal antes de facturar',
-      )
-    }
-    const { subtotal, taxAmount, total } = computeLineTotals(items)
-
-    const { id } = await insertInvoiceWithItems(
-      {
-        client_id: proposal.client_id,
-        project_id: proposal.project_id,
-        proposal_id: proposal.id,
-        series,
-        status: 'draft',
-        currency: 'EUR',
-        subtotal,
-        tax_amount: taxAmount,
-        total,
-        client_nif: client?.nif ?? null,
-        client_name: client?.name ?? null,
-        client_address_street: client?.billing_address_street ?? null,
-        client_address_zip: client?.billing_address_zip ?? null,
-        client_address_city: client?.billing_address_city ?? null,
-        client_address_province: client?.billing_address_province ?? null,
-        client_address_country: client?.billing_address_country ?? null,
-        notes: proposal.notes,
-        created_by: user.id,
-      },
-      items.map((it, idx) => ({
-        position: idx,
-        description: it.description,
-        quantity: it.quantity,
-        unit_price: it.unit_price,
-        vat_rate: it.vat_rate,
-      })),
-    )
-
-    return { id }
-  },
-})
 
 /**
  * Creates only the missing draft invoices for a proposal payment plan. Each

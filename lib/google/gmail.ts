@@ -20,7 +20,7 @@ type GmailMessage = {
 }
 type GmailMessageList = { messages?: Array<Pick<GmailMessage, 'id' | 'threadId'>> }
 
-export type GmailLeadMessage = {
+type GmailLeadMessage = {
   gmailMessageId: string
   gmailThreadId: string | null
   rfcMessageId: string | null

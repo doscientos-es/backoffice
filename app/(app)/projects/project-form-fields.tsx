@@ -8,7 +8,7 @@ import { BillingSection, type ProjectBillingType } from './billing-section'
 import type { GitHubSyncMode } from './github-sync-section'
 import { GitHubSyncSection } from './github-sync-section'
 
-export const PROJECT_STATUS_OPTIONS = [
+const PROJECT_STATUS_OPTIONS = [
   { value: 'planning', label: 'Planificación' },
   { value: 'active', label: 'Activo' },
   { value: 'on_hold', label: 'En pausa' },
@@ -16,7 +16,7 @@ export const PROJECT_STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelado' },
 ] as const
 
-export type ProjectFormDefaults = {
+type ProjectFormDefaults = {
   client_id?: string | null
   name?: string | null
   status?: string | null

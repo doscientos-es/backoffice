@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 
 export type StatTone = 'default' | 'success' | 'danger' | 'info' | 'warning'
 
-export type GoalProp = {
+type GoalProp = {
   /** Raw numeric current value (same unit as target). */
   current: number
   /** Raw numeric target value. */

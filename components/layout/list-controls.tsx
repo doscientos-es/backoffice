@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils'
 
 import { SavedViewsControl } from './saved-views-control'
 
-export type FilterOption = { value: string; label: string; avatar?: AvatarMember }
+type FilterOption = { value: string; label: string; avatar?: AvatarMember }
 
 export type FilterConfig = {
   key: string

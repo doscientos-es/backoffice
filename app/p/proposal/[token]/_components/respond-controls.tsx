@@ -96,7 +96,7 @@ export function TrackedLink({
 }
 
 /** Attribute that marks every rendering of the accept/decline panel. */
-export const RESPONSE_PANEL_ATTR = 'data-proposal-response'
+const RESPONSE_PANEL_ATTR = 'data-proposal-response'
 
 /**
  * The panel is rendered twice (sidebar on desktop, below the document on

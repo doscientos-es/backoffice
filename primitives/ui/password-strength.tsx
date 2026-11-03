@@ -16,7 +16,7 @@ const COLORS = [
  * Heuristic password strength on a 0–4 scale.
  * 0 empty · 1 short · 2 ok · 3 good · 4 strong.
  */
-export function passwordScore(value: string): number {
+function passwordScore(value: string): number {
   if (!value) return 0
   let score = 0
   if (value.length >= 8) score++

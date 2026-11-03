@@ -24,15 +24,6 @@ type LeadCommercialProps = {
   invoices: LeadRelatedInvoice[]
 }
 
-/** Shown in place of a list when projects/invoices require a client. */
-function ClientRequiredHint() {
-  return (
-    <p className="px-6 py-2 text-sm text-muted-foreground">
-      Disponible cuando el lead sea cliente.
-    </p>
-  )
-}
-
 function relationshipSummary(count: number, singular: string, plural: string) {
   return `${count} ${count === 1 ? singular : plural}`
 }

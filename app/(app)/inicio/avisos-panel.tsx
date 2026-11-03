@@ -2,10 +2,8 @@ import { BellRing, CalendarClock, FileText as FileWarning, ShieldAlert } from 'l
 import Link from 'next/link'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { AvisosData, OverdueInvoiceRow, ReminderRow } from '@/lib/dashboard/types'
+import type { AvisosData } from '@/lib/dashboard/types'
 import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
-
-export type { AvisosData, OverdueInvoiceRow, ReminderRow }
 
 export type AvisosPanelProps = AvisosData & { showFinance?: boolean }
 

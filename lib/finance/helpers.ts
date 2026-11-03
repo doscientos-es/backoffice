@@ -136,7 +136,7 @@ export const EMPTY_LINE_ITEM: Omit<LineItem, 'id'> = {
   discount_reason: null,
 }
 
-export const DISCOUNT_TYPES = ['none', 'percent', 'amount'] as const
+const DISCOUNT_TYPES = ['none', 'percent', 'amount'] as const
 export type DiscountType = (typeof DISCOUNT_TYPES)[number]
 
 /** Whole-proposal discount. Applies to one-time lines only. */
@@ -182,7 +182,7 @@ export function computeLineTotals(
 }
 
 /** Totals bucketed by cadence. `total` includes VAT. */
-export type ProposalBucket = { subtotal: number; taxAmount: number; total: number }
+type ProposalBucket = { subtotal: number; taxAmount: number; total: number }
 
 export type ProposalTotals = {
   /** Items with billing_cycle === 'none'. This is what gets invoiced first. */

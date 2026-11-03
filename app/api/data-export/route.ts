@@ -20,7 +20,6 @@ export const runtime = 'nodejs'
 
 const log = scopedLogger('api.data-export')
 
-type ExportFormat = 'json' | 'csv'
 type ExportRequest =
   | { format: 'json'; table: null; includePii: boolean }
   | { format: 'csv'; table: ExportableTable; includePii: boolean }

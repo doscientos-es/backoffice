@@ -143,13 +143,6 @@ export interface GitHubIssueResult {
   state: 'open' | 'closed'
 }
 
-export interface GitHubPRResult {
-  number: number
-  html_url: string
-  state: 'open' | 'closed'
-  merged: boolean
-}
-
 export interface CreateIssueParams {
   installationId: number
   owner: string
@@ -235,14 +228,4 @@ export async function updateGitHubIssueState(
 ): Promise<void> {
   const token = await getInstallationToken(installationId)
   await ghFetch(token, 'PATCH', `/repos/${owner}/${repo}/issues/${issueNumber}`, { state })
-}
-
-export async function getGitHubIssue(
-  installationId: number,
-  owner: string,
-  repo: string,
-  issueNumber: number,
-): Promise<GitHubIssueResult> {
-  const token = await getInstallationToken(installationId)
-  return ghFetch<GitHubIssueResult>(token, 'GET', `/repos/${owner}/${repo}/issues/${issueNumber}`)
 }

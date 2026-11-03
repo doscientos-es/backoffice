@@ -14,9 +14,9 @@ import type { badgeVariants } from '@/components/ui/badge'
 import { EXPENSE_STATUS_LABELS, type ExpenseStatus } from '@/lib/finance'
 import type { RecoveryState } from '@/lib/recovery/types'
 
-export type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>
 
-export type StatusEntry = { label: string; variant: BadgeVariant }
+type StatusEntry = { label: string; variant: BadgeVariant }
 export type StatusMeta<T extends string> = Readonly<Record<T, StatusEntry>>
 
 // ---------------------------------------------------------------------------

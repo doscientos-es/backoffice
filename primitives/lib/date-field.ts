@@ -1,7 +1,7 @@
 import { format, isValid, parse } from 'date-fns'
 
-export const DISPLAY_FMT = 'dd/MM/yyyy'
-export const ISO_FMT = 'yyyy-MM-dd'
+const DISPLAY_FMT = 'dd/MM/yyyy'
+const ISO_FMT = 'yyyy-MM-dd'
 
 /**
  * ISO `yyyy-MM-dd` → display `dd/MM/yyyy`.
@@ -39,7 +39,7 @@ export function maskDate(value: string): string {
  * Maps a cursor position inside the raw (pre-mask) string to the
  * equivalent position inside the masked string.
  */
-export function mapCursorToMasked(rawCursor: number, rawValue: string, masked: string): number {
+function mapCursorToMasked(rawCursor: number, rawValue: string, masked: string): number {
   const digitsBeforeCursor = rawValue.slice(0, rawCursor).replace(/[^0-9]/g, '').length
   let digitsSeen = 0
   for (let i = 0; i < masked.length; i++) {

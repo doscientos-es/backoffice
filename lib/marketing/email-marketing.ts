@@ -9,7 +9,7 @@ export type EmailMarketingList = {
   contact_count: number
 }
 
-export type EmailMarketingStep = {
+type EmailMarketingStep = {
   id: string
   sequence_id: string
   position: number
@@ -43,7 +43,7 @@ export type EmailMarketingSequence = {
   steps: EmailMarketingStep[]
 }
 
-export type EmailMarketingRecipientEvent = {
+type EmailMarketingRecipientEvent = {
   email: string
   name: string | null
   company: string | null

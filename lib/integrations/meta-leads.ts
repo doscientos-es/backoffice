@@ -11,7 +11,7 @@ import { scopedLogger } from '@/lib/logger'
 
 const log = scopedLogger('meta-leads')
 
-export const META_LEAD_SOURCE = 'Anuncios Meta'
+const META_LEAD_SOURCE = 'Anuncios Meta'
 
 /**
  * Meta sends a JSON body and signs it with HMAC-SHA256 using the App Secret.
@@ -38,7 +38,7 @@ export function verifyMetaSignature(
 
 // ---------------- Graph API types ----------------
 
-export type MetaLeadgenChange = {
+type MetaLeadgenChange = {
   value: {
     leadgen_id: string
     page_id: string
@@ -59,7 +59,7 @@ export type MetaWebhookPayload = {
   }>
 }
 
-export type MetaLeadField = { name: string; values: string[] }
+type MetaLeadField = { name: string; values: string[] }
 
 export type MetaLeadgenResponse = {
   id: string

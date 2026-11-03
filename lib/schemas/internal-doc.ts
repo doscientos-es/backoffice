@@ -59,7 +59,6 @@ export const INTERNAL_DOC_MAX_TAG_LENGTH = 40
  * the CHECK constraint in the migration.
  */
 export const INTERNAL_DOC_ACTIONS = ['created', 'updated', 'file_replaced', 'deleted'] as const
-export type InternalDocAction = (typeof INTERNAL_DOC_ACTIONS)[number]
 
 /**
  * Input for editing an internal document's metadata. The file itself is
@@ -78,4 +77,3 @@ export const UpdateInternalDocInput = z.object({
   effective_date: optionalDate,
   expires_at: optionalDate,
 })
-export type UpdateInternalDocInputType = z.infer<typeof UpdateInternalDocInput>

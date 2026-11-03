@@ -1,4 +1,4 @@
-export type NdaParty = {
+type NdaParty = {
   name: string
   nif?: string | null
   address?: string | null
@@ -13,7 +13,7 @@ export type NdaData = {
   effectiveDate: string
 }
 
-export type NdaClause = { title: string; body: string }
+type NdaClause = { title: string; body: string }
 
 export type NdaDocument = {
   title: string

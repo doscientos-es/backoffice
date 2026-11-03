@@ -12,7 +12,7 @@ const InvoiceDate = z
   .nullable()
   .default(null)
 
-export const ExpenseInvoiceSuggestionSchema = z.object({
+const ExpenseInvoiceSuggestionSchema = z.object({
   vendor: z.string().max(160).nullable().default(null),
   description: z.string().max(400).nullable().default(null),
   expense_date: InvoiceDate,

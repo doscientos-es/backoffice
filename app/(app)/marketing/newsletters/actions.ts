@@ -293,7 +293,7 @@ export const createEmailMarketingSequence = defineAction({
   },
 })
 
-export const addEmailMarketingStep = defineAction({
+const addEmailMarketingStep = defineAction({
   name: 'emailMarketing.addStep',
   schema: z.object({
     sequenceId: z.string().uuid(),
@@ -340,7 +340,7 @@ export const addEmailMarketingStep = defineAction({
   },
 })
 
-export const setEmailMarketingSequenceStatus = defineAction({
+const setEmailMarketingSequenceStatus = defineAction({
   name: 'emailMarketing.setSequenceStatus',
   schema: z.object({
     id: z.string().uuid(),
@@ -359,7 +359,7 @@ export const setEmailMarketingSequenceStatus = defineAction({
   },
 })
 
-export const updateEmailMarketingStep = defineAction({
+const updateEmailMarketingStep = defineAction({
   name: 'emailMarketing.updateStep',
   schema: z.object({
     id: z.string().uuid(),
@@ -401,7 +401,7 @@ export const updateEmailMarketingStep = defineAction({
   },
 })
 
-export const retryEmailMarketingStep = defineAction({
+const retryEmailMarketingStep = defineAction({
   name: 'emailMarketing.retryStep',
   schema: z.object({ id: z.string().uuid() }),
   roles: ['owner', 'admin'],
@@ -434,7 +434,7 @@ export const retryEmailMarketingStep = defineAction({
   },
 })
 
-export const deleteEmailMarketingStep = defineAction({
+const deleteEmailMarketingStep = defineAction({
   name: 'emailMarketing.deleteStep',
   schema: z.object({ id: z.string().uuid() }),
   roles: ['owner', 'admin', 'member'],

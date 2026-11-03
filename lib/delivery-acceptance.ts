@@ -1,17 +1,11 @@
 import { createHash } from 'node:crypto'
 
-export type DeliveryAcceptanceMode = 'explicit_only' | 'explicit_or_uncontested'
+type DeliveryAcceptanceMode = 'explicit_only' | 'explicit_or_uncontested'
 
 export type DeliveryAcceptanceSettings = {
   enabled: boolean
   days: number
   mode: DeliveryAcceptanceMode
-}
-
-export const DEFAULT_DELIVERY_ACCEPTANCE_SETTINGS: DeliveryAcceptanceSettings = {
-  enabled: false,
-  days: 7,
-  mode: 'explicit_or_uncontested',
 }
 
 export function deliveryAcceptanceClause(settings: DeliveryAcceptanceSettings): string {

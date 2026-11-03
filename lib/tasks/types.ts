@@ -71,7 +71,7 @@ export type TaskListResult = {
 
 // ─── Detail ────────────────────────────────────────────────────────────────────
 
-export type TaskDetailProject = {
+type TaskDetailProject = {
   id: string
   name: string
   github_sync_mode: string | null
@@ -80,29 +80,29 @@ export type TaskDetailProject = {
   github_repo_name: string | null
 }
 
-export type TaskDetailLead = {
+type TaskDetailLead = {
   id: string
   name: string
 }
 
-export type TaskDetailClient = {
+type TaskDetailClient = {
   id: string
   name: string
 }
 
-export type TaskDetailMember = {
+type TaskDetailMember = {
   id: string
   name: string
 }
 
-export type TaskDetailComment = {
+type TaskDetailComment = {
   id: string
   body: string
   created_at: string
   author: { id: string; name: string } | null
 }
 
-export type TaskDetail = {
+type TaskDetail = {
   id: string
   title: string
   description: string | null
@@ -114,14 +114,3 @@ export type TaskDetail = {
   github_issue_url: string | null
   github_issue_number: number | null
 }
-
-export type TaskDetailResult = {
-  task: TaskDetail
-  project: TaskDetailProject | null
-  lead: TaskDetailLead | null
-  client: TaskDetailClient | null
-  assignee: TaskDetailMember | null
-  creator: TaskDetailMember | null
-  members: TaskDetailMember[]
-  comments: TaskDetailComment[]
-} | null

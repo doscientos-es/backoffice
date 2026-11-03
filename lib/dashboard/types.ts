@@ -7,7 +7,7 @@ import type { LeadStatus, TaskPriority, TaskStatus } from '@/lib/status'
 
 export type DashboardRange = '7d' | '30d' | '90d' | 'ytd'
 
-export type DateWindow = {
+type DateWindow = {
   from: Date
   to: Date
 }
@@ -38,13 +38,13 @@ export type OverdueInvoiceRow = {
   client_name: string | null
 }
 
-export type RevenuePoint = {
+type RevenuePoint = {
   month: string // period label, e.g. "15 jun" or "11–17 jun"
   current: number
   previous: number
 }
 
-export type RevenueBreakdownPoint = {
+type RevenueBreakdownPoint = {
   month: string
   total: number
   [seriesKey: string]: string | number

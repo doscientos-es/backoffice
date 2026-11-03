@@ -33,7 +33,7 @@ export type CurrentUser = {
   contactEmail: string | null
 }
 
-export type AuthFailureReason = 'no_session' | 'no_team_member' | 'team_member_deleted' | 'db_error'
+type AuthFailureReason = 'no_session' | 'no_team_member' | 'team_member_deleted' | 'db_error'
 
 export type AuthResult = { ok: true; user: CurrentUser } | { ok: false; reason: AuthFailureReason }
 
@@ -158,7 +158,7 @@ export async function requirePagePermission(permission: PermissionKey): Promise<
  * limited period. The security settings page uses requireUser(), so an admin
  * at aal1 can still enroll TOTP instead of being locked out.
  */
-export async function requireAal2(userId: string): Promise<void> {
+async function requireAal2(userId: string): Promise<void> {
   if (!(await hasMfaAccess(userId))) redirect('/settings/security')
 }
 

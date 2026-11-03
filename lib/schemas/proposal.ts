@@ -19,12 +19,11 @@ import {
  * client-side and persisted as-is so the deck/portal can use it as a React
  * key without re-deriving it on every render.
  */
-export const keyPointInput = z.object({
+const keyPointInput = z.object({
   id: z.string().min(1).max(64),
   title: z.string().trim().min(1, 'Título obligatorio').max(KEY_POINTS_LIMITS.maxTitleLength),
   description: z.string().max(KEY_POINTS_LIMITS.maxDescriptionLength).nullable().optional(),
 })
-export type KeyPointInputType = z.infer<typeof keyPointInput>
 
 /** Reusable, nullable list of key points capped at the domain limit. */
 const keyPointListField = z
@@ -86,7 +85,6 @@ export type CreateProposalInputType = z.infer<typeof CreateProposalInput>
  * the title (prefixed), target, narrative blocks and line items.
  */
 export const DuplicateProposalInput = uuidIdInput
-export type DuplicateProposalInputType = z.infer<typeof DuplicateProposalInput>
 
 /**
  * Patch payload for the inline editor. All fields optional except
@@ -127,7 +125,6 @@ export const UpdateProposalInput = z.object({
     .transform((v) => (v === undefined ? undefined : v || null)),
   items: z.array(lineItemInput).min(1).optional(),
 })
-export type UpdateProposalInputType = z.infer<typeof UpdateProposalInput>
 
 /** Calendar-only update allowed after acceptance for unbilled future payments. */
 export const UpdateProposalPaymentPlanInput = z.object({
@@ -140,24 +137,14 @@ export const UpdateProposalTeamInput = z.object({
   proposal_id: z.string().uuid(),
   member_ids: z.array(z.string().uuid()).max(20),
 })
-export type UpdateProposalTeamInputType = z.infer<typeof UpdateProposalTeamInput>
 
 export const SendProposalPreviewInput = z.object({
   id: z.string().uuid(),
   to: z.string().email().optional(),
   message: z.string().max(1000).optional(),
 })
-export type SendProposalPreviewInputType = z.infer<typeof SendProposalPreviewInput>
 
 // ---------------- Proposal specs ----------------
-
-export const CreateProposalSpecInput = z.object({
-  proposal_id: z.string().uuid(),
-  title: z.string().min(1).max(200),
-  body_markdown: z.string().min(1).max(60_000),
-  is_client_visible: z.boolean().default(false),
-})
-export type CreateProposalSpecInputType = z.infer<typeof CreateProposalSpecInput>
 
 export const UpdateProposalSpecInput = z.object({
   id: z.string().uuid(),
@@ -165,16 +152,12 @@ export const UpdateProposalSpecInput = z.object({
   title: z.string().min(1).max(200).optional(),
   body_markdown: z.string().min(1).max(60_000).optional(),
 })
-export type UpdateProposalSpecInputType = z.infer<typeof UpdateProposalSpecInput>
 
 export const ToggleProposalSpecVisibilityInput = z.object({
   id: z.string().uuid(),
   expected_version: z.coerce.number().int().positive(),
   is_client_visible: z.boolean(),
 })
-export type ToggleProposalSpecVisibilityInputType = z.infer<
-  typeof ToggleProposalSpecVisibilityInput
->
 
 export const ProposalSpecIdInput = uuidIdInput
 
@@ -214,7 +197,6 @@ export const AcceptProposalSignature = z.object({
     errorMap: () => ({ message: 'Debes aceptar las condiciones para firmar la propuesta' }),
   }),
 })
-export type AcceptProposalSignatureType = z.infer<typeof AcceptProposalSignature>
 
 /** Proposal contract signature: adds the client's legal capacity (TRLGDCU arts. 98.8 and 103). */
 export const AcceptProposalContractSignature = AcceptProposalSignature.extend({
@@ -222,10 +204,3 @@ export const AcceptProposalContractSignature = AcceptProposalSignature.extend({
   consumer_early_start: z.boolean().default(false),
 })
 export type AcceptProposalContractSignatureType = z.input<typeof AcceptProposalContractSignature>
-
-export const AcceptProposalInput = z.object({
-  token: ProposalPortalToken,
-  signature: AcceptProposalContractSignature,
-  fiscal: AcceptProposalFiscalData.optional(),
-})
-export type AcceptProposalInputType = z.infer<typeof AcceptProposalInput>

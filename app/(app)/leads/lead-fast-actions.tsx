@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { Textarea } from '@/components/ui/textarea'
-import type { LeadInteraction, LeadListItem } from '@/lib/leads/types'
+import type { LeadListItem } from '@/lib/leads/types'
 import type { CallOutcome } from '@/lib/schemas/lead'
 import { relativeTime } from '@/lib/utils'
 import { todayIsoLocal } from '@/lib/utils/date'
@@ -33,9 +33,7 @@ import { CallDateField } from './call-date-field'
 import { CallDigestDialog } from './call-digest-dialog'
 import { WhatsAppComposer } from './whatsapp-composer'
 
-export type FastInteraction = LeadInteraction
-
-export type FastLead = LeadListItem
+type FastLead = LeadListItem
 
 type Props = {
   lead: FastLead

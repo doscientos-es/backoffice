@@ -2,8 +2,8 @@ import { createServerClient } from '@/lib/supabase/server'
 
 import { createXlsx, csvWithBom, type QuarterlyPeriod, type XlsxCell } from './quarterly-invoices'
 
-export const EXPORTABLE_INVOICE_STATUSES = ['issued', 'paid', 'overdue', 'rectified']
-export const QUARTERLY_CSV_HEADERS = [
+const EXPORTABLE_INVOICE_STATUSES = ['issued', 'paid', 'overdue', 'rectified']
+const QUARTERLY_CSV_HEADERS = [
   'Tipo',
   'Número / referencia',
   'Fecha',
@@ -20,7 +20,7 @@ export const QUARTERLY_CSV_HEADERS = [
   'Enlaces Drive',
 ] as const
 
-export type QuarterlyInvoice = {
+type QuarterlyInvoice = {
   id: string
   full_number: string | null
   issue_date: string | null
@@ -34,7 +34,7 @@ export type QuarterlyInvoice = {
   verifactu_csv: string | null
 }
 
-export type QuarterlyExpense = {
+type QuarterlyExpense = {
   id: string
   vendor: string
   category: string | null
@@ -47,7 +47,7 @@ export type QuarterlyExpense = {
   currency: string | null
 }
 
-export type ExpenseAttachment = {
+type ExpenseAttachment = {
   id?: string
   expense_id: string
   name: string

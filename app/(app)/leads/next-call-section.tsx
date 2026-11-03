@@ -16,7 +16,7 @@ const PRESETS: Preset[] = [
 ]
 
 /** Same hour of the day the team usually starts calling (09:00 local). */
-export function nextCallPresetValue(days: number, now: Date = new Date()): string {
+function nextCallPresetValue(days: number, now: Date = new Date()): string {
   const date = new Date(now)
   date.setDate(date.getDate() + days)
   date.setHours(9, 0, 0, 0)

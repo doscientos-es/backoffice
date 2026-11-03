@@ -9,7 +9,7 @@ const BODY_SIZE = 10.5
 const LINE_HEIGHT = 15
 
 /** Splits text into lines that fit `maxWidth` for the given font and size. */
-export function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const lines: string[] = []
   for (const paragraph of text.split('\n')) {
     let current = ''

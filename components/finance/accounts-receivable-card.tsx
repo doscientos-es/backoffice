@@ -19,7 +19,7 @@ function pluralize(count: number, singular: string, plural: string): string {
  * and how much was collected within the current calendar month. Mirrors the
  * Meta Ads balance tile so both fit the same dashboard row.
  */
-export function AccountsReceivableCard({ data }: { data: AccountsReceivable }) {
+function AccountsReceivableCard({ data }: { data: AccountsReceivable }) {
   const { pendingTotal, pendingCount, overdueTotal, overdueCount, paidMonthTotal, paidMonthCount } =
     data
 

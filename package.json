@@ -32,7 +32,8 @@
     "push:keys": "tsx scripts/generate-push-keys.ts",
     "quality:quick": "pnpm format:check && pnpm lint",
     "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
-    "hooks:install": "node .githooks/install.mjs"
+    "hooks:install": "node .githooks/install.mjs",
+    "check:dead": "knip --no-progress --reporter compact --include files,dependencies,unlisted,unresolved"
   },
   "dependencies": {
     "@ai-sdk/google-vertex": "^5.0.10",

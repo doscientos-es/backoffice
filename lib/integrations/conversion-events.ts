@@ -6,7 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 const log = scopedLogger('conversion-events')
 
-export const CONVERSION_EVENT_NAMES = [
+const CONVERSION_EVENT_NAMES = [
   'page_view',
   'cta_click',
   'calculator_used',
@@ -35,7 +35,7 @@ export const CONVERSION_EVENT_NAMES = [
  * servidor — lead_created, whatsapp_click y el diagnóstico completado — para
  * que nadie pueda inventarse conversiones desde la consola del navegador.
  */
-export const PUBLIC_TRACKABLE_EVENT_NAMES = [
+const PUBLIC_TRACKABLE_EVENT_NAMES = [
   'page_view',
   'cta_click',
   'calculator_used',
@@ -52,7 +52,7 @@ export const PUBLIC_TRACKABLE_EVENT_NAMES = [
   'diagnostic_step_completed',
 ] as const
 
-export const ConversionEventInput = z.object({
+const ConversionEventInput = z.object({
   event_id: z.string().trim().max(120).optional().nullable(),
   visitor_id: z.string().trim().max(120).optional().nullable(),
   lead_id: z.string().uuid().optional().nullable(),

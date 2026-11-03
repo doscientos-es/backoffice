@@ -74,16 +74,16 @@ export type LeadStatusEvent = {
   payload: unknown
 }
 
-export type SankeyNode = { id: string; label: string; color: string }
-export type SankeyLink = { source: string; target: string; value: number }
-export type FunnelStage = {
+type SankeyNode = { id: string; label: string; color: string }
+type SankeyLink = { source: string; target: string; value: number }
+type FunnelStage = {
   id: PipelineStage
   label: string
   value: number
   rate: number
   color: string
 }
-export type SourcePerformance = {
+type SourcePerformance = {
   source: string
   leads: number
   won: number
@@ -91,7 +91,7 @@ export type SourcePerformance = {
   pipelineValue: number
   wonValue: number
 }
-export type LeadTrendPoint = { week: string; entradas: number; ganados: number; perdidos: number }
+type LeadTrendPoint = { week: string; entradas: number; ganados: number; perdidos: number }
 
 export type LeadJourneyAnalytics = {
   total: number

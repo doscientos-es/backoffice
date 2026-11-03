@@ -346,31 +346,3 @@ export async function getMetaAdPreview(
   const data = (await res.json()) as { data?: Array<{ body: string }> }
   return data.data?.[0]?.body ?? null
 }
-
-/**
- * Campaign-level insights for active campaigns, using a Meta `date_preset`
- * (e.g. `this_month`, `last_30d`, `lifetime`). Used by the dashboard to show
- * aggregated KPIs per campaign with Meta-attributed leads.
- */
-export async function getMetaCampaignInsights(
-  datePreset:
-    | 'today'
-    | 'yesterday'
-    | 'this_month'
-    | 'last_month'
-    | 'last_30d'
-    | 'lifetime' = 'this_month',
-): Promise<MetaMarketingInsight[]> {
-  const env = serverEnv()
-  if (!env.META_AD_ACCOUNT_ID) throw new Error('META_AD_ACCOUNT_ID not configured')
-
-  return fetchMetaMarketing<MetaMarketingInsight>(`${env.META_AD_ACCOUNT_ID}/insights`, {
-    level: 'campaign',
-    fields:
-      'campaign_id,campaign_name,date_start,date_stop,impressions,reach,clicks,spend,ctr,cpc,account_currency,actions,cost_per_action_type',
-    date_preset: datePreset,
-    filtering: JSON.stringify([
-      { field: 'campaign.delivery_info', operator: 'IN', value: ['active'] },
-    ]),
-  })
-}

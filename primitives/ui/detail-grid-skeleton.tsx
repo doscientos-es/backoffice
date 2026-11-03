@@ -3,7 +3,7 @@ import { Skeleton } from '@doscientos/ui'
 import { cn } from '../lib/utils'
 import { Card, CardContent, CardHeader } from './card'
 
-export type DetailGridSkeletonProps = {
+type DetailGridSkeletonProps = {
   /** Width of each row's value cell in px. Length defines number of rows. */
   rowWidths?: number[]
   /** Width of every label cell in px. */
@@ -12,7 +12,7 @@ export type DetailGridSkeletonProps = {
 }
 
 /** Mirrors DetailGrid + DetailRow layout for loading states. */
-export function DetailGridSkeleton({
+function DetailGridSkeleton({
   rowWidths = [180, 140, 160, 120],
   labelWidth = 96,
   className,

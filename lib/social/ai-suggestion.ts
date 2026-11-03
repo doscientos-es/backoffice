@@ -17,7 +17,7 @@ export const SocialPostSuggestionSchema = z.object({
 
 export type SocialPostSuggestion = z.infer<typeof SocialPostSuggestionSchema>
 
-export type SocialCompanyContext = {
+type SocialCompanyContext = {
   name: string
   positioning: string
 }

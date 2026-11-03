@@ -131,5 +131,3 @@ export type CalendarEvent = {
 }
 
 export type CalendarView = 'month' | 'week' | 'agenda'
-
-export type TeamMemberOption = { id: string; name: string }

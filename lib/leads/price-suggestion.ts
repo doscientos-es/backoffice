@@ -1,6 +1,6 @@
 const ROUNDING_STEP_EUR = 50
 
-export type PriceSuggestionItem = {
+type PriceSuggestionItem = {
   name: string
   hours_min: number
   hours_max: number

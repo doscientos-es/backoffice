@@ -14,7 +14,7 @@ import { SOCIAL_PLATFORMS } from '@/lib/social/core'
 const platformEnum = z.enum(SOCIAL_PLATFORMS as unknown as [string, ...string[]])
 
 /** One uploaded asset, as returned by the upload route. */
-export const MediaItemInput = z.object({
+const MediaItemInput = z.object({
   storagePath: z.string().min(1),
   publicUrl: z.string().url(),
   type: z.enum(['image', 'video']),
@@ -51,8 +51,6 @@ export const CreatePostSchema = z
     path: ['scheduledAt'],
   })
 
-export type CreatePostSchemaType = z.infer<typeof CreatePostSchema>
-
 /** Publish an existing post now. */
 export const PostIdInput = z.object({ postId: z.string().uuid() })
 
@@ -72,7 +70,7 @@ export const ReplyCommentInput = z.object({
 
 const metaPlatformEnum = z.enum(['instagram', 'facebook'])
 
-export const AutomationInput = z.object({
+const AutomationInput = z.object({
   keyword: z.string().trim().min(1, 'Indica la palabra clave').max(80),
   publicReply: z.string().trim().min(1, 'Indica la respuesta pública').max(3000),
   privateMessage: z.string().trim().min(1, 'Indica el mensaje privado').max(3000),

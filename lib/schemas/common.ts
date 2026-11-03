@@ -90,4 +90,3 @@ export const lineItemInput = z.object({
     .nullish()
     .transform((v) => v || null),
 })
-export type LineItemInputType = z.infer<typeof lineItemInput>

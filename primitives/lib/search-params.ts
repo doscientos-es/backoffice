@@ -21,7 +21,7 @@ export function parseStringParam(params: RawParams, key: string, fallback = ''):
  * Reads a param as a positive integer.
  * Returns `fallback` when the value is missing or not a valid integer ≥ 1.
  */
-export function parseIntParam(params: RawParams, key: string, fallback = 1): number {
+function parseIntParam(params: RawParams, key: string, fallback = 1): number {
   const raw = parseStringParam(params, key)
   const n = Number.parseInt(raw, 10)
   return Number.isFinite(n) && n >= 1 ? n : fallback

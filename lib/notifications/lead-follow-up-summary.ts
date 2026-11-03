@@ -13,7 +13,7 @@ export type LeadFollowUpSummary = {
   priorityLeads: LeadFollowUpPriority[]
 }
 
-export type LeadFollowUpPriority = {
+type LeadFollowUpPriority = {
   id: string
   name: string
   hours: number

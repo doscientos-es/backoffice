@@ -73,7 +73,7 @@ function portalCookieName(token: string): string {
 }
 
 /** Sets the unlock cookie after a successful password check. */
-export async function grantPortalUnlock(token: string, passwordHash: string): Promise<void> {
+async function grantPortalUnlock(token: string, passwordHash: string): Promise<void> {
   const store = await cookies()
   store.set(portalCookieName(token), fingerprint(token, passwordHash), {
     httpOnly: true,

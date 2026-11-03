@@ -23,12 +23,11 @@ import type { LeadCompanyResearch as LeadCompanyResearchData } from '@/lib/leads
 import { leadDisplayName } from '@/lib/leads/utils'
 import { listActiveMembers } from '@/lib/members/queries'
 import { can } from '@/lib/permissions'
-import { LEAD_STATUS, TASK_STATUS, type TaskStatus } from '@/lib/status'
-import { formatDate, formatEUR, relativeTime } from '@/lib/utils'
+import { LEAD_STATUS, type TaskStatus } from '@/lib/status'
+import { formatDate, formatEUR } from '@/lib/utils'
 
 import { buildAdsManagerUrl } from '../../marketing/_components/marketing-format'
 import { AdPreviewDialog } from '../../marketing/ad-preview-dialog'
-import { TaskCreateDialog } from '../../tasks/task-create-dialog'
 import { LeadActivityFeed, countActivityEvents } from './lead-activity-feed'
 import { LeadAiPanel } from './lead-ai-panel'
 import { LeadCommercial } from './lead-commercial'
@@ -44,8 +43,7 @@ import { LeadDetailTabs, resolveLeadTab } from './lead-detail-tabs'
 import { LeadDiscoveryQuestionsPanel } from './lead-discovery-questions-panel'
 import { LeadEditDialog } from './lead-edit-dialog'
 import { LeadLanguageSelect } from './lead-language-select'
-import { LeadNextActionReminderItem } from './lead-next-action-reminder-item'
-import { LeadNextActionTaskItem } from './lead-next-action-task-item'
+import { type NextAction, NextActionsCard } from './lead-next-actions-card'
 import { LeadNotesDialog } from './lead-notes-dialog'
 import { LeadOwnerSuggestionCard } from './lead-owner-suggestion'
 import { LeadPriceSuggestion } from './lead-price-suggestion'
@@ -56,14 +54,6 @@ import { PhoneQuickActions } from './phone-actions'
 import { LeadStatusSelect } from './status-select'
 
 export const dynamic = 'force-dynamic'
-
-type NextAction = {
-  id: string
-  title: string
-  kind: 'task' | 'reminder'
-  when: string | null
-  status: TaskStatus
-}
 
 function hasValue(value: unknown): boolean {
   if (value == null) return false
@@ -726,103 +716,5 @@ export default async function LeadDetailPage({
         <LeadDeleteDangerZone leadId={lead.id as string} leadName={displayName} />
       ) : null}
     </div>
-  )
-}
-
-function NextActionsCard({
-  canEdit,
-  leadId,
-  members,
-  currentUserId,
-  actions,
-}: {
-  canEdit: boolean
-  leadId: string
-  members: Awaited<ReturnType<typeof listActiveMembers>>
-  currentUserId: string
-  actions: NextAction[]
-}) {
-  return (
-    <Card className="border-primary/20 bg-primary/[0.03]">
-      <CardHeader className="flex flex-row items-center justify-between gap-4 pb-3">
-        <div>
-          <CardTitle className="text-base">Siguiente paso</CardTitle>
-          <p className="mt-1 text-sm font-normal text-muted-foreground">
-            Próximos pasos para mantener el lead en movimiento.
-          </p>
-        </div>
-        {canEdit ? (
-          <TaskCreateDialog
-            leadId={leadId}
-            members={members}
-            currentUserId={currentUserId}
-            trigger={<Button size="sm">Nueva tarea</Button>}
-          />
-        ) : null}
-      </CardHeader>
-      <CardContent className="px-0 pt-0">
-        {actions.length > 0 ? (
-          <ul className="divide-y divide-border">
-            {actions.map((action) => {
-              const overdue = action.when ? new Date(action.when) < new Date() : false
-              const whenLabel = action.when ? relativeTime(action.when) : null
-              if (action.kind === 'task' && canEdit) {
-                return (
-                  <LeadNextActionTaskItem
-                    key={`${action.kind}-${action.id}`}
-                    task={{ ...action, overdue, whenLabel }}
-                    leadId={leadId}
-                    members={members}
-                    currentUserId={currentUserId}
-                  />
-                )
-              }
-              if (action.kind === 'reminder' && canEdit) {
-                return (
-                  <LeadNextActionReminderItem
-                    key={`${action.kind}-${action.id}`}
-                    reminder={{ id: action.id, title: action.title, whenLabel, overdue }}
-                  />
-                )
-              }
-              return (
-                <li
-                  key={`${action.kind}-${action.id}`}
-                  className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm"
-                >
-                  <Link
-                    href={`/tasks/${action.id}`}
-                    className="min-w-0 truncate font-medium hover:underline"
-                  >
-                    <span className="mr-2 text-xs text-muted-foreground">
-                      {action.kind === 'reminder' ? 'Aviso' : 'Tarea'}
-                    </span>
-                    {action.title}
-                  </Link>
-                  <div className="flex shrink-0 items-center gap-3 text-xs">
-                    {action.kind === 'task' ? (
-                      <StatusBadge meta={TASK_STATUS} value={action.status} />
-                    ) : null}
-                    {whenLabel ? (
-                      <span
-                        className={
-                          overdue ? 'font-medium text-destructive' : 'text-muted-foreground'
-                        }
-                      >
-                        {whenLabel}
-                      </span>
-                    ) : null}
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        ) : (
-          <p className="px-6 pb-4 text-sm text-muted-foreground">
-            Crea una tarea o un recordatorio para dejar claro qué toca hacer después.
-          </p>
-        )}
-      </CardContent>
-    </Card>
   )
 }

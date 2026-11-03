@@ -1,7 +1,7 @@
 const MAX_DOCUMENT_TEXT_LENGTH = 2_000_000
 const MAX_PAGE_TEXT_LENGTH = 100_000
 
-export type ExtractedPdfPage = { pageNumber: number; content: string }
+type ExtractedPdfPage = { pageNumber: number; content: string }
 export type ExtractedPdf = { pageCount: number; pages: ExtractedPdfPage[]; truncated: boolean }
 
 function normalizeText(value: string): string {

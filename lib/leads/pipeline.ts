@@ -27,25 +27,14 @@ export const ACTIVE_LEAD_STATUSES = [
   'quoted',
 ] as const
 
-export const TERMINAL_LEAD_STATUSES = ['won', 'lost', 'not_interested', 'archived'] as const
+const TERMINAL_LEAD_STATUSES = ['won', 'lost', 'not_interested', 'archived'] as const
 
 /** Closed-out stages, used by the recovery funnel and the closure dialogs. */
-export const CLOSURE_LEAD_STATUSES = ['lost', 'not_interested'] as const
-
 const ACTIVE_SET: ReadonlySet<LeadStatus> = new Set(ACTIVE_LEAD_STATUSES)
 const TERMINAL_SET: ReadonlySet<LeadStatus> = new Set(TERMINAL_LEAD_STATUSES)
 
 export const isActiveLeadStatus = (status: LeadStatus): boolean => ACTIVE_SET.has(status)
 export const isTerminalLeadStatus = (status: LeadStatus): boolean => TERMINAL_SET.has(status)
-
-/**
- * Board column a status renders into. Only `qualifying` differs from the
- * identity mapping: legacy rows land in `in_conversation` so no lead is
- * stranded in a column that is no longer offered.
- */
-export function boardColumnFor(status: LeadStatus): LeadStatus {
-  return status === 'qualifying' ? 'in_conversation' : status
-}
 
 /** Statuses offered in selects and filters: everything except the legacy one. */
 export const SELECTABLE_LEAD_STATUSES = [

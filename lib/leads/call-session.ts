@@ -1,12 +1,6 @@
 export const CALL_SESSION_TTL_HOURS = 4
-export const MISSED_CALL_THRESHOLD_SECONDS = 30
-export const CALL_SESSION_STATUSES = [
-  'started',
-  'dialing',
-  'awaiting_log',
-  'logged',
-  'abandoned',
-] as const
+const MISSED_CALL_THRESHOLD_SECONDS = 30
+const CALL_SESSION_STATUSES = ['started', 'dialing', 'awaiting_log', 'logged', 'abandoned'] as const
 
 export type CallSessionStatus = (typeof CALL_SESSION_STATUSES)[number]
 

@@ -177,15 +177,3 @@ export const deleteSubscription = defineAction({
     if (error) throw new Error(error.message)
   },
 })
-
-export const restoreSubscription = defineAction({
-  name: 'subscriptions.restore',
-  schema: z.object({ id: z.string().uuid() }),
-  roles: ['owner', 'admin'],
-  revalidate: ['/subscriptions'],
-  async handler({ id }) {
-    const supabase = await createServerClient()
-    const { error } = await supabase.from('subscriptions').update({ deleted_at: null }).eq('id', id)
-    if (error) throw new Error(error.message)
-  },
-})

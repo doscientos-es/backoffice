@@ -20,10 +20,6 @@ export type MeetParticipant = {
 
 type ConferenceRecord = { name: string; startTime: string; endTime?: string; space?: string }
 
-export type EnrichedConferenceRecord = ConferenceRecord & {
-  participants: MeetParticipant[]
-}
-
 /** Lists conference instances matching a Meet code near the scheduled time. */
 export async function listConferenceRecords(opts: {
   subject: string

@@ -10,7 +10,7 @@ import { isAIEnabled, isGoogleEnabled, publicEnv, serverEnv } from '@/lib/env'
  * must never leave the server.
  */
 
-export type SystemCheck = {
+type SystemCheck = {
   key: string
   label: string
   configured: boolean
@@ -18,7 +18,7 @@ export type SystemCheck = {
   detail?: string
 }
 
-export type RuntimeInfo = { key: string; label: string; value: string }
+type RuntimeInfo = { key: string; label: string; value: string }
 
 export type SystemStatus = {
   integrations: SystemCheck[]

@@ -10,7 +10,7 @@
  */
 
 /** Province name keyed by 2-digit INE prefix. */
-export const PROVINCE_BY_PREFIX: Record<string, string> = {
+const PROVINCE_BY_PREFIX: Record<string, string> = {
   '01': 'Álava',
   '02': 'Albacete',
   '03': 'Alicante',
@@ -66,7 +66,7 @@ export const PROVINCE_BY_PREFIX: Record<string, string> = {
 }
 
 /** City name keyed by exact 5-digit ZIP. Extend as needed. */
-export const CITY_BY_ZIP: Record<string, string> = {
+const CITY_BY_ZIP: Record<string, string> = {
   // --- Álava ---
   '01001': 'Vitoria-Gasteiz',
   '01002': 'Vitoria-Gasteiz',

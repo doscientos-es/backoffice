@@ -5,7 +5,7 @@ import { EmailLayout } from './email-layout'
 const BRAND = '#2A4227'
 const FONT = "'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
 
-export type ProposalEmailSpec = {
+type ProposalEmailSpec = {
   /** Display title of the technical-spec document. */
   title: string
   /** Absolute URL to /p/spec/[token]. */

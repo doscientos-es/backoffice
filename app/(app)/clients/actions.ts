@@ -97,7 +97,7 @@ export async function createClient(formData: FormData): Promise<void> {
 // Public, backward-compatible input shape for callers (form values are
 // all-strings). The schema in lib/schemas/client validates + coerces "" to
 // undefined for optional fields before the handler runs.
-export type UpdateClientInputType = {
+type UpdateClientInputType = {
   id: string
   name: string
   nif: string

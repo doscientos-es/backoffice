@@ -23,7 +23,7 @@ export type EditableItem = LineItem
  * `id` (e.g. when the invoice_items query omits it). The editor assigns a
  * UUID at mount time, so we accept items where `id` is optional.
  */
-export type InitialEditableItem = Omit<LineItem, 'id'> & { id?: string }
+type InitialEditableItem = Omit<LineItem, 'id'> & { id?: string }
 
 export type InvoiceEditorProps = {
   id: string

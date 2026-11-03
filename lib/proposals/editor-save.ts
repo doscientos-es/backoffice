@@ -169,7 +169,7 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
 }
 
 /** Replaces the people shown as the project team in the client deck. */
-export async function replaceProposalTeam(
+async function replaceProposalTeam(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   await requirePermission('proposals.write')

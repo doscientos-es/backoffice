@@ -35,7 +35,7 @@ export const AI_MODELS = {
   drafter: 'gemini-3.1-flash-lite',
 } as const
 /** Timeout máximo por llamada — 30s. */
-export const AI_TIMEOUT_MS = 30_000
+const AI_TIMEOUT_MS = 30_000
 
 function generationOptions(
   modelName: string,

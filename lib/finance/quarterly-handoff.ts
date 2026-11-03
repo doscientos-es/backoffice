@@ -9,7 +9,7 @@ import { type QuarterlyPeriod, quarterlyPeriod } from '@/lib/exports/quarterly-i
 export const QUARTERLY_ADVISOR_EMAIL = 'fiscal@doscientos.es'
 export const QUARTERLY_REMINDER_DAYS = 7
 
-export type QuarterlyHandoffStatus = 'idle' | 'upcoming' | 'due' | 'overdue' | 'sent'
+type QuarterlyHandoffStatus = 'idle' | 'upcoming' | 'due' | 'overdue' | 'sent'
 
 export type QuarterlyHandoff = {
   status: QuarterlyHandoffStatus

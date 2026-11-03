@@ -31,7 +31,7 @@ export type FinanceDetails = {
   memberContributions: MemberContribution[]
 }
 
-export type InvoiceRow = {
+type InvoiceRow = {
   id: string
   full_number: string | null
   total: number
@@ -105,13 +105,13 @@ export type ExpenseTeamMemberOption = {
   github_handle: string | null
 }
 
-export type ExpenseDetailProject = {
+type ExpenseDetailProject = {
   id: string
   name: string
   clientName: string | null
 }
 
-export type ExpenseDetail = {
+type ExpenseDetail = {
   id: string
   /** Internal optimistic-concurrency token. */
   version: number

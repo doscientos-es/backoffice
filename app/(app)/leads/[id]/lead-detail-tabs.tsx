@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 import { TabCount, TabList, TabTrigger } from '@/components/ui/tabs'
 
-export const LEAD_TABS = ['resumen', 'actividad', 'comercial', 'inteligencia'] as const
+const LEAD_TABS = ['resumen', 'actividad', 'comercial', 'inteligencia'] as const
 
 export type LeadTab = (typeof LEAD_TABS)[number]
 
@@ -19,7 +19,7 @@ export function resolveLeadTab(value: string | undefined): LeadTab {
   return LEAD_TABS.includes(value as LeadTab) ? (value as LeadTab) : 'resumen'
 }
 
-export function leadTabHref(leadId: string, tab: LeadTab): string {
+function leadTabHref(leadId: string, tab: LeadTab): string {
   return tab === 'resumen' ? `/leads/${leadId}` : `/leads/${leadId}?tab=${tab}`
 }
 

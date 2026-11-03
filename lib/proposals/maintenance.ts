@@ -10,7 +10,7 @@ export const MAINTENANCE_LIMITS = {
   maxPlans: 6,
 } as const
 
-export const maintenancePlanInput = z.object({
+const maintenancePlanInput = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1, 'El nombre del plan es obligatorio').max(80),
   summary: z.string().trim().min(1, 'Describe qué cubre el plan').max(400),

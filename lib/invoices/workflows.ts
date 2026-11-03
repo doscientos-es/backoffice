@@ -1,4 +1,4 @@
-export const RECTIFIABLE_INVOICE_STATUSES = ['issued', 'paid', 'overdue'] as const
+const RECTIFIABLE_INVOICE_STATUSES = ['issued', 'paid', 'overdue'] as const
 
 export function isRectifiableInvoice({
   status,

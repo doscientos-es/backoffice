@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 
-export const TASK_STATUS_OPTIONS = [
+const TASK_STATUS_OPTIONS = [
   { value: 'todo', label: 'Por hacer' },
   { value: 'in_progress', label: 'En curso' },
   { value: 'in_review', label: 'Revisión' },
@@ -18,14 +18,14 @@ export const TASK_STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelada' },
 ] as const
 
-export const TASK_PRIORITY_OPTIONS = [
+const TASK_PRIORITY_OPTIONS = [
   { value: 'low', label: 'Baja' },
   { value: 'medium', label: 'Media' },
   { value: 'high', label: 'Alta' },
   { value: 'urgent', label: 'Urgente' },
 ] as const
 
-export type TaskFormDefaults = {
+type TaskFormDefaults = {
   title?: string
   description?: string | null
   client_title?: string | null

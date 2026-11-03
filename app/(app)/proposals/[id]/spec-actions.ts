@@ -5,7 +5,6 @@ import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/auth'
 import { scopedLogger } from '@/lib/logger'
 import {
-  CreateProposalSpecInput,
   ProposalSpecIdInput,
   ToggleProposalSpecVisibilityInput,
   UpdateProposalSpecInput,
@@ -15,52 +14,6 @@ import { createServerClient } from '@/lib/supabase/server'
 const log = scopedLogger('proposals.specs')
 
 type Result<T = unknown> = ({ ok: true } & T) | { ok: false; error: string; code?: 'conflict' }
-
-/**
- * Creates a proposal_spec linked to a proposal. Returns the new id so the
- * caller can navigate to it / open the editor.
- */
-export async function createSpec(input: unknown): Promise<Result<{ id: string }>> {
-  const user = await requireUser()
-  const parsed = CreateProposalSpecInput.safeParse(input)
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.errors[0]?.message ?? 'Datos no válidos' }
-  }
-  const data = parsed.data
-
-  const supabase = await createServerClient()
-
-  // Confirm the parent proposal exists and pick up project_id / client_id.
-  const { data: proposal } = await supabase
-    .from('proposals')
-    .select('id, project_id, client_id')
-    .eq('id', data.proposal_id)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (!proposal) return { ok: false, error: 'Propuesta no encontrada' }
-
-  const { data: doc, error } = await supabase
-    .from('proposal_specs')
-    .insert({
-      title: data.title,
-      body_markdown: data.body_markdown,
-      proposal_id: data.proposal_id,
-      project_id: (proposal as { project_id: string | null }).project_id,
-      client_id: (proposal as { client_id: string }).client_id,
-      is_client_visible: data.is_client_visible,
-      created_by: user.id,
-    })
-    .select('id')
-    .single()
-
-  if (error || !doc) {
-    log.error({ err: error, proposalId: data.proposal_id }, 'create_spec_failed')
-    return { ok: false, error: error?.message ?? 'No se pudo crear la documentación' }
-  }
-
-  revalidatePath(`/proposals/${data.proposal_id}`)
-  return { ok: true, id: doc.id as string }
-}
 
 export async function updateSpec(input: unknown): Promise<Result<{ version: number }>> {
   await requireUser()

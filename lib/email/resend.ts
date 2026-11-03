@@ -5,7 +5,7 @@ import { serverEnv } from '@/lib/env'
 const cachedByKey = new Map<string, Resend>()
 
 /** Returns a Resend client for `apiKey` (defaults to RESEND_API_KEY), or null when unset. */
-export function getResend(apiKey?: string): Resend | null {
+function getResend(apiKey?: string): Resend | null {
   const key = apiKey || serverEnv().RESEND_API_KEY
   if (!key) return null
   let client = cachedByKey.get(key)

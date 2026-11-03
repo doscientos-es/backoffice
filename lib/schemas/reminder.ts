@@ -28,4 +28,3 @@ export const CreateReminderInput = z.object({
   /** ID of the team member to assign this reminder to. Defaults to the current user. */
   assigneeId: z.string().uuid().optional(),
 })
-export type CreateReminderInputType = z.infer<typeof CreateReminderInput>

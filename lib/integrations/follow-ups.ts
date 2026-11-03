@@ -24,7 +24,7 @@ const LIST_LIMIT = 25
 /** Proposal statuses that are awaiting a client response. */
 const PENDING_PROPOSAL_STATUSES = ['sent', 'viewed'] as const
 
-export type StaleLead = {
+type StaleLead = {
   id: string
   name: string
   company: string | null
@@ -38,7 +38,7 @@ export type StaleLead = {
   url: string
 }
 
-export type PendingProposal = {
+type PendingProposal = {
   id: string
   number: string | null
   title: string
@@ -50,7 +50,7 @@ export type PendingProposal = {
   url: string
 }
 
-export type UncontactedLead = {
+type UncontactedLead = {
   id: string
   name: string
   company: string | null

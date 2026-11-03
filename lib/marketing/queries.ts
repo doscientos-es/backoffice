@@ -127,14 +127,14 @@ const COMPARATORS: Record<MarketingSort, (a: ActiveAdRow, b: ActiveAdRow) => num
   name_asc: (a, b) => a.name.localeCompare(b.name, 'es'),
 }
 
-export type AdsOverviewOptions = {
+type AdsOverviewOptions = {
   since: string
   until: string
   includePaused?: boolean
   sort?: MarketingSort
 }
 
-export async function getActiveAdsOverview(opts: AdsOverviewOptions): Promise<MarketingOverview> {
+async function getActiveAdsOverview(opts: AdsOverviewOptions): Promise<MarketingOverview> {
   const supabase = await createServerClient()
 
   // marketing_* tables hold external data from Meta and do not use the soft-delete convention.
@@ -243,7 +243,7 @@ const CAMPAIGN_COMPARATORS: Record<MarketingSort, (a: CampaignRow, b: CampaignRo
   name_asc: (a, b) => a.name.localeCompare(b.name, 'es'),
 }
 
-export type CampaignsOverviewOptions = {
+type CampaignsOverviewOptions = {
   since: string
   until: string
   sort?: MarketingSort
@@ -255,9 +255,7 @@ export type CampaignsOverviewOptions = {
  * Meta's campaign-level endpoint to avoid an extra API hit on every render
  * and to keep the same `since/until` window as the ads view.
  */
-export async function getCampaignsOverview(
-  opts: CampaignsOverviewOptions,
-): Promise<CampaignsOverview> {
+async function getCampaignsOverview(opts: CampaignsOverviewOptions): Promise<CampaignsOverview> {
   const supabase = await createServerClient()
 
   const { data: adsData, error: adsErr } = await supabase.from('marketing_ads').select(

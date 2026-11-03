@@ -7,5 +7,5 @@
  */
 
 export { FacebookPublisher } from './facebook-publisher'
-export { graphGet, graphGetList, graphPost, metaPageToken } from './graph-client'
+
 export { InstagramPublisher } from './instagram-publisher'

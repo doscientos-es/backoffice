@@ -11,7 +11,7 @@ import type { PublisherRegistry } from './registry'
 import type { ComposedPost, FanOutResult, PostStatus, SocialPlatform, TargetResult } from './types'
 
 /** Derive the post-level status from its per-target results. */
-export function computeAggregateStatus(targets: TargetResult[]): PostStatus {
+function computeAggregateStatus(targets: TargetResult[]): PostStatus {
   if (targets.length === 0) return 'failed'
   const ok = targets.filter((t) => t.ok).length
   if (ok === 0) return 'failed'

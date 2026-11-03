@@ -17,7 +17,6 @@ export const InvoiceStatus = z.enum([
   'cancelled',
   'rectified',
 ])
-export type InvoiceStatusType = z.infer<typeof InvoiceStatus>
 
 export const InvoiceIdInput = uuidIdInput
 
@@ -34,11 +33,9 @@ export const SendInvoiceEmailInput = z.object({
   message: z.string().max(1000).optional(),
   attachPdf: z.boolean().optional(),
 })
-export type SendInvoiceEmailInputType = z.infer<typeof SendInvoiceEmailInput>
 
 /** Input for rendering the invoice email without delivering it. */
 export const PreviewInvoiceEmailInput = SendInvoiceEmailInput.pick({ id: true, message: true })
-export type PreviewInvoiceEmailInputType = z.infer<typeof PreviewInvoiceEmailInput>
 
 /**
  * Input for logging that the portal link was shared over WhatsApp. Delivery
@@ -48,12 +45,10 @@ export const LogInvoiceWhatsappShareInput = z.object({
   id: z.string().uuid(),
   phone: z.string().min(6).max(30),
 })
-export type LogInvoiceWhatsappShareInputType = z.infer<typeof LogInvoiceWhatsappShareInput>
 
 export const CreateInvoiceFromProposalInput = z.object({
   proposalId: z.string().uuid(),
 })
-export type CreateInvoiceFromProposalInputType = z.infer<typeof CreateInvoiceFromProposalInput>
 
 /** Creates the missing draft invoices for the proposal's configured payment plan. */
 export const CreateInvoicesFromProposalPlanInput = CreateInvoiceFromProposalInput
@@ -66,7 +61,6 @@ export const CreateMonthlyHourlyInvoiceInput = z.object({
   projectId: z.string().uuid(),
   month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Mes no válido (YYYY-MM)'),
 })
-export type CreateMonthlyHourlyInvoiceInputType = z.infer<typeof CreateMonthlyHourlyInvoiceInput>
 
 export const UpdateInvoiceInput = z.object({
   id: z.string().uuid(),
@@ -77,9 +71,8 @@ export const UpdateInvoiceInput = z.object({
   payment_terms: z.string().max(4000).nullable().optional(),
   items: z.array(lineItemInput).min(1).optional(),
 })
-export type UpdateInvoiceInputType = z.input<typeof UpdateInvoiceInput>
 
-export const PaymentMethod = z.enum(['transfer', 'card', 'bizum', 'cash', 'other'])
+const PaymentMethod = z.enum(['transfer', 'card', 'bizum', 'cash', 'other'])
 export type PaymentMethodType = z.infer<typeof PaymentMethod>
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethodType, string> = {
@@ -95,7 +88,6 @@ export const UpdateInvoiceStatusInput = z.object({
   status: InvoiceStatus,
   paymentMethod: PaymentMethod.optional(),
 })
-export type UpdateInvoiceStatusInputType = z.infer<typeof UpdateInvoiceStatusInput>
 
 export const RecordInvoicePaymentInput = z.object({
   id: z.string().uuid(),
@@ -106,19 +98,16 @@ export const RecordInvoicePaymentInput = z.object({
 export const MarkUncollectibleInput = z.object({
   id: z.string().uuid(),
 })
-export type MarkUncollectibleInputType = z.infer<typeof MarkUncollectibleInput>
 
 /**
  * Input for creating a rectification invoice (factura rectificativa).
  * Types R1/R4 are the most common for B2B invoices (RD 1619/2012 art.15).
  * R1 = error/devolución; R4 = otras causas.
  */
-export const RectificationType = z.enum(['R1', 'R4'])
-export type RectificationTypeType = z.infer<typeof RectificationType>
+const RectificationType = z.enum(['R1', 'R4'])
 
 export const CreateRectificationInput = z.object({
   originalInvoiceId: z.string().uuid(),
   rectificationType: RectificationType,
   reason: z.string().min(1, 'El motivo es obligatorio').max(500),
 })
-export type CreateRectificationInputType = z.infer<typeof CreateRectificationInput>

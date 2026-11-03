@@ -1,4 +1,4 @@
-export const LEAD_SOURCES = [
+const LEAD_SOURCES = [
   'Landing',
   'Anuncios Meta',
   'Cal.com',
@@ -10,23 +10,14 @@ export const LEAD_SOURCES = [
   'Otro',
 ] as const
 
-export const COMPANY_SIZE_OPTIONS = [
+const COMPANY_SIZE_OPTIONS = [
   '1-10 empleados',
   '10-50 empleados',
   '50-200 empleados',
   'Más de 200 empleados',
 ] as const
 
-export const URGENCY_OPTIONS = ['Inmediata', 'Este mes', 'Este trimestre', 'Explorando'] as const
-
-export const SOLUTION_TYPES = [
-  'Software a medida',
-  'App móvil',
-  'Web corporativa',
-  'E-commerce',
-  'Consultoría técnica',
-  'Otro',
-] as const
+const URGENCY_OPTIONS = ['Inmediata', 'Este mes', 'Este trimestre', 'Explorando'] as const
 
 const SOURCE_ALIASES = new Map<string, (typeof LEAD_SOURCES)[number]>([
   ['landing', 'Landing'],

@@ -183,10 +183,6 @@ export function can(role: MemberRole, permission: PermissionKey): boolean {
   return ROLE_PERMISSIONS[role].includes(permission)
 }
 
-export function permissionsForRole(role: MemberRole): readonly PermissionKey[] {
-  return ROLE_PERMISSIONS[role]
-}
-
 export function effectiveAccessScope(role: MemberRole, scope: AccessScope): AccessScope {
   return role === 'owner' || role === 'admin' ? 'all' : scope
 }

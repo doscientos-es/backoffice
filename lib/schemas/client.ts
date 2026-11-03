@@ -29,14 +29,10 @@ export const CreateClientInput = z.object({
   logo_url: optionalText(500),
 })
 
-export type CreateClientInputType = z.infer<typeof CreateClientInput>
-
 export const UpdateClientInput = CreateClientInput.extend({
   id: z.string().uuid(),
   expected_version: z.coerce.number().int().positive(),
 })
-
-export type UpdateClientInputType = z.infer<typeof UpdateClientInput>
 
 export const ValidateClientFiscalIdentityInput = z.object({
   clientId: z.string().uuid(),

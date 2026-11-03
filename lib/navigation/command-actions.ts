@@ -17,7 +17,7 @@ export type CommandAction = {
 }
 
 /** Atajos que llevan directamente a trabajo pendiente, no a módulos genéricos. */
-export const COMMAND_ACTIONS: readonly CommandAction[] = [
+const COMMAND_ACTIONS: readonly CommandAction[] = [
   {
     key: 'priorities',
     href: '/inicio#inicio-prioridades',

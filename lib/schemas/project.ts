@@ -13,7 +13,7 @@ export type ProjectStatusType = z.infer<typeof ProjectStatus>
 export const GithubSyncMode = z.enum(['none', 'link_only', 'bidirectional'])
 export type GithubSyncModeType = z.infer<typeof GithubSyncMode>
 
-export const ProjectWorkspacePath = z
+const ProjectWorkspacePath = z
   .string()
   .trim()
   .min(1, 'La ruta no puede estar vacía')
@@ -45,8 +45,7 @@ export const UpdateProjectWorkspacePathsInput = z.object({
 })
 
 /** Fixed-price vs. hourly engagement. Drives monthly invoice generation. */
-export const ProjectBillingType = z.enum(['fixed', 'hourly'])
-export type ProjectBillingTypeType = z.infer<typeof ProjectBillingType>
+const ProjectBillingType = z.enum(['fixed', 'hourly'])
 
 const ProjectBase = z.object({
   client_id: z.string().uuid('Cliente inválido'),
@@ -117,11 +116,7 @@ const projectRefinement = (d: z.infer<typeof ProjectBase>, ctx: z.RefinementCtx)
 
 export const ProjectInput = ProjectBase.superRefine(projectRefinement)
 
-export type ProjectInputType = z.infer<typeof ProjectInput>
-
 export const UpdateProjectInput = ProjectBase.extend({
   id: z.string().uuid('ID de proyecto inválido'),
   expected_version: z.coerce.number().int().positive(),
 }).superRefine(projectRefinement)
-
-export type UpdateProjectInputType = z.infer<typeof UpdateProjectInput>

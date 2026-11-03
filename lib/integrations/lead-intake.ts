@@ -67,7 +67,7 @@ const contextSchema = z.object({
  * payloads into this shape so the storage layer stays agnostic.
  * Exporting lets adapters reuse it for unit tests.
  */
-export const LeadIntakeSchema = z.object({
+const LeadIntakeSchema = z.object({
   name: z.string().trim().min(1, 'name is required'),
   email: z.string().email('invalid email').optional().nullable(),
   phone: z.string().optional().nullable(),
@@ -94,7 +94,7 @@ export const LeadIntakeSchema = z.object({
 
 export type LeadIntake = z.infer<typeof LeadIntakeSchema>
 
-export function normalizeContactLanguage(value: string | null | undefined): 'ca' | 'es' | 'en' {
+function normalizeContactLanguage(value: string | null | undefined): 'ca' | 'es' | 'en' {
   const language = value?.toLowerCase().split(/[-_]/)[0]
   return language === 'ca' || language === 'en' ? language : 'es'
 }

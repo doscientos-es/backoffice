@@ -9,6 +9,13 @@
     "oxlint.config.ts"
   ],
   "project": ["app/**", "components/**", "lib/**", "primitives/**", "scripts/**"],
-  "ignore": ["lib/database.types.ts", "vendor/**", "supabase/**", ".next/**"],
+  "ignore": [
+    "lib/database.types.ts",
+    "vendor/**",
+    "supabase/**",
+    ".next/**",
+    "primitives/index.ts",
+    "primitives/ui/**"
+  ],
   "ignoreDependencies": ["tw-animate-css", "shadcn", "@shadcn/lint", "oxlint-tsgolint"]
 }

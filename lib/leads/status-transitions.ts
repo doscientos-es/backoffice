@@ -1,4 +1,4 @@
-export const LEAD_CLOSURE_STATUSES = ['lost', 'not_interested'] as const
+const LEAD_CLOSURE_STATUSES = ['lost', 'not_interested'] as const
 
 export type LeadClosureStatus = (typeof LEAD_CLOSURE_STATUSES)[number]
 

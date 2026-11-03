@@ -7,7 +7,7 @@
  */
 import type { SocialPlatform } from './types'
 
-export class SocialError extends Error {
+class SocialError extends Error {
   constructor(message: string) {
     super(message)
     this.name = new.target.name
@@ -25,15 +25,6 @@ export class NotConfiguredError extends SocialError {
 }
 
 /** The post's media/shape is not publishable on this platform. */
-export class UnsupportedMediaError extends SocialError {
-  constructor(
-    readonly platform: SocialPlatform,
-    reason: string,
-  ) {
-    super(reason)
-  }
-}
-
 /** The remote API rejected the publish (wraps the upstream message). */
 export class PublishError extends SocialError {
   constructor(

@@ -7,7 +7,7 @@ import { resolveLeadId, resolveRecipientId, type ViewedProposal } from './record
 const log = scopedLogger('proposals.engagement')
 
 /** Interest signals a lead can show on the public proposal, with their weight. */
-export const ENGAGEMENT_POINTS = {
+const ENGAGEMENT_POINTS = {
   return_visit: 8,
   pricing_viewed: 5,
   terms_viewed: 4,
@@ -52,7 +52,7 @@ const CLOSED_STATUSES = ['won', 'lost', 'not_interested', 'archived']
 type Temperature = 'hot' | 'warm' | 'cold'
 const RANK: Record<Temperature, number> = { cold: 0, warm: 1, hot: 2 }
 
-export function temperatureForScore(score: number): Temperature | null {
+function temperatureForScore(score: number): Temperature | null {
   if (score >= HOT_AT) return 'hot'
   if (score >= WARM_AT) return 'warm'
   return null

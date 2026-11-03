@@ -19,7 +19,7 @@ function formatMargin(margin: number | null): string {
  * dominant expense category. Mirrors the visual structure of the Meta Ads
  * balance tile so they share the dashboard row.
  */
-export function MonthExpensesCard({ data }: { data: MonthFinanceSummary }) {
+function MonthExpensesCard({ data }: { data: MonthFinanceSummary }) {
   const { revenueMonth, expenseMonth, netMonth, margin, topCategory } = data
 
   const netNegative = netMonth < 0

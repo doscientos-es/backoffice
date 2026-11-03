@@ -35,4 +35,3 @@ export const PortalUnlockInput = z.object({
   token: PortalToken,
   password: z.string().min(1, 'Introduce la contraseña').max(200),
 })
-export type PortalUnlockInputType = z.infer<typeof PortalUnlockInput>

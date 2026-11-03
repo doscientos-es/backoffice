@@ -1,7 +1,7 @@
 import { SupabaseStorageProvider } from './supabase'
 import type { StorageProvider } from './types'
 
-export type { StorageBucket, StorageProvider } from './types'
+export type { StorageProvider } from './types'
 
 /**
  * Returns the active StorageProvider.

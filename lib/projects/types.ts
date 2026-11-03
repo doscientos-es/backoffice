@@ -8,7 +8,7 @@ export const PROJECT_RELATED_LIMIT = 10
 
 // ─── List ─────────────────────────────────────────────────────────────────────
 
-export type ProjectListItem = {
+type ProjectListItem = {
   id: string
   name: string
   status: string | null
@@ -38,19 +38,19 @@ export type ProjectListResult = {
 
 // ─── Detail (related rows) ────────────────────────────────────────────────────
 
-export type ProjectDetailClient = {
+type ProjectDetailClient = {
   id: string
   name: string
   email: string | null
 }
 
-export type ProjectDetailTask = {
+type ProjectDetailTask = {
   id: string
   title: string
   status: string | null
 }
 
-export type ProjectDetailProposal = {
+type ProjectDetailProposal = {
   id: string
   number: string | null
   title: string | null
@@ -58,7 +58,7 @@ export type ProjectDetailProposal = {
   total: string | number | null
 }
 
-export type ProjectDetailInvoice = {
+type ProjectDetailInvoice = {
   id: string
   full_number: string | null
   status: string | null
@@ -66,14 +66,14 @@ export type ProjectDetailInvoice = {
   issue_date: string | null
 }
 
-export type ProjectClientOption = {
+type ProjectClientOption = {
   id: string
   name: string
 }
 
 // ─── Full project record ───────────────────────────────────────────────────────
 
-export type ProjectDetail = {
+type ProjectDetail = {
   id: string
   name: string
   status: string | null
@@ -88,12 +88,3 @@ export type ProjectDetail = {
   github_repo_name: string | null
   updated_at: string | null
 }
-
-export type ProjectDetailResult = {
-  project: ProjectDetail
-  client: ProjectDetailClient | null
-  clients: ProjectClientOption[]
-  tasks: ProjectDetailTask[]
-  proposals: ProjectDetailProposal[]
-  invoices: ProjectDetailInvoice[]
-} | null

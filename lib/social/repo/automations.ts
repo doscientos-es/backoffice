@@ -132,17 +132,6 @@ export async function listApplicableAutomationRules(
     .sort((a, b) => Number(b.postId === postId) - Number(a.postId === postId))
 }
 
-export async function getAutomationRulesForPost(postId: string): Promise<AutomationRule[]> {
-  const supabase = await createServerClient()
-  const { data, error } = await supabase
-    .from('social_automation_rules')
-    .select(RULE_SELECT)
-    .eq('post_id', postId)
-    .order('created_at', { ascending: false })
-  if (error) throw new Error(`No se pudieron cargar las automatizaciones: ${error.message}`)
-  return (data as unknown as AutomationRuleRow[]).map(mapRule)
-}
-
 export async function setAutomationRuleActive(ruleId: string, active: boolean): Promise<void> {
   const supabase = await createServerClient()
   const { error } = await supabase

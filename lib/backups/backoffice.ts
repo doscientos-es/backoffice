@@ -87,10 +87,6 @@ export function buildBackofficeBackupPayload(
   }
 }
 
-export function isBackofficeBackupConfigured(): boolean {
-  return getBackofficeBackupSetup(serverEnv()).configured
-}
-
 /** Runs a full database and Storage backup on the trusted backup server. */
 export async function runBackofficeBackup(): Promise<void> {
   const setup = getBackofficeBackupSetup(serverEnv())

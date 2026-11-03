@@ -16,7 +16,7 @@ import {
   updateGitHubIssueState,
 } from './github'
 
-export type GitHubSyncMode = 'none' | 'link_only' | 'bidirectional'
+type GitHubSyncMode = 'none' | 'link_only' | 'bidirectional'
 
 /**
  * Parse a GitHub repo URL into `{ owner, name }`. Accepts:

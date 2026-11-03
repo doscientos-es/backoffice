@@ -12,7 +12,6 @@ export const SCOPE_MODULE_LIMITS = {
 } as const
 
 export const SCOPE_MODULE_DURATION_WEEKS = [1, 2, 3, 4, 5, 6] as const
-export type ScopeModuleDurationWeeks = (typeof SCOPE_MODULE_DURATION_WEEKS)[number]
 
 export function scopeModuleDurationLabel(weeks: number): string {
   return `${weeks} ${weeks === 1 ? 'semana' : 'semanas'}`
@@ -25,7 +24,7 @@ const customDuration = z
   .regex(/^\d+\s+(días?|semanas?|mes|meses)$/, 'Usa un número y una unidad: días, semanas o meses')
   .max(32)
 
-export const scopeModuleInput = z
+const scopeModuleInput = z
   .object({
     id: z.string().min(1).max(64),
     title: z
@@ -68,7 +67,7 @@ export function scopeModuleDurationText(
   return module.duration_weeks ? scopeModuleDurationLabel(module.duration_weeks) : null
 }
 
-export const PAYMENT_SCHEDULES = [
+const PAYMENT_SCHEDULES = [
   'upfront',
   'half_half',
   '30_40_30',
@@ -79,7 +78,7 @@ export const paymentScheduleInput = z.enum(PAYMENT_SCHEDULES)
 export type PaymentSchedule = z.infer<typeof paymentScheduleInput>
 
 /** A billable portion of the one-time amount of a proposal. */
-export const paymentPlanItemInput = z.object({
+const paymentPlanItemInput = z.object({
   id: z.string().min(1).max(64),
   title: z.string().trim().min(1, 'El concepto del plazo es obligatorio').max(160),
   percentage: z.coerce.number().positive('El porcentaje debe ser mayor que 0').max(100),

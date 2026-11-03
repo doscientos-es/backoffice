@@ -1,4 +1,4 @@
-import type { BillingCycle, LineItem } from '@/lib/finance'
+import type { BillingCycle } from '@/lib/finance'
 import { roundCurrency } from '@/lib/finance'
 
 export type SubscriptionCycle = Exclude<BillingCycle, 'none'>
@@ -80,9 +80,7 @@ export function annualProratedAmount(
   )
 }
 
-export function isAutomaticAnnualProration(
-  line: Pick<ProposalBillingLine, 'description'>,
-): boolean {
+function isAutomaticAnnualProration(line: Pick<ProposalBillingLine, 'description'>): boolean {
   const description = line.description.trim().toLowerCase()
   return (
     description.startsWith(ANNUAL_PRORATION_PREFIX.toLowerCase()) ||

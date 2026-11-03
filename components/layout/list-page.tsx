@@ -17,9 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty-state'
 
-export type { BreadcrumbEntry }
-
-export type ListValue = string | number | null | undefined
+type ListValue = string | number | null | undefined
 
 /** A cell owns its display and export value; columns select cells by name. */
 export type ListCell = { content: ReactNode; value?: ListValue }

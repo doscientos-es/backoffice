@@ -16,13 +16,6 @@ export function getRecoveryState(signals: RecoverySignals): RecoveryState {
  * Whole days elapsed since an ISO timestamp, or null when absent. Used to
  * surface how long a lost lead has been sitting untouched.
  */
-export function daysSince(iso: string | null): number | null {
-  if (!iso) return null
-  const then = new Date(iso).getTime()
-  if (Number.isNaN(then)) return null
-  return Math.max(0, Math.floor((Date.now() - then) / 86_400_000))
-}
-
 /**
  * Builds a self-service Cal.com booking URL for a lost lead. Prefills the guest
  * name/email and stamps `metadata[leadId]` so the Cal webhook merges the booking

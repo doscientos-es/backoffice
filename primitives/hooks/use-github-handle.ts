@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react'
  */
 const HANDLE_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/
 
-export type GithubHandleStatus =
+type GithubHandleStatus =
   | 'empty'
   | 'invalid'
   | 'checking'
@@ -111,6 +111,6 @@ export function useGithubHandle(handle: string, options: Options = {}): GithubHa
 }
 
 /** Synchronous regex check. */
-export function isValidGithubHandleShape(handle: string): boolean {
+function isValidGithubHandleShape(handle: string): boolean {
   return HANDLE_RE.test(handle.trim())
 }

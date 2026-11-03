@@ -10,7 +10,7 @@ export type InvoiceDisplayItem = {
   subtotal: number | string | null
 }
 
-export type InvoiceVatRow = { rate: number; base: number; tax: number }
+type InvoiceVatRow = { rate: number; base: number; tax: number }
 
 type InvoiceItemsSummaryProps = {
   items: InvoiceDisplayItem[]

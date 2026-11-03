@@ -84,10 +84,6 @@ export const WebProjectInput = z.object({
   db_pass: optionalText(500),
 })
 
-export type WebProjectInputType = z.infer<typeof WebProjectInput>
-
 export const UpdateWebProjectInput = WebProjectInput.extend({
   id: z.string().uuid(),
 })
-
-export type UpdateWebProjectInputType = z.infer<typeof UpdateWebProjectInput>

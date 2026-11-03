@@ -62,7 +62,6 @@ export const AddWorkLogInput = z
       })
     }
   })
-export type AddWorkLogInputType = z.infer<typeof AddWorkLogInput>
 
 /**
  * Edita una entrada existente. Si se envían `start_time` y `end_time`, se
@@ -96,7 +95,6 @@ export const UpdateWorkLogInput = z
       })
     }
   })
-export type UpdateWorkLogInputType = z.infer<typeof UpdateWorkLogInput>
 
 /**
  * Soft-delete payload. `project_id` travels alongside `id` so the action can
@@ -106,4 +104,3 @@ export const DeleteWorkLogInput = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
 })
-export type DeleteWorkLogInputType = z.infer<typeof DeleteWorkLogInput>

@@ -14,13 +14,13 @@ function trackingBase(appUrl: string): string {
   return appUrl.replace(/\/+$/, '')
 }
 
-export function appendOpenPixel(html: string, appUrl: string, token: string): string {
+function appendOpenPixel(html: string, appUrl: string, token: string): string {
   const src = `${trackingBase(appUrl)}/api/track/open/${token}`
   const pixel = `<img src="${src}" width="1" height="1" alt="" style="display:none!important;opacity:0;width:1px;height:1px" />`
   return `${html}\n${pixel}`
 }
 
-export function wrapTrackedLinks(html: string, appUrl: string, token: string): string {
+function wrapTrackedLinks(html: string, appUrl: string, token: string): string {
   const base = trackingBase(appUrl)
   return html.replace(HREF_RE, (match, quote: string, rawUrl: string) => {
     const destination = safeUrl(rawUrl)

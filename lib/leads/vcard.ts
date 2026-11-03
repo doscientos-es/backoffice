@@ -1,4 +1,4 @@
-export function normalizeLeadPhone(phone: string): string {
+function normalizeLeadPhone(phone: string): string {
   const cleaned = phone.replace(/[^\d+]/g, '')
   const plusIndex = cleaned.indexOf('+')
   return plusIndex > 0 ? cleaned.slice(plusIndex) : cleaned

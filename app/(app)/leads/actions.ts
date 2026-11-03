@@ -12,7 +12,6 @@ import { buildSignatureHtml } from '@/lib/email/signature'
 import { appendSignature, markdownToHtml, renderTemplate } from '@/lib/email/templates'
 import { addEmailTracking } from '@/lib/email/tracking'
 import { isGoogleEnabled, publicEnv, serverEnv } from '@/lib/env'
-import type { CalendarBusySlot } from '@/lib/google/calendar'
 import { pushMetaQualifiedLeadStage } from '@/lib/integrations/meta-capi'
 import { isAutomaticallyAccessible, summarizeCallOutcomes } from '@/lib/leads/call-qualification'
 import { CALL_SESSION_TTL_HOURS, completeCallSession } from '@/lib/leads/call-session'
@@ -38,7 +37,6 @@ import {
   AssignLeadOwnerInput,
   ArchiveLeadContactInput,
   DismissLeadMeetContactSuggestionInput,
-  CheckMeetingSlotInput,
   CallSessionInput,
   ConvertLeadInput,
   CreateLeadInput,
@@ -1984,35 +1982,7 @@ export const assignLeadOwner = defineAction({
 // ---------------- CALENDAR (Google Workspace) ----------------
 
 /**
- * Step 1 — Check for conflicts on the shared calendar without creating anything.
- * Returns the overlapping events so the user can decide whether to proceed.
- */
-const checkLeadMeetingSlot = defineAction({
-  name: 'leads.checkMeetingSlot',
-  schema: CheckMeetingSlotInput,
-  roles: ['owner', 'admin', 'member'],
-  handler: async (data, { user }): Promise<{ conflicts: CalendarBusySlot[] }> => {
-    if (!isGoogleEnabled()) return { conflicts: [] }
-    const calendarId = serverEnv().GOOGLE_CALENDAR_ID
-    if (!calendarId) return { conflicts: [] }
-    const [{ resolveSubject }, { findConflicts }] = await Promise.all([
-      import('@/lib/google/client'),
-      import('@/lib/google/calendar'),
-    ])
-    const subject = resolveSubject(user.email)
-
-    const conflicts = await findConflicts({
-      subject,
-      calendarId,
-      start: new Date(data.start),
-      end: new Date(data.end),
-    })
-    return { conflicts }
-  },
-})
-
-/**
- * Step 2 — Create the meeting on the shared calendar and record it as a
+ * Create the meeting on the shared calendar and record it as a
  * `meeting` interaction in the lead timeline.
  */
 export const scheduleLeadMeeting = defineAction<

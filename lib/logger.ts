@@ -6,7 +6,7 @@ let cached: Logger | null = null
  * Structured logger to stdout (pino).
  * In dev: pretty-printed; in prod: JSON for log aggregators.
  */
-export function logger(): Logger {
+function logger(): Logger {
   if (cached) return cached
   // Logging must work even when application environment validation fails.
   const configuredLevel = process.env.LOG_LEVEL?.trim()

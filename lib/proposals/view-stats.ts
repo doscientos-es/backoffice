@@ -8,7 +8,7 @@ export type ProposalViewStats = { visits: number; lastViewAt: string | null }
 export type ProposalHeat = 'none' | 'warm' | 'hot'
 
 /** Groups client opens (newest first or any order) into visits separated by at least 30 minutes. */
-export function summarizeViews(viewedAt: string[]): ProposalViewStats {
+function summarizeViews(viewedAt: string[]): ProposalViewStats {
   const times = viewedAt.map((value) => Date.parse(value)).filter(Number.isFinite)
   times.sort((a, b) => a - b)
   let visits = 0

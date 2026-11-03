@@ -4,10 +4,10 @@ export const numberFmt = new Intl.NumberFormat('es-ES')
 export const percentFmt = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 })
 
 // Visual cue thresholds — agreed with the user as starting points.
-export const CPL_GOOD = 15
-export const CPL_BAD = 25
-export const CTR_GOOD = 1.5
-export const CTR_BAD = 0.8
+const CPL_GOOD = 15
+const CPL_BAD = 25
+const CTR_GOOD = 1.5
+const CTR_BAD = 0.8
 
 export function cplClass(cpl: number, leads: number): string {
   if (leads === 0) return 'text-muted-foreground'

@@ -18,7 +18,7 @@ export type FiscalVerificationStatus =
 
 // ─── List ─────────────────────────────────────────────────────────────────────
 
-export type ClientListItem = {
+type ClientListItem = {
   id: string
   /** Internal optimistic-concurrency token. */
   version: number
@@ -55,13 +55,13 @@ export type ClientListResult = {
 
 // ─── Detail (related rows) ────────────────────────────────────────────────────
 
-export type ClientProjectItem = {
+type ClientProjectItem = {
   id: string
   name: string
   status: string | null
 }
 
-export type ClientProposalItem = {
+type ClientProposalItem = {
   id: string
   number: string | null
   title: string | null
@@ -69,7 +69,7 @@ export type ClientProposalItem = {
   total: number | null
 }
 
-export type ClientInvoiceItem = {
+type ClientInvoiceItem = {
   id: string
   full_number: string | null
   status: string | null
@@ -77,14 +77,14 @@ export type ClientInvoiceItem = {
   issue_date: string | null
 }
 
-export type ClientTaskItem = {
+type ClientTaskItem = {
   id: string
   title: string
   status: string
   due_date: string | null
 }
 
-export type ClientWebItem = {
+type ClientWebItem = {
   id: string
   name: string
   url: string
@@ -95,7 +95,7 @@ export type ClientWebItem = {
 
 // ─── Full client record ────────────────────────────────────────────────────────
 
-export type ClientDetail = {
+type ClientDetail = {
   id: string
   /** Internal optimistic-concurrency token. */
   version: number
@@ -119,7 +119,7 @@ export type ClientDetail = {
   updated_at: string | null
 }
 
-export type ClientOriginLead = {
+type ClientOriginLead = {
   id: string
   name: string
   company: string | null

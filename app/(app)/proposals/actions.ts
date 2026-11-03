@@ -1,10 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
-import { requirePermission, requireRole, requireUser } from '@/lib/auth'
+import { requirePermission, requireUser } from '@/lib/auth'
 import {
   ensureClientForProposal,
   ensureProjectForProposal,
@@ -17,11 +16,7 @@ import { createProposalDraftInvoices } from '@/lib/invoices/proposal-drafts'
 import { buildLeadStatusPatch } from '@/lib/leads/status-transitions'
 import { scopedLogger } from '@/lib/logger'
 import { buildPortalAccessPatch } from '@/lib/portal/access'
-import {
-  replaceProposalTeam,
-  saveProposalEditorDraft,
-  updateProposalRecord,
-} from '@/lib/proposals/editor-save'
+import { saveProposalEditorDraft, updateProposalRecord } from '@/lib/proposals/editor-save'
 import { buildProposalItemRows, buildProposalTotalsPatch } from '@/lib/proposals/items'
 import { ensureProposalMaintenanceSubscription } from '@/lib/proposals/maintenance-subscription'
 import { DEFAULT_PROPOSAL_LEGAL_TERMS } from '@/lib/proposals/proposal-acceptance'
@@ -204,42 +199,7 @@ export async function createSubscriptionFromProposal(
   return { ok: true, id: result.id }
 }
 
-export async function createProposal(formData: FormData): Promise<void> {
-  const user = await requirePermission('proposals.write')
-  await requirePermission('proposals.prices')
-
-  const itemsRaw = formData.get('items')?.toString() ?? '[]'
-  let items: unknown
-  try {
-    items = JSON.parse(itemsRaw)
-  } catch {
-    throw new Error('Líneas no válidas')
-  }
-
-  const parsed = CreateProposalInput.safeParse({
-    client_id: formData.get('client_id')?.toString() ?? '',
-    lead_id: formData.get('lead_id')?.toString() ?? '',
-    title: formData.get('title')?.toString() ?? '',
-    valid_until: formData.get('valid_until')?.toString() ?? '',
-    notes: formData.get('notes')?.toString() ?? '',
-    items,
-  })
-  if (!parsed.success) {
-    throw new Error(parsed.error.errors[0]?.message ?? 'Datos no válidos')
-  }
-
-  const supabase = await createServerClient()
-  const res = await insertDraftProposal(supabase, user.id, parsed.data)
-  if (!res.ok) throw new Error(res.error)
-
-  revalidatePath('/proposals')
-  redirect(`/proposals/${res.id}`)
-}
-
-/**
- * JSON version of createProposal for use with client-side calls.
- * Returns the created proposal ID on success.
- */
+/** Creates a draft proposal and returns its ID on success. */
 export async function createProposalAction(
   input: unknown,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
@@ -476,13 +436,6 @@ export async function linkProposalToProject(
   revalidatePath(`/proposals/${proposal_id}`)
   if (project_id) revalidatePath(`/projects/${project_id}`)
   return { ok: true }
-}
-
-// ---------------- PROPOSAL TEAM ----------------
-
-/** Replaces the people shown as the project team in the client deck. */
-export async function setProposalTeamMembers(input: unknown) {
-  return replaceProposalTeam(input)
 }
 
 // ---------------- DELETE (soft) ----------------

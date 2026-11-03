@@ -79,7 +79,7 @@ export async function scheduleInvoicePaymentFollowUp(
   return findInvoicePaymentFollowUp(supabase, invoiceId)
 }
 
-export async function findInvoicePaymentFollowUp(
+async function findInvoicePaymentFollowUp(
   supabase: DbClient,
   invoiceId: string,
 ): Promise<InvoicePaymentFollowUp | null> {

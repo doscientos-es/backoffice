@@ -17,7 +17,7 @@ import { emptyToUndef, optionalDate, optionalUuid, uuidIdInput } from './common'
  * touch `lib/schemas/expense` for validation + type derivation.
  */
 
-export { EXPENSE_CATEGORIES, EXPENSE_PAYMENT_SOURCES, EXPENSE_RECURRENCES, EXPENSE_STATUSES }
+export { EXPENSE_CATEGORIES, EXPENSE_STATUSES }
 
 export const ExpenseCategory = z.enum(EXPENSE_CATEGORIES)
 export type ExpenseCategoryType = z.infer<typeof ExpenseCategory>
@@ -86,4 +86,3 @@ export const UpdateExpenseInput = ExpenseBase.extend({
   id: z.string().uuid('ID inválido'),
   expected_version: z.coerce.number().int().positive(),
 }).refine(hasPayer, payerRefinement)
-export type UpdateExpenseInputType = z.infer<typeof UpdateExpenseInput>

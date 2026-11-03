@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import { PortalToken } from './portal'
 
-export const ProjectRequestCategory = z.enum([
+const ProjectRequestCategory = z.enum([
   'incident',
   'change',
   'question',
