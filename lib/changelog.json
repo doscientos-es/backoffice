@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.163",
+      "date": "2026-11-03",
+      "title": "v0.1.163",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Enhance invoice analysis with size and confirmation handling"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "7e5a1b114d1d37ad1d3d8848c70b10aa48335da8",
+          "type": "feat",
+          "scope": "invoice",
+          "breaking": false,
+          "description": "Enhance invoice analysis with size and confirmation handling"
+        }
+      ]
+    },
+    {
       "version": "0.1.162",
       "date": "2026-11-03",
       "title": "v0.1.162",

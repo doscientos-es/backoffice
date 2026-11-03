@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-03 — v0.1.163
+
+### Nuevas funciones
+
+- Enhance invoice analysis with size and confirmation handling
+
 ## 2026-11-03 — v0.1.162
 
 ### Nuevas funciones
