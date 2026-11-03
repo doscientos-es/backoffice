@@ -16,7 +16,7 @@ with ranked as (
     and description in ('CALL_PENDING', 'CALL_PENDING_NOTIFIED', 'CALL_AUTO_FOLLOW_UP')
 )
 update public.tasks t
-set deleted_at = now()
+set deleted_at = now(), status = 'cancelled'
 from ranked r
 where t.id = r.id and r.position > 1;
 
@@ -34,7 +34,7 @@ begin
     return new;
   end if;
   perform pg_advisory_xact_lock(hashtextextended(new.lead_id::text || ':' || new.assignee_id::text, 0));
-  update public.tasks set deleted_at = now()
+  update public.tasks set deleted_at = now(), status = 'cancelled'
   where lead_id = new.lead_id and assignee_id = new.assignee_id
     and kind = 'reminder' and status = 'todo'
     and completed_at is null and deleted_at is null
