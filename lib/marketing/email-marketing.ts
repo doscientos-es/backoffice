@@ -1,6 +1,9 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createServerClient } from '@/lib/supabase/server'
 
+import { personalizeMarketingText } from './personalization'
+import { getResendActivity } from './resend-events'
+
 export type EmailMarketingList = {
   id: string
   name: string
@@ -23,6 +26,7 @@ export type EmailMarketingStep = {
   last_error: string | null
   stats: {
     recipients: number
+    sent: number
     delivered: number
     opened: number
     clicked: number
@@ -43,7 +47,8 @@ export type EmailMarketingSequence = {
   steps: EmailMarketingStep[]
 }
 
-type EmailMarketingRecipientEvent = {
+export type EmailMarketingRecipientEvent = {
+  id: string
   email: string
   name: string | null
   company: string | null
@@ -51,6 +56,8 @@ type EmailMarketingRecipientEvent = {
   sent_at: string | null
   delivered_at: string | null
   opened_at: string | null
+  clicked_at: string | null
+  links: string[]
   click_count: number
   unsubscribed_at: string | null
   bounced_at: string | null
@@ -137,13 +144,15 @@ export async function getEmailMarketingOverview(): Promise<{
       const { data, error } = await supabase
         .from('lead_campaign_sends')
         .select(
-          'sequence_step_id, sent_at, delivered_at, opened_at, clicked_at, unsubscribed_at, bounced_at, complained_at, converted_lead_id, marketing_send_status',
+          'sequence_step_id, resend_email_id, sent_at, delivered_at, opened_at, clicked_at, unsubscribed_at, bounced_at, complained_at, converted_lead_id, marketing_send_status',
         )
         .in('sequence_step_id', stepIds)
+        .order('id')
         .range(offset, offset + 999)
       if (error) throw new Error(error.message)
       const rows = (data ?? []) as unknown as {
         sequence_step_id: string
+        resend_email_id: string | null
         sent_at: string | null
         delivered_at: string | null
         opened_at: string | null
@@ -154,9 +163,16 @@ export async function getEmailMarketingOverview(): Promise<{
         converted_lead_id: string | null
         marketing_send_status: string
       }[]
+      // The send query above applies the caller's RLS. Provider events may have
+      // no lead, so read only those authorized send IDs using the admin client.
+      const activity = await getResendActivity(
+        createAdminClient(),
+        rows.flatMap((row) => (row.resend_email_id ? [row.resend_email_id] : [])),
+      )
       for (const row of rows) {
         const stats = statsByStep.get(row.sequence_step_id) ?? {
           recipients: 0,
+          sent: 0,
           delivered: 0,
           opened: 0,
           clicked: 0,
@@ -166,9 +182,11 @@ export async function getEmailMarketingOverview(): Promise<{
           converted: 0,
         }
         if (row.marketing_send_status !== 'skipped') stats.recipients += 1
+        if (row.sent_at) stats.sent += 1
         if (row.delivered_at) stats.delivered += 1
-        if (row.opened_at) stats.opened += 1
-        if (row.clicked_at) stats.clicked += 1
+        const event = row.resend_email_id ? activity.get(row.resend_email_id) : undefined
+        if (row.opened_at || event?.openedAt) stats.opened += 1
+        if (row.clicked_at || event?.clickedAt) stats.clicked += 1
         if (row.unsubscribed_at) stats.unsubscribed += 1
         if (row.bounced_at) stats.bounced += 1
         if (row.complained_at) stats.complained += 1
@@ -193,6 +211,7 @@ export async function getEmailMarketingOverview(): Promise<{
         position: index + 1,
         stats: statsByStep.get(step.id) ?? {
           recipients: 0,
+          sent: 0,
           delivered: 0,
           opened: 0,
           clicked: 0,
@@ -213,6 +232,8 @@ export type EmailMarketingContact = {
   name: string | null
   company: string | null
   status: 'subscribed' | 'unsubscribed' | 'bounced' | 'complained'
+  unsubscribe_token: string
+  unsubscribed_at: string | null
 }
 
 export async function getEmailMarketingListContacts(listId: string, page: number) {
@@ -221,9 +242,12 @@ export async function getEmailMarketingListContacts(listId: string, page: number
   const offset = (page - 1) * pageSize
   const { data, error, count } = await supabase
     .from('email_marketing_list_members')
-    .select('contact_id, contact:email_marketing_contacts(id, email, name, company, status)', {
-      count: 'exact',
-    })
+    .select(
+      'contact_id, contact:email_marketing_contacts(id, email, name, company, status, unsubscribe_token, unsubscribed_at)',
+      {
+        count: 'exact',
+      },
+    )
     .eq('list_id', listId)
     .order('contact_id')
     .range(offset, offset + pageSize - 1)
@@ -236,57 +260,110 @@ export async function getEmailMarketingListContacts(listId: string, page: number
   }
 }
 
-export async function getEmailMarketingStepDetails(stepId: string, page: number) {
+export async function getSuppressedMarketingContacts(page: number) {
+  const supabase = await createServerClient()
+  const pageSize = 50
+  const offset = (page - 1) * pageSize
+  const { data, error, count } = await supabase
+    .from('email_marketing_contacts')
+    .select('id, email, name, company, status, unsubscribe_token, unsubscribed_at', {
+      count: 'exact',
+    })
+    .in('status', ['unsubscribed', 'bounced', 'complained'])
+    .order('unsubscribed_at', { ascending: false, nullsFirst: false })
+    .order('id')
+    .range(offset, offset + pageSize - 1)
+  if (error) throw new Error(error.message)
+  return { contacts: (data ?? []) as EmailMarketingContact[], count: count ?? 0, pageSize }
+}
+
+export type RecipientFilter = 'all' | 'opened' | 'clicked' | 'not_opened' | 'issues'
+
+export async function getEmailMarketingStepDetails(
+  stepId: string,
+  page: number,
+  filter: RecipientFilter = 'all',
+) {
   const supabase = await createServerClient()
   const pageSize = 50
   const offset = Math.max(0, page - 1) * pageSize
   const { data: step, error: stepError } = await supabase
     .from('email_marketing_sequence_steps')
     .select(
-      'id, title, subject, scheduled_at, status, sent_at, sequence:email_marketing_sequences(name, list:email_marketing_lists(name))',
+      'id, title, subject, scheduled_at, status, sent_at, sequence:email_marketing_sequences(id, list_id, name, list:email_marketing_lists(name))',
     )
     .eq('id', stepId)
     .maybeSingle()
-  if (stepError || !step) return null
+  if (stepError) throw new Error(stepError.message)
+  if (!step) return null
 
-  const countBase = () =>
-    supabase
-      .from('lead_campaign_sends')
-      .select('id', { count: 'exact', head: true })
-      .eq('sequence_step_id', stepId)
-  const [sendResult, delivered, opened, clicked, unsubscribed, bounced, complained, converted] =
-    await Promise.all([
-      supabase
-        .from('lead_campaign_sends')
-        .select(
-          'id, email, marketing_send_status, sent_at, delivered_at, opened_at, click_count, unsubscribed_at, bounced_at, complained_at, converted_lead_id, contact:email_marketing_contacts(name, company)',
-          { count: 'exact' },
-        )
-        .eq('sequence_step_id', stepId)
-        .order('email', { ascending: true })
-        .range(offset, offset + pageSize - 1),
-      countBase().not('delivered_at', 'is', null),
-      countBase().not('opened_at', 'is', null),
-      countBase().gt('click_count', 0),
-      countBase().not('unsubscribed_at', 'is', null),
-      countBase().not('bounced_at', 'is', null),
-      countBase().not('complained_at', 'is', null),
-      countBase().not('converted_lead_id', 'is', null),
-    ])
-  const rows = (sendResult.data ?? []) as unknown as {
+  type SendRow = {
     id: string
     email: string
+    resend_email_id: string | null
     marketing_send_status: string
     sent_at: string | null
     delivered_at: string | null
     opened_at: string | null
+    clicked_at: string | null
     click_count: number
     unsubscribed_at: string | null
     bounced_at: string | null
     complained_at: string | null
     converted_lead_id: string | null
     contact: { name: string | null; company: string | null } | null
-  }[]
+  }
+  const rows: SendRow[] = []
+  for (let start = 0; ; start += 1000) {
+    const { data, error } = await supabase
+      .from('lead_campaign_sends')
+      .select(
+        'id, email, resend_email_id, marketing_send_status, sent_at, delivered_at, opened_at, clicked_at, click_count, unsubscribed_at, bounced_at, complained_at, converted_lead_id, contact:email_marketing_contacts(name, company)',
+      )
+      .eq('sequence_step_id', stepId)
+      .order('email')
+      .order('id')
+      .range(start, start + 999)
+    if (error) throw new Error(error.message)
+    const batch = (data ?? []) as unknown as SendRow[]
+    rows.push(...batch)
+    if (batch.length < 1000) break
+  }
+  // Restrict provider history to send IDs returned by the caller's RLS query.
+  const activity = await getResendActivity(
+    createAdminClient(),
+    rows.flatMap((row) => (row.resend_email_id ? [row.resend_email_id] : [])),
+  )
+  const recipients: EmailMarketingRecipientEvent[] = rows.map((row) => {
+    const event = row.resend_email_id ? activity.get(row.resend_email_id) : undefined
+    return {
+      id: row.id,
+      email: row.email,
+      name: row.contact?.name ?? null,
+      company: row.contact?.company ?? null,
+      status: row.marketing_send_status,
+      sent_at: row.sent_at,
+      delivered_at: row.delivered_at,
+      opened_at: row.opened_at ?? event?.openedAt ?? null,
+      clicked_at: row.clicked_at ?? event?.clickedAt ?? null,
+      links: event?.links ?? [],
+      click_count: row.click_count,
+      unsubscribed_at: row.unsubscribed_at,
+      bounced_at: row.bounced_at,
+      complained_at: row.complained_at,
+      converted_lead_id: row.converted_lead_id,
+    }
+  })
+  const filtered = recipients.filter((row) => {
+    if (filter === 'opened') return Boolean(row.opened_at)
+    if (filter === 'clicked') return Boolean(row.clicked_at)
+    if (filter === 'not_opened') return Boolean(row.sent_at && !row.opened_at)
+    if (filter === 'issues')
+      return Boolean(
+        row.bounced_at || row.complained_at || row.unsubscribed_at || row.status === 'failed',
+      )
+    return true
+  })
   return {
     step: step as unknown as {
       id: string
@@ -295,42 +372,28 @@ export async function getEmailMarketingStepDetails(stepId: string, page: number)
       scheduled_at: string
       status: string
       sent_at: string | null
-      sequence: { name: string; list: { name: string } | null } | null
+      sequence: { id: string; list_id: string; name: string; list: { name: string } | null } | null
     },
     page,
     pageSize,
-    total: sendResult.count ?? 0,
+    total: filtered.length,
+    totalRecipients: recipients.length,
     metrics: {
-      delivered: delivered.count ?? 0,
-      opened: opened.count ?? 0,
-      clicked: clicked.count ?? 0,
-      unsubscribed: unsubscribed.count ?? 0,
-      bounced: bounced.count ?? 0,
-      complained: complained.count ?? 0,
-      converted: converted.count ?? 0,
+      sent: recipients.filter((row) => row.sent_at).length,
+      delivered: recipients.filter((row) => row.delivered_at).length,
+      opened: recipients.filter((row) => row.opened_at).length,
+      clicked: recipients.filter((row) => row.clicked_at).length,
+      unsubscribed: recipients.filter((row) => row.unsubscribed_at).length,
+      bounced: recipients.filter((row) => row.bounced_at).length,
+      complained: recipients.filter((row) => row.complained_at).length,
+      converted: recipients.filter((row) => row.converted_lead_id).length,
     },
-    recipients: rows.map(
-      (row) =>
-        ({
-          email: row.email,
-          name: row.contact?.name ?? null,
-          company: row.contact?.company ?? null,
-          status: row.marketing_send_status,
-          sent_at: row.sent_at,
-          delivered_at: row.delivered_at,
-          opened_at: row.opened_at,
-          click_count: row.click_count,
-          unsubscribed_at: row.unsubscribed_at,
-          bounced_at: row.bounced_at,
-          complained_at: row.complained_at,
-          converted_lead_id: row.converted_lead_id,
-        }) satisfies EmailMarketingRecipientEvent,
-    ),
+    recipients: filtered.slice(offset, offset + pageSize),
   }
 }
 
 /** Processes due sequence steps and a bounded recipient batch for scheduled campaigns. */
-export async function processDueEmailMarketing(): Promise<{
+export async function processDueEmailMarketing(options: { stepId?: string } = {}): Promise<{
   prepared: number
   sent: number
   skipped: number
@@ -343,14 +406,18 @@ export async function processDueEmailMarketing(): Promise<{
   let skipped = 0
   let failed = 0
 
-  const { data: dueSteps, error: dueError } = await supabase
+  let dueQuery = supabase
     .from('email_marketing_sequence_steps')
     .select(
-      'id, sequence_id, position, title, subject, preview_text, body_markdown, scheduled_at, sequence:email_marketing_sequences(id, list_id, name, status)',
+      'id, sequence_id, position, title, subject, preview_text, body_markdown, scheduled_at, sequence:email_marketing_sequences!inner(id, list_id, name, status)',
     )
     .eq('status', 'scheduled')
     .lte('scheduled_at', now)
+    .eq('sequence.status', 'active')
+    .is('sequence.deleted_at', null)
     .limit(5)
+  if (options.stepId) dueQuery = dueQuery.eq('id', options.stepId)
+  const { data: dueSteps, error: dueError } = await dueQuery
   if (dueError) throw new Error(dueError.message)
 
   for (const raw of (dueSteps ?? []) as unknown as {
@@ -385,30 +452,29 @@ export async function processDueEmailMarketing(): Promise<{
       if (campaignError || !campaign)
         throw new Error(campaignError?.message ?? 'No se pudo crear la campaña')
 
-      const { error: linkError } = await supabase
-        .from('email_marketing_sequence_steps')
-        .update({ tracking_campaign_id: campaign.id })
-        .eq('id', raw.id)
-      if (linkError) throw new Error(linkError.message)
-
-      const { data: members, error: membersError } = await supabase
-        .from('email_marketing_list_members')
-        .select('contact:email_marketing_contacts(id, email, name, company, lead_id, status)')
-        .eq('list_id', raw.sequence.list_id)
-      if (membersError) throw new Error(membersError.message)
-
-      const recipients = (
-        (members ?? []) as unknown as {
-          contact: {
-            id: string
-            email: string
-            name: string | null
-            company: string | null
-            lead_id: string | null
-            status: string
-          } | null
-        }[]
-      )
+      const members: {
+        contact: {
+          id: string
+          email: string
+          name: string | null
+          company: string | null
+          lead_id: string | null
+          status: string
+        } | null
+      }[] = []
+      for (let start = 0; ; start += 1000) {
+        const { data, error } = await supabase
+          .from('email_marketing_list_members')
+          .select('contact:email_marketing_contacts(id, email, name, company, lead_id, status)')
+          .eq('list_id', raw.sequence.list_id)
+          .order('contact_id')
+          .range(start, start + 999)
+        if (error) throw new Error(error.message)
+        const batch = (data ?? []) as unknown as typeof members
+        members.push(...batch)
+        if (batch.length < 1000) break
+      }
+      const recipients = members
         .map((member) => member.contact)
         .filter((contact) => contact?.status === 'subscribed')
       for (let offset = 0; offset < recipients.length; offset += 250) {
@@ -420,12 +486,18 @@ export async function processDueEmailMarketing(): Promise<{
           email: contact!.email,
           marketing_send_status: 'queued',
         }))
-        const { error } = await supabase.from('lead_campaign_sends').upsert(rows, {
-          onConflict: 'sequence_step_id,marketing_contact_id',
-          ignoreDuplicates: true,
-        })
+        // The step is claimed once and list membership is unique. A plain insert
+        // also works with the partial unique index on step/contact.
+        const { error } = await supabase.from('lead_campaign_sends').insert(rows)
         if (error) throw new Error(error.message)
       }
+      // Publish the campaign only once the complete queue is ready. Other workers
+      // use this link to decide whether the step can be sent or finalized.
+      const { error: linkError } = await supabase
+        .from('email_marketing_sequence_steps')
+        .update({ tracking_campaign_id: campaign.id })
+        .eq('id', raw.id)
+      if (linkError) throw new Error(linkError.message)
       prepared += recipients.length
     } catch (error) {
       failed += 1
@@ -439,14 +511,20 @@ export async function processDueEmailMarketing(): Promise<{
     }
   }
 
-  const { data: queue, error: queueError } = await supabase
+  let queueQuery = supabase
     .from('lead_campaign_sends')
     .select(
-      'id, campaign_id, lead_id, email, tracking_token, marketing_contact_id, sequence_step_id, marketing_contact:email_marketing_contacts(name, company, status), step:email_marketing_sequence_steps(id, title, subject, preview_text, body_markdown, sequence:email_marketing_sequences(name, status))',
+      'id, campaign_id, lead_id, email, tracking_token, marketing_contact_id, sequence_step_id, marketing_contact:email_marketing_contacts(name, company, status), step:email_marketing_sequence_steps!inner(id, title, subject, preview_text, body_markdown, sequence:email_marketing_sequences!inner(name, status))',
     )
     .eq('marketing_send_status', 'queued')
     .not('sequence_step_id', 'is', null)
+    .eq('step.status', 'sending')
+    .not('step.tracking_campaign_id', 'is', null)
+    .eq('step.sequence.status', 'active')
+    .is('step.sequence.deleted_at', null)
     .limit(50)
+  if (options.stepId) queueQuery = queueQuery.eq('sequence_step_id', options.stepId)
+  const { data: queue, error: queueError } = await queueQuery
   if (queueError) throw new Error(queueError.message)
 
   const {
@@ -508,11 +586,32 @@ export async function processDueEmailMarketing(): Promise<{
     if (!claim) continue
 
     try {
-      let html = markdownToHtml(
-        row.step.body_markdown
-          .replace(/\{\{\s*nombre\s*\}\}/g, row.marketing_contact?.name ?? '')
-          .replace(/\{\{\s*empresa\s*\}\}/g, row.marketing_contact?.company ?? '')
-          .replace(/\{\{\s*email\s*\}\}/g, row.email),
+      // The queue may have been loaded before the recipient opted out.
+      const { data: currentContact, error: contactError } = await supabase
+        .from('email_marketing_contacts')
+        .select('status')
+        .eq('id', row.marketing_contact_id)
+        .maybeSingle()
+      if (contactError) throw new Error('No se pudo comprobar la baja del contacto.')
+      if (currentContact?.status !== 'subscribed') {
+        const { error } = await supabase
+          .from('lead_campaign_sends')
+          .update({ marketing_send_status: 'skipped' })
+          .eq('id', row.id)
+          .eq('marketing_send_status', 'sending')
+        if (error) throw new Error(error.message)
+        skipped += 1
+        continue
+      }
+      const contact = {
+        name: row.marketing_contact?.name ?? null,
+        company: row.marketing_contact?.company ?? null,
+        email: row.email,
+      }
+      let html = personalizeMarketingText(
+        markdownToHtml(row.step.body_markdown),
+        contact,
+        escapeHtml,
       )
       html = html.replace(/href=(["'])([^"']+)\1/gi, (match, quote: string, rawUrl: string) => {
         try {
@@ -535,18 +634,22 @@ export async function processDueEmailMarketing(): Promise<{
       })
       const unsubscribeUrl = `${appUrl.replace(/\/+$/, '')}/api/track/unsubscribe/${row.tracking_token}`
       if (row.step.preview_text) {
-        html = `<div style="display:none!important;max-height:0;overflow:hidden;opacity:0;color:transparent">${escapeHtml(row.step.preview_text)}</div>${html}`
+        html = `<div style="display:none!important;max-height:0;overflow:hidden;opacity:0;color:transparent">${personalizeMarketingText(row.step.preview_text, contact, escapeHtml)}</div>${html}`
       }
-      html = `<p style="padding:12px;background:#f5f5f4;text-align:center;font-size:13px"><a href="${unsubscribeUrl}" style="color:#444;font-weight:600">¿No quieres recibir más emails? Date de baja aquí</a></p>${html}<hr style="border:0;border-top:1px solid #e5e7eb;margin:28px 0 16px"/><p style="font-size:12px;line-height:18px;color:#6b7280">Recibes este mensaje porque te suscribiste a las comunicaciones de Doscientos. <a href="${unsubscribeUrl}">Darte de baja</a>.</p>`
       html = addEmailTracking(html, appUrl, row.tracking_token)
+      html = `<p style="padding:12px;background:#f5f5f4;text-align:center;font-size:13px"><a href="${unsubscribeUrl}" style="color:#444;font-weight:600">¿No quieres recibir más emails? Date de baja aquí</a></p>${html}<hr style="border:0;border-top:1px solid #e5e7eb;margin:28px 0 16px"/><p style="font-size:12px;line-height:18px;color:#6b7280">Recibes este mensaje porque te suscribiste a las comunicaciones de Doscientos. <a href="${unsubscribeUrl}">Darte de baja</a>.</p>`
       const result = await sendEmail({
         fromName: EMAIL_MARKETING_FROM_NAME,
         fromAlias: EMAIL_MARKETING_FROM_EMAIL,
         to: row.email,
         replyTo: EMAIL_MARKETING_REPLY_TO,
         apiKey: marketingApiKey,
-        subject: row.step.subject,
+        subject: personalizeMarketingText(row.step.subject, contact),
         html,
+        headers: {
+          'List-Unsubscribe': `<${unsubscribeUrl}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
         tags: {
           marketing_campaign_id: row.campaign_id,
           sequence_step_id: row.step.id,
@@ -591,11 +694,13 @@ export async function processDueEmailMarketing(): Promise<{
     }
   }
 
-  const { data: sendingSteps } = await supabase
+  let sendingQuery = supabase
     .from('email_marketing_sequence_steps')
     .select('id, tracking_campaign_id')
     .eq('status', 'sending')
     .not('tracking_campaign_id', 'is', null)
+  if (options.stepId) sendingQuery = sendingQuery.eq('id', options.stepId)
+  const { data: sendingSteps } = await sendingQuery
   for (const step of (sendingSteps ?? []) as { id: string; tracking_campaign_id: string }[]) {
     const { count } = await supabase
       .from('lead_campaign_sends')

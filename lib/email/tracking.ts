@@ -23,7 +23,8 @@ function appendOpenPixel(html: string, appUrl: string, token: string): string {
 function wrapTrackedLinks(html: string, appUrl: string, token: string): string {
   const base = trackingBase(appUrl)
   return html.replace(HREF_RE, (match, quote: string, rawUrl: string) => {
-    const destination = safeUrl(rawUrl)
+    // URLs in HTML attributes encode ampersands as entities.
+    const destination = safeUrl(rawUrl.replace(/&amp;/gi, '&'))
     if (!destination) return match
     const tracked = `${base}/api/track/click/${token}?url=${encodeURIComponent(destination)}`
     return `href=${quote}${tracked}${quote}`

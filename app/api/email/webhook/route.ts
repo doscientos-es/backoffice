@@ -35,6 +35,7 @@ const RESEND_EVENT_SUBJECT: Record<string, string> = {
 
 type ResendWebhookPayload = {
   type?: string
+  created_at?: string
   data?: {
     email_id?: string
     from?: string
@@ -101,17 +102,22 @@ function verifySvixSignature(
 
 export async function POST(request: NextRequest) {
   const env = serverEnv()
-  if (!env.RESEND_WEBHOOK_SECRET) {
+  const secrets = [env.RESEND_WEBHOOK_SECRET, env.EMAIL_MARKETING_RESEND_WEBHOOK_SECRET].filter(
+    Boolean,
+  )
+  if (!secrets.length) {
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 })
   }
   const raw = await request.text()
   if (
-    !verifySvixSignature(
-      env.RESEND_WEBHOOK_SECRET,
-      raw,
-      request.headers.get('svix-id'),
-      request.headers.get('svix-timestamp'),
-      request.headers.get('svix-signature'),
+    !secrets.some((secret) =>
+      verifySvixSignature(
+        secret,
+        raw,
+        request.headers.get('svix-id'),
+        request.headers.get('svix-timestamp'),
+        request.headers.get('svix-signature'),
+      ),
     )
   ) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
@@ -133,14 +139,17 @@ export async function POST(request: NextRequest) {
   if (!interactionType) return NextResponse.json({ ok: true })
 
   const supabase = createAdminClient()
-  const eventAt = payload.data?.created_at
-    ? new Date(String(payload.data.created_at)).toISOString()
-    : new Date().toISOString()
+  const eventDate = new Date(payload.created_at ?? Date.now())
+  const eventAt = Number.isNaN(eventDate.getTime())
+    ? new Date().toISOString()
+    : eventDate.toISOString()
   if (type === 'email.delivered') {
-    await supabase
+    const { error: deliveryError } = await supabase
       .from('lead_campaign_sends')
       .update({ delivered_at: eventAt })
       .eq('resend_email_id', emailId)
+    if (deliveryError)
+      return NextResponse.json({ error: 'Could not update delivery' }, { status: 500 })
   } else if (
     type === 'email.bounced' ||
     type === 'email.complained' ||
@@ -203,11 +212,24 @@ export async function POST(request: NextRequest) {
       subject: eventSubject(type, payload.data?.subject),
       resend_email_id: emailId,
       resend_webhook_id: webhookId,
-      payload: payload.data as Record<string, unknown>,
+      payload: { ...payload.data, event_created_at: eventAt },
     },
     { onConflict: 'resend_webhook_id', ignoreDuplicates: true },
   )
   if (error) return NextResponse.json({ error: 'Could not record email event' }, { status: 500 })
+
+  // A webhook can be retried; only set the first observed event and never increment
+  // the pixel counters here (the provider and our pixel may both see the same event).
+  if (type === 'email.opened' || type === 'email.clicked') {
+    const column = type === 'email.opened' ? 'opened_at' : 'clicked_at'
+    const { error: trackingError } = await supabase
+      .from('lead_campaign_sends')
+      .update({ [column]: eventAt })
+      .eq('resend_email_id', emailId)
+      .is(column, null)
+    if (trackingError)
+      return NextResponse.json({ error: 'Could not update email tracking' }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true })
 }

@@ -25,6 +25,7 @@ export type SendEmailInput = {
   subject: string
   html: string
   tags?: Record<string, string>
+  headers?: Record<string, string>
   attachments?: Array<{ filename: string; content: Buffer | string }>
   /** Overrides RESEND_API_KEY (e.g. the dedicated email marketing account). */
   apiKey?: string
@@ -51,6 +52,7 @@ export async function sendEmail(
     html: input.html,
     replyTo: input.replyTo,
     attachments: input.attachments,
+    headers: input.headers,
     tags: input.tags
       ? Object.entries(input.tags).map(([name, value]) => ({ name, value }))
       : undefined,

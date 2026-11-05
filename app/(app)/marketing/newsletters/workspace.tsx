@@ -9,6 +9,7 @@ import {
   type EmailMarketingSequence,
 } from '@/lib/marketing/email-marketing'
 
+import { MarketingAnalytics } from './analytics'
 import {
   CreateListDialog,
   CreateSequenceDialog,
@@ -16,6 +17,7 @@ import {
   ImportContactsDialog,
 } from './list-dialogs'
 import { EditMarketingDialog, RemoveContactDialog } from './manage-dialogs'
+import { CopyUnsubscribeLink, UnsubscribeContactDialog } from './unsubscribe-controls'
 
 const base = '/marketing/newsletters'
 const contactStatuses: Record<string, string> = {
@@ -39,15 +41,18 @@ export async function MarketingWorkspace({
   sequences,
   list,
   page,
+  appUrl,
 }: {
   lists: EmailMarketingList[]
   sequences: EmailMarketingSequence[]
   list?: EmailMarketingList
   page: number
+  appUrl: string
 }) {
   if (!list)
     return (
       <>
+        <MarketingAnalytics sequences={sequences} />
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             [ContactRound, 'Listas', lists.length],
@@ -83,7 +88,21 @@ export async function MarketingWorkspace({
                 Entra en una lista para gestionar sus contactos y secuencias.
               </p>
             </div>
-            <CreateListDialog />
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`${base}/calendar`}
+                className="inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium hover:bg-muted"
+              >
+                Calendario de envíos
+              </Link>
+              <Link
+                href={`${base}/unsubscribed`}
+                className="inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium hover:bg-muted"
+              >
+                Ver bajas y bloqueos
+              </Link>
+              <CreateListDialog />
+            </div>
           </div>
           {lists.length === 0 ? (
             <Card>
@@ -247,11 +266,15 @@ export async function MarketingWorkspace({
                           : contact.company || ''}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge variant={contact.status === 'subscribed' ? 'success' : 'warning'}>
                         {contactStatuses[contact.status] ?? contact.status}
                       </Badge>
                       <EditMarketingDialog target={{ kind: 'contact', value: contact }} />
+                      <CopyUnsubscribeLink token={contact.unsubscribe_token} appUrl={appUrl} />
+                      {contact.status === 'subscribed' && (
+                        <UnsubscribeContactDialog contact={contact} />
+                      )}
                       <RemoveContactDialog listId={list.id} contact={contact} />
                     </div>
                   </div>

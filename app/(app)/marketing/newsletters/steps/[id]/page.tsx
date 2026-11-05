@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { requireUser } from '@/lib/auth'
-import { getEmailMarketingStepDetails } from '@/lib/marketing/email-marketing'
+import { getEmailMarketingStepDetails, type RecipientFilter } from '@/lib/marketing/email-marketing'
+
+import { percent } from '../../analytics'
 
 export const metadata: Metadata = { title: 'Actividad de email - doscientos' }
 export const dynamic = 'force-dynamic'
@@ -24,7 +26,7 @@ function eventBadges(recipient: {
   status: string
   delivered_at: string | null
   opened_at: string | null
-  click_count: number
+  clicked_at: string | null
   unsubscribed_at: string | null
   bounced_at: string | null
   complained_at: string | null
@@ -37,7 +39,7 @@ function eventBadges(recipient: {
   else events.push('Enviado')
   if (recipient.delivered_at) events.push('Entregado')
   if (recipient.opened_at) events.push('Abierto')
-  if (recipient.click_count > 0) events.push(`Clics ${recipient.click_count}`)
+  if (recipient.clicked_at) events.push('Clic')
   if (recipient.converted_lead_id) events.push('Formulario')
   if (recipient.unsubscribed_at) events.push('Baja')
   if (recipient.bounced_at) events.push('Rebotado')
@@ -50,12 +52,19 @@ export default async function EmailMarketingStepActivityPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; filter?: string }>
 }) {
   await requireUser()
   const [{ id }, query] = await Promise.all([params, searchParams])
-  const page = Math.max(1, Number.parseInt(query.page ?? '1', 10) || 1)
-  const details = await getEmailMarketingStepDetails(id, page)
+  const parsedPage = Number(query.page)
+  const page =
+    Number.isSafeInteger(parsedPage) && parsedPage > 0 && parsedPage <= 100000 ? parsedPage : 1
+  const filter: RecipientFilter = ['opened', 'clicked', 'not_opened', 'issues'].includes(
+    query.filter ?? '',
+  )
+    ? (query.filter as RecipientFilter)
+    : 'all'
+  const details = await getEmailMarketingStepDetails(id, page, filter)
 
   if (!details) {
     return (
@@ -87,7 +96,15 @@ export default async function EmailMarketingStepActivityPage({
         ]}
         actions={
           <Button asChild variant="outline">
-            <Link href="/marketing/newsletters">Volver a secuencias</Link>
+            <Link
+              href={
+                details.step.sequence
+                  ? `/marketing/newsletters?list=${details.step.sequence.list_id}&sequence=${details.step.sequence.id}`
+                  : '/marketing/newsletters'
+              }
+            >
+              Volver a secuencia
+            </Link>
           </Button>
         }
       />
@@ -96,14 +113,15 @@ export default async function EmailMarketingStepActivityPage({
         <CardHeader>
           <CardTitle>{details.step.subject}</CardTitle>
           <CardDescription>
-            {details.total} contactos · envío{' '}
+            {details.totalRecipients} contactos · envío{' '}
             {details.step.sent_at
               ? `completado ${fmtDate(details.step.sent_at)}`
               : `previsto ${fmtDate(details.step.scheduled_at)}`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+        <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
           {[
+            ['Enviados', details.metrics.sent],
             ['Entregados', details.metrics.delivered],
             ['Aperturas', details.metrics.opened],
             ['Clics', details.metrics.clicked],
@@ -118,16 +136,41 @@ export default async function EmailMarketingStepActivityPage({
             </div>
           ))}
         </CardContent>
+        <div className="px-6 pb-5 text-sm text-muted-foreground">
+          Apertura: {percent(details.metrics.opened, details.metrics.delivered)} · Clic:{' '}
+          {percent(details.metrics.clicked, details.metrics.delivered)} sobre entregados
+        </div>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Actividad por contacto</CardTitle>
           <CardDescription>
-            Las aperturas son orientativas; los clics y formularios muestran acciones más directas.
+            Datos por destinatario; los filtros incluyen el historial de Resend. Las aperturas y
+            clics pueden incluir actividad automática de privacidad o seguridad.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <nav aria-label="Filtrar destinatarios" className="mb-4 flex flex-wrap gap-2 text-sm">
+            {(
+              [
+                ['all', 'Todos'],
+                ['opened', 'Abiertos'],
+                ['clicked', 'Con clic'],
+                ['not_opened', 'Sin apertura'],
+                ['issues', 'Bajas e incidencias'],
+              ] as const
+            ).map(([value, label]) => (
+              <Link
+                key={value}
+                href={`/marketing/newsletters/steps/${id}?filter=${value}`}
+                aria-current={filter === value ? 'page' : undefined}
+                className={`rounded-lg border px-3 py-1.5 ${filter === value ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b text-left text-muted-foreground">
@@ -143,12 +186,12 @@ export default async function EmailMarketingStepActivityPage({
                 {details.recipients.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-muted-foreground">
-                      Todavía no hay destinatarios preparados.
+                      No hay destinatarios para este filtro.
                     </td>
                   </tr>
                 ) : (
                   details.recipients.map((recipient) => (
-                    <tr key={`${recipient.email}-${recipient.status}`} className="align-top">
+                    <tr key={recipient.id} className="align-top">
                       <td className="py-3 pr-4">
                         <div className="font-medium">{recipient.name ?? recipient.email}</div>
                         {recipient.name ? (
@@ -186,7 +229,31 @@ export default async function EmailMarketingStepActivityPage({
                           '—'
                         )}
                       </td>
-                      <td className="py-3 pr-4 tabular-nums">{recipient.click_count}</td>
+                      <td className="max-w-xs py-3 pr-4">
+                        {recipient.clicked_at ? (
+                          <>
+                            <div>Clic registrado</div>
+                            <div className="text-xs text-muted-foreground">
+                              {fmtDate(recipient.clicked_at)}
+                            </div>
+                            {recipient.links.map((link) => (
+                              <div
+                                key={link}
+                                className="mt-1 text-xs break-all text-muted-foreground"
+                              >
+                                {link}
+                              </div>
+                            ))}
+                            {recipient.links.length === 0 && (
+                              <div className="text-xs text-muted-foreground">
+                                Enlace no disponible
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
                       <td className="py-3">
                         <div className="flex max-w-sm flex-wrap gap-1">
                           {eventBadges(recipient).map((event) => (
@@ -224,12 +291,18 @@ export default async function EmailMarketingStepActivityPage({
             <div className="flex gap-2">
               {page > 1 ? (
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/marketing/newsletters/steps/${id}?page=${page - 1}`}>Anterior</Link>
+                  <Link
+                    href={`/marketing/newsletters/steps/${id}?filter=${filter}&page=${Math.min(page - 1, totalPages)}`}
+                  >
+                    Anterior
+                  </Link>
                 </Button>
               ) : null}
               {page < totalPages ? (
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/marketing/newsletters/steps/${id}?page=${page + 1}`}>
+                  <Link
+                    href={`/marketing/newsletters/steps/${id}?filter=${filter}&page=${page + 1}`}
+                  >
                     Siguiente
                   </Link>
                 </Button>

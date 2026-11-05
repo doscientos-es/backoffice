@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { db, role } = vi.hoisted(() => ({
+const { db, role, processor } = vi.hoisted(() => ({
   db: {
     results: [] as Array<{
       data?: unknown
@@ -10,10 +10,15 @@ const { db, role } = vi.hoisted(() => ({
     calls: [] as Array<{ table: string; method: string; args: unknown[] }>,
   },
   role: { value: 'admin' },
+  processor: vi.fn(),
 }))
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/logger', () => ({ scopedLogger: () => ({ warn: vi.fn(), error: vi.fn() }) }))
+vi.mock('@/lib/env', () => ({
+  serverEnv: () => ({ RESEND_API_KEY: 'fake-test-key', EMAIL_MARKETING_RESEND_API_KEY: '' }),
+}))
+vi.mock('@/lib/marketing/email-marketing', () => ({ processDueEmailMarketing: processor }))
 vi.mock('@/lib/auth', () => ({
   requireRole: async (roles: string[]) => {
     if (!roles.includes(role.value)) throw new Error('Sin permisos')
@@ -56,6 +61,8 @@ import {
   deleteEmailMarketingSequence,
   deleteEmailMarketingStep,
   removeEmailMarketingContact,
+  sendEmailMarketingStepNow,
+  unsubscribeMarketingContact,
   updateEmailMarketingContact,
   updateEmailMarketingList,
 } from './actions'
@@ -67,9 +74,24 @@ beforeEach(() => {
   db.results = []
   db.calls = []
   role.value = 'admin'
+  processor.mockReset().mockResolvedValue({ sent: 1, failed: 0 })
 })
 
 describe('gestión de listas y secuencias', () => {
+  it('da de baja globalmente sin eliminar el contacto ni sus pertenencias', async () => {
+    db.results = [{ data: { id } }]
+    expect(await unsubscribeMarketingContact({ id })).toEqual({ ok: true })
+    expect(db.calls).toContainEqual(
+      expect.objectContaining({
+        table: 'email_marketing_contacts',
+        method: 'update',
+        args: [
+          expect.objectContaining({ status: 'unsubscribed', unsubscribed_at: expect.any(String) }),
+        ],
+      }),
+    )
+    expect(db.calls.some((call) => call.method === 'delete')).toBe(false)
+  })
   it('rechaza nombres de lista duplicados sin modificar la lista', async () => {
     db.results = [{ data: { id: otherId } }]
     const result = await updateEmailMarketingList({ id, name: 'Clientes', description: '' })
@@ -160,6 +182,64 @@ describe('gestión de listas y secuencias', () => {
     })
     expect(result).toMatchObject({ ok: false, error: expect.stringContaining('completada') })
     expect(db.calls.some((call) => call.method === 'insert')).toBe(false)
+  })
+
+  it('rechaza fechas inexistentes antes de programar', async () => {
+    const result = await addEmailMarketingStep({
+      sequenceId: id,
+      title: 'Correo',
+      subject: 'Hola',
+      bodyMarkdown: 'Contenido',
+      scheduledAt: '2099-02-31T10:00',
+    })
+    expect(result).toMatchObject({ ok: false, error: expect.stringContaining('fecha') })
+    expect(db.calls).toHaveLength(0)
+  })
+
+  it('no envía sin confirmación o con la secuencia pausada', async () => {
+    expect(await sendEmailMarketingStepNow({ id, confirm: false } as never)).toMatchObject({
+      ok: false,
+    })
+    db.results = [
+      {
+        data: {
+          id,
+          status: 'scheduled',
+          tracking_campaign_id: null,
+          sequence: { status: 'paused', deleted_at: null },
+        },
+      },
+    ]
+    expect(await sendEmailMarketingStepNow({ id, confirm: true })).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('Activa'),
+    })
+    expect(processor).not.toHaveBeenCalled()
+    expect(db.calls.some((call) => call.method === 'update')).toBe(false)
+  })
+
+  it('inicia únicamente el email confirmado y no lo duplica si falla el procesador', async () => {
+    const step = {
+      id,
+      status: 'scheduled',
+      tracking_campaign_id: null,
+      sequence: { status: 'active', deleted_at: null },
+    }
+    db.results = [{ data: step }, { data: { id } }]
+    expect(await sendEmailMarketingStepNow({ id, confirm: true })).toEqual({
+      ok: true,
+      outcome: 'started',
+    })
+    expect(processor).toHaveBeenCalledWith({ stepId: id })
+    expect(db.calls).toContainEqual(
+      expect.objectContaining({ method: 'is', args: ['tracking_campaign_id', null] }),
+    )
+    db.results = [{ data: step }, { data: { id } }]
+    processor.mockRejectedValueOnce(new Error('offline'))
+    expect(await sendEmailMarketingStepNow({ id, confirm: true })).toEqual({
+      ok: true,
+      outcome: 'queued',
+    })
   })
 
   it('no elimina un email en envío y exige permisos de administrador', async () => {

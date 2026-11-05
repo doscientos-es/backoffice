@@ -36,6 +36,11 @@ function madridDateTimeToIso(value: string): string {
     )
     result += targetUtc - represented
   }
+  const check = Object.fromEntries(
+    formatter.formatToParts(new Date(result)).map((part) => [part.type, part.value]),
+  )
+  if (`${check.year}-${check.month}-${check.day}T${check.hour}:${check.minute}` !== value)
+    throw new Error('La fecha o la hora no existe en el horario peninsular.')
   return new Date(result).toISOString()
 }
 
@@ -227,6 +232,25 @@ export const removeEmailMarketingContact = defineAction({
   },
 })
 
+export const unsubscribeMarketingContact = defineAction({
+  name: 'emailMarketing.unsubscribeContact',
+  schema: z.object({ id: z.string().uuid() }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH, `${PATH}/unsubscribed`],
+  handler: async ({ id }) => {
+    const supabase = await createServerClient()
+    const { data, error } = await supabase
+      .from('email_marketing_contacts')
+      .update({ status: 'unsubscribed', unsubscribed_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('status', 'subscribed')
+      .select('id')
+      .maybeSingle()
+    if (error || !data)
+      throw new Error(error?.message ?? 'El contacto no existe o ya está bloqueado.')
+  },
+})
+
 export const importEmailMarketingContacts = defineAction({
   name: 'emailMarketing.importContacts',
   schema: z.object({
@@ -411,7 +435,9 @@ export const deleteEmailMarketingSequence = defineAction({
       .eq('status', 'sending')
     if (stepsError) throw new Error(stepsError.message)
     if (count)
-      throw new Error('Espera a que termine el envío en curso antes de eliminar la secuencia.')
+      throw new Error(
+        'Hay un envío en curso. Reactiva la secuencia hasta que termine y vuelve a pausarla antes de eliminarla.',
+      )
     const { data, error } = await supabase
       .from('email_marketing_sequences')
       .update({ status: 'paused', deleted_at: new Date().toISOString() })
@@ -493,6 +519,53 @@ export const setEmailMarketingSequenceStatus = defineAction({
       .select('id')
       .maybeSingle()
     if (error || !data) throw new Error(error?.message ?? 'Secuencia no encontrada o completada.')
+  },
+})
+
+export const sendEmailMarketingStepNow = defineAction({
+  name: 'emailMarketing.sendStepNow',
+  schema: z.object({ id: z.string().uuid(), confirm: z.literal(true) }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async ({ id }) => {
+    const supabase = await createServerClient()
+    const { data: step, error } = await supabase
+      .from('email_marketing_sequence_steps')
+      .select(
+        'id, status, tracking_campaign_id, sequence:email_marketing_sequences(status, deleted_at)',
+      )
+      .eq('id', id)
+      .maybeSingle()
+    if (error || !step) throw new Error(error?.message ?? 'Email no encontrado.')
+    const sequence = step.sequence as unknown as {
+      status: string
+      deleted_at: string | null
+    } | null
+    if (!sequence || sequence.deleted_at || sequence.status !== 'active')
+      throw new Error('Activa la secuencia antes de enviar este email.')
+    if (step.status !== 'scheduled' || step.tracking_campaign_id)
+      throw new Error('Este email ya no está pendiente de envío.')
+    const env = (await import('@/lib/env')).serverEnv()
+    if (!env.EMAIL_MARKETING_RESEND_API_KEY && !env.RESEND_API_KEY)
+      throw new Error('Falta configurar la conexión con Resend.')
+    const { data: updated, error: updateError } = await supabase
+      .from('email_marketing_sequence_steps')
+      .update({ scheduled_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('status', 'scheduled')
+      .is('tracking_campaign_id', null)
+      .select('id')
+      .maybeSingle()
+    if (updateError || !updated)
+      throw new Error(updateError?.message ?? 'El email ya no está pendiente de envío.')
+    try {
+      const { processDueEmailMarketing } = await import('@/lib/marketing/email-marketing')
+      const result = await processDueEmailMarketing({ stepId: id })
+      return { outcome: result.failed ? ('attention' as const) : ('started' as const) }
+    } catch {
+      // It is already scheduled; do not encourage creating or sending a duplicate.
+      return { outcome: 'queued' as const }
+    }
   },
 })
 

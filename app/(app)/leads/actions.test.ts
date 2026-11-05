@@ -21,6 +21,7 @@ const { db, authUser, googleCalendar, sendEmail } = vi.hoisted(() => ({
     insertedRows: [] as Record<string, unknown>[],
     updatedRows: [] as Record<string, unknown>[],
     queryError: null as string | null,
+    marketingStatuses: [] as Array<string | null>,
     leadStatus: 'new' as string,
     leadDetails: { name: 'Ana García', alias: 'Nube', company: 'Acme S.L.' } as {
       name: string
@@ -125,6 +126,9 @@ vi.mock('@/lib/supabase/server', () => ({
           if (updatedRow) (updatedRow.filters as unknown[]).push([column, value])
           return builder
         },
+        ilike() {
+          return builder
+        },
         is(column: string, value: unknown) {
           if (updatedRow) (updatedRow.filters as unknown[]).push([column, value])
           return builder
@@ -149,6 +153,10 @@ vi.mock('@/lib/supabase/server', () => ({
           return resolve()
         },
         async maybeSingle() {
+          if (table === 'email_marketing_contacts') {
+            const status = db.marketingStatuses.shift() ?? null
+            return { data: status ? { status } : null, error: null }
+          }
           if (table === 'leads' && selectedColumns.includes('mom_test_accessible')) return resolve()
           if (table === 'leads' && selectedColumns === 'status, lost_reason') return resolve()
           if (table === 'leads' && selectedColumns === 'name, alias, company') return resolve()
@@ -262,6 +270,7 @@ beforeEach(() => {
     mom_test_comparing_other_companies: null,
   }
   db.adminEmails = [{ email: 'admin@doscientos.es' }, { email: 'owner@doscientos.es' }]
+  db.marketingStatuses = []
   authUser.role = 'admin'
   authUser.emailAlias = 'pol'
   sendEmail.mockReset()
@@ -461,6 +470,19 @@ describe('lead discovery questions', () => {
 })
 
 describe('sendEmailToLead', () => {
+  it('no envía si el destinatario se da de baja mientras se prepara el correo', async () => {
+    db.marketingStatuses = ['subscribed', 'unsubscribed']
+    const result = await sendEmailToLead({
+      leadId: '00000000-0000-0000-0000-000000000001',
+      to: 'lead@example.test',
+      subject: 'Seguimiento',
+      bodyHtml: 'Hola',
+      ccAdmins: false,
+    })
+    expect(result).toMatchObject({ ok: false, error: expect.stringContaining('dado de baja') })
+    expect(sendEmail).not.toHaveBeenCalled()
+  })
+
   it('sanitizes shared content and copies active owners and admins for a post-call email', async () => {
     const result = await sendEmailToLead({
       leadId: '00000000-0000-0000-0000-000000000001',

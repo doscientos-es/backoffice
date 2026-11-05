@@ -8,8 +8,9 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { requireUser } from '@/lib/auth'
+import { externalAppUrl } from '@/lib/email/app-url'
+import { publicEnv, serverEnv } from '@/lib/env'
 import { getEmailMarketingOverview } from '@/lib/marketing/email-marketing'
 
 import { ActionForm } from './action-form'
@@ -19,17 +20,16 @@ import {
   setEmailMarketingSequenceStatus,
 } from './actions'
 import { DeleteSequenceDialog, EditMarketingDialog } from './manage-dialogs'
+import { MessageFields } from './message-fields'
+import { SendNowDialog } from './send-now-dialog'
 import { StepEditor } from './step-editor'
 import { MarketingWorkspace } from './workspace'
 
 export const metadata: Metadata = { title: 'Email marketing - doscientos' }
 export const dynamic = 'force-dynamic'
 
-function dateTimeLocalDefault(monthOffset = 1): string {
-  const date = new Date()
-  date.setMonth(date.getMonth() + monthOffset)
-  date.setDate(10)
-  date.setHours(10, 0, 0, 0)
+function dateTimeLocalDefault(): string {
+  const date = new Date(Date.now() + 24 * 60 * 60 * 1000)
   const parts = new Intl.DateTimeFormat('sv-SE', {
     timeZone: 'Europe/Madrid',
     year: 'numeric',
@@ -79,6 +79,8 @@ export default async function EmailMarketingPage({
   searchParams: Promise<{ list?: string; sequence?: string; page?: string }>
 }) {
   const user = await requireUser()
+  const env = serverEnv()
+  const sendingConfigured = Boolean(env.EMAIL_MARKETING_RESEND_API_KEY || env.RESEND_API_KEY)
   const { lists, sequences } = await getEmailMarketingOverview()
   const params = await searchParams
   const list = lists.find((item) => item.id === params.list)
@@ -116,8 +118,30 @@ export default async function EmailMarketingPage({
         ]}
       />
 
+      {!list && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/30 px-5 py-4 text-sm">
+          <div>
+            <p className="font-medium">Remitente de marketing · {env.EMAIL_MARKETING_FROM_EMAIL}</p>
+            <p className="mt-1 text-muted-foreground">
+              {sendingConfigured
+                ? 'Clave de Resend configurada; la conexión y el programador no se han verificado desde aquí.'
+                : 'Falta configurar una clave de Resend para poder enviar.'}
+            </p>
+          </div>
+          <Badge variant={sendingConfigured ? 'outline' : 'warning'}>
+            {sendingConfigured ? 'Configuración presente' : 'Configuración pendiente'}
+          </Badge>
+        </div>
+      )}
+
       {!sequence ? (
-        <MarketingWorkspace lists={lists} sequences={sequences} list={list} page={page} />
+        <MarketingWorkspace
+          lists={lists}
+          sequences={sequences}
+          list={list}
+          page={page}
+          appUrl={externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}
+        />
       ) : (
         <section className="grid gap-4">
           <div className="flex flex-col gap-4">
@@ -236,6 +260,27 @@ export default async function EmailMarketingPage({
                               {step.last_error ? (
                                 <p className="mt-2 text-xs text-destructive">{step.last_error}</p>
                               ) : null}
+                              {step.status === 'scheduled' && (
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                  <SendNowDialog
+                                    id={step.id}
+                                    title={step.title}
+                                    listName={sequence.list_name}
+                                    count={list?.contact_count ?? 0}
+                                    active={sequence.status === 'active'}
+                                    configured={sendingConfigured}
+                                  />
+                                  <span className="text-xs text-muted-foreground">
+                                    {sequence.status !== 'active'
+                                      ? 'Activa la secuencia para enviar.'
+                                      : !sendingConfigured
+                                        ? 'Configura Resend para enviar.'
+                                        : !list?.contact_count
+                                          ? 'Añade contactos suscritos para enviar.'
+                                          : 'O espera a la fecha programada.'}
+                                  </span>
+                                </div>
+                              )}
                               <details className="mt-3 text-sm">
                                 <summary className="cursor-pointer font-medium">
                                   Ver contenido
@@ -301,27 +346,7 @@ export default async function EmailMarketingPage({
                             placeholder="Caso práctico de automatización"
                           />
                         </div>
-                        <div className="grid gap-1.5">
-                          <Label htmlFor={`step-subject-${sequence.id}`}>Asunto del email</Label>
-                          <Input
-                            id={`step-subject-${sequence.id}`}
-                            name="subject"
-                            required
-                            maxLength={160}
-                            placeholder="¿Cuánto tiempo pierde tu equipo en tareas manuales?"
-                          />
-                        </div>
-                        <div className="grid gap-1.5">
-                          <Label htmlFor={`step-preview-${sequence.id}`}>
-                            Texto de vista previa
-                          </Label>
-                          <Input
-                            id={`step-preview-${sequence.id}`}
-                            name="previewText"
-                            maxLength={220}
-                            placeholder="Una idea concreta para mejorar el proceso."
-                          />
-                        </div>
+                        <MessageFields id={`new-${sequence.id}`} />
                         <div className="grid gap-1.5">
                           <Label htmlFor={`step-date-${sequence.id}`}>Fecha y hora de envío</Label>
                           <Input
@@ -332,25 +357,12 @@ export default async function EmailMarketingPage({
                             defaultValue={dateTimeLocalDefault()}
                           />
                         </div>
-                        <div className="grid gap-1.5">
-                          <Label htmlFor={`step-body-${sequence.id}`}>Contenido</Label>
-                          <Textarea
-                            id={`step-body-${sequence.id}`}
-                            name="bodyMarkdown"
-                            required
-                            maxLength={30000}
-                            className="min-h-36"
-                            placeholder={
-                              'Hola {{nombre}},\n\nAquí va el mensaje. Puedes usar {{empresa}} y {{email}}.'
-                            }
-                          />
-                        </div>
                         <p className="text-xs text-muted-foreground">
                           Al guardar queda pendiente.{' '}
                           {sequence.status === 'active'
                             ? 'La secuencia está activa: se enviará al llegar la fecha.'
                             : 'Solo se enviará si activas la secuencia.'}{' '}
-                          La baja aparecerá destacada al principio y al final del email.
+                          Después de guardarlo también podrás elegir «Enviar ahora».
                         </p>
                         <SubmitButton className="w-fit" loadingLabel="Guardando…">
                           Guardar email planificado

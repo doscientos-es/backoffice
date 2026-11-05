@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('next/link', () => ({
@@ -15,6 +15,7 @@ vi.mock('@/lib/marketing/email-marketing', () => ({
         name: 'Ana',
         company: 'Acme',
         status: 'unsubscribed',
+        unsubscribe_token: '123e4567-e89b-42d3-a456-426614174000',
       },
     ],
     count: 51,
@@ -55,7 +56,14 @@ const sequence: EmailMarketingSequence = {
 
 describe('navegación de email marketing', () => {
   it('muestra listas enlazadas y sus secuencias en el resumen', async () => {
-    render(await MarketingWorkspace({ lists: [list], sequences: [sequence], page: 1 }))
+    render(
+      await MarketingWorkspace({
+        lists: [list],
+        sequences: [sequence],
+        page: 1,
+        appUrl: 'https://example.test',
+      }),
+    )
     expect(screen.getByRole('link', { name: /Clientes/ }).getAttribute('href')).toBe(
       '/marketing/newsletters?list=list-1',
     )
@@ -63,7 +71,15 @@ describe('navegación de email marketing', () => {
   })
 
   it('muestra las secuencias, estado de los contactos y paginación dentro de una lista', async () => {
-    render(await MarketingWorkspace({ lists: [list], sequences: [sequence], list, page: 1 }))
+    render(
+      await MarketingWorkspace({
+        lists: [list],
+        sequences: [sequence],
+        list,
+        page: 1,
+        appUrl: 'https://example.test',
+      }),
+    )
     expect(screen.getByRole('link', { name: /Bienvenida/ }).getAttribute('href')).toBe(
       '/marketing/newsletters?list=list-1&sequence=sequence-1',
     )
@@ -72,5 +88,29 @@ describe('navegación de email marketing', () => {
     expect(screen.getByRole('link', { name: 'Siguiente' }).getAttribute('href')).toBe(
       '/marketing/newsletters?list=list-1&page=2',
     )
+  })
+
+  it('copia un enlace personalizado con la URL pública configurada', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } })
+    try {
+      render(
+        await MarketingWorkspace({
+          lists: [list],
+          sequences: [sequence],
+          list,
+          page: 1,
+          appUrl: 'https://example.test',
+        }),
+      )
+      fireEvent.click(screen.getByRole('button', { name: /Copiar enlace de baja/ }))
+      await waitFor(() =>
+        expect(writeText).toHaveBeenCalledWith(
+          'https://example.test/api/track/unsubscribe/123e4567-e89b-42d3-a456-426614174000',
+        ),
+      )
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })

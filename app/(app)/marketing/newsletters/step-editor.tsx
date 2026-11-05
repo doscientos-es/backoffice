@@ -2,11 +2,11 @@ import { SubmitButton } from '@doscientos/ui'
 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import type { EmailMarketingStep } from '@/lib/marketing/email-marketing'
 
 import { ActionForm, DeleteStepDialog } from './action-form'
 import { updateEmailMarketingStep } from './actions'
+import { MessageFields } from './message-fields'
 
 function dateTimeLocalValue(value: string): string {
   const parts = new Intl.DateTimeFormat('sv-SE', {
@@ -43,26 +43,14 @@ export function StepEditor({ step, canDelete }: { step: EmailMarketingStep; canD
             defaultValue={step.title}
           />
         </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor={`edit-subject-${step.id}`}>Asunto</Label>
-          <Input
-            id={`edit-subject-${step.id}`}
-            name="subject"
-            required
-            minLength={2}
-            maxLength={160}
-            defaultValue={step.subject}
-          />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor={`edit-preview-${step.id}`}>Vista previa</Label>
-          <Input
-            id={`edit-preview-${step.id}`}
-            name="previewText"
-            maxLength={220}
-            defaultValue={step.preview_text ?? ''}
-          />
-        </div>
+        <MessageFields
+          id={`edit-${step.id}`}
+          initial={{
+            subject: step.subject,
+            previewText: step.preview_text ?? '',
+            bodyMarkdown: step.body_markdown,
+          }}
+        />
         <div className="grid gap-1.5">
           <Label htmlFor={`edit-date-${step.id}`}>Fecha y hora de envío · horario peninsular</Label>
           <Input
@@ -71,18 +59,6 @@ export function StepEditor({ step, canDelete }: { step: EmailMarketingStep; canD
             type="datetime-local"
             required
             defaultValue={dateTimeLocalValue(step.scheduled_at)}
-          />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor={`edit-body-${step.id}`}>Contenido</Label>
-          <Textarea
-            id={`edit-body-${step.id}`}
-            name="bodyMarkdown"
-            required
-            minLength={3}
-            maxLength={30000}
-            className="min-h-36"
-            defaultValue={step.body_markdown}
           />
         </div>
         <div className="flex flex-wrap gap-2">

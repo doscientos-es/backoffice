@@ -34,6 +34,7 @@ import {
   isLeadClosureStatus,
 } from '@/lib/leads/status-transitions'
 import { scopedLogger } from '@/lib/logger'
+import { assertMarketingEmailAllowed } from '@/lib/marketing/suppression'
 import {
   AssignLeadOwnerInput,
   ArchiveLeadContactInput,
@@ -769,6 +770,7 @@ export const sendEmailToLead = defineAction({
       .is('deleted_at', null)
       .single()
     if (leadErr || !lead) throw new Error(leadErr?.message ?? 'Lead no encontrado')
+    await assertMarketingEmailAllowed(supabase, data.to)
 
     const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
     const renderedMarkdown = sanitizeLeadSharedText(
@@ -832,7 +834,8 @@ export const sendEmailToLead = defineAction({
       throw new Error(sendErr?.message ?? 'No se pudo preparar el envío trackeado')
     }
 
-    const trackedHtml = addEmailTracking(finalHtml, appUrl, sendRow.tracking_token as string)
+    const unsubscribeUrl = `${appUrl.replace(/\/+$/, '')}/api/track/unsubscribe/${sendRow.tracking_token as string}`
+    const trackedHtml = `${addEmailTracking(finalHtml, appUrl, sendRow.tracking_token as string)}<hr/><p style="font-size:12px;color:#6b7280"><a href="${unsubscribeUrl}">No quiero recibir más emails comerciales</a></p>`
 
     let cc: string[] | undefined
     if (data.ccAdmins) {
@@ -856,6 +859,7 @@ export const sendEmailToLead = defineAction({
     let resendId: string | null = null
     let mocked = false
     try {
+      await assertMarketingEmailAllowed(supabase, data.to)
       const { sendEmail } = await import('@/lib/email/resend')
       const sent = await sendEmail({
         fromName: user.name,
@@ -865,6 +869,10 @@ export const sendEmailToLead = defineAction({
         replyTo: user.email,
         subject: renderedSubject,
         html: trackedHtml,
+        headers: {
+          'List-Unsubscribe': `<${unsubscribeUrl}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
         tags: { lead_id: data.leadId, campaign_send_id: sendRow.id as string },
       })
       resendId = sent.id

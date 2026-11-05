@@ -2,12 +2,19 @@ import { createHmac } from 'node:crypto'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { WEBHOOK_SECRET, state } = vi.hoisted(() => {
+const { WEBHOOK_SECRET, MARKETING_SECRET, state } = vi.hoisted(() => {
   const webhookSecret = `whsec_${Buffer.from('resend-webhook-test-key').toString('base64')}`
+  const marketingSecret = `whsec_${Buffer.from('marketing-webhook-test-key').toString('base64')}`
   const maybeSingle = vi.fn()
   const upsert = vi.fn()
+  const is = vi.fn<() => Promise<{ error: { message: string } | null }>>(async () => ({
+    error: null,
+  }))
+  const update = vi.fn(() => ({
+    eq: () => Object.assign(Promise.resolve({ error: null }), { is }),
+  }))
   const from = vi.fn(() => ({
-    update: () => ({ eq: async () => ({ error: null }) }),
+    update,
     select: () => ({
       eq: () => ({
         limit: () => ({ maybeSingle }),
@@ -22,11 +29,18 @@ const { WEBHOOK_SECRET, state } = vi.hoisted(() => {
     upsert,
   }))
 
-  return { WEBHOOK_SECRET: webhookSecret, state: { from, maybeSingle, upsert } }
+  return {
+    WEBHOOK_SECRET: webhookSecret,
+    MARKETING_SECRET: marketingSecret,
+    state: { from, maybeSingle, upsert, update, is },
+  }
 })
 
 vi.mock('@/lib/env', () => ({
-  serverEnv: () => ({ RESEND_WEBHOOK_SECRET: WEBHOOK_SECRET }),
+  serverEnv: () => ({
+    RESEND_WEBHOOK_SECRET: WEBHOOK_SECRET,
+    EMAIL_MARKETING_RESEND_WEBHOOK_SECRET: MARKETING_SECRET,
+  }),
 }))
 
 vi.mock('@/lib/supabase/admin', () => ({
@@ -35,9 +49,9 @@ vi.mock('@/lib/supabase/admin', () => ({
 
 import { POST } from './route'
 
-function signedRequest(body: string, id = 'msg_123') {
+function signedRequest(body: string, id = 'msg_123', secret = WEBHOOK_SECRET) {
   const timestamp = Math.floor(Date.now() / 1000).toString()
-  const key = Buffer.from(WEBHOOK_SECRET.slice('whsec_'.length), 'base64')
+  const key = Buffer.from(secret.slice('whsec_'.length), 'base64')
   const signature = createHmac('sha256', key).update(`${id}.${timestamp}.${body}`).digest('base64')
 
   return new Request('http://localhost/api/email/webhook', {
@@ -57,6 +71,33 @@ describe('POST /api/email/webhook', () => {
     state.maybeSingle.mockResolvedValue({ data: { lead_id: 'lead-1', client_id: null } })
     state.upsert.mockReset()
     state.upsert.mockResolvedValue({ error: null })
+    state.update.mockClear()
+    state.is.mockReset().mockResolvedValue({ error: null })
+  })
+
+  it('accepts the dedicated marketing webhook secret', async () => {
+    const body = JSON.stringify({ type: 'email.clicked', data: { email_id: 'email-1' } })
+    expect((await POST(signedRequest(body, 'msg_marketing', MARKETING_SECRET))).status).toBe(200)
+  })
+
+  it.each([
+    ['email.opened', 'opened_at'],
+    ['email.clicked', 'clicked_at'],
+  ])('records first %s using the event timestamp', async (type, column) => {
+    const body = JSON.stringify({
+      type,
+      created_at: '2026-01-02T10:00:00.000Z',
+      data: { email_id: 'email-1', created_at: '2026-01-01T10:00:00.000Z' },
+    })
+    expect((await POST(signedRequest(body))).status).toBe(200)
+    expect(state.update).toHaveBeenCalledWith({ [column]: '2026-01-02T10:00:00.000Z' })
+    expect(state.is).toHaveBeenCalledWith(column, null)
+  })
+
+  it('requests a retry when tracking cannot be saved', async () => {
+    state.is.mockResolvedValue({ error: { message: 'database failure' } })
+    const body = JSON.stringify({ type: 'email.opened', data: { email_id: 'email-1' } })
+    expect((await POST(signedRequest(body))).status).toBe(500)
   })
 
   it.each([
