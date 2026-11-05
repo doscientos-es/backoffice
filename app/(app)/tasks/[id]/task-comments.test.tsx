@@ -65,7 +65,7 @@ describe('TaskComments', () => {
     )
 
     act(() => {
-      TestImage.instances.forEach((image) => image.load())
+      for (const image of TestImage.instances) image.load()
     })
 
     expect(screen.getByRole('list', { name: 'Chat de comentarios' })).toBeTruthy()
