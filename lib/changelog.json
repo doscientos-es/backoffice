@@ -1,6 +1,44 @@
 {
   "releases": [
     {
+      "version": "0.1.169",
+      "date": "2026-11-05",
+      "title": "v0.1.169",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Complete email campaign workflow",
+            "Improve contact and sequence count display in workspace",
+            "Add email marketing contact management and dialogs"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "3aa671715aa6d2429b1dd0c591ba4dfe9c51eb2b",
+          "type": "feat",
+          "scope": "marketing",
+          "breaking": false,
+          "description": "Complete email campaign workflow"
+        },
+        {
+          "sha": "a8da0a0fc68fbc7086a99304667637bb230b79be",
+          "type": "feat",
+          "scope": "marketing",
+          "breaking": false,
+          "description": "Improve contact and sequence count display in workspace"
+        },
+        {
+          "sha": "3fafd8f0e3478eed5fc9128ad55a1ab82256c641",
+          "type": "feat",
+          "scope": "marketing",
+          "breaking": false,
+          "description": "Add email marketing contact management and dialogs"
+        }
+      ]
+    },
+    {
       "version": "0.1.167",
       "date": "2026-11-05",
       "title": "v0.1.167",

@@ -2,6 +2,14 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-05 — v0.1.169
+
+### Nuevas funciones
+
+- Complete email campaign workflow
+- Improve contact and sequence count display in workspace
+- Add email marketing contact management and dialogs
+
 ## 2026-11-05 — v0.1.167
 
 ### Nuevas funciones
