@@ -40,7 +40,7 @@ import { PricingSummary } from './_components/pricing-summary'
 import { PROPOSAL_SURFACE_CLASS } from './_components/primitives'
 import {
   EngagementTracker,
-  MobileCtaBar,
+  FloatingCta,
   type NavItem,
   SectionNav,
 } from './_components/respond-controls'
@@ -526,7 +526,7 @@ export default async function PortalProposalPage({
         tr={tr}
       />
       {canRespond ? (
-        <MobileCtaBar
+        <FloatingCta
           totalLabel={tr('Inversión sin IVA', 'Inversió sense IVA', 'Investment excl. VAT')}
           total={formatPortalEUR(totals.oneTime.subtotal, portalLanguage)}
           cta={tr('Revisar y aceptar', 'Revisar i acceptar', 'Review and accept')}

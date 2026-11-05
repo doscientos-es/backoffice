@@ -126,22 +126,24 @@ function scrollToResponse() {
 export function RespondButton({
   children,
   className,
+  tabIndex,
 }: {
   children: ReactNode
   className?: string
+  tabIndex?: number
 }) {
   return (
-    <button type="button" onClick={scrollToResponse} className={className}>
+    <button type="button" onClick={scrollToResponse} className={className} tabIndex={tabIndex}>
       {children}
     </button>
   )
 }
 
 /**
- * Fixed bottom bar for small screens: keeps the price and the main action in
- * reach while reading, and steps aside once the panel itself is on screen.
+ * Keeps the main action in reach while reading and steps aside when the
+ * response panel is visible. Small screens also show the investment.
  */
-export function MobileCtaBar({
+export function FloatingCta({
   totalLabel,
   total,
   cta,
@@ -169,17 +171,18 @@ export function MobileCtaBar({
   return (
     <div
       aria-hidden={panelVisible}
-      className={`fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-4 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur transition-transform duration-200 lg:hidden dark:border-zinc-800 dark:bg-zinc-950/95 ${panelVisible ? 'pointer-events-none translate-y-full' : 'translate-y-0'}`}
+      className={`fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-4 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur transition-transform duration-200 lg:inset-x-auto lg:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] lg:left-[max(1.5rem,env(safe-area-inset-left))] lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none dark:border-zinc-800 dark:bg-zinc-950/95 dark:lg:bg-transparent ${panelVisible ? 'pointer-events-none translate-y-[calc(100%+2rem)]' : 'translate-y-0'}`}
     >
       <div className="mx-auto flex max-w-xl items-center justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 lg:hidden">
           <p className="text-[11px] font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
             {totalLabel}
           </p>
           <p className="truncate text-base font-bold text-zinc-900 dark:text-zinc-100">{total}</p>
         </div>
         <RespondButton
-          className={`shrink-0 px-5 py-2.5 text-sm font-semibold ${PROPOSAL_ACTION_CLASS}`}
+          tabIndex={panelVisible ? -1 : 0}
+          className={`shrink-0 px-5 py-2.5 text-sm font-semibold lg:px-6 lg:py-3.5 lg:shadow-lg ${PROPOSAL_ACTION_CLASS}`}
         >
           {cta}
         </RespondButton>
