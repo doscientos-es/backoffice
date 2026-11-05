@@ -9,7 +9,7 @@ export type EmailMarketingList = {
   contact_count: number
 }
 
-type EmailMarketingStep = {
+export type EmailMarketingStep = {
   id: string
   sequence_id: string
   position: number
@@ -90,6 +90,9 @@ export async function getEmailMarketingOverview(): Promise<{
       .is('deleted_at', null)
       .order('created_at', { ascending: false }),
   ])
+
+  if (listResult.error) throw new Error(listResult.error.message)
+  if (sequenceResult.error) throw new Error(sequenceResult.error.message)
 
   const listRows = (listResult.data ?? []) as unknown as Omit<EmailMarketingList, 'contact_count'>[]
   const listIds = listRows.map((row) => row.id)
@@ -202,6 +205,35 @@ export async function getEmailMarketingOverview(): Promise<{
   }))
 
   return { lists, sequences }
+}
+
+export type EmailMarketingContact = {
+  id: string
+  email: string
+  name: string | null
+  company: string | null
+  status: 'subscribed' | 'unsubscribed' | 'bounced' | 'complained'
+}
+
+export async function getEmailMarketingListContacts(listId: string, page: number) {
+  const supabase = await createServerClient()
+  const pageSize = 50
+  const offset = (page - 1) * pageSize
+  const { data, error, count } = await supabase
+    .from('email_marketing_list_members')
+    .select('contact_id, contact:email_marketing_contacts(id, email, name, company, status)', {
+      count: 'exact',
+    })
+    .eq('list_id', listId)
+    .order('contact_id')
+    .range(offset, offset + pageSize - 1)
+  if (error) throw new Error(error.message)
+  const rows = (data ?? []) as unknown as { contact: EmailMarketingContact | null }[]
+  return {
+    contacts: rows.flatMap((row) => (row.contact ? [row.contact] : [])),
+    count: count ?? 0,
+    pageSize,
+  }
 }
 
 export async function getEmailMarketingStepDetails(stepId: string, page: number) {

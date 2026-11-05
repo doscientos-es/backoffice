@@ -10,6 +10,7 @@ import {
   SubmitButton,
 } from '@doscientos/ui'
 import { Plus, Trash2, Upload } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { type FormEvent, useState, useTransition } from 'react'
 import { sileo } from 'sileo'
 
@@ -29,7 +30,7 @@ type ListRef = { id: string; name: string; contact_count?: number }
 type Action = (input: FormData) => Promise<{ ok: boolean; error?: string }>
 
 /** Runs a server action from a dialog form: pending state, toast and close on success. */
-function useDialogForm(action: Action, onDone: () => void, success: (res: never) => string) {
+export function useDialogForm(action: Action, onDone: () => void, success: (res: never) => string) {
   const [pending, startTransition] = useTransition()
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -189,6 +190,7 @@ export function ImportContactsDialog({ list }: { list: ListRef }) {
 
 export function DeleteListDialog({ list }: { list: ListRef }) {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
   const [pending, startTransition] = useTransition()
   const confirm = () =>
     startTransition(async () => {
@@ -196,6 +198,7 @@ export function DeleteListDialog({ list }: { list: ListRef }) {
       if (!res.ok) return void sileo.error({ title: res.error })
       sileo.success({ title: 'Lista eliminada' })
       setOpen(false)
+      router.push('/marketing/newsletters')
     })
   return (
     <>
@@ -212,7 +215,8 @@ export function DeleteListDialog({ list }: { list: ListRef }) {
           <DialogHeader>
             <DialogTitle>¿Eliminar «{list.name}»?</DialogTitle>
             <DialogDescription>
-              Dejará de aparecer en el backoffice. Los contactos no se borran.
+              Dejará de aparecer en el backoffice. Los contactos no se borran. Primero debes
+              eliminar sus secuencias.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -156,6 +156,77 @@ export const createEmailMarketingList = defineAction({
   },
 })
 
+export const updateEmailMarketingList = defineAction({
+  name: 'emailMarketing.updateList',
+  schema: z.object({
+    id: z.string().uuid(),
+    name: z.string().trim().min(2).max(120),
+    description: z.string().trim().max(500).optional(),
+  }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async ({ id, name, description }) => {
+    const supabase = await createServerClient()
+    const { data: duplicate, error: duplicateError } = await supabase
+      .from('email_marketing_lists')
+      .select('id')
+      .ilike('name', name.replace(/[\\%_]/g, '\\$&'))
+      .neq('id', id)
+      .is('deleted_at', null)
+      .limit(1)
+      .maybeSingle()
+    if (duplicateError) throw new Error(duplicateError.message)
+    if (duplicate) throw new Error('Ya existe una lista con ese nombre.')
+    const { data, error } = await supabase
+      .from('email_marketing_lists')
+      .update({ name, description: description || null })
+      .eq('id', id)
+      .is('deleted_at', null)
+      .select('id')
+      .maybeSingle()
+    if (error || !data) throw new Error(error?.message ?? 'Lista no encontrada.')
+  },
+})
+
+export const updateEmailMarketingContact = defineAction({
+  name: 'emailMarketing.updateContact',
+  schema: z.object({
+    id: z.string().uuid(),
+    name: z.string().trim().max(200).optional(),
+    company: z.string().trim().max(200).optional(),
+  }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async ({ id, name, company }) => {
+    const supabase = await createServerClient()
+    const { data, error } = await supabase
+      .from('email_marketing_contacts')
+      .update({ name: name || null, company: company || null })
+      .eq('id', id)
+      .select('id')
+      .maybeSingle()
+    if (error || !data) throw new Error(error?.message ?? 'Contacto no encontrado.')
+  },
+})
+
+export const removeEmailMarketingContact = defineAction({
+  name: 'emailMarketing.removeContact',
+  schema: z.object({ listId: z.string().uuid(), contactId: z.string().uuid() }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async ({ listId, contactId }) => {
+    const supabase = await createServerClient()
+    const { data, error } = await supabase
+      .from('email_marketing_list_members')
+      .delete()
+      .eq('list_id', listId)
+      .eq('contact_id', contactId)
+      .select('contact_id')
+      .maybeSingle()
+    if (error || !data) throw new Error(error?.message ?? 'Contacto no encontrado en la lista.')
+  },
+})
+
 export const importEmailMarketingContacts = defineAction({
   name: 'emailMarketing.importContacts',
   schema: z.object({
@@ -283,6 +354,13 @@ export const createEmailMarketingSequence = defineAction({
   revalidate: () => [PATH],
   handler: async (input, { user }) => {
     const supabase = await createServerClient()
+    const { data: list, error: listError } = await supabase
+      .from('email_marketing_lists')
+      .select('id')
+      .eq('id', input.listId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (listError || !list) throw new Error(listError?.message ?? 'Lista no encontrada.')
     const { error } = await supabase.from('email_marketing_sequences').insert({
       list_id: input.listId,
       name: input.name,
@@ -293,7 +371,61 @@ export const createEmailMarketingSequence = defineAction({
   },
 })
 
-const addEmailMarketingStep = defineAction({
+export const updateEmailMarketingSequence = defineAction({
+  name: 'emailMarketing.updateSequence',
+  schema: z.object({ id: z.string().uuid(), name: z.string().trim().min(2).max(160) }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async ({ id, name }) => {
+    const supabase = await createServerClient()
+    const { data, error } = await supabase
+      .from('email_marketing_sequences')
+      .update({ name })
+      .eq('id', id)
+      .is('deleted_at', null)
+      .select('id')
+      .maybeSingle()
+    if (error || !data) throw new Error(error?.message ?? 'Secuencia no encontrada.')
+  },
+})
+
+export const deleteEmailMarketingSequence = defineAction({
+  name: 'emailMarketing.deleteSequence',
+  schema: z.object({ id: z.string().uuid() }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async ({ id }) => {
+    const supabase = await createServerClient()
+    const { data: sequence, error: readError } = await supabase
+      .from('email_marketing_sequences')
+      .select('id, status')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (readError || !sequence) throw new Error(readError?.message ?? 'Secuencia no encontrada.')
+    if (sequence.status === 'active') throw new Error('Pausa la secuencia antes de eliminarla.')
+    const { count, error: stepsError } = await supabase
+      .from('email_marketing_sequence_steps')
+      .select('id', { count: 'exact', head: true })
+      .eq('sequence_id', id)
+      .eq('status', 'sending')
+    if (stepsError) throw new Error(stepsError.message)
+    if (count)
+      throw new Error('Espera a que termine el envío en curso antes de eliminar la secuencia.')
+    const { data, error } = await supabase
+      .from('email_marketing_sequences')
+      .update({ status: 'paused', deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .neq('status', 'active')
+      .is('deleted_at', null)
+      .select('id')
+      .maybeSingle()
+    if (error || !data)
+      throw new Error(error?.message ?? 'La secuencia ha cambiado; vuelve a intentarlo.')
+  },
+})
+
+export const addEmailMarketingStep = defineAction({
   name: 'emailMarketing.addStep',
   schema: z.object({
     sequenceId: z.string().uuid(),
@@ -312,12 +444,14 @@ const addEmailMarketingStep = defineAction({
     const supabase = await createServerClient()
     const { data: sequence, error: sequenceError } = await supabase
       .from('email_marketing_sequences')
-      .select('id')
+      .select('id, status')
       .eq('id', input.sequenceId)
       .is('deleted_at', null)
       .maybeSingle()
     if (sequenceError || !sequence)
       throw new Error(sequenceError?.message ?? 'Secuencia no encontrada.')
+    if (sequence.status === 'completed')
+      throw new Error('No se pueden añadir emails a una secuencia completada.')
     const { data: lastStep } = await supabase
       .from('email_marketing_sequence_steps')
       .select('position')
@@ -340,7 +474,7 @@ const addEmailMarketingStep = defineAction({
   },
 })
 
-const setEmailMarketingSequenceStatus = defineAction({
+export const setEmailMarketingSequenceStatus = defineAction({
   name: 'emailMarketing.setSequenceStatus',
   schema: z.object({
     id: z.string().uuid(),
@@ -350,16 +484,19 @@ const setEmailMarketingSequenceStatus = defineAction({
   revalidate: () => [PATH],
   handler: async ({ id, status }) => {
     const supabase = await createServerClient()
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('email_marketing_sequences')
       .update({ status })
       .eq('id', id)
       .is('deleted_at', null)
-    if (error) throw new Error(error.message)
+      .neq('status', 'completed')
+      .select('id')
+      .maybeSingle()
+    if (error || !data) throw new Error(error?.message ?? 'Secuencia no encontrada o completada.')
   },
 })
 
-const updateEmailMarketingStep = defineAction({
+export const updateEmailMarketingStep = defineAction({
   name: 'emailMarketing.updateStep',
   schema: z.object({
     id: z.string().uuid(),
@@ -387,7 +524,7 @@ const updateEmailMarketingStep = defineAction({
       !['draft', 'scheduled', 'paused'].includes(step.status as string)
     )
       throw new Error('Este email ya ha entrado en la cola y no se puede editar.')
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('email_marketing_sequence_steps')
       .update({
         title: input.title,
@@ -397,11 +534,15 @@ const updateEmailMarketingStep = defineAction({
         scheduled_at: scheduledAt,
       })
       .eq('id', input.id)
-    if (error) throw new Error(error.message)
+      .in('status', ['draft', 'scheduled', 'paused'])
+      .is('tracking_campaign_id', null)
+      .select('id')
+      .maybeSingle()
+    if (error || !data) throw new Error(error?.message ?? 'El email ya no se puede editar.')
   },
 })
 
-const retryEmailMarketingStep = defineAction({
+export const retryEmailMarketingStep = defineAction({
   name: 'emailMarketing.retryStep',
   schema: z.object({ id: z.string().uuid() }),
   roles: ['owner', 'admin'],
@@ -434,10 +575,10 @@ const retryEmailMarketingStep = defineAction({
   },
 })
 
-const deleteEmailMarketingStep = defineAction({
+export const deleteEmailMarketingStep = defineAction({
   name: 'emailMarketing.deleteStep',
   schema: z.object({ id: z.string().uuid() }),
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin'],
   revalidate: () => [PATH],
   handler: async ({ id }) => {
     const supabase = await createServerClient()
@@ -452,8 +593,15 @@ const deleteEmailMarketingStep = defineAction({
       !['scheduled', 'draft', 'paused'].includes(step.status as string)
     )
       throw new Error('No se puede eliminar un correo que ya ha entrado en envío.')
-    const { error } = await supabase.from('email_marketing_sequence_steps').delete().eq('id', id)
-    if (error) throw new Error(error.message)
+    const { data, error } = await supabase
+      .from('email_marketing_sequence_steps')
+      .delete()
+      .eq('id', id)
+      .in('status', ['draft', 'scheduled', 'paused'])
+      .is('tracking_campaign_id', null)
+      .select('id')
+      .maybeSingle()
+    if (error || !data) throw new Error(error?.message ?? 'El email ya no se puede eliminar.')
   },
 })
 
