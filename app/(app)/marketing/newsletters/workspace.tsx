@@ -118,8 +118,13 @@ export async function MarketingWorkspace({
                         <CardDescription>{item.description || 'Sin descripción'}</CardDescription>
                       </CardHeader>
                       <CardContent className="flex gap-4 text-sm text-muted-foreground">
-                        <span>{item.contact_count} contactos activos</span>
-                        <span>{related.length} secuencias</span>
+                        <span>
+                          {item.contact_count}{' '}
+                          {item.contact_count === 1 ? 'contacto activo' : 'contactos activos'}
+                        </span>
+                        <span>
+                          {related.length} {related.length === 1 ? 'secuencia' : 'secuencias'}
+                        </span>
                       </CardContent>
                     </Card>
                   </Link>
@@ -141,8 +146,9 @@ export async function MarketingWorkspace({
           <div>
             <p className="text-sm text-muted-foreground">{list.description || 'Sin descripción'}</p>
             <p className="mt-2 text-sm">
-              <strong>{list.contact_count}</strong> contactos activos ·{' '}
-              <strong>{related.length}</strong> secuencias
+              <strong>{list.contact_count}</strong>{' '}
+              {list.contact_count === 1 ? 'contacto activo' : 'contactos activos'} ·{' '}
+              <strong>{related.length}</strong> {related.length === 1 ? 'secuencia' : 'secuencias'}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

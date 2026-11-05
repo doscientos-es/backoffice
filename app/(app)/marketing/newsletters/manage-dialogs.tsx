@@ -146,8 +146,9 @@ export function DeleteSequenceDialog({ sequence }: { sequence: EmailMarketingSeq
           <DialogHeader>
             <DialogTitle>¿Eliminar «{sequence.name}»?</DialogTitle>
             <DialogDescription>
-              La secuencia dejará de aparecer y no se enviarán sus correos pendientes. Se conserva
-              el historial. Debe estar pausada y sin envíos en curso.
+              La secuencia dejará de aparecer y se conserva el historial. Debe estar pausada y sin
+              envíos en curso; los envíos ya iniciados pueden necesitar terminar antes de
+              eliminarla.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -256,7 +256,9 @@ export default async function EmailMarketingPage({
                                 />
                               )}
                             </div>
-                            {step.status === 'failed' && sequence.status === 'active' ? (
+                            {step.status === 'failed' &&
+                            sequence.status === 'active' &&
+                            ['owner', 'admin'].includes(user.role) ? (
                               <ActionForm
                                 action={retryEmailMarketingStep}
                                 success="Envíos fallidos en cola"
