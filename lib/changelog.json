@@ -1,6 +1,60 @@
 {
   "releases": [
     {
+      "version": "0.1.167",
+      "date": "2026-11-05",
+      "title": "v0.1.167",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Update mobile CTA to improve accessibility and responsiveness",
+            "Update investment labels and links for clarity",
+            "Add demo URL field to proposals and related components",
+            "Add team section to display assigned team members",
+            "Enhance proposal styling and structure for better UX"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "aaa954e0ad572fcc55c0cd143aa4520eee4659c3",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Update mobile CTA to improve accessibility and responsiveness"
+        },
+        {
+          "sha": "0d2b10ae25f4a314ba22e89068aba742be8a21ba",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Update investment labels and links for clarity"
+        },
+        {
+          "sha": "1285f81b3a8c7570d4623e5d8b3bb6792f05490c",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add demo URL field to proposals and related components"
+        },
+        {
+          "sha": "fd25ebae5818fca6a4ffb9b7cd278a562b38ee42",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add team section to display assigned team members"
+        },
+        {
+          "sha": "b33ed076b86ccc0eb79d708d48773a2e14dd067d",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Enhance proposal styling and structure for better UX"
+        }
+      ]
+    },
+    {
       "version": "0.1.166",
       "date": "2026-11-03",
       "title": "v0.1.166",
