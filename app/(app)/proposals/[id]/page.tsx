@@ -25,6 +25,7 @@ import { requirePagePermission } from '@/lib/auth'
 import { hasCompleteFiscalData } from '@/lib/crm/conversion'
 import { isAIEnabled } from '@/lib/env'
 import type { DiscountType } from '@/lib/finance'
+import { scopedLogger } from '@/lib/logger'
 import { can } from '@/lib/permissions'
 import { parseKeyPoints, toEditableKeyPoints, zipKeyPoints } from '@/lib/proposals/key-points'
 import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
@@ -212,6 +213,8 @@ function ProposalSidebar({
 
 export const dynamic = 'force-dynamic'
 
+const log = scopedLogger('proposals.detail')
+
 export default async function ProposalDetailPage({
   params,
   searchParams,
@@ -226,7 +229,7 @@ export default async function ProposalDetailPage({
   const canEditProposal = can(user.role, 'proposals.write')
   const supabase = await createServerClient()
 
-  const { data: proposal } = await supabase
+  const { data: proposal, error: proposalError } = await supabase
     .from('proposals')
     .select(
       'id, number, title, status, delivered_at, client_id, lead_id, project_id, version, payment_plan, payment_schedule, valid_until, notes, demo_url, context_markdown, problems, solutions, terms, scope_modules, deliverables, acceptance_criteria, change_management_terms, legal_terms, maintenance_selected_plan_id, portal_token, is_client_visible, portal_password_hash, sent_at, viewed_at, responded_at, created_at, clients(id, name, nif, billing_address_street, email, phone, contact_person), leads(id, name, company, email, phone), projects(id, name)',
@@ -235,6 +238,10 @@ export default async function ProposalDetailPage({
     .is('deleted_at', null)
     .maybeSingle()
 
+  if (proposalError) {
+    log.error({ proposalId: id, err: proposalError }, 'could not load proposal')
+    throw new Error('No se pudo cargar la propuesta', { cause: proposalError })
+  }
   if (!proposal) notFound()
 
   const [{ data: priceSummary }, { data: items }] = await Promise.all([

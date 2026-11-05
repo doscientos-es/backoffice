@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { act, cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import { TestImage } from '@/tests/stubs/test-image'
 
 import { TaskComments } from './task-comments'
 
@@ -26,7 +28,15 @@ const currentMember = {
 }
 
 describe('TaskComments', () => {
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    TestImage.instances = []
+    TestImage.cached = false
+  })
+
   it('renders comments as dated chat bubbles with member avatars', () => {
+    vi.stubGlobal('Image', TestImage)
     render(
       <TaskComments
         taskId="task-1"
@@ -53,6 +63,10 @@ describe('TaskComments', () => {
         ]}
       />,
     )
+
+    act(() => {
+      TestImage.instances.forEach((image) => image.load())
+    })
 
     expect(screen.getByRole('list', { name: 'Chat de comentarios' })).toBeTruthy()
     expect(screen.getByText('Mensaje de otra persona').closest('li')?.className).toContain(

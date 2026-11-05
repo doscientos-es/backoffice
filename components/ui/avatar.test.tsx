@@ -1,46 +1,9 @@
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { TestImage } from '@/tests/stubs/test-image'
+
 import { Avatar, AvatarFallback, AvatarImage } from './avatar'
-
-class TestImage extends EventTarget {
-  static instances: TestImage[] = []
-  static cached = false
-  private source = ''
-  complete = false
-  naturalWidth = 0
-
-  constructor() {
-    super()
-    TestImage.instances.push(this)
-  }
-
-  get src() {
-    return this.source
-  }
-
-  set src(value: string) {
-    this.source = value
-    this.complete = false
-    this.naturalWidth = 0
-    if (TestImage.cached) {
-      this.complete = true
-      this.naturalWidth = 64
-    }
-  }
-
-  load() {
-    this.complete = true
-    this.naturalWidth = 64
-    this.dispatchEvent(new Event('load'))
-  }
-
-  fail() {
-    this.complete = true
-    this.naturalWidth = 0
-    this.dispatchEvent(new Event('error'))
-  }
-}
 
 function Photo({ src }: { src?: string }) {
   return (
