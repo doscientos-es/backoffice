@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.171",
+      "date": "2026-11-06",
+      "title": "v0.1.171",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add functionality to send saved email marketing tests"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "ca6b818eca521639ce5b11a69218df50b513d02e",
+          "type": "feat",
+          "scope": "marketing",
+          "breaking": false,
+          "description": "Add functionality to send saved email marketing tests"
+        }
+      ]
+    },
+    {
       "version": "0.1.170",
       "date": "2026-11-06",
       "title": "v0.1.170",
