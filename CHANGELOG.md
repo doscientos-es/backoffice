@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-06 — v0.1.172
+
+### Nuevas funciones
+
+- Add participant name deduplication and tests
+
 ## 2026-11-06 — v0.1.171
 
 ### Nuevas funciones

@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.172",
+      "date": "2026-11-06",
+      "title": "v0.1.172",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add participant name deduplication and tests"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "dcb95a01ba1dfdf1be8763c904c143e672cfec44",
+          "type": "feat",
+          "scope": "meeting",
+          "breaking": false,
+          "description": "Add participant name deduplication and tests"
+        }
+      ]
+    },
+    {
       "version": "0.1.171",
       "date": "2026-11-06",
       "title": "v0.1.171",
