@@ -4,7 +4,13 @@ import { Video } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { extractNextSteps, isNoShow, type MeetingInfo } from '@/lib/leads/meeting-info'
+import { Markdown } from '@/components/ui/markdown'
+import {
+  extractNextSteps,
+  isNoShow,
+  type MeetingInfo,
+  participantNames,
+} from '@/lib/leads/meeting-info'
 
 import { MeetingArtifactDetails } from './meeting-artifact-details'
 import { MeetingNextSteps, MeetingNoShowAlert } from './meeting-insights'
@@ -73,6 +79,7 @@ export function MeetingDetailsSection({
   canEdit: boolean
 }) {
   const nextSteps = extractNextSteps(info.summary)
+  const participants = participantNames(info.participants)
   const noArtifacts = !info.importedAt && !info.summary && !info.hasNotes && !info.hasTranscript
 
   return (
@@ -95,16 +102,16 @@ export function MeetingDetailsSection({
         </div>
       </div>
       <div className="space-y-4 p-4 sm:p-5">
-        {info.participants.length ? (
+        {participants.length ? (
           <div>
             <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               Quién estuvo en la llamada
               {info.durationMinutes !== null ? ` · ${info.durationMinutes} min` : ''}
             </h4>
             <div className="mt-2 flex flex-wrap gap-2">
-              {info.participants.map((p) => (
-                <Badge key={`${p.email ?? p.name}-${p.start}`} variant="secondary">
-                  {p.name ?? p.email ?? 'Participante'}
+              {participants.map((name) => (
+                <Badge key={name} variant="secondary">
+                  {name}
                 </Badge>
               ))}
             </div>
@@ -113,9 +120,7 @@ export function MeetingDetailsSection({
         {isNoShow(info, leadEmail) ? (
           <MeetingNoShowAlert leadId={leadId} interactionId={interactionId} canEdit={canEdit} />
         ) : null}
-        {info.summary ? (
-          <p className="text-sm leading-7 break-words whitespace-pre-wrap">{info.summary}</p>
-        ) : null}
+        {info.summary ? <Markdown source={info.summary} className="break-words" /> : null}
         {info.summaryTruncated ? (
           <p className="text-xs text-muted-foreground">
             El resumen puede ser parcial. Consulta los documentos de Google para ver todo el

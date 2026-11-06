@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { extractNextSteps, leadDidNotShow, meetingChips, parseMeetingInfo } from './meeting-info'
+import {
+  extractNextSteps,
+  leadDidNotShow,
+  meetingChips,
+  parseMeetingInfo,
+  participantNames,
+} from './meeting-info'
 
 const imported = (extra: Record<string, unknown> = {}, attendees = ['lead@acme.com']) => ({
   meet_url: 'https://meet.google.com/abc',
@@ -54,6 +60,32 @@ describe('meetingChips', () => {
     const info = parseMeetingInfo(imported({ summary: 'Resumen' }))
     const texts = meetingChips(info, { leadEmail: 'otro@x.com', now }).map((c) => c.text)
     expect(texts).toEqual(['42 min', '1 participante', 'Resumen listo'])
+  })
+
+  it('counts displayed participants once without discarding attendance records', () => {
+    const info = parseMeetingInfo(
+      imported({
+        participants: [
+          { name: ' Stella ', start: '10:00', email: 'stella@example.test' },
+          { name: 'stella', start: '10:05' },
+          { name: 'Pol  Gubau', start: '10:10' },
+          { name: 'POL Gubau', start: '10:20' },
+          { email: 'guest@example.test' },
+          { email: 'GUEST@example.test' },
+          {},
+        ],
+      }),
+    )
+    expect(participantNames(info.participants)).toEqual([
+      'Stella',
+      'Pol Gubau',
+      'guest@example.test',
+      'Participante',
+    ])
+    expect(info.participants).toHaveLength(7)
+    expect(meetingChips(info, { leadEmail: null, now }).map((chip) => chip.text)).toContain(
+      '4 participantes',
+    )
   })
 
   it('reads availability and truncation without the heavy texts', () => {

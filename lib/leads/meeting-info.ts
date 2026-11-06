@@ -102,6 +102,19 @@ export function leadDidNotShow(info: MeetingInfo, leadEmail: string | null): boo
   return !info.participants.some((p) => p.email?.trim().toLowerCase() === lead)
 }
 
+/** Display each name once without changing the original attendance records. */
+export function participantNames(participants: MeetingParticipant[]): string[] {
+  const names = new Map<string, string>()
+  for (const participant of participants) {
+    const name = (participant.name || participant.email || 'Participante')
+      .trim()
+      .replace(/\s+/g, ' ')
+    const key = name.toLocaleLowerCase('es')
+    if (!names.has(key)) names.set(key, name)
+  }
+  return [...names.values()]
+}
+
 export type MeetingChip = { text: string; tone: 'success' | 'muted' | 'warning' }
 
 /** Short status chips for the timeline card of a meeting. */
@@ -124,8 +137,8 @@ export function meetingChips(
     chips.push({ text: 'El lead no se presentó', tone: 'warning' })
   if (info.durationMinutes !== null)
     chips.push({ text: `${info.durationMinutes} min`, tone: 'muted' })
-  if (info.participants.length) {
-    const n = info.participants.length
+  const n = participantNames(info.participants).length
+  if (n) {
     chips.push({ text: `${n} ${n === 1 ? 'participante' : 'participantes'}`, tone: 'muted' })
   }
   if (info.summary) chips.push({ text: 'Resumen listo', tone: 'success' })
