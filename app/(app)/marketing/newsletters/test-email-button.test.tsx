@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
   send: vi.fn(),
+  sendSaved: vi.fn(),
   success: vi.fn(),
   warning: vi.fn(),
   error: vi.fn(),
@@ -10,6 +11,7 @@ const state = vi.hoisted(() => ({
 vi.mock('sileo', () => ({ sileo: state }))
 vi.mock('./actions', () => ({
   sendEmailMarketingTest: state.send,
+  sendSavedEmailMarketingTest: state.sendSaved,
   deleteEmailMarketingStep: vi.fn(),
 }))
 
@@ -19,9 +21,28 @@ import { TestEmailButton } from './test-email-button'
 beforeEach(() => {
   vi.clearAllMocks()
   state.send.mockResolvedValue({ ok: true, email: 'ana@example.test' })
+  state.sendSaved.mockResolvedValue({ ok: true, email: 'ana@example.test' })
 })
 
 describe('prueba de email', () => {
+  it('permite probar un email guardado sin abrir un formulario', async () => {
+    render(<TestEmailButton stepId="step-1" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar prueba' }))
+    await waitFor(() =>
+      expect(state.success).toHaveBeenCalledWith({ title: 'Prueba enviada a ana@example.test' }),
+    )
+    expect(state.sendSaved).toHaveBeenCalledWith({ id: 'step-1' })
+    expect(state.send).not.toHaveBeenCalled()
+  })
+
+  it('muestra el error cuando falla la prueba guardada', async () => {
+    state.sendSaved.mockResolvedValue({ ok: false, error: 'Resend no disponible' })
+    render(<TestEmailButton stepId="step-1" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar prueba' }))
+    await waitFor(() => expect(state.error).toHaveBeenCalledWith({ title: 'Resend no disponible' }))
+    expect(state.success).not.toHaveBeenCalled()
+  })
+
   it('envía los campos actuales sin guardar ni exigir fecha', async () => {
     const save = vi.fn()
     render(

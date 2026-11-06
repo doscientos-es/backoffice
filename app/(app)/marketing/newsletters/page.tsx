@@ -301,8 +301,8 @@ async function EmailMarketingContent({
                               {step.last_error ? (
                                 <p className="mt-2 text-xs text-destructive">{step.last_error}</p>
                               ) : null}
-                              {step.status === 'scheduled' && (
-                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                {step.status === 'scheduled' && (
                                   <SendNowDialog
                                     id={step.id}
                                     title={step.title}
@@ -311,6 +311,9 @@ async function EmailMarketingContent({
                                     active={sequence.status === 'active'}
                                     configured={sendingConfigured}
                                   />
+                                )}
+                                <TestEmailButton stepId={step.id} />
+                                {step.status === 'scheduled' && (
                                   <span className="text-xs text-muted-foreground">
                                     {sequence.status !== 'active'
                                       ? 'Activa la secuencia para enviar.'
@@ -320,8 +323,8 @@ async function EmailMarketingContent({
                                           ? 'Añade contactos suscritos para enviar.'
                                           : 'O espera a la fecha programada.'}
                                   </span>
-                                </div>
-                              )}
+                                )}
+                              </div>
                               <details className="mt-3 text-sm">
                                 <summary className="cursor-pointer font-medium">
                                   Ver contenido

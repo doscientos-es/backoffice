@@ -583,6 +583,35 @@ export const sendEmailMarketingTest = defineAction({
   },
 })
 
+export const sendSavedEmailMarketingTest = defineAction({
+  name: 'emailMarketing.sendSavedTest',
+  schema: z.object({ id: z.string().uuid() }),
+  roles: ['owner', 'admin', 'member'],
+  handler: async ({ id }, { user }) => {
+    const supabase = await createServerClient()
+    const { data: step, error } = await supabase
+      .from('email_marketing_sequence_steps')
+      .select(
+        'subject, preview_text, body_markdown, sequence:email_marketing_sequences(deleted_at)',
+      )
+      .eq('id', id)
+      .maybeSingle()
+    if (error || !step) throw new Error(error?.message ?? 'Email no encontrado.')
+    const sequence = step.sequence as unknown as { deleted_at: string | null } | null
+    if (!sequence || sequence.deleted_at) throw new Error('Secuencia no encontrada.')
+    const { sendMarketingTest } = await import('@/lib/marketing/send-test')
+    await sendMarketingTest(
+      {
+        subject: step.subject,
+        previewText: step.preview_text ?? undefined,
+        bodyMarkdown: step.body_markdown,
+      },
+      user,
+    )
+    return { email: user.email }
+  },
+})
+
 export const setEmailMarketingSequenceStatus = defineAction({
   name: 'emailMarketing.setSequenceStatus',
   schema: z.object({

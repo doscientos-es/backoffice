@@ -69,6 +69,7 @@ import {
   removeEmailMarketingContact,
   sendEmailMarketingStepNow,
   sendEmailMarketingTest,
+  sendSavedEmailMarketingTest,
   unsubscribeMarketingContact,
   updateEmailMarketingContact,
   updateEmailMarketingList,
@@ -267,6 +268,39 @@ describe('gestión de listas y secuencias', () => {
     role.value = 'viewer'
     expect(await sendEmailMarketingTest(step)).toMatchObject({ ok: false })
     expect(sendTest).toHaveBeenCalledTimes(1)
+  })
+
+  it('envía como prueba el contenido guardado sin alterar la programación', async () => {
+    db.results = [
+      {
+        data: {
+          subject: 'Hola',
+          preview_text: 'Adelanto',
+          body_markdown: 'Contenido',
+          sequence: { deleted_at: null },
+        },
+      },
+    ]
+    expect(await sendSavedEmailMarketingTest({ id })).toEqual({
+      ok: true,
+      email: 'ana@example.test',
+    })
+    expect(sendTest).toHaveBeenCalledWith(
+      { subject: 'Hola', previewText: 'Adelanto', bodyMarkdown: 'Contenido' },
+      expect.objectContaining({ email: 'ana@example.test' }),
+    )
+    expect(
+      db.calls.some((call) => ['insert', 'upsert', 'update', 'delete'].includes(call.method)),
+    ).toBe(false)
+  })
+
+  it('no envía pruebas si el email no existe, la secuencia se eliminó o no hay permiso', async () => {
+    db.results = [{ data: null }, { data: { sequence: { deleted_at: '2026-01-01' } } }]
+    expect(await sendSavedEmailMarketingTest({ id })).toMatchObject({ ok: false })
+    expect(await sendSavedEmailMarketingTest({ id })).toMatchObject({ ok: false })
+    role.value = 'viewer'
+    expect(await sendSavedEmailMarketingTest({ id })).toMatchObject({ ok: false })
+    expect(sendTest).not.toHaveBeenCalled()
   })
   it('da de baja globalmente sin eliminar el contacto ni sus pertenencias', async () => {
     db.results = [{ data: { id } }]
