@@ -7,8 +7,7 @@ export type ResendActivity = { openedAt: string | null; clickedAt: string | null
 export async function getResendActivity(client: Client, emailIds: string[]) {
   const activity = new Map<string, ResendActivity>()
   const ids = [...new Set(emailIds.filter(Boolean))]
-  for (let start = 0; start < ids.length; start += 200) {
-    const batch = ids.slice(start, start + 200)
+  async function readBatch(batch: string[]) {
     for (let offset = 0; ; offset += 1000) {
       const { data, error } = await client
         .from('lead_interactions')
@@ -73,6 +72,13 @@ export async function getResendActivity(client: Client, emailIds: string[]) {
       }
       if (rows.length < 1000) break
     }
+  }
+  // Avoid a long serial chain for large audiences without flooding the database.
+  for (let start = 0; start < ids.length; start += 800) {
+    const batches = Array.from({ length: 4 }, (_, index) =>
+      ids.slice(start + index * 200, start + (index + 1) * 200),
+    ).filter((batch) => batch.length > 0)
+    await Promise.all(batches.map(readBatch))
   }
   return activity
 }

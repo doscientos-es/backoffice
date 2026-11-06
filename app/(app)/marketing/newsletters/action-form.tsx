@@ -22,7 +22,12 @@ export function ActionForm({
   children,
   resetOnSuccess,
 }: {
-  action: (form: FormData) => Promise<{ ok: boolean; error?: string }>
+  action: (form: FormData) => Promise<{
+    ok: boolean
+    error?: string
+    warning?: string
+    successMessage?: string
+  }>
   success: string
   className?: string
   children: ReactNode
@@ -37,7 +42,8 @@ export function ActionForm({
       const result = await action(data)
       if (!result.ok)
         return void sileo.error({ title: result.error ?? 'No se pudo completar la acción' })
-      sileo.success({ title: success })
+      if (result.warning) sileo.warning({ title: result.warning, duration: null })
+      else sileo.success({ title: result.successMessage ?? success })
       if (resetOnSuccess) form.reset()
     })
   }

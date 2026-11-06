@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { renderMarketingFooter } from '@/lib/marketing/email-footer'
 import { MARKETING_VARIABLES, personalizeMarketingText } from '@/lib/marketing/personalization'
+import { renderMarketingMessage } from '@/lib/marketing/render-message'
 
 type Field = 'subject' | 'previewText' | 'bodyMarkdown'
 type Message = Record<Field, string>
@@ -23,6 +25,11 @@ export function MessageFields({ id, initial }: { id: string; initial?: Partial<M
   const [active, setActive] = useState<Field>('bodyMarkdown')
   const container = useRef<HTMLDivElement>(null)
   const refs = useRef<Partial<Record<Field, HTMLInputElement | HTMLTextAreaElement>>>({})
+  const preview = renderMarketingMessage(
+    { subject: message.subject, bodyMarkdown: message.bodyMarkdown },
+    SAMPLE,
+  )
+  const previewDocument = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'"><style>body{margin:0;overflow-wrap:anywhere}a{pointer-events:none!important}</style></head><body>${message.bodyMarkdown ? preview.html : '<p>Escribe tu mensaje para previsualizarlo.</p>'}${renderMarketingFooter('#baja', '#privacidad')}</body></html>`
 
   useEffect(() => {
     const form = container.current?.closest('form')
@@ -107,8 +114,8 @@ export function MessageFields({ id, initial }: { id: string; initial?: Partial<M
             onChange={(e) => setMessage({ ...message, bodyMarkdown: e.target.value })}
           />
           <p className="text-xs text-muted-foreground">
-            Admite Markdown: **negrita** y [texto](https://ejemplo.com). La baja se añade
-            automáticamente.
+            Admite Markdown: **negrita**, *cursiva* y [texto del enlace](https://ejemplo.com). La
+            baja y la política de privacidad se añaden automáticamente al final.
           </p>
         </div>
         <div>
@@ -138,25 +145,26 @@ export function MessageFields({ id, initial }: { id: string; initial?: Partial<M
           <Eye className="size-4" /> Vista previa de ejemplo
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Con datos ficticios. El formato Markdown se aplicará al enviar.
+          Con datos ficticios. La apariencia puede variar según el programa de correo; las imágenes
+          externas y los enlaces están desactivados aquí.
         </p>
         <div className="mt-4 rounded-lg border bg-background p-4 shadow-sm">
           <p className="text-xs text-muted-foreground">Asunto</p>
           <p className="mt-1 font-semibold break-words">
-            {personalizeMarketingText(message.subject, SAMPLE) || 'Tu asunto aparecerá aquí'}
+            {preview.subject || 'Tu asunto aparecerá aquí'}
           </p>
           {message.previewText && (
             <p className="mt-1 text-xs break-words text-muted-foreground">
               {personalizeMarketingText(message.previewText, SAMPLE)}
             </p>
           )}
-          <div className="mt-4 border-t pt-4 text-sm break-words whitespace-pre-wrap">
-            {personalizeMarketingText(message.bodyMarkdown, SAMPLE) ||
-              'Escribe tu mensaje para previsualizarlo.'}
-          </div>
-          <p className="mt-6 border-t pt-3 text-xs text-muted-foreground">
-            El enlace de baja se añadirá al envío.
-          </p>
+          <iframe
+            title="Contenido del email de ejemplo"
+            sandbox=""
+            tabIndex={-1}
+            srcDoc={previewDocument}
+            className="mt-4 h-80 w-full border-0 border-t bg-white pt-4 text-black"
+          />
         </div>
       </aside>
     </div>

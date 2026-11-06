@@ -2,12 +2,14 @@ import { SubmitButton } from '@doscientos/ui'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { requireUser } from '@/lib/auth'
 import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv, serverEnv } from '@/lib/env'
@@ -19,10 +21,12 @@ import {
   retryEmailMarketingStep,
   setEmailMarketingSequenceStatus,
 } from './actions'
+import EmailMarketingLoading from './loading'
 import { DeleteSequenceDialog, EditMarketingDialog } from './manage-dialogs'
 import { MessageFields } from './message-fields'
 import { SendNowDialog } from './send-now-dialog'
 import { StepEditor } from './step-editor'
+import { TestEmailButton } from './test-email-button'
 import { MarketingWorkspace } from './workspace'
 
 export const metadata: Metadata = { title: 'Email marketing - doscientos' }
@@ -79,10 +83,37 @@ export default async function EmailMarketingPage({
   searchParams: Promise<{ list?: string; sequence?: string; page?: string }>
 }) {
   const user = await requireUser()
+  const params = await searchParams
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (
+    (params.list && !uuid.test(params.list)) ||
+    (params.sequence && (!params.list || !uuid.test(params.sequence)))
+  )
+    notFound()
+  return (
+    <Suspense
+      key={`${params.list ?? ''}:${params.sequence ?? ''}:${params.page ?? ''}`}
+      fallback={<EmailMarketingLoading />}
+    >
+      <EmailMarketingContent user={user} params={params} />
+    </Suspense>
+  )
+}
+
+async function EmailMarketingContent({
+  user,
+  params,
+}: {
+  user: Awaited<ReturnType<typeof requireUser>>
+  params: { list?: string; sequence?: string; page?: string }
+}) {
   const env = serverEnv()
   const sendingConfigured = Boolean(env.EMAIL_MARKETING_RESEND_API_KEY || env.RESEND_API_KEY)
-  const { lists, sequences } = await getEmailMarketingOverview()
-  const params = await searchParams
+  const { lists, sequences } = await getEmailMarketingOverview({
+    listId: params.list,
+    sequenceId: params.sequence,
+    includeStats: !params.list || Boolean(params.sequence),
+  })
   const list = lists.find((item) => item.id === params.list)
   const sequence = sequences.find(
     (item) => item.id === params.sequence && item.list_id === list?.id,
@@ -135,13 +166,23 @@ export default async function EmailMarketingPage({
       )}
 
       {!sequence ? (
-        <MarketingWorkspace
-          lists={lists}
-          sequences={sequences}
-          list={list}
-          page={page}
-          appUrl={externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}
-        />
+        <Suspense
+          key={`${params.list ?? ''}:${page}`}
+          fallback={
+            <div role="status" aria-label="Cargando contactos y secuencias" className="space-y-4">
+              <Skeleton className="h-24 rounded-xl" />
+              <Skeleton className="h-48 rounded-xl" />
+            </div>
+          }
+        >
+          <MarketingWorkspace
+            lists={lists}
+            sequences={sequences}
+            list={list}
+            page={page}
+            appUrl={externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}
+          />
+        </Suspense>
       ) : (
         <section className="grid gap-4">
           <div className="flex flex-col gap-4">
@@ -364,9 +405,22 @@ export default async function EmailMarketingPage({
                             : 'Solo se enviará si activas la secuencia.'}{' '}
                           Después de guardarlo también podrás elegir «Enviar ahora».
                         </p>
-                        <SubmitButton className="w-fit" loadingLabel="Guardando…">
-                          Guardar email planificado
-                        </SubmitButton>
+                        <label className="flex items-start gap-2 text-sm">
+                          <input type="checkbox" name="sendTest" className="mt-1" />
+                          <span>
+                            Enviarme una prueba a {user.email} al guardar
+                            <span className="block text-xs text-muted-foreground">
+                              También puedes enviarla ahora sin guardar. Usa datos de ejemplo; no
+                              cuenta en las estadísticas y la baja está desactivada.
+                            </span>
+                          </span>
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          <SubmitButton loadingLabel="Guardando…">
+                            Guardar email planificado
+                          </SubmitButton>
+                          <TestEmailButton />
+                        </div>
                       </ActionForm>
                     </details>
                   )}

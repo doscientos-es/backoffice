@@ -20,8 +20,23 @@ describe('editor de email marketing', () => {
     ).toBeTruthy()
     const body = screen.getByLabelText('Mensaje') as HTMLTextAreaElement
     fireEvent.change(body, { target: { value: 'Bienvenida a {{empresa}}' } })
-    expect(
-      within(screen.getByLabelText('Vista previa de ejemplo')).getByText('Bienvenida a Acme'),
-    ).toBeTruthy()
+    const frame = screen.getByTitle('Contenido del email de ejemplo') as HTMLIFrameElement
+    expect(frame.srcdoc).toContain('Bienvenida a Acme')
+    expect(frame.srcdoc).toContain('Dejar de recibir correos')
+    expect(frame.srcdoc).toContain('Política de privacidad')
+  })
+
+  it('renderiza el mismo Markdown que el envío en una vista previa aislada', () => {
+    render(<MessageFields id="test" />)
+    fireEvent.change(screen.getByLabelText('Mensaje'), {
+      target: { value: 'Hola **{{nombre}}**\n[Enlace](https://example.test)\n*Texto*' },
+    })
+    const frame = screen.getByTitle('Contenido del email de ejemplo') as HTMLIFrameElement
+    expect(frame.srcdoc).toContain('<strong>Ana</strong>')
+    expect(frame.srcdoc).toContain('<br>')
+    expect(frame.srcdoc).toContain('<a href="https://example.test">Enlace</a>')
+    expect(frame.srcdoc).toContain('<em>Texto</em>')
+    expect(frame.getAttribute('sandbox')).toBe('')
+    expect(frame.srcdoc).toContain("default-src 'none'")
   })
 })

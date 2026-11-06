@@ -12,7 +12,12 @@ const { WEBHOOK_SECRET, MARKETING_SECRET, state } = vi.hoisted(() => {
   }))
   const update = vi.fn(() => ({
     eq: () => Object.assign(Promise.resolve({ error: null }), { is }),
+    ilike: (column: string, value: string) => {
+      ilike(column, value)
+      return { select: () => ({ maybeSingle }) }
+    },
   }))
+  const ilike = vi.fn()
   const from = vi.fn(() => ({
     update,
     select: () => ({
@@ -32,7 +37,7 @@ const { WEBHOOK_SECRET, MARKETING_SECRET, state } = vi.hoisted(() => {
   return {
     WEBHOOK_SECRET: webhookSecret,
     MARKETING_SECRET: marketingSecret,
-    state: { from, maybeSingle, upsert, update, is },
+    state: { from, maybeSingle, upsert, update, is, ilike },
   }
 })
 
@@ -68,10 +73,13 @@ function signedRequest(body: string, id = 'msg_123', secret = WEBHOOK_SECRET) {
 describe('POST /api/email/webhook', () => {
   beforeEach(() => {
     state.from.mockClear()
-    state.maybeSingle.mockResolvedValue({ data: { lead_id: 'lead-1', client_id: null } })
+    state.maybeSingle
+      .mockReset()
+      .mockResolvedValue({ data: { lead_id: 'lead-1', client_id: null } })
     state.upsert.mockReset()
     state.upsert.mockResolvedValue({ error: null })
     state.update.mockClear()
+    state.ilike.mockClear()
     state.is.mockReset().mockResolvedValue({ error: null })
   })
 
@@ -79,6 +87,18 @@ describe('POST /api/email/webhook', () => {
     const body = JSON.stringify({ type: 'email.clicked', data: { email_id: 'email-1' } })
     expect((await POST(signedRequest(body, 'msg_marketing', MARKETING_SECRET))).status).toBe(200)
   })
+
+  it.each(['email.sent', 'email.clicked', 'email.complained'])(
+    'ignores test event %s',
+    async (type) => {
+      const body = JSON.stringify({
+        type,
+        data: { email_id: 'test-email', tags: { email_marketing_test: 'true' } },
+      })
+      expect((await POST(signedRequest(body))).status).toBe(200)
+      expect(state.from).not.toHaveBeenCalled()
+    },
+  )
 
   it.each([
     ['email.opened', 'opened_at'],
@@ -130,6 +150,32 @@ describe('POST /api/email/webhook', () => {
       }),
       { ignoreDuplicates: true, onConflict: 'resend_webhook_id' },
     )
+  })
+
+  it('bloquea la dirección del envío, aunque el contacto haya cambiado de email', async () => {
+    state.maybeSingle
+      .mockResolvedValueOnce({
+        data: { id: 'send-1', marketing_contact_id: 'contact-1', email: 'old@example.test' },
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: { id: 'old-address' }, error: null })
+    const body = JSON.stringify({ type: 'email.complained', data: { email_id: 'email-1' } })
+    expect((await POST(signedRequest(body))).status).toBe(200)
+    expect(state.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'old@example.test', status: 'complained' }),
+      { onConflict: 'email', ignoreDuplicates: true },
+    )
+    expect(state.ilike).toHaveBeenCalledWith('email', 'old@example.test')
+  })
+
+  it('solicita reintento si no puede guardar la supresión', async () => {
+    state.maybeSingle.mockResolvedValueOnce({
+      data: { id: 'send-1', marketing_contact_id: 'contact-1', email: 'old@example.test' },
+      error: null,
+    })
+    state.upsert.mockResolvedValueOnce({ error: { message: 'database failure' } })
+    const body = JSON.stringify({ type: 'email.bounced', data: { email_id: 'email-1' } })
+    expect((await POST(signedRequest(body))).status).toBe(500)
   })
 
   it('links an incoming email to the lead with the matching sender address', async () => {

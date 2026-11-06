@@ -23,6 +23,7 @@ vi.mock('@/lib/marketing/email-marketing', () => ({
   })),
 }))
 vi.mock('./list-dialogs', () => ({
+  AddContactDialog: () => null,
   CreateListDialog: () => null,
   CreateSequenceDialog: () => null,
   DeleteListDialog: () => null,

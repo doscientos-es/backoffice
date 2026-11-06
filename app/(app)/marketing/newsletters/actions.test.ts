@@ -1,16 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { db, role, processor } = vi.hoisted(() => ({
+const { db, role, processor, sendTest } = vi.hoisted(() => ({
   db: {
     results: [] as Array<{
       data?: unknown
       count?: number | null
-      error?: { message: string } | null
+      error?: { message: string; code?: string } | null
     }>,
     calls: [] as Array<{ table: string; method: string; args: unknown[] }>,
   },
   role: { value: 'admin' },
   processor: vi.fn(),
+  sendTest: vi.fn(),
 }))
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
@@ -19,10 +20,11 @@ vi.mock('@/lib/env', () => ({
   serverEnv: () => ({ RESEND_API_KEY: 'fake-test-key', EMAIL_MARKETING_RESEND_API_KEY: '' }),
 }))
 vi.mock('@/lib/marketing/email-marketing', () => ({ processDueEmailMarketing: processor }))
+vi.mock('@/lib/marketing/send-test', () => ({ sendMarketingTest: sendTest }))
 vi.mock('@/lib/auth', () => ({
   requireRole: async (roles: string[]) => {
     if (!roles.includes(role.value)) throw new Error('Sin permisos')
-    return { id: 'user-id' }
+    return { id: 'user-id', name: 'Ana', email: 'ana@example.test' }
   },
 }))
 vi.mock('@/lib/supabase/server', () => ({
@@ -35,12 +37,14 @@ vi.mock('@/lib/supabase/server', () => ({
         'update',
         'delete',
         'insert',
+        'upsert',
         'eq',
         'neq',
         'is',
         'in',
         'ilike',
         'limit',
+        'order',
       ]) {
         builder[method] = (...args: unknown[]) => {
           db.calls.push({ table, method, args })
@@ -57,11 +61,14 @@ vi.mock('@/lib/supabase/server', () => ({
 }))
 
 import {
+  addEmailMarketingContact,
   addEmailMarketingStep,
   deleteEmailMarketingSequence,
   deleteEmailMarketingStep,
+  importEmailMarketingContacts,
   removeEmailMarketingContact,
   sendEmailMarketingStepNow,
+  sendEmailMarketingTest,
   unsubscribeMarketingContact,
   updateEmailMarketingContact,
   updateEmailMarketingList,
@@ -75,9 +82,192 @@ beforeEach(() => {
   db.calls = []
   role.value = 'admin'
   processor.mockReset().mockResolvedValue({ sent: 1, failed: 0 })
+  sendTest.mockReset().mockResolvedValue(undefined)
+})
+
+describe('añadir contactos manualmente', () => {
+  const contact = {
+    listId: id,
+    email: ' Ana@Example.test ',
+    name: 'Ana, López',
+    company: 'Empresa',
+    consentSource: 'Formulario web',
+    consentReference: 'registro-1',
+    confirmPermission: 'on',
+  }
+
+  it('crea el contacto y lo vincula con la evidencia del permiso', async () => {
+    db.results = [
+      { data: { id } },
+      { data: [] },
+      { data: [{ id: 'lead-1', email: 'ana@example.test' }] },
+      { data: [{ id: otherId, email: 'ana@example.test' }] },
+      {},
+    ]
+    expect(await addEmailMarketingContact(contact)).toEqual({ ok: true })
+    expect(db.calls).toContainEqual({
+      table: 'email_marketing_contacts',
+      method: 'upsert',
+      args: [
+        [
+          expect.objectContaining({
+            email: 'ana@example.test',
+            name: 'Ana, López',
+            company: 'Empresa',
+            lead_id: 'lead-1',
+            status: 'subscribed',
+            consent_source: 'Formulario web',
+          }),
+        ],
+        { onConflict: 'email', ignoreDuplicates: true },
+      ],
+    })
+    expect(db.calls).toContainEqual({
+      table: 'email_marketing_list_members',
+      method: 'upsert',
+      args: [
+        [
+          expect.objectContaining({
+            list_id: id,
+            contact_id: otherId,
+            consent_source: 'Formulario web',
+            consent_reference: 'registro-1',
+            consented_at: expect.any(String),
+          }),
+        ],
+        { onConflict: 'list_id,contact_id', ignoreDuplicates: true },
+      ],
+    })
+  })
+
+  it('reutiliza contactos suscritos sin sobrescribir sus datos', async () => {
+    db.results = [
+      { data: { id } },
+      {
+        data: [{ id: otherId, email: 'ana@example.test', status: 'subscribed', lead_id: 'lead-1' }],
+      },
+      { data: [] },
+      {},
+    ]
+    expect(await addEmailMarketingContact(contact)).toEqual({ ok: true })
+    expect(
+      db.calls.some(
+        (call) =>
+          call.table === 'email_marketing_contacts' && ['update', 'upsert'].includes(call.method),
+      ),
+    ).toBe(false)
+    expect(
+      db.calls.some(
+        (call) => call.table === 'email_marketing_list_members' && call.method === 'upsert',
+      ),
+    ).toBe(true)
+  })
+
+  it.each(['unsubscribed', 'bounced', 'complained'])('no reactiva contactos %s', async (status) => {
+    db.results = [
+      { data: { id } },
+      { data: [{ id: otherId, email: 'ana@example.test', status, lead_id: null }] },
+      { data: [] },
+    ]
+    expect(await addEmailMarketingContact(contact)).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('baja'),
+    })
+    expect(db.calls.some((call) => ['upsert', 'update'].includes(call.method))).toBe(false)
+  })
+
+  it('valida email, permiso, lista y rol antes de guardar', async () => {
+    expect(await addEmailMarketingContact({ ...contact, email: 'incorrecto' })).toMatchObject({
+      ok: false,
+    })
+    expect(
+      await addEmailMarketingContact({ ...contact, confirmPermission: undefined }),
+    ).toMatchObject({ ok: false })
+    role.value = 'viewer'
+    expect(await addEmailMarketingContact(contact)).toMatchObject({ ok: false })
+    expect(db.calls).toHaveLength(0)
+    role.value = 'admin'
+    db.results = [{ data: null }]
+    expect(await addEmailMarketingContact(contact)).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('lista'),
+    })
+    expect(db.calls.some((call) => call.method === 'upsert')).toBe(false)
+  })
+
+  it('conserva el flujo de importación CSV', async () => {
+    db.results = [
+      { data: { id } },
+      { data: [] },
+      { data: [] },
+      { data: [{ id: otherId, email: 'ana@example.test' }] },
+      {},
+    ]
+    expect(
+      await importEmailMarketingContacts({
+        listId: id,
+        csv: 'ana@example.test,Ana,Empresa',
+        consentSource: 'Formulario',
+      }),
+    ).toEqual({ ok: true, addedToList: 1, suppressed: 0 })
+  })
 })
 
 describe('gestión de listas y secuencias', () => {
+  const step = {
+    sequenceId: id,
+    title: 'Correo',
+    subject: 'Hola {{nombre}}',
+    bodyMarkdown: 'Contenido',
+    scheduledAt: '2099-01-10T10:00',
+  }
+
+  it('programa sin enviar prueba si no se solicita', async () => {
+    db.results = [{ data: { id, status: 'active' } }, { data: null }, {}]
+    expect(await addEmailMarketingStep(step)).toEqual({ ok: true })
+    expect(sendTest).not.toHaveBeenCalled()
+  })
+
+  it('envía la prueba al usuario después de programar', async () => {
+    db.results = [{ data: { id, status: 'active' } }, { data: null }, {}]
+    expect(await addEmailMarketingStep({ ...step, sendTest: 'on' })).toMatchObject({
+      ok: true,
+      successMessage: expect.stringContaining('ana@example.test'),
+    })
+    expect(sendTest).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: step.subject }),
+      expect.objectContaining({ email: 'ana@example.test' }),
+    )
+    expect(db.calls.filter((call) => call.method === 'insert')).toHaveLength(1)
+  })
+
+  it('avisa de fallo parcial sin volver a crear la programación', async () => {
+    sendTest.mockRejectedValueOnce(new Error('Resend unavailable'))
+    db.results = [{ data: { id, status: 'active' } }, { data: null }, {}]
+    expect(await addEmailMarketingStep({ ...step, sendTest: 'on' })).toMatchObject({
+      ok: true,
+      warning: expect.stringContaining('está planificado'),
+    })
+    expect(db.calls.filter((call) => call.method === 'insert')).toHaveLength(1)
+  })
+
+  it('no envía la prueba si falla la programación', async () => {
+    db.results = [
+      { data: { id, status: 'active' } },
+      { data: null },
+      { error: { message: 'error' } },
+    ]
+    expect(await addEmailMarketingStep({ ...step, sendTest: 'on' })).toMatchObject({ ok: false })
+    expect(sendTest).not.toHaveBeenCalled()
+  })
+
+  it('permite una prueba independiente sin programar y requiere permisos', async () => {
+    expect(await sendEmailMarketingTest(step)).toEqual({ ok: true, email: 'ana@example.test' })
+    expect(db.calls).toHaveLength(0)
+    role.value = 'viewer'
+    expect(await sendEmailMarketingTest(step)).toMatchObject({ ok: false })
+    expect(sendTest).toHaveBeenCalledTimes(1)
+  })
   it('da de baja globalmente sin eliminar el contacto ni sus pertenencias', async () => {
     db.results = [{ data: { id } }]
     expect(await unsubscribeMarketingContact({ id })).toEqual({ ok: true })
@@ -158,8 +348,15 @@ describe('gestión de listas y secuencias', () => {
   })
 
   it('edita el contacto sin modificar su email ni su estado de consentimiento', async () => {
-    db.results = [{ data: { id } }]
-    expect(await updateEmailMarketingContact({ id, name: 'Ana', company: 'Empresa' })).toEqual({
+    db.results = [{ data: { email: 'ana@example.test', status: 'subscribed' } }, { data: { id } }]
+    expect(
+      await updateEmailMarketingContact({
+        id,
+        email: 'ana@example.test',
+        name: 'Ana',
+        company: 'Empresa',
+      }),
+    ).toEqual({
       ok: true,
     })
     expect(db.calls).toContainEqual(
@@ -169,6 +366,65 @@ describe('gestión de listas y secuencias', () => {
         args: [{ name: 'Ana', company: 'Empresa' }],
       }),
     )
+  })
+
+  it('cambia el email normalizado con consentimiento y sin modificar el estado', async () => {
+    db.results = [{ data: { email: 'ana@example.test', status: 'subscribed' } }, { data: { id } }]
+    expect(
+      await updateEmailMarketingContact({
+        id,
+        email: ' Nueva@Example.test ',
+        name: 'Ana',
+        confirmEmailConsent: 'on',
+      }),
+    ).toEqual({ ok: true })
+    expect(db.calls).toContainEqual(
+      expect.objectContaining({
+        method: 'update',
+        args: [{ name: 'Ana', company: null, email: 'nueva@example.test' }],
+      }),
+    )
+    expect(db.calls).toContainEqual(
+      expect.objectContaining({ method: 'eq', args: ['email', 'ana@example.test'] }),
+    )
+    expect(db.calls).toContainEqual(
+      expect.objectContaining({ method: 'eq', args: ['status', 'subscribed'] }),
+    )
+  })
+
+  it('no cambia el email sin consentimiento, ni el de un contacto bloqueado', async () => {
+    db.results = [{ data: { email: 'ana@example.test', status: 'subscribed' } }]
+    expect(await updateEmailMarketingContact({ id, email: 'nueva@example.test' })).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('autoriza'),
+    })
+    db.results = [{ data: { email: 'ana@example.test', status: 'unsubscribed' } }]
+    expect(
+      await updateEmailMarketingContact({
+        id,
+        email: 'nueva@example.test',
+        confirmEmailConsent: 'on',
+      }),
+    ).toMatchObject({ ok: false, error: expect.stringContaining('baja') })
+    expect(db.calls.some((call) => call.method === 'update')).toBe(false)
+  })
+
+  it('rechaza emails inválidos y duplicados sin reactivar contactos existentes', async () => {
+    expect(
+      await updateEmailMarketingContact({ id, email: 'incorrecto', confirmEmailConsent: 'on' }),
+    ).toMatchObject({ ok: false })
+    expect(db.calls).toHaveLength(0)
+    db.results = [
+      { data: { email: 'ana@example.test', status: 'subscribed' } },
+      { error: { code: '23505', message: 'duplicate' } },
+    ]
+    expect(
+      await updateEmailMarketingContact({
+        id,
+        email: 'nueva@example.test',
+        confirmEmailConsent: 'on',
+      }),
+    ).toMatchObject({ ok: false, error: expect.stringContaining('Ya existe un contacto') })
   })
 
   it('no permite añadir correos a secuencias completadas', async () => {

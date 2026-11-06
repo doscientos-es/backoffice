@@ -41,6 +41,7 @@ type ResendWebhookPayload = {
     from?: string
     subject?: string
     to?: string | string[]
+    tags?: Record<string, string>
     [key: string]: unknown
   }
 }
@@ -137,6 +138,7 @@ export async function POST(request: NextRequest) {
 
   const interactionType = RESEND_TO_INTERACTION[type]
   if (!interactionType) return NextResponse.json({ ok: true })
+  if (payload.data?.tags?.email_marketing_test === 'true') return NextResponse.json({ ok: true })
 
   const supabase = createAdminClient()
   const eventDate = new Date(payload.created_at ?? Date.now())
@@ -155,25 +157,43 @@ export async function POST(request: NextRequest) {
     type === 'email.complained' ||
     type === 'email.suppressed'
   ) {
-    const { data: send } = await supabase
+    const { data: send, error: sendError } = await supabase
       .from('lead_campaign_sends')
-      .select('id, marketing_contact_id')
+      .select('id, marketing_contact_id, email')
       .eq('resend_email_id', emailId)
       .maybeSingle()
+    if (sendError) return NextResponse.json({ error: 'Could not find email send' }, { status: 500 })
     if (send?.id) {
       const sendPatch =
         type === 'email.bounced'
           ? { bounced_at: eventAt }
           : { complained_at: eventAt, unsubscribed_at: eventAt }
-      await supabase.from('lead_campaign_sends').update(sendPatch).eq('id', send.id)
-      if (send.marketing_contact_id) {
-        await supabase
+      const { error: updateError } = await supabase
+        .from('lead_campaign_sends')
+        .update(sendPatch)
+        .eq('id', send.id)
+      if (updateError)
+        return NextResponse.json({ error: 'Could not update email send' }, { status: 500 })
+      if (send.marketing_contact_id && send.email) {
+        // Suppress the address that received the email, even if the contact was edited later.
+        const email = send.email.trim().toLowerCase()
+        const status = type === 'email.bounced' ? 'bounced' : 'complained'
+        const { error: insertError } = await supabase
           .from('email_marketing_contacts')
-          .update({
-            status: type === 'email.bounced' ? 'bounced' : 'complained',
-            unsubscribed_at: eventAt,
-          })
-          .eq('id', send.marketing_contact_id)
+          .upsert(
+            { email, status, unsubscribed_at: eventAt },
+            { onConflict: 'email', ignoreDuplicates: true },
+          )
+        if (insertError && insertError.code !== '23505')
+          return NextResponse.json({ error: 'Could not suppress email' }, { status: 500 })
+        const { data: suppressed, error: suppressionError } = await supabase
+          .from('email_marketing_contacts')
+          .update({ status, unsubscribed_at: eventAt })
+          .ilike('email', email.replace(/[\\%_]/g, '\\$&'))
+          .select('id')
+          .maybeSingle()
+        if (suppressionError || !suppressed)
+          return NextResponse.json({ error: 'Could not suppress email' }, { status: 500 })
       }
     }
   }

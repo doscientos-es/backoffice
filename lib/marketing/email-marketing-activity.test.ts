@@ -20,6 +20,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }))
 vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => ({ authorizedHistory: true }) }))
 vi.mock('./resend-events', () => ({ getResendActivity: vi.fn(async () => state.history) }))
+vi.mock('./privacy-url', () => ({ MARKETING_PRIVACY_URL: 'https://example.test/privacy' }))
 
 import { getEmailMarketingStepDetails } from './email-marketing'
 import { getResendActivity } from './resend-events'

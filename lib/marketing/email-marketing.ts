@@ -1,7 +1,9 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createServerClient } from '@/lib/supabase/server'
 
-import { personalizeMarketingText } from './personalization'
+import { renderMarketingFooter } from './email-footer'
+import { MARKETING_PRIVACY_URL } from './privacy-url'
+import { renderMarketingMessage } from './render-message'
 import { getResendActivity } from './resend-events'
 
 export type EmailMarketingList = {
@@ -65,38 +67,35 @@ export type EmailMarketingRecipientEvent = {
   converted_lead_id: string | null
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => {
-    const entities: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    }
-    return entities[character]!
-  })
-}
-
-export async function getEmailMarketingOverview(): Promise<{
+export async function getEmailMarketingOverview(
+  options: {
+    listId?: string
+    sequenceId?: string
+    includeStats?: boolean
+  } = {},
+): Promise<{
   lists: EmailMarketingList[]
   sequences: EmailMarketingSequence[]
 }> {
   const supabase = await createServerClient()
-  const [listResult, sequenceResult] = await Promise.all([
-    supabase
-      .from('email_marketing_lists')
-      .select('id, name, description, created_at')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false }),
-    supabase
-      .from('email_marketing_sequences')
-      .select(
-        'id, list_id, name, status, created_at, list:email_marketing_lists(name), steps:email_marketing_sequence_steps(id, sequence_id, position, title, subject, preview_text, body_markdown, scheduled_at, status, sent_at, last_error)',
-      )
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false }),
-  ])
+  let listsQuery = supabase
+    .from('email_marketing_lists')
+    .select('id, name, description, created_at')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+  let sequencesQuery = supabase
+    .from('email_marketing_sequences')
+    .select(
+      'id, list_id, name, status, created_at, list:email_marketing_lists(name), steps:email_marketing_sequence_steps(id, sequence_id, position, title, subject, preview_text, body_markdown, scheduled_at, status, sent_at, last_error)',
+    )
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+  if (options.listId) {
+    listsQuery = listsQuery.eq('id', options.listId)
+    sequencesQuery = sequencesQuery.eq('list_id', options.listId)
+  }
+  if (options.sequenceId) sequencesQuery = sequencesQuery.eq('id', options.sequenceId)
+  const [listResult, sequenceResult] = await Promise.all([listsQuery, sequencesQuery])
 
   if (listResult.error) throw new Error(listResult.error.message)
   if (sequenceResult.error) throw new Error(sequenceResult.error.message)
@@ -104,12 +103,15 @@ export async function getEmailMarketingOverview(): Promise<{
   const listRows = (listResult.data ?? []) as unknown as Omit<EmailMarketingList, 'contact_count'>[]
   const listIds = listRows.map((row) => row.id)
   const memberCounts = new Map<string, number>()
-  if (listIds.length) {
+  async function readMemberCounts() {
+    if (!listIds.length) return
     for (let offset = 0; ; offset += 1000) {
       const { data, error } = await supabase
         .from('email_marketing_list_members')
         .select('list_id, contact:email_marketing_contacts(status)')
         .in('list_id', listIds)
+        .order('list_id')
+        .order('contact_id')
         .range(offset, offset + 999)
       if (error) throw new Error(error.message)
       const rows = (data ?? []) as unknown as {
@@ -123,10 +125,6 @@ export async function getEmailMarketingOverview(): Promise<{
       if (rows.length < 1000) break
     }
   }
-  const lists = listRows.map((row) => ({
-    ...row,
-    contact_count: memberCounts.get(row.id) ?? 0,
-  }))
 
   const rawSequences = (sequenceResult.data ?? []) as unknown as {
     id: string
@@ -139,7 +137,8 @@ export async function getEmailMarketingOverview(): Promise<{
   }[]
   const stepIds = rawSequences.flatMap((sequence) => (sequence.steps ?? []).map((step) => step.id))
   const statsByStep = new Map<string, EmailMarketingStep['stats']>()
-  if (stepIds.length) {
+  async function readStats() {
+    if (options.includeStats === false || !stepIds.length) return
     for (let offset = 0; ; offset += 1000) {
       const { data, error } = await supabase
         .from('lead_campaign_sends')
@@ -196,6 +195,11 @@ export async function getEmailMarketingOverview(): Promise<{
       if (rows.length < 1000) break
     }
   }
+  await Promise.all([readMemberCounts(), readStats()])
+  const lists = listRows.map((row) => ({
+    ...row,
+    contact_count: memberCounts.get(row.id) ?? 0,
+  }))
 
   const sequences = rawSequences.map((sequence) => ({
     id: sequence.id,
@@ -541,7 +545,6 @@ export async function processDueEmailMarketing(options: { stepId?: string } = {}
 
   const { sendEmail } = await import('@/lib/email/resend')
   const { addEmailTracking } = await import('@/lib/email/tracking')
-  const { markdownToHtml } = await import('@/lib/email/templates')
   const { externalAppUrl } = await import('@/lib/email/app-url')
   const { publicEnv } = await import('@/lib/env')
   const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
@@ -586,14 +589,17 @@ export async function processDueEmailMarketing(options: { stepId?: string } = {}
     if (!claim) continue
 
     try {
-      // The queue may have been loaded before the recipient opted out.
+      // The queue may have been loaded before the recipient opted out or changed address.
       const { data: currentContact, error: contactError } = await supabase
         .from('email_marketing_contacts')
-        .select('status')
+        .select('status, email')
         .eq('id', row.marketing_contact_id)
         .maybeSingle()
       if (contactError) throw new Error('No se pudo comprobar la baja del contacto.')
-      if (currentContact?.status !== 'subscribed') {
+      if (
+        currentContact?.status !== 'subscribed' ||
+        currentContact.email.trim().toLowerCase() !== row.email.trim().toLowerCase()
+      ) {
         const { error } = await supabase
           .from('lead_campaign_sends')
           .update({ marketing_send_status: 'skipped' })
@@ -608,11 +614,15 @@ export async function processDueEmailMarketing(options: { stepId?: string } = {}
         company: row.marketing_contact?.company ?? null,
         email: row.email,
       }
-      let html = personalizeMarketingText(
-        markdownToHtml(row.step.body_markdown),
+      const message = renderMarketingMessage(
+        {
+          subject: row.step.subject,
+          previewText: row.step.preview_text,
+          bodyMarkdown: row.step.body_markdown,
+        },
         contact,
-        escapeHtml,
       )
+      let html = message.html
       html = html.replace(/href=(["'])([^"']+)\1/gi, (match, quote: string, rawUrl: string) => {
         try {
           if (/^(#|mailto:|tel:|javascript:)/i.test(rawUrl)) return match
@@ -633,18 +643,15 @@ export async function processDueEmailMarketing(options: { stepId?: string } = {}
         }
       })
       const unsubscribeUrl = `${appUrl.replace(/\/+$/, '')}/api/track/unsubscribe/${row.tracking_token}`
-      if (row.step.preview_text) {
-        html = `<div style="display:none!important;max-height:0;overflow:hidden;opacity:0;color:transparent">${personalizeMarketingText(row.step.preview_text, contact, escapeHtml)}</div>${html}`
-      }
       html = addEmailTracking(html, appUrl, row.tracking_token)
-      html = `<p style="padding:12px;background:#f5f5f4;text-align:center;font-size:13px"><a href="${unsubscribeUrl}" style="color:#444;font-weight:600">¿No quieres recibir más emails? Date de baja aquí</a></p>${html}<hr style="border:0;border-top:1px solid #e5e7eb;margin:28px 0 16px"/><p style="font-size:12px;line-height:18px;color:#6b7280">Recibes este mensaje porque te suscribiste a las comunicaciones de Doscientos. <a href="${unsubscribeUrl}">Darte de baja</a>.</p>`
+      html += renderMarketingFooter(unsubscribeUrl, MARKETING_PRIVACY_URL)
       const result = await sendEmail({
         fromName: EMAIL_MARKETING_FROM_NAME,
         fromAlias: EMAIL_MARKETING_FROM_EMAIL,
         to: row.email,
         replyTo: EMAIL_MARKETING_REPLY_TO,
         apiKey: marketingApiKey,
-        subject: personalizeMarketingText(row.step.subject, contact),
+        subject: message.subject,
         html,
         headers: {
           'List-Unsubscribe': `<${unsubscribeUrl}>`,

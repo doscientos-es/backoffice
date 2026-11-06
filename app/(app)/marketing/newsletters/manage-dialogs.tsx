@@ -39,6 +39,10 @@ type EditTarget =
 
 export function EditMarketingDialog({ target }: { target: EditTarget }) {
   const [open, setOpen] = useState(false)
+  const [email, setEmail] = useState(target.kind === 'contact' ? target.value.email : '')
+  const emailChanged =
+    target.kind === 'contact' &&
+    email.trim().toLowerCase() !== target.value.email.trim().toLowerCase()
   const action =
     target.kind === 'list'
       ? updateEmailMarketingList
@@ -54,7 +58,14 @@ export function EditMarketingDialog({ target }: { target: EditTarget }) {
     target.kind === 'list' ? 'lista' : target.kind === 'sequence' ? 'secuencia' : 'contacto'
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          if (target.kind === 'contact') setEmail(target.value.email)
+          setOpen(true)
+        }}
+      >
         <Pencil className="size-4" /> Editar
       </Button>
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
@@ -63,7 +74,7 @@ export function EditMarketingDialog({ target }: { target: EditTarget }) {
             <DialogTitle>Editar {label}</DialogTitle>
             <DialogDescription>
               {target.kind === 'contact'
-                ? 'Los cambios se aplican al contacto en todas sus listas. El email y su estado de consentimiento no cambian.'
+                ? 'Los cambios se aplican en todas sus listas. Los envíos pendientes a la dirección anterior se omitirán; los ya iniciados pueden llegar a ella.'
                 : `Actualiza los datos de la ${label}.`}
             </DialogDescription>
           </DialogHeader>
@@ -94,15 +105,41 @@ export function EditMarketingDialog({ target }: { target: EditTarget }) {
               </div>
             )}
             {target.kind === 'contact' && (
-              <div className="grid gap-1.5">
-                <Label htmlFor={`edit-company-${target.value.id}`}>Empresa</Label>
-                <Input
-                  id={`edit-company-${target.value.id}`}
-                  name="company"
-                  maxLength={200}
-                  defaultValue={target.value.company ?? ''}
-                />
-              </div>
+              <>
+                <div className="grid gap-1.5">
+                  <Label htmlFor={`edit-email-${target.value.id}`}>Email</Label>
+                  <Input
+                    id={`edit-email-${target.value.id}`}
+                    name="email"
+                    type="email"
+                    maxLength={320}
+                    required
+                    value={email}
+                    readOnly={target.value.status !== 'subscribed'}
+                    onChange={(event) => setEmail(event.target.value)}
+                  />
+                  {target.value.status !== 'subscribed' && (
+                    <p className="text-xs text-muted-foreground">
+                      El email de un contacto dado de baja o bloqueado no se puede cambiar.
+                    </p>
+                  )}
+                </div>
+                {emailChanged && (
+                  <label className="flex items-start gap-2 text-sm">
+                    <input type="checkbox" name="confirmEmailConsent" required className="mt-1" />
+                    Confirmo que es la misma persona y que autoriza los envíos a la nueva dirección.
+                  </label>
+                )}
+                <div className="grid gap-1.5">
+                  <Label htmlFor={`edit-company-${target.value.id}`}>Empresa</Label>
+                  <Input
+                    id={`edit-company-${target.value.id}`}
+                    name="company"
+                    maxLength={200}
+                    defaultValue={target.value.company ?? ''}
+                  />
+                </div>
+              </>
             )}
             <DialogFooter>
               <Button

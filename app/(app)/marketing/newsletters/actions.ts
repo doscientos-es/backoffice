@@ -197,19 +197,35 @@ export const updateEmailMarketingContact = defineAction({
   name: 'emailMarketing.updateContact',
   schema: z.object({
     id: z.string().uuid(),
+    email: z.string().trim().email('Indica un email válido.').max(320).toLowerCase(),
     name: z.string().trim().max(200).optional(),
     company: z.string().trim().max(200).optional(),
+    confirmEmailConsent: z.string().optional(),
   }),
   roles: ['owner', 'admin', 'member'],
   revalidate: () => [PATH],
-  handler: async ({ id, name, company }) => {
+  handler: async ({ id, email, name, company, confirmEmailConsent }) => {
     const supabase = await createServerClient()
-    const { data, error } = await supabase
+    const { data: contact, error: lookupError } = await supabase
       .from('email_marketing_contacts')
-      .update({ name: name || null, company: company || null })
+      .select('email, status')
       .eq('id', id)
-      .select('id')
       .maybeSingle()
+    if (lookupError || !contact) throw new Error(lookupError?.message ?? 'Contacto no encontrado.')
+    const emailChanged = contact.email.trim().toLowerCase() !== email
+    if (emailChanged && contact.status !== 'subscribed')
+      throw new Error('No se puede cambiar el email de un contacto dado de baja o bloqueado.')
+    if (emailChanged && confirmEmailConsent !== 'on')
+      throw new Error('Confirma que el contacto autoriza los envíos a la nueva dirección.')
+
+    let query = supabase
+      .from('email_marketing_contacts')
+      .update({ name: name || null, company: company || null, ...(emailChanged ? { email } : {}) })
+      .eq('id', id)
+    if (emailChanged) query = query.eq('email', contact.email).eq('status', 'subscribed')
+    const { data, error } = await query.select('id').maybeSingle()
+    if (error?.code === '23505')
+      throw new Error('Ya existe un contacto con ese email, incluso si está dado de baja.')
     if (error || !data) throw new Error(error?.message ?? 'Contacto no encontrado.')
   },
 })
@@ -251,120 +267,159 @@ export const unsubscribeMarketingContact = defineAction({
   },
 })
 
+async function addContactsToList(
+  listId: string,
+  contacts: ReturnType<typeof parseContactCsv>,
+  consentSource: string,
+) {
+  const supabase = await createServerClient()
+  const { data: list, error: listError } = await supabase
+    .from('email_marketing_lists')
+    .select('id')
+    .eq('id', listId)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (listError || !list) throw new Error(listError?.message ?? 'No se encontró la lista.')
+
+  const now = new Date().toISOString()
+  const ids = new Map<string, string>()
+  const suppressed = new Set<string>()
+  const contactsByEmail = new Map(contacts.map((contact) => [contact.email, contact]))
+  for (let offset = 0; offset < contacts.length; offset += 500) {
+    const batch = contacts.slice(offset, offset + 500)
+    const emails = batch.map((contact) => contact.email)
+    const { data: existing, error: existingError } = await supabase
+      .from('email_marketing_contacts')
+      .select('id, email, status, lead_id')
+      .in('email', emails)
+    if (existingError) throw new Error(existingError.message)
+    const { data: matchingLeads, error: leadsError } = await supabase
+      .from('leads')
+      .select('id, email')
+      .in('email', emails)
+      .is('deleted_at', null)
+    if (leadsError) throw new Error(leadsError.message)
+    const leadsByEmail = new Map(
+      ((matchingLeads ?? []) as { id: string; email: string | null }[])
+        .filter((lead) => lead.email)
+        .map((lead) => [lead.email!.toLowerCase(), lead.id]),
+    )
+    const known = new Set<string>()
+    for (const contact of (existing ?? []) as {
+      id: string
+      email: string
+      status: string
+      lead_id: string | null
+    }[]) {
+      known.add(contact.email.toLowerCase())
+      if (contact.status === 'subscribed') ids.set(contact.email.toLowerCase(), contact.id)
+      else suppressed.add(contact.email.toLowerCase())
+      const matchingLeadId = leadsByEmail.get(contact.email.toLowerCase())
+      if (contact.status === 'subscribed' && !contact.lead_id && matchingLeadId) {
+        const { error } = await supabase
+          .from('email_marketing_contacts')
+          .update({ lead_id: matchingLeadId })
+          .eq('id', contact.id)
+        if (error) throw new Error(error.message)
+      }
+    }
+
+    const newContacts = batch.filter((contact) => !known.has(contact.email))
+    if (newContacts.length) {
+      const { data: inserted, error: insertError } = await supabase
+        .from('email_marketing_contacts')
+        .upsert(
+          newContacts.map((contact) => ({
+            email: contact.email,
+            name: contact.name,
+            company: contact.company,
+            lead_id: leadsByEmail.get(contact.email) ?? null,
+            status: 'subscribed',
+            consented_at: now,
+            consent_source: contact.consentSource || consentSource,
+          })),
+          { onConflict: 'email', ignoreDuplicates: true },
+        )
+        .select('id, email')
+      if (insertError) throw new Error(insertError.message)
+      for (const contact of (inserted ?? []) as {
+        id: string
+        email: string
+      }[])
+        ids.set(contact.email.toLowerCase(), contact.id)
+    }
+  }
+
+  const memberRows = [...ids.entries()].map(([email, contactId]) => {
+    const contact = contactsByEmail.get(email)
+    return {
+      list_id: listId,
+      contact_id: contactId,
+      consented_at: now,
+      consent_source: contact?.consentSource || consentSource,
+      consent_reference: contact?.consentReference ?? null,
+    }
+  })
+  for (let offset = 0; offset < memberRows.length; offset += 500) {
+    const { error } = await supabase
+      .from('email_marketing_list_members')
+      .upsert(memberRows.slice(offset, offset + 500), {
+        onConflict: 'list_id,contact_id',
+        ignoreDuplicates: true,
+      })
+    if (error) throw new Error(error.message)
+  }
+  return { addedToList: ids.size, suppressed: suppressed.size }
+}
+
+const confirmPermission = z
+  .string()
+  .optional()
+  .refine((value) => value === 'on', 'Confirma el permiso de contacto.')
+
 export const importEmailMarketingContacts = defineAction({
   name: 'emailMarketing.importContacts',
   schema: z.object({
     listId: z.string().uuid(),
     csv: z.string().trim().min(3).max(2_000_000),
     consentSource: z.string().trim().min(3).max(200),
-    confirmPermission: z
-      .string()
-      .optional()
-      .transform((value) => value === 'on')
-      .refine(Boolean),
   }),
   roles: ['owner', 'admin', 'member'],
   revalidate: () => [PATH],
-  handler: async ({ listId, csv, consentSource }) => {
-    const contacts = parseContactCsv(csv)
-    const supabase = await createServerClient()
-    const { data: list, error: listError } = await supabase
-      .from('email_marketing_lists')
-      .select('id')
-      .eq('id', listId)
-      .is('deleted_at', null)
-      .maybeSingle()
-    if (listError || !list) throw new Error(listError?.message ?? 'No se encontró la lista.')
+  handler: async ({ listId, csv, consentSource }) =>
+    addContactsToList(listId, parseContactCsv(csv), consentSource),
+})
 
-    const now = new Date().toISOString()
-    const ids = new Map<string, string>()
-    const suppressed = new Set<string>()
-    const contactsByEmail = new Map(contacts.map((contact) => [contact.email, contact]))
-    for (let offset = 0; offset < contacts.length; offset += 500) {
-      const batch = contacts.slice(offset, offset + 500)
-      const emails = batch.map((contact) => contact.email)
-      const { data: existing, error: existingError } = await supabase
-        .from('email_marketing_contacts')
-        .select('id, email, status, lead_id')
-        .in('email', emails)
-      if (existingError) throw new Error(existingError.message)
-      const { data: matchingLeads, error: leadsError } = await supabase
-        .from('leads')
-        .select('id, email')
-        .in('email', emails)
-        .is('deleted_at', null)
-      if (leadsError) throw new Error(leadsError.message)
-      const leadsByEmail = new Map(
-        ((matchingLeads ?? []) as { id: string; email: string | null }[])
-          .filter((lead) => lead.email)
-          .map((lead) => [lead.email!.toLowerCase(), lead.id]),
-      )
-      const known = new Set<string>()
-      for (const contact of (existing ?? []) as {
-        id: string
-        email: string
-        status: string
-        lead_id: string | null
-      }[]) {
-        known.add(contact.email.toLowerCase())
-        if (contact.status === 'subscribed') ids.set(contact.email.toLowerCase(), contact.id)
-        else suppressed.add(contact.email.toLowerCase())
-        const matchingLeadId = leadsByEmail.get(contact.email.toLowerCase())
-        if (contact.status === 'subscribed' && !contact.lead_id && matchingLeadId) {
-          const { error } = await supabase
-            .from('email_marketing_contacts')
-            .update({ lead_id: matchingLeadId })
-            .eq('id', contact.id)
-          if (error) throw new Error(error.message)
-        }
-      }
-
-      const newContacts = batch.filter((contact) => !known.has(contact.email))
-      if (newContacts.length) {
-        const { data: inserted, error: insertError } = await supabase
-          .from('email_marketing_contacts')
-          .upsert(
-            newContacts.map((contact) => ({
-              email: contact.email,
-              name: contact.name,
-              company: contact.company,
-              lead_id: leadsByEmail.get(contact.email) ?? null,
-              status: 'subscribed',
-              consented_at: now,
-              consent_source: contact.consentSource || consentSource,
-            })),
-            { onConflict: 'email', ignoreDuplicates: true },
-          )
-          .select('id, email')
-        if (insertError) throw new Error(insertError.message)
-        for (const contact of (inserted ?? []) as {
-          id: string
-          email: string
-        }[])
-          ids.set(contact.email.toLowerCase(), contact.id)
-      }
-    }
-
-    const memberRows = [...ids.entries()].map(([email, contactId]) => {
-      const contact = contactsByEmail.get(email)
-      return {
-        list_id: listId,
-        contact_id: contactId,
-        consented_at: now,
-        consent_source: contact?.consentSource || consentSource,
-        consent_reference: contact?.consentReference ?? null,
-      }
-    })
-    for (let offset = 0; offset < memberRows.length; offset += 500) {
-      const { error } = await supabase
-        .from('email_marketing_list_members')
-        .upsert(memberRows.slice(offset, offset + 500), {
-          onConflict: 'list_id,contact_id',
-          ignoreDuplicates: true,
-        })
-      if (error) throw new Error(error.message)
-    }
-    return { addedToList: ids.size, suppressed: suppressed.size }
+export const addEmailMarketingContact = defineAction({
+  name: 'emailMarketing.addContact',
+  schema: z.object({
+    listId: z.string().uuid(),
+    email: z.string().trim().email('Indica un email válido.').max(320).toLowerCase(),
+    name: z.string().trim().max(200).optional(),
+    company: z.string().trim().max(200).optional(),
+    consentSource: z.string().trim().min(3, 'Indica el origen del permiso.').max(200),
+    consentReference: z.string().trim().max(200).optional(),
+    confirmPermission,
+  }),
+  roles: ['owner', 'admin', 'member'],
+  revalidate: () => [PATH],
+  handler: async ({ listId, email, name, company, consentSource, consentReference }) => {
+    const result = await addContactsToList(
+      listId,
+      [
+        {
+          email,
+          name: name || null,
+          company: company || null,
+          consentSource,
+          consentReference: consentReference || null,
+        },
+      ],
+      consentSource,
+    )
+    if (result.suppressed)
+      throw new Error('El contacto está dado de baja o bloqueado y no se puede añadir.')
+    if (!result.addedToList) throw new Error('No se pudo añadir el contacto. Inténtalo de nuevo.')
   },
 })
 
@@ -460,6 +515,7 @@ export const addEmailMarketingStep = defineAction({
     previewText: z.string().trim().max(220).optional(),
     bodyMarkdown: z.string().trim().min(3).max(30000),
     scheduledAt: z.string().min(16).max(16),
+    sendTest: z.literal('on').optional(),
   }),
   roles: ['owner', 'admin', 'member'],
   revalidate: () => [PATH],
@@ -497,6 +553,33 @@ export const addEmailMarketingStep = defineAction({
       created_by: user.id,
     })
     if (error) throw new Error(error.message)
+    if (input.sendTest) {
+      try {
+        const { sendMarketingTest } = await import('@/lib/marketing/send-test')
+        await sendMarketingTest(input, user)
+        return { successMessage: `Email planificado; prueba enviada a ${user.email}` }
+      } catch {
+        return {
+          warning:
+            'El email está planificado, pero falló la prueba. Puedes reintentarlo desde Editar; no lo programes de nuevo.',
+        }
+      }
+    }
+  },
+})
+
+export const sendEmailMarketingTest = defineAction({
+  name: 'emailMarketing.sendTest',
+  schema: z.object({
+    subject: z.string().trim().min(2).max(160),
+    previewText: z.string().trim().max(220).optional(),
+    bodyMarkdown: z.string().trim().min(3).max(30000),
+  }),
+  roles: ['owner', 'admin', 'member'],
+  handler: async (input, { user }) => {
+    const { sendMarketingTest } = await import('@/lib/marketing/send-test')
+    await sendMarketingTest(input, user)
+    return { email: user.email }
   },
 })
 

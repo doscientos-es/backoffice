@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { requireUser } from '@/lib/auth'
-import { getEmailMarketingOverview } from '@/lib/marketing/email-marketing'
+import { getEmailMarketingCalendar } from '@/lib/marketing/email-marketing-calendar'
 
 export const metadata = { title: 'Calendario de email marketing - doscientos' }
 export const dynamic = 'force-dynamic'
@@ -32,7 +32,6 @@ export default async function MarketingCalendarPage({
   searchParams: Promise<{ month?: string }>
 }) {
   await requireUser()
-  const { sequences } = await getEmailMarketingOverview()
   const requested = (await searchParams).month
   const current = dayKey(new Date()).slice(0, 7)
   const month =
@@ -43,10 +42,8 @@ export default async function MarketingCalendarPage({
   const offset = (first.getUTCDay() + 6) % 7
   const previous = monthKey(new Date(Date.UTC(year, monthNumber - 2, 1)))
   const next = monthKey(new Date(Date.UTC(year, monthNumber, 1)))
-  const entries = sequences
-    .flatMap((sequence) =>
-      sequence.steps.map((step) => ({ sequence, step, day: dayKey(new Date(step.scheduled_at)) })),
-    )
+  const entries = (await getEmailMarketingCalendar(year, monthNumber))
+    .map(({ sequence, step }) => ({ sequence, step, day: dayKey(new Date(step.scheduled_at)) }))
     .filter((entry) => entry.day.startsWith(month))
     .sort((a, b) => a.step.scheduled_at.localeCompare(b.step.scheduled_at))
   const title = new Intl.DateTimeFormat('es-ES', {

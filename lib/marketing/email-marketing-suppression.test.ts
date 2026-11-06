@@ -53,6 +53,7 @@ vi.mock('@/lib/env', () => ({
   publicEnv: { NEXT_PUBLIC_APP_URL: 'https://example.test' },
 }))
 vi.mock('@/lib/email/resend', () => ({ sendEmail: state.send }))
+vi.mock('./privacy-url', () => ({ MARKETING_PRIVACY_URL: 'https://example.test/privacy' }))
 
 import { processDueEmailMarketing } from './email-marketing'
 
@@ -114,13 +115,26 @@ describe('bajas en la cola de marketing', () => {
     expect(state.send).not.toHaveBeenCalled()
   })
 
+  it('omite envíos en cola si la dirección del contacto ha cambiado', async () => {
+    state.results = [
+      { data: [] },
+      { data: [queued] },
+      { data: { id: 'send-1' } },
+      { data: { status: 'subscribed', email: 'nueva@example.test' } },
+      {},
+      { data: [] },
+    ]
+    expect(await processDueEmailMarketing()).toMatchObject({ skipped: 1, sent: 0 })
+    expect(state.send).not.toHaveBeenCalled()
+  })
+
   it('incluye enlace directo y cabeceras de baja en envíos válidos', async () => {
     state.send.mockResolvedValue({ id: 'provider-id', mocked: false })
     state.results = [
       { data: [] },
       { data: [queued] },
       { data: { id: 'send-1' } },
-      { data: { status: 'subscribed' } },
+      { data: { status: 'subscribed', email: queued.email } },
       {},
       { data: [] },
     ]
@@ -141,6 +155,43 @@ describe('bajas en la cola de marketing', () => {
     )
   })
 
+  it('convierte enlaces Markdown y añade el pie sin rastrear sus enlaces', async () => {
+    state.send.mockResolvedValue({ id: 'provider-id', mocked: false })
+    state.results = [
+      { data: [] },
+      {
+        data: [
+          {
+            ...queued,
+            step: {
+              ...queued.step,
+              body_markdown: 'Hola **{{nombre}}**. [Visitar](https://example.test/oferta?a=1&b=2)',
+            },
+          },
+        ],
+      },
+      { data: { id: 'send-1' } },
+      { data: { status: 'subscribed', email: queued.email } },
+      {},
+      { data: [] },
+    ]
+    expect(await processDueEmailMarketing()).toMatchObject({ sent: 1 })
+    const html = state.send.mock.calls[0]![0].html as string
+    expect(html).toContain('<strong>Ana</strong>')
+    const trackedHref = html.match(/href="([^"]+)">Visitar<\/a>/)?.[1]
+    expect(trackedHref).toBeTruthy()
+    expect(new URL(trackedHref!).searchParams.get('url')).toBe(
+      'https://example.test/oferta?a=1&b=2',
+    )
+    const unsubscribeUrl = `https://example.test/api/track/unsubscribe/${queued.tracking_token}`
+    expect(html).toContain(`href="${unsubscribeUrl}"`)
+    expect(html).toContain('href="https://example.test/privacy"')
+    expect(html.indexOf('Visitar</a>')).toBeLessThan(
+      html.indexOf('Si prefieres que no volvamos a contactarte'),
+    )
+    expect(html.match(/Dejar de recibir correos/g)).toHaveLength(1)
+  })
+
   it('prioriza la cuenta dedicada de marketing si está configurada', async () => {
     state.marketingKey = 'fake-marketing-key'
     state.send.mockResolvedValue({ id: 'provider-id', mocked: false })
@@ -148,7 +199,7 @@ describe('bajas en la cola de marketing', () => {
       { data: [] },
       { data: [queued] },
       { data: { id: 'send-1' } },
-      { data: { status: 'subscribed' } },
+      { data: { status: 'subscribed', email: queued.email } },
       {},
       { data: [] },
     ]
@@ -177,7 +228,7 @@ describe('bajas en la cola de marketing', () => {
         ],
       },
       { data: { id: 'send-1' } },
-      { data: { status: 'subscribed' } },
+      { data: { status: 'subscribed', email: queued.email } },
       {},
       { data: [] },
     ]

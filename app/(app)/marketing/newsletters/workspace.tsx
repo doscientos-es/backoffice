@@ -11,6 +11,7 @@ import {
 
 import { MarketingAnalytics } from './analytics'
 import {
+  AddContactDialog,
   CreateListDialog,
   CreateSequenceDialog,
   DeleteListDialog,
@@ -172,6 +173,7 @@ export async function MarketingWorkspace({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <EditMarketingDialog target={{ kind: 'list', value: list }} />
+            <AddContactDialog list={list} />
             <ImportContactsDialog list={list} />
             <DeleteListDialog list={list} />
           </div>

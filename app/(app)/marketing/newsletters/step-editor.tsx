@@ -7,6 +7,7 @@ import type { EmailMarketingStep } from '@/lib/marketing/email-marketing'
 import { ActionForm, DeleteStepDialog } from './action-form'
 import { updateEmailMarketingStep } from './actions'
 import { MessageFields } from './message-fields'
+import { TestEmailButton } from './test-email-button'
 
 function dateTimeLocalValue(value: string): string {
   const parts = new Intl.DateTimeFormat('sv-SE', {
@@ -65,6 +66,7 @@ export function StepEditor({ step, canDelete }: { step: EmailMarketingStep; canD
           <SubmitButton variant="outline" loadingLabel="Guardando…">
             Guardar cambios
           </SubmitButton>
+          <TestEmailButton />
           {canDelete ? (
             <DeleteStepDialog id={step.id} title={step.title} />
           ) : (

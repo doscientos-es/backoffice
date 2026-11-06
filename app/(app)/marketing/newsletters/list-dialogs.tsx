@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
 import {
+  addEmailMarketingContact,
   createEmailMarketingList,
   createEmailMarketingSequence,
   deleteEmailMarketingList,
@@ -108,6 +109,65 @@ export function CreateListDialog() {
   )
 }
 
+export function AddContactDialog({ list }: { list: ListRef }) {
+  const [open, setOpen] = useState(false)
+  const { pending, submit } = useDialogForm(
+    addEmailMarketingContact,
+    () => setOpen(false),
+    () => 'Contacto añadido o ya presente en la lista',
+  )
+  return (
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        <Plus className="size-4" aria-hidden="true" /> Añadir contacto
+      </Button>
+      <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Añadir contacto a «{list.name}»</DialogTitle>
+            <DialogDescription>
+              Si el contacto ya existe, se conservarán sus datos. Las bajas no se reactivan.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={submit} className="grid gap-4">
+            <input type="hidden" name="listId" value={list.id} />
+            <div className="grid gap-1.5">
+              <Label htmlFor={`new-contact-email-${list.id}`}>Email</Label>
+              <Input id={`new-contact-email-${list.id}`} name="email" type="email" required maxLength={320} />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-1.5">
+                <Label htmlFor={`new-contact-name-${list.id}`}>Nombre (opcional)</Label>
+                <Input id={`new-contact-name-${list.id}`} name="name" maxLength={200} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor={`new-contact-company-${list.id}`}>Empresa (opcional)</Label>
+                <Input id={`new-contact-company-${list.id}`} name="company" maxLength={200} />
+              </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor={`new-contact-consent-${list.id}`}>Origen del permiso</Label>
+              <Input id={`new-contact-consent-${list.id}`} name="consentSource" required minLength={3} maxLength={200} placeholder="Formulario web, evento, solicitud…" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor={`new-contact-reference-${list.id}`}>Referencia del permiso (opcional)</Label>
+              <Input id={`new-contact-reference-${list.id}`} name="consentReference" maxLength={200} />
+            </div>
+            <label className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
+              <input type="checkbox" name="confirmPermission" required className="mt-1 size-4 rounded border-border" />
+              <span>Confirmo que el contacto ha autorizado recibir estos emails y que el origen indicado es correcto.</span>
+            </label>
+            <DialogFooter>
+              <Button type="button" variant="ghost" disabled={pending} onClick={() => setOpen(false)}>Cancelar</Button>
+              <SubmitButton loading={pending} loadingLabel="Añadiendo…">Añadir a la lista</SubmitButton>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
 export function ImportContactsDialog({ list }: { list: ListRef }) {
   const [open, setOpen] = useState(false)
   const { pending, submit } = useDialogForm(
@@ -119,12 +179,12 @@ export function ImportContactsDialog({ list }: { list: ListRef }) {
   return (
     <>
       <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        <Upload className="size-3.5" aria-hidden="true" /> Añadir contactos
+        <Upload className="size-3.5" aria-hidden="true" /> Importar contactos
       </Button>
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Añadir contactos a «{list.name}»</DialogTitle>
+            <DialogTitle>Importar contactos a «{list.name}»</DialogTitle>
             <DialogDescription>
               Pega emails o CSV con email, nombre, empresa y, opcionalmente, origen y referencia del
               permiso. Los contactos dados de baja no se reactivan.

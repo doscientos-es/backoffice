@@ -57,4 +57,24 @@ describe('historial de interacción de Resend', () => {
       'database failure',
     )
   })
+
+  it('consulta lotes en paralelo con un máximo de cuatro simultáneos', async () => {
+    let active = 0
+    let maximum = 0
+    const builder: Record<string, unknown> = {}
+    for (const method of ['select', 'in', 'order']) builder[method] = () => builder
+    builder.range = vi.fn(async () => {
+      active++
+      maximum = Math.max(maximum, active)
+      await new Promise((resolve) => setTimeout(resolve, 1))
+      active--
+      return { data: [], error: null }
+    })
+    await getResendActivity(
+      { from: () => builder } as never,
+      Array.from({ length: 1001 }, (_, index) => `mail-${index}`),
+    )
+    expect(builder.range).toHaveBeenCalledTimes(6)
+    expect(maximum).toBe(4)
+  })
 })
