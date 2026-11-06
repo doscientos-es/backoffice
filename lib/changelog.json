@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.170",
+      "date": "2026-11-06",
+      "title": "v0.1.170",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Improve form layout and accessibility in contact dialog",
+            "Enhance email marketing features and add tests"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "2956daae8bd2ea6195d830512cb47d84bf07f59f",
+          "type": "feat",
+          "scope": "marketing",
+          "breaking": false,
+          "description": "Improve form layout and accessibility in contact dialog"
+        },
+        {
+          "sha": "5d62a7bef2ef64434665f16ae128b640a1b5629a",
+          "type": "feat",
+          "scope": "marketing",
+          "breaking": false,
+          "description": "Enhance email marketing features and add tests"
+        }
+      ]
+    },
+    {
       "version": "0.1.169",
       "date": "2026-11-05",
       "title": "v0.1.169",

@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-06 — v0.1.170
+
+### Nuevas funciones
+
+- Improve form layout and accessibility in contact dialog
+- Enhance email marketing features and add tests
+
 ## 2026-11-05 — v0.1.169
 
 ### Nuevas funciones
