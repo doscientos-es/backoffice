@@ -133,7 +133,13 @@ export function AddContactDialog({ list }: { list: ListRef }) {
             <input type="hidden" name="listId" value={list.id} />
             <div className="grid gap-1.5">
               <Label htmlFor={`new-contact-email-${list.id}`}>Email</Label>
-              <Input id={`new-contact-email-${list.id}`} name="email" type="email" required maxLength={320} />
+              <Input
+                id={`new-contact-email-${list.id}`}
+                name="email"
+                type="email"
+                required
+                maxLength={320}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
@@ -147,19 +153,49 @@ export function AddContactDialog({ list }: { list: ListRef }) {
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor={`new-contact-consent-${list.id}`}>Origen del permiso</Label>
-              <Input id={`new-contact-consent-${list.id}`} name="consentSource" required minLength={3} maxLength={200} placeholder="Formulario web, evento, solicitud…" />
+              <Input
+                id={`new-contact-consent-${list.id}`}
+                name="consentSource"
+                required
+                minLength={3}
+                maxLength={200}
+                placeholder="Formulario web, evento, solicitud…"
+              />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor={`new-contact-reference-${list.id}`}>Referencia del permiso (opcional)</Label>
-              <Input id={`new-contact-reference-${list.id}`} name="consentReference" maxLength={200} />
+              <Label htmlFor={`new-contact-reference-${list.id}`}>
+                Referencia del permiso (opcional)
+              </Label>
+              <Input
+                id={`new-contact-reference-${list.id}`}
+                name="consentReference"
+                maxLength={200}
+              />
             </div>
             <label className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-              <input type="checkbox" name="confirmPermission" required className="mt-1 size-4 rounded border-border" />
-              <span>Confirmo que el contacto ha autorizado recibir estos emails y que el origen indicado es correcto.</span>
+              <input
+                type="checkbox"
+                name="confirmPermission"
+                required
+                className="mt-1 size-4 rounded border-border"
+              />
+              <span>
+                Confirmo que el contacto ha autorizado recibir estos emails y que el origen indicado
+                es correcto.
+              </span>
             </label>
             <DialogFooter>
-              <Button type="button" variant="ghost" disabled={pending} onClick={() => setOpen(false)}>Cancelar</Button>
-              <SubmitButton loading={pending} loadingLabel="Añadiendo…">Añadir a la lista</SubmitButton>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={pending}
+                onClick={() => setOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <SubmitButton loading={pending} loadingLabel="Añadiendo…">
+                Añadir a la lista
+              </SubmitButton>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -216,18 +252,6 @@ export function ImportContactsDialog({ list }: { list: ListRef }) {
                 }
               />
             </div>
-            <label className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-              <input
-                type="checkbox"
-                name="confirmPermission"
-                required
-                className="mt-1 size-4 rounded border-border"
-              />
-              <span>
-                Confirmo que las personas importadas han autorizado recibir estos emails y que el
-                origen indicado es correcto.
-              </span>
-            </label>
             <DialogFooter>
               <Button
                 type="button"
