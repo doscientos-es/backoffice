@@ -85,6 +85,8 @@ export const ServerSchema = PublicSchema.extend({
   VERIFACTU_PRODUCER_NIF: z.string().optional().default(''),
   // Generic lead-intake webhook (landing forms and future integrations)
   LEAD_INTAKE_TOKEN: z.string().optional().default(''),
+  // Read-only UptimeRobot API key used by the public landing status widget.
+  UPTIMEROBOT_API_KEY: z.string().optional().default(''),
   // Comma-separated origins allowed to POST the public landing contact form.
   // Use "*" only for local development.
   LANDING_ALLOWED_ORIGINS: z.string().default('https://doscientos.es,https://www.doscientos.es'),
