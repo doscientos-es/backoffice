@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.176",
+      "date": "2026-11-08",
+      "title": "v0.1.176",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add UptimeRobot API integration for status monitoring"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "4b6a40de1990d8a7e24c274ad02bcd42924339aa",
+          "type": "feat",
+          "scope": "uptime-status",
+          "breaking": false,
+          "description": "Add UptimeRobot API integration for status monitoring"
+        }
+      ]
+    },
+    {
       "version": "0.1.175",
       "date": "2026-11-08",
       "title": "v0.1.175",

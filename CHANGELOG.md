@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-08 — v0.1.176
+
+### Nuevas funciones
+
+- Add UptimeRobot API integration for status monitoring
+
 ## 2026-11-08 — v0.1.175
 
 ### Nuevas funciones
