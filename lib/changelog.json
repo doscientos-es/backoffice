@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.174",
+      "date": "2026-11-08",
+      "title": "v0.1.174",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add archive filter and update related tests"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "d20df64d9e72fd3c28ad7b9489fae4dba45c0d38",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Add archive filter and update related tests"
+        }
+      ]
+    },
+    {
       "version": "0.1.173",
       "date": "2026-11-08",
       "title": "v0.1.173",

@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-08 — v0.1.174
+
+### Nuevas funciones
+
+- Add archive filter and update related tests
+
 ## 2026-11-08 — v0.1.173
 
 ### Nuevas funciones
