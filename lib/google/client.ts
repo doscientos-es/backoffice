@@ -79,6 +79,15 @@ type GoogleFetchInit = Omit<RequestInit, 'headers'> & {
   headers?: Record<string, string>
 }
 
+export class GoogleApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message)
+  }
+}
+
 /**
  * Llama a una REST API de Google autenticada como `subject`. Devuelve el JSON
  * parseado (o `null` si la respuesta es 204). Lanza Error con el mensaje de la
@@ -109,7 +118,7 @@ export async function googleFetch<T>(
       const message =
         (json as { error?: { message?: string } } | null)?.error?.message ??
         `Google API ${res.status}`
-      throw new Error(message)
+      throw new GoogleApiError(message, res.status)
     }
     return json as T
   } catch (err) {

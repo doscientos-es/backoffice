@@ -3,7 +3,7 @@
  *
  * `insertEvent` crea el evento (con Meet) una vez el equipo confirma.
  */
-import { GOOGLE_SCOPES, googleFetch } from './client'
+import { GOOGLE_SCOPES, GoogleApiError, googleFetch } from './client'
 
 const BASE = 'https://www.googleapis.com/calendar/v3/calendars'
 
@@ -24,6 +24,10 @@ export type InsertEventInput = {
   allDay?: boolean
   /** Propiedades privadas extendidas (k/v). Úsalas para taggear origen del evento. */
   extendedProperties?: Record<string, string>
+  /** Stable event ID and fingerprint for safe retries. Both are required together. */
+  idempotency?: { eventId: string; fingerprint: string }
+  /** Defaults to notifying external guests only. */
+  sendUpdates?: 'all' | 'externalOnly'
 }
 
 export type InsertedEvent = { id: string; htmlLink: string | null; meetUrl: string | null }
@@ -110,9 +114,14 @@ export async function insertEvent(input: InsertEventInput): Promise<InsertedEven
     start: startField,
     end: endField,
   }
+  if (input.idempotency) body.id = input.idempotency.eventId
 
-  if (input.extendedProperties && Object.keys(input.extendedProperties).length) {
-    body.extendedProperties = { private: input.extendedProperties }
+  const privateProperties = {
+    ...input.extendedProperties,
+    ...(input.idempotency ? { mcpFingerprint: input.idempotency.fingerprint } : {}),
+  }
+  if (Object.keys(privateProperties).length) {
+    body.extendedProperties = { private: privateProperties }
   }
   if (input.attendees?.length) {
     body.attendees = input.attendees.map((email) => ({ email }))
@@ -120,7 +129,7 @@ export async function insertEvent(input: InsertEventInput): Promise<InsertedEven
   if (input.withMeet) {
     body.conferenceData = {
       createRequest: {
-        requestId: `doscientos-${Date.now().toString(36)}`,
+        requestId: input.idempotency?.eventId ?? `doscientos-${Date.now().toString(36)}`,
         conferenceSolutionKey: { type: 'hangoutsMeet' },
       },
     }
@@ -129,22 +138,42 @@ export async function insertEvent(input: InsertEventInput): Promise<InsertedEven
   // "externalOnly" → only external (non-Workspace-domain) attendees receive invite
   // emails; internal @doscientos.es members already see the event on the shared
   // group calendar, so "all" would send them a duplicate notification.
-  const params = new URLSearchParams({ sendUpdates: 'externalOnly' })
+  const params = new URLSearchParams({ sendUpdates: input.sendUpdates ?? 'externalOnly' })
   if (input.withMeet) params.set('conferenceDataVersion', '1')
   const url = `${BASE}/${encodeURIComponent(input.calendarId)}/events?${params}`
 
-  const data = await googleFetch<{
+  type EventResponse = {
     id: string
     htmlLink?: string
     hangoutLink?: string
+    status?: string
+    extendedProperties?: { private?: Record<string, string> }
     conferenceData?: {
       entryPoints?: Array<{ entryPointType?: string; uri?: string }>
     }
-  }>(input.subject, [GOOGLE_SCOPES.calendar], url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+  }
+  let data: EventResponse
+  try {
+    data = await googleFetch<EventResponse>(input.subject, [GOOGLE_SCOPES.calendar], url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+  } catch (error) {
+    if (!(error instanceof GoogleApiError) || error.status !== 409 || !input.idempotency)
+      throw error
+    data = await googleFetch<EventResponse>(
+      input.subject,
+      [GOOGLE_SCOPES.calendar],
+      `${BASE}/${encodeURIComponent(input.calendarId)}/events/${encodeURIComponent(input.idempotency.eventId)}?conferenceDataVersion=1`,
+    )
+    if (
+      data.status === 'cancelled' ||
+      data.extendedProperties?.private?.mcpFingerprint !== input.idempotency.fingerprint
+    ) {
+      throw new Error('La clave de idempotencia ya corresponde a otra reunión o fue cancelada.')
+    }
+  }
 
   return {
     id: data.id,
