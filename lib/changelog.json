@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.173",
+      "date": "2026-11-08",
+      "title": "v0.1.173",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Implement MCP meeting scheduling with idempotency support"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "5742ec897ede5ed7810060018b2785d579cde2f5",
+          "type": "feat",
+          "scope": "meetings",
+          "breaking": false,
+          "description": "Implement MCP meeting scheduling with idempotency support"
+        }
+      ]
+    },
+    {
       "version": "0.1.172",
       "date": "2026-11-06",
       "title": "v0.1.172",

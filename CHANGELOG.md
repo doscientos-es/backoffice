@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-08 — v0.1.173
+
+### Nuevas funciones
+
+- Implement MCP meeting scheduling with idempotency support
+
 ## 2026-11-06 — v0.1.172
 
 ### Nuevas funciones
