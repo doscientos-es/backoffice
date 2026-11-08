@@ -37,6 +37,11 @@ const STATUS_FILTER_OPTIONS = (Object.keys(PROPOSAL_STATUS) as ProposalStatus[])
   label: PROPOSAL_STATUS[value].label,
 }))
 
+const ARCHIVE_FILTER_OPTIONS = [
+  { value: 'archived', label: 'Archivadas' },
+  { value: 'all', label: 'Todas' },
+]
+
 const EXPIRY_FILTER_OPTIONS = [
   { value: 'expiring_7', label: 'Próximos 7 días' },
   { value: 'expiring_30', label: 'Próximos 30 días' },
@@ -63,6 +68,7 @@ export default async function ProposalsPage({
   const sp = await searchParams
   const q = parseStringParam(sp, 'q')
   const status = parseStringParam(sp, 'status')
+  const archive = parseStringParam(sp, 'archive')
   const clientId = parseStringParam(sp, 'client')
   const leadId = parseStringParam(sp, 'lead')
   const expiry = parseStringParam(sp, 'expiry')
@@ -99,12 +105,14 @@ export default async function ProposalsPage({
   })()
 
   let query = supabase
-    .from('proposals')
+    .from('proposal_list')
     .select(
       'id, number, title, status, delivered_at, valid_until, sent_at, viewed_at, client_id, clients(name, logo_url, lead_id, leads(phone)), lead_id, leads(name, phone), project_id, projects(name)',
       { count: 'exact' },
     )
     .is('deleted_at', null)
+
+  if (archive !== 'all') query = query.eq('is_archived', archive === 'archived')
 
   if (q.length > 0) {
     const pattern = `%${escapeIlike(q)}%`
@@ -181,7 +189,7 @@ export default async function ProposalsPage({
     </Button>
   )
 
-  const hasFilters = !!(q || status || clientId || leadId || expiry || followUp)
+  const hasFilters = !!(q || status || clientId || leadId || expiry || followUp || archive)
   const priceColumn = {
     key: 'importe',
     label: 'Importe',
@@ -201,7 +209,7 @@ export default async function ProposalsPage({
   return (
     <ListPage
       title="Propuestas"
-      empty={hasFilters ? 'Sin coincidencias.' : 'Aún no hay propuestas.'}
+      empty={hasFilters ? 'Sin coincidencias.' : 'No hay propuestas activas.'}
       error={error?.message}
       actions={actions}
       emptyAction={canWriteProposals ? newAction : undefined}
@@ -210,6 +218,12 @@ export default async function ProposalsPage({
       searchKey="q"
       searchPlaceholder="Buscar por número o título…"
       filters={[
+        {
+          key: 'archive',
+          label: 'Archivo',
+          emptyLabel: 'Activas',
+          options: ARCHIVE_FILTER_OPTIONS,
+        },
         { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
         { key: 'client', label: 'Cliente', options: CLIENT_FILTER_OPTIONS },
         { key: 'expiry', label: 'Vencimiento', options: EXPIRY_FILTER_OPTIONS },

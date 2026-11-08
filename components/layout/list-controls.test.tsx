@@ -72,6 +72,28 @@ describe('ListControls avatar filter', () => {
     expect(navigation.replace).toHaveBeenCalledWith('/leads', { scroll: false })
   })
 
+  it('shows the actual default and selecting archived resets pagination', () => {
+    navigation.params = new URLSearchParams('page=2')
+    render(
+      <ListControls
+        filters={[
+          {
+            key: 'archive',
+            label: 'Archivo',
+            emptyLabel: 'Activas',
+            options: [{ value: 'archived', label: 'Archivadas' }],
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByRole('option', { name: 'Archivo: Activas' })).toBeDefined()
+    fireEvent.change(screen.getByRole('combobox', { name: 'Archivo' }), {
+      target: { value: 'archived' },
+    })
+    expect(navigation.replace).toHaveBeenCalledWith('/leads?archive=archived', { scroll: false })
+  })
+
   it('leaves space for the search icon in the default presentation', () => {
     render(<ListControls searchPlaceholder="Buscar leads" />)
 

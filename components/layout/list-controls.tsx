@@ -21,6 +21,7 @@ export type FilterConfig = {
   key: string
   label: string
   options: FilterOption[]
+  emptyLabel?: string
   searchable?: boolean
   display?: 'select' | 'avatars'
 }
@@ -335,7 +336,7 @@ export function ListControls({
                           aria-label={filter.label}
                           className="h-9 text-xs"
                         >
-                          <option value="">Todos</option>
+                          <option value="">{filter.emptyLabel ?? 'Todos'}</option>
                           {filter.options.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
@@ -530,7 +531,9 @@ export function ListControls({
                 aria-label={f.label}
                 className={cn('max-w-45 min-w-30 flex-1 text-xs font-medium sm:flex-none', 'h-8')}
               >
-                <option value="">{f.label}: todos</option>
+                <option value="">
+                  {f.label}: {f.emptyLabel ?? 'todos'}
+                </option>
                 {f.options.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}

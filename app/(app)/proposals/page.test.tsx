@@ -56,9 +56,42 @@ beforeEach(() => {
 })
 
 describe('ProposalsPage follow-up filters', () => {
+  it.each([
+    [{}, false],
+    [{ archive: 'archived' }, true],
+    [{ archive: 'unexpected' }, false],
+  ])('filters archive state before pagination for %j', async (params, archived) => {
+    const page = await ProposalsPage({ searchParams: Promise.resolve({ ...params, page: '2' }) })
+    const query = builders.get('proposal_list')
+    expect(query?.eq).toHaveBeenCalledWith('is_archived', archived)
+    expect(query?.eq?.mock.invocationCallOrder[0]).toBeLessThan(
+      query?.range?.mock.invocationCallOrder[0] ?? Infinity,
+    )
+    expect(query?.range).toHaveBeenCalledWith(25, 49)
+    expect(page.props.filters).toContainEqual({
+      key: 'archive',
+      label: 'Archivo',
+      emptyLabel: 'Activas',
+      options: [
+        { value: 'archived', label: 'Archivadas' },
+        { value: 'all', label: 'Todas' },
+      ],
+    })
+  })
+
+  it('shows all proposals only when explicitly requested and combines other filters', async () => {
+    await ProposalsPage({
+      searchParams: Promise.resolve({ archive: 'all', status: 'sent', q: 'diseño' }),
+    })
+    const query = builders.get('proposal_list')
+    expect(query?.eq).not.toHaveBeenCalledWith('is_archived', expect.anything())
+    expect(query?.eq).toHaveBeenCalledWith('status', 'sent')
+    expect(query?.or).toHaveBeenCalledWith('number.ilike.%diseño%,title.ilike.%diseño%')
+  })
+
   it('shows unanswered proposals oldest first in the follow-up queue', async () => {
     render(await ProposalsPage({ searchParams: Promise.resolve({ followup: 'waiting_72' }) }))
-    const query = builders.get('proposals')
+    const query = builders.get('proposal_list')
     expect(query?.in).toHaveBeenCalledWith('status', ['sent', 'viewed'])
     expect(query?.is).toHaveBeenCalledWith('responded_at', null)
     expect(query?.lt).toHaveBeenCalledWith('sent_at', expect.any(String))
@@ -69,14 +102,14 @@ describe('ProposalsPage follow-up filters', () => {
   })
   it('distinguishes viewed proposals from those with no recorded opening', async () => {
     await ProposalsPage({ searchParams: Promise.resolve({ followup: 'viewed' }) })
-    expect(builders.get('proposals')?.eq).toHaveBeenCalledWith('status', 'viewed')
+    expect(builders.get('proposal_list')?.eq).toHaveBeenCalledWith('status', 'viewed')
     await ProposalsPage({ searchParams: Promise.resolve({ followup: 'not_viewed' }) })
-    expect(builders.get('proposals')?.eq).toHaveBeenCalledWith('status', 'sent')
-    expect(builders.get('proposals')?.is).toHaveBeenCalledWith('viewed_at', null)
+    expect(builders.get('proposal_list')?.eq).toHaveBeenCalledWith('status', 'sent')
+    expect(builders.get('proposal_list')?.is).toHaveBeenCalledWith('viewed_at', null)
   })
   it('preserves the usual newest-first ordering outside follow-up mode', async () => {
     await ProposalsPage({ searchParams: Promise.resolve({}) })
-    expect(builders.get('proposals')?.order).toHaveBeenCalledWith('created_at', {
+    expect(builders.get('proposal_list')?.order).toHaveBeenCalledWith('created_at', {
       ascending: false,
       nullsFirst: false,
     })
@@ -92,7 +125,7 @@ describe('ProposalsPage follow-up filters', () => {
     )
     const page = ProposalsPage({ searchParams: Promise.resolve({}) })
     try {
-      await vi.waitFor(() => expect(builders.get('proposals')?.then).toHaveBeenCalled())
+      await vi.waitFor(() => expect(builders.get('proposal_list')?.then).toHaveBeenCalled())
     } finally {
       finish({ data: [{ id: 'client-1', name: 'Test client' }] })
     }
@@ -115,17 +148,17 @@ describe('ProposalsPage follow-up filters', () => {
     )
     const page = ProposalsPage({ searchParams: Promise.resolve({ lead }) })
     await vi.waitFor(() => expect(mocks.leadClient).toHaveBeenCalled())
-    expect(builders.get('proposals')?.then).not.toHaveBeenCalled()
+    expect(builders.get('proposal_list')?.then).not.toHaveBeenCalled()
     finish({ data: { id: 'client-1' } })
     await page
-    expect(builders.get('proposals')?.or).toHaveBeenCalledWith(
+    expect(builders.get('proposal_list')?.or).toHaveBeenCalledWith(
       `lead_id.eq.${lead},client_id.eq.client-1`,
     )
   })
 
   it.each(['sales', 'delivery'])('preserves price visibility for %s', async (role) => {
     mocks.role = role
-    results.set('proposals', { data: [{ id: 'proposal-1', title: 'Test', status: 'draft' }] })
+    results.set('proposal_list', { data: [{ id: 'proposal-1', title: 'Test', status: 'draft' }] })
     results.set('proposal_prices', { data: [{ proposal_id: 'proposal-1', total: 120 }] })
     const page = await ProposalsPage({ searchParams: Promise.resolve({}) })
     expect(mocks.from.mock.calls.some(([table]) => table === 'proposal_prices')).toBe(
