@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.175",
+      "date": "2026-11-08",
+      "title": "v0.1.175",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add function to check if proposals are archived"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "67acc752e5ea92ba200fd99221f783993340300f",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Add function to check if proposals are archived"
+        }
+      ]
+    },
+    {
       "version": "0.1.174",
       "date": "2026-11-08",
       "title": "v0.1.174",
