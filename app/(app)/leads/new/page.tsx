@@ -30,9 +30,7 @@ export default async function NewLeadPage({ searchParams }: PageProps) {
   const sharedUrl = first(params.shared_url, 1000)
   const sharedNotes = [sharedText, sharedUrl].filter(Boolean).join('\n')
   const defaults: LeadFormDefaults | undefined =
-    sharedTitle || sharedNotes
-      ? { name: sharedTitle, notes: sharedNotes, source: 'Otro' }
-      : undefined
+    sharedTitle || sharedNotes ? { name: sharedTitle, notes: sharedNotes } : undefined
   return (
     <div className="flex flex-col gap-6">
       <PageHeader

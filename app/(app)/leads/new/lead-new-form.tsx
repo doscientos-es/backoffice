@@ -62,7 +62,6 @@ export function LeadNewForm({
       company: fd.get('company')?.toString() ?? '',
       email: fd.get('email')?.toString() ?? '',
       phone: fd.get('phone')?.toString() ?? '',
-      source: fd.get('source')?.toString() ?? '',
       notes: fd.get('notes')?.toString() ?? '',
       estimated_value,
       company_size: fd.get('company_size')?.toString() ?? '',

@@ -101,6 +101,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
             <LeadFormFields
               idPrefix={`edit-${lead.id}`}
               includeEstimatedValue
+              includeSource
               members={members}
               defaults={{
                 name: lead.name,

@@ -51,12 +51,14 @@ export function LeadFormFields({
   defaults,
   idPrefix = 'lead',
   includeEstimatedValue = false,
+  includeSource = false,
   autoFocusName = false,
   members = [],
 }: {
   defaults?: LeadFormDefaults
   idPrefix?: string
   includeEstimatedValue?: boolean
+  includeSource?: boolean
   autoFocusName?: boolean
   members?: MemberOption[]
 }) {
@@ -225,24 +227,26 @@ export function LeadFormFields({
           Gestión
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormRow
-            label="Origen"
-            htmlFor={`${idPrefix}-source`}
-            hint="Canal por el que llegó el lead."
-          >
-            <Select
-              id={`${idPrefix}-source`}
-              name="source"
-              defaultValue={isCustomSource ? 'Otro' : sourceValue}
+          {includeSource ? (
+            <FormRow
+              label="Origen"
+              htmlFor={`${idPrefix}-source`}
+              hint="Canal por el que llegó el lead."
             >
-              <option value="">— Sin especificar —</option>
-              {LEAD_SOURCES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </Select>
-          </FormRow>
+              <Select
+                id={`${idPrefix}-source`}
+                name="source"
+                defaultValue={isCustomSource ? 'Otro' : sourceValue}
+              >
+                <option value="">— Sin especificar —</option>
+                {LEAD_SOURCES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </Select>
+            </FormRow>
+          ) : null}
           {members.length > 0 && (
             <FormRow
               label="Responsable"
