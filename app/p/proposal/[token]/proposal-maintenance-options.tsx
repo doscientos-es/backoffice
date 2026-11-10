@@ -1,101 +1,47 @@
-'use client'
-
-import { Check } from 'lucide-react'
-import { useState } from 'react'
-
-import { Button } from '@/components/ui/button'
-import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { formatPortalEUR } from '@/lib/portal/language'
 import { type MaintenanceOffer, recommendedMaintenancePlanId } from '@/lib/proposals/maintenance'
 
 import { SectionLabel } from './_components/primitives'
-import { selectProposalMaintenance } from './actions'
 
 export function ProposalMaintenanceOptions({
-  token,
   offer,
-  selectedPlanId,
-  disabled,
   language = 'es',
 }: {
-  token: string
   offer: MaintenanceOffer
-  selectedPlanId: string | null
-  disabled: boolean
   language?: 'es' | 'ca' | 'en'
 }) {
-  const feedback = useFormFeedback({ successResetMs: 0 })
-  const [selected, setSelected] = useState(selectedPlanId)
-  const selectedPlan = offer.plans.find((plan) => plan.id === selected) ?? null
   const recommendedPlanId = recommendedMaintenancePlanId(offer)
   const copy =
     language === 'ca'
       ? {
-          choose: 'Tria la cobertura que prefereixis',
+          heading: 'Opcions de manteniment',
           intro:
-            'Compara què cobreix cada pla i selecciona’n com a màxim un abans de confirmar la proposta.',
+            'Aquestes opcions no estan incloses en l’import de la proposta. Destaquem la nostra recomanació.',
           month: '/ mes + IVA',
           recommended: 'Recomanat',
-          selected: 'Seleccionat',
           includes: 'Inclou',
           excludes: 'No inclou',
-          remove: 'Pla seleccionat · Treure',
-          choosePlan: 'Tria aquest pla',
-          chosen: 'Has triat',
-          before: 'Pots canviar-lo o treure’l abans de confirmar.',
-          without: 'Pots confirmar la proposta sense afegir manteniment.',
-          updating: 'Actualitzant la proposta…',
-          added: 'Manteniment seleccionat',
-          removed: 'Manteniment no afegit',
         }
       : language === 'en'
         ? {
-            choose: 'Choose your preferred coverage',
+            heading: 'Maintenance options',
             intro:
-              'Compare what each plan covers and select at most one before confirming the proposal.',
+              'These options are not included in the proposal amount. Our recommendation is highlighted.',
             month: '/ month + VAT',
             recommended: 'Recommended',
-            selected: 'Selected',
             includes: 'Includes',
             excludes: 'Does not include',
-            remove: 'Plan selected · Remove',
-            choosePlan: 'Choose this plan',
-            chosen: 'You chose',
-            before: 'You can change or remove it before confirming.',
-            without: 'You can confirm the proposal without adding maintenance.',
-            updating: 'Updating proposal…',
-            added: 'Maintenance selected',
-            removed: 'Maintenance not added',
           }
         : {
-            choose: 'Elige la cobertura que prefieras',
+            heading: 'Opciones de mantenimiento',
             intro:
-              'Compara qué cubre cada plan y selecciona como máximo uno antes de confirmar la propuesta.',
+              'Estas opciones no están incluidas en el importe de la propuesta. Destacamos nuestra recomendación.',
             month: '/ mes + IVA',
             recommended: 'Recomendado',
-            selected: 'Seleccionado',
             includes: 'Incluye',
             excludes: 'No incluye',
-            remove: 'Plan seleccionado · Quitar',
-            choosePlan: 'Elegir este plan',
-            chosen: 'Has elegido',
-            before: 'Puedes cambiarlo o quitarlo antes de confirmar.',
-            without: 'Puedes confirmar la propuesta sin añadir mantenimiento.',
-            updating: 'Actualizando propuesta…',
-            added: 'Mantenimiento seleccionado',
-            removed: 'Mantenimiento no añadido',
           }
   const money = (amount: number) => formatPortalEUR(amount, language)
-
-  const choose = async (planId: string | null) => {
-    if (disabled) return
-    feedback.setPending()
-    const result = await selectProposalMaintenance(token, planId)
-    if (!result.ok) return feedback.setError(result.error)
-    setSelected(planId)
-    feedback.setSuccess(planId ? copy.added : copy.removed)
-    // The Server Action revalidates this page and returns the updated totals.
-  }
 
   return (
     <section className="border-t border-zinc-100 bg-[#2A4227]/3 px-6 py-7 sm:px-8 dark:border-zinc-800/60 dark:bg-[#9CC196]/4">
@@ -103,20 +49,21 @@ export function ProposalMaintenanceOptions({
         <p className="text-[11px] font-semibold tracking-widest text-[#2A4227] uppercase dark:text-[#9CC196]">
           {offer.heading}
         </p>
-        <SectionLabel className="mt-2">{copy.choose}</SectionLabel>
+        <SectionLabel className="mt-2">{copy.heading}</SectionLabel>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{offer.intro}</p>
         <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
           {copy.intro}
         </p>
       </header>
-      <div className="mt-5 grid gap-3 lg:grid-cols-3">
+      <div
+        className={`mt-5 grid gap-3 ${offer.plans.length === 1 ? '' : offer.plans.length === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3'}`}
+      >
         {offer.plans.map((plan) => {
-          const active = selected === plan.id
           const recommended = recommendedPlanId === plan.id
           return (
             <article
               key={plan.id}
-              className={`rounded-lg border p-4 ${active ? 'border-[#2A4227] bg-[#2A4227]/5 dark:border-[#9CC196]' : recommended ? 'border-[#2A4227]/50 bg-[#2A4227]/3 dark:border-[#9CC196]/60 dark:bg-[#9CC196]/5' : 'border-zinc-200 dark:border-zinc-800'}`}
+              className={`rounded-lg border p-4 ${recommended ? 'border-[#2A4227]/50 bg-[#2A4227]/3 dark:border-[#9CC196]/60 dark:bg-[#9CC196]/5' : 'border-zinc-200 dark:border-zinc-800'}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -130,11 +77,6 @@ export function ProposalMaintenanceOptions({
                   {recommended ? (
                     <span className="rounded-full bg-[#2A4227] px-2 py-1 text-[10px] font-semibold tracking-wide text-white uppercase dark:bg-[#9CC196] dark:text-[#1a2b18]">
                       {copy.recommended}
-                    </span>
-                  ) : null}
-                  {active ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
-                      <Check className="size-4" aria-hidden /> {copy.selected}
                     </span>
                   ) : null}
                 </div>
@@ -166,31 +108,9 @@ export function ProposalMaintenanceOptions({
                   </ul>
                 </div>
               ) : null}
-              {!disabled ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={active ? 'secondary' : 'outline'}
-                  className="mt-4 w-full"
-                  disabled={feedback.pending}
-                  onClick={() => choose(active ? null : plan.id)}
-                >
-                  {active ? copy.remove : copy.choosePlan}
-                </Button>
-              ) : null}
             </article>
           )
         })}
-      </div>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        {selectedPlan ? (
-          <p className="text-xs font-medium text-[#2A4227] dark:text-[#9CC196]">
-            {copy.chosen} {selectedPlan.name}. {copy.before}
-          </p>
-        ) : (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{copy.without}</p>
-        )}
-        {!disabled ? <FormFeedback state={feedback.state} pendingLabel={copy.updating} /> : null}
       </div>
     </section>
   )

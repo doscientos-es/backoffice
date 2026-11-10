@@ -36,7 +36,6 @@ import {
   type EngagementType,
   recordProposalEngagement,
 } from '@/lib/proposals/engagement'
-import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
 import {
   PROPOSAL_ACCEPTANCE_VERSION,
   proposalAcceptanceConsentText,
@@ -257,6 +256,22 @@ async function acceptWithFiscal(
       parsedSignature.data.consumer_early_start,
   }
 
+  // Retire an unconfirmed choice from the previous portal flow before accepting.
+  // Already accepted proposals return above and keep their historical contracts.
+  if (proposal.maintenance_selected_plan_id) {
+    const { error: maintenanceError } = await admin
+      .from('proposals')
+      .update({
+        maintenance_selected_plan_id: null,
+        maintenance_selection_source: null,
+        maintenance_selected_at: null,
+      })
+      .eq('id', proposal.id)
+      .in('status', ['sent', 'viewed'])
+    if (maintenanceError)
+      return { ok: false, error: 'No se pudo preparar la firma de la propuesta' }
+  }
+
   const snapshot = proposalAcceptanceSnapshot(
     proposal as unknown as Record<string, unknown>,
     (items ?? []) as Parameters<typeof proposalAcceptanceSnapshot>[1],
@@ -468,60 +483,6 @@ async function loadTrackableProposal(token: string): Promise<ViewedProposal | nu
   if (isProposalExpired(proposal.valid_until)) return null
   if (!(await requirePublicPortalAccess(parsed.data, proposal)).ok) return null
   return viewedProposal(proposal)
-}
-
-/** The portal can only change maintenance before the proposal has a final response. */
-export async function selectProposalMaintenance(
-  token: string,
-  planId: string | null,
-): Promise<ActionResult> {
-  const parsedToken = ProposalPortalToken.safeParse(token)
-  if (!parsedToken.success) return { ok: false, error: 'Token inválido' }
-  if (planId !== null && !z.string().min(1).max(64).safeParse(planId).success) {
-    return { ok: false, error: 'Plan de mantenimiento no válido' }
-  }
-
-  const admin = createAdminClient()
-  const { data: proposal, error } = await admin
-    .from('proposals')
-    .select(
-      'id, number, title, lead_id, client_id, created_by, status, valid_until, is_client_visible, portal_password_hash, maintenance_options',
-    )
-    .eq('portal_token', parsedToken.data)
-    .is('deleted_at', null)
-    .maybeSingle()
-  if (error || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
-  const access = await requirePublicPortalAccess(parsedToken.data, proposal)
-  if (!access.ok) return access
-  if (isProposalExpired(proposal.valid_until)) {
-    return { ok: false, error: 'El mantenimiento ya no se puede modificar' }
-  }
-  if (!['sent', 'viewed'].includes(proposal.status as string)) {
-    return { ok: false, error: 'El mantenimiento ya no se puede modificar' }
-  }
-
-  const offer = parseMaintenanceOffer(proposal.maintenance_options)
-  if (!offer.enabled) {
-    return { ok: false, error: 'El mantenimiento no está disponible en esta propuesta' }
-  }
-  if (planId && !selectedMaintenancePlan(offer, planId)) {
-    return { ok: false, error: 'Este plan no está disponible en la propuesta' }
-  }
-  const { error: updateError } = await admin
-    .from('proposals')
-    .update({
-      maintenance_options: offer,
-      maintenance_selected_plan_id: planId,
-      maintenance_selection_source: planId ? 'client' : null,
-      maintenance_selected_at: planId ? new Date().toISOString() : null,
-    })
-    .eq('id', proposal.id as string)
-    .in('status', ['sent', 'viewed'])
-  if (updateError) return { ok: false, error: 'No se pudo actualizar el mantenimiento' }
-
-  if (planId) await recordProposalEngagement(viewedProposal(proposal), 'maintenance_selected')
-  revalidatePath(`/p/proposal/${parsedToken.data}`)
-  return { ok: true }
 }
 
 function viewedProposal(row: Record<string, unknown>): ViewedProposal {

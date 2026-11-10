@@ -42,7 +42,6 @@ const props = {
   initialPaymentTerms: null,
   initialChangeManagementTerms: null,
   initialMaintenanceOptions: DEFAULT_MAINTENANCE_OFFER,
-  initialMaintenanceSelectedPlanId: null,
   teamMembers: [],
   initialTeamMemberIds: [],
   initialItems: [],
@@ -119,10 +118,10 @@ describe('ProposalEditor', () => {
       expect(saveProposal).toHaveBeenCalledWith(
         expect.objectContaining({
           maintenance_options: expect.objectContaining({ enabled: false }),
-          maintenance_selected_plan_id: null,
         }),
       ),
     )
+    expect(saveProposal.mock.lastCall?.[0]).not.toHaveProperty('maintenance_selected_plan_id')
   })
 
   it('guides the user through the proposal steps', () => {

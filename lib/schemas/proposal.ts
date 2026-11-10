@@ -125,7 +125,6 @@ export const UpdateProposalInput = z.object({
   change_management_terms: proposalMarkdownField(8_000),
   legal_terms: proposalLegalTermsField,
   maintenance_options: maintenanceOfferInput.nullable().optional(),
-  maintenance_selected_plan_id: z.string().min(1).max(64).nullable().optional(),
   discount_type: z.enum(['none', 'percent', 'amount']).optional(),
   discount_value: z.coerce.number().min(0).max(100_000_000).optional(),
   discount_reason: z

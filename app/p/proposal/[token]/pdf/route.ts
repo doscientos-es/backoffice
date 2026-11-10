@@ -152,9 +152,11 @@ export async function GET(
     proposal as unknown as { leads: { name: string | null; company: string | null } | null }
   ).leads
   const maintenanceOffer = parseMaintenanceOffer(documentSource.maintenance_options)
-  const maintenanceSelectedPlanId =
-    (documentSource.maintenance_selected_plan_id as string | null) ?? null
-  const maintenancePlan = selectedMaintenancePlan(maintenanceOffer, maintenanceSelectedPlanId)
+  // Preserve previously signed maintenance charges, never add options to an unsigned quote.
+  const maintenancePlan = selectedMaintenancePlan(
+    maintenanceOffer,
+    (signedProposal?.maintenance_selected_plan_id as string | null) ?? null,
+  )
   const pdfItems: ProposalPdfItem[] = (signedItems as Array<Record<string, unknown>>).map(
     (item): ProposalPdfItem => ({
       id: String(item.id),
@@ -252,7 +254,6 @@ export async function GET(
     },
     items: pdfItems,
     maintenanceOffer,
-    maintenanceSelectedPlanId,
     portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${token}?lang=${language}`,
     companyName:
       signedSnapshot?.parties?.provider?.name ?? (settings?.company_name as string | null) ?? null,

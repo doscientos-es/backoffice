@@ -1,6 +1,6 @@
 'use client'
 
-import { Check } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -13,13 +13,10 @@ import {
   type MaintenanceOffer,
   recommendedMaintenancePlanId,
 } from '@/lib/proposals/maintenance'
-import { formatEUR } from '@/lib/utils'
 
 type Props = {
   offer: MaintenanceOffer
-  selectedPlanId: string | null
   onChange: (offer: MaintenanceOffer) => void
-  onSelectedPlanChange: (planId: string | null) => void
   locked: boolean
 }
 
@@ -98,18 +95,40 @@ function MaintenanceListTextarea({
 }
 
 /** Proposal-scoped maintenance plans. Copy and pricing remain editable per quote. */
-export function MaintenanceOfferEditor({
-  offer,
-  selectedPlanId,
-  onChange,
-  onSelectedPlanChange,
-  locked,
-}: Props) {
+export function MaintenanceOfferEditor({ offer, onChange, locked }: Props) {
   const recommendedPlanId = recommendedMaintenancePlanId(offer)
   const patchPlan = (index: number, patch: Partial<MaintenanceOffer['plans'][number]>) => {
     onChange({
       ...offer,
       plans: offer.plans.map((plan, current) => (current === index ? { ...plan, ...patch } : plan)),
+    })
+  }
+  const addPlan = () => {
+    if (locked || offer.plans.length >= MAINTENANCE_LIMITS.maxPlans) return
+    onChange({
+      ...offer,
+      plans: [
+        ...offer.plans,
+        {
+          id: crypto.randomUUID(),
+          name: 'Nuevo plan',
+          summary: '',
+          monthly_price: 0,
+          vat_rate: 21,
+          coverage: [],
+          exclusions: [],
+        },
+      ],
+    })
+  }
+  const removePlan = (planId: string) => {
+    if (locked || offer.plans.length <= 1) return
+    const plans = offer.plans.filter((plan) => plan.id !== planId)
+    onChange({
+      ...offer,
+      plans,
+      recommended_plan_id:
+        recommendedPlanId === planId ? plans[0]?.id : (recommendedPlanId ?? undefined),
     })
   }
 
@@ -118,8 +137,8 @@ export function MaintenanceOfferEditor({
       <header className="flex flex-col gap-0.5">
         <h2 className="text-sm font-semibold">Mantenimiento</h2>
         <p className="text-[11px] text-muted-foreground">
-          Personaliza los planes para esta propuesta. El cliente podrá escoger uno antes de
-          aceptarla.
+          Personaliza las opciones de mantenimiento y marca nuestra recomendación. Se muestran como
+          alternativas informativas, sin añadir cuotas al importe de la propuesta.
         </p>
       </header>
       <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/20 p-3">
@@ -127,10 +146,7 @@ export function MaintenanceOfferEditor({
           type="checkbox"
           checked={offer.enabled}
           disabled={locked}
-          onChange={(event) => {
-            onChange({ ...offer, enabled: event.target.checked })
-            if (!event.target.checked) onSelectedPlanChange(null)
-          }}
+          onChange={(event) => onChange({ ...offer, enabled: event.target.checked })}
           aria-label="Incluir mantenimiento en esta propuesta"
           className="mt-0.5 size-4 accent-primary"
         />
@@ -192,12 +208,11 @@ export function MaintenanceOfferEditor({
           </div>
           <div className="flex flex-col gap-4">
             {offer.plans.map((plan, index) => {
-              const selected = selectedPlanId === plan.id
               const recommended = recommendedPlanId === plan.id
               return (
                 <article
                   key={plan.id}
-                  className={`overflow-hidden rounded-xl border ${selected ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-background'}`}
+                  className={`overflow-hidden rounded-xl border ${recommended ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-background'}`}
                 >
                   <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3">
                     <div className="flex items-center gap-2.5">
@@ -226,11 +241,17 @@ export function MaintenanceOfferEditor({
                         />
                         Recomendado al cliente
                       </label>
-                      {selected ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                          <Check className="size-3.5" aria-hidden /> Seleccionado
-                        </span>
-                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={locked || offer.plans.length <= 1}
+                        onClick={() => removePlan(plan.id)}
+                        aria-label={`Eliminar el plan ${plan.name}`}
+                      >
+                        <Trash2 className="size-3.5" aria-hidden />
+                        Eliminar
+                      </Button>
                     </div>
                   </header>
                   <div className="grid gap-5 p-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -304,29 +325,26 @@ export function MaintenanceOfferEditor({
                       </section>
                     </div>
                   </div>
-                  <footer className="flex justify-end border-t border-border bg-muted/20 px-4 py-3">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={selected ? 'secondary' : 'outline'}
-                      className="w-full sm:w-auto"
-                      disabled={locked}
-                      onClick={() => onSelectedPlanChange(selected ? null : plan.id)}
-                    >
-                      {selected
-                        ? 'Quitar de la propuesta'
-                        : `Seleccionar · ${formatEUR(plan.monthly_price)}/mes`}
-                    </Button>
-                  </footer>
                 </article>
               )
             })}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {selectedPlanId
-              ? 'Este plan queda incluido como cuota mensual y se podrá cambiar hasta que la propuesta sea aceptada.'
-              : 'No se ha seleccionado ningún plan. La propuesta seguirá siendo válida sin mantenimiento.'}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              {offer.plans.length}/{MAINTENANCE_LIMITS.maxPlans} opciones. Mantén al menos una o
+              desactiva el mantenimiento.
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={locked || offer.plans.length >= MAINTENANCE_LIMITS.maxPlans}
+              onClick={addPlan}
+            >
+              <Plus className="size-3.5" aria-hidden />
+              Añadir plan
+            </Button>
+          </div>
         </>
       ) : null}
     </section>

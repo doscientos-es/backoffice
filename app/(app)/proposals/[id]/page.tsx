@@ -609,9 +609,6 @@ export default async function ProposalDetailPage({
             }
             initialLegalTerms={(proposal.legal_terms as string | null) ?? null}
             initialMaintenanceOptions={parseMaintenanceOffer(priceSummary?.maintenance_options)}
-            initialMaintenanceSelectedPlanId={
-              (proposal.maintenance_selected_plan_id as string | null) ?? null
-            }
             teamMembers={(teamMembers ?? []) as Parameters<typeof ProposalEditor>[0]['teamMembers']}
             initialTeamMemberIds={selectedTeamIds}
             initialItems={editableItems}
@@ -660,9 +657,6 @@ export default async function ProposalDetailPage({
           changeManagementTerms={(proposal.change_management_terms as string | null) ?? null}
           legalTerms={(proposal.legal_terms as string | null) ?? null}
           maintenanceOffer={canSeePrices && priceSummary ? maintenanceOffer : null}
-          maintenanceSelectedPlanId={
-            (proposal.maintenance_selected_plan_id as string | null) ?? null
-          }
           attachments={proposalAttachments}
           team={visibleTeam}
           mainContent={

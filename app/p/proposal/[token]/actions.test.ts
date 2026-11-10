@@ -73,6 +73,7 @@ type ProposalRow = {
   total?: number
   payment_schedule?: string
   maintenance_options?: unknown
+  maintenance_selected_plan_id?: string | null
   lead_id?: string | null
   client_id?: string | null
   clients?: {
@@ -162,14 +163,12 @@ const COMPLETE_CLIENT = {
 let acceptProposal: typeof import('./actions').acceptProposal
 let initiateProposalPayment: typeof import('./actions').initiateProposalPayment
 let rejectProposal: typeof import('./actions').rejectProposal
-let selectProposalMaintenance: typeof import('./actions').selectProposalMaintenance
 
 beforeAll(async () => {
   const actions = await import('./actions')
   acceptProposal = actions.acceptProposal
   initiateProposalPayment = actions.initiateProposalPayment
   rejectProposal = actions.rejectProposal
-  selectProposalMaintenance = actions.selectProposalMaintenance
 }, 30_000)
 
 describe('portal proposal actions', () => {
@@ -255,10 +254,6 @@ describe('portal proposal actions', () => {
     isPortalUnlocked.mockResolvedValue(false)
 
     await expect(rejectProposal(VALID_TOKEN)).resolves.toEqual({
-      ok: false,
-      error: 'Vuelve a introducir la contraseña del portal',
-    })
-    await expect(selectProposalMaintenance(VALID_TOKEN, 'growth')).resolves.toEqual({
       ok: false,
       error: 'Vuelve a introducir la contraseña del portal',
     })
@@ -359,32 +354,56 @@ describe('portal proposal actions', () => {
     expect(revalidatePath).not.toHaveBeenCalled()
   })
 
-  it('saves maintenance selection and revalidates the portal to update totals', async () => {
-    state.fetchResult = {
-      data: { id: 'p5', status: 'sent', maintenance_options: DEFAULT_MAINTENANCE_OFFER },
-      error: null,
-    }
-
-    await expect(selectProposalMaintenance(VALID_TOKEN, 'essential')).resolves.toEqual({ ok: true })
-    expect(state.lastPatch).toMatchObject({ maintenance_selected_plan_id: 'essential' })
-    expect(revalidatePath).toHaveBeenCalledExactlyOnceWith(`/p/proposal/${VALID_TOKEN}`)
+  it('does not expose a maintenance selection action', async () => {
+    const actions = await import('./actions')
+    expect(actions).not.toHaveProperty('selectProposalMaintenance')
   })
 
-  it('rejects maintenance selection when the offer is disabled', async () => {
+  it('accepts options without contracting an unconfirmed legacy maintenance selection', async () => {
     state.fetchResult = {
       data: {
         id: 'p5',
         status: 'sent',
-        maintenance_options: { ...DEFAULT_MAINTENANCE_OFFER, enabled: false },
+        client_id: 'c1',
+        clients: COMPLETE_CLIENT,
+        maintenance_options: DEFAULT_MAINTENANCE_OFFER,
+        maintenance_selected_plan_id: 'essential',
       },
       error: null,
     }
 
-    await expect(selectProposalMaintenance(VALID_TOKEN, null)).resolves.toEqual({
-      ok: false,
-      error: 'El mantenimiento no está disponible en esta propuesta',
+    await expect(acceptProposal(VALID_TOKEN, SIGNATURE)).resolves.toEqual({ ok: true })
+    expect(state.lastPatch).toMatchObject({
+      maintenance_selected_plan_id: null,
+      maintenance_selection_source: null,
+      maintenance_selected_at: null,
     })
-    expect(state.lastPatch).toBeNull()
+    expect(state.lastRpc?.args.p_document_snapshot).toMatchObject({
+      proposal: {
+        maintenance_options: DEFAULT_MAINTENANCE_OFFER,
+        maintenance_selected_plan_id: null,
+      },
+    })
+  })
+
+  it('does not sign if an unconfirmed legacy maintenance choice cannot be cleared', async () => {
+    state.fetchResult = {
+      data: {
+        id: 'p5',
+        status: 'sent',
+        client_id: 'c1',
+        clients: COMPLETE_CLIENT,
+        maintenance_selected_plan_id: 'growth',
+      },
+      error: null,
+    }
+    state.updateResult = { error: { message: 'db down' } }
+    await expect(acceptProposal(VALID_TOKEN, SIGNATURE)).resolves.toEqual({
+      ok: false,
+      error: 'No se pudo preparar la firma de la propuesta',
+    })
+    expect(state.lastRpc).toBeNull()
+    expect(createProposalDraftInvoices).not.toHaveBeenCalled()
   })
 
   it('creates exactly the agreed deposit through the atomic payment RPC', async () => {

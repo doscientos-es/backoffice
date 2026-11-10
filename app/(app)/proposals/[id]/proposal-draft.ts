@@ -32,7 +32,6 @@ export type InitialProposalDraft = Pick<
   | 'initialChangeManagementTerms'
   | 'initialLegalTerms'
   | 'initialMaintenanceOptions'
-  | 'initialMaintenanceSelectedPlanId'
   | 'initialTeamMemberIds'
   | 'initialItems'
   | 'initialDiscountType'
@@ -59,7 +58,6 @@ export function createProposalDraft({
   initialChangeManagementTerms,
   initialLegalTerms,
   initialMaintenanceOptions,
-  initialMaintenanceSelectedPlanId,
   initialTeamMemberIds,
   initialItems,
   initialDiscountType,
@@ -109,7 +107,6 @@ export function createProposalDraft({
     changeManagementTerms: initialChangeManagementTerms ?? DEFAULT_CHANGE_MANAGEMENT_TERMS,
     legalTerms: initialLegalTerms ?? DEFAULT_PROPOSAL_LEGAL_TERMS,
     maintenanceOptions: initialMaintenanceOptions ?? DEFAULT_MAINTENANCE_OFFER,
-    maintenanceSelectedPlanId: initialMaintenanceSelectedPlanId,
     teamMemberIds: initialTeamMemberIds,
     discountType: initialDiscountType,
     discountValue: initialDiscountValue,
@@ -139,7 +136,6 @@ export type ProposalDraft = {
   changeManagementTerms: string
   legalTerms: string
   maintenanceOptions: MaintenanceOffer
-  maintenanceSelectedPlanId: string | null
   teamMemberIds: string[]
   discountType: DiscountType
   discountValue: number
@@ -165,7 +161,6 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
     changeManagementTerms,
     legalTerms,
     maintenanceOptions,
-    maintenanceSelectedPlanId,
     teamMemberIds,
     discountType,
     discountValue,
@@ -193,7 +188,6 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
     change_management_terms: changeManagementTerms || null,
     legal_terms: legalTerms || null,
     maintenance_options: maintenanceOptions,
-    maintenance_selected_plan_id: maintenanceSelectedPlanId,
     discount_type: discountType,
     discount_value: discountType === 'none' ? 0 : discountValue,
     discount_reason: discountType === 'none' ? null : discountReason || null,

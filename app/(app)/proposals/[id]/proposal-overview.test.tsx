@@ -24,7 +24,6 @@ describe('ProposalOverview', () => {
         changeManagementTerms={null}
         legalTerms={null}
         maintenanceOffer={null}
-        maintenanceSelectedPlanId={null}
         attachments={[]}
         team={[]}
         sidebar={<div data-testid="proposal-sidebar">Aperturas recientes</div>}
@@ -56,7 +55,6 @@ describe('ProposalOverview', () => {
         changeManagementTerms={null}
         legalTerms={null}
         maintenanceOffer={null}
-        maintenanceSelectedPlanId={null}
         attachments={[]}
         team={[]}
       />,
@@ -119,7 +117,6 @@ describe('ProposalOverview', () => {
             },
           ],
         }}
-        maintenanceSelectedPlanId="growth"
         attachments={[
           {
             id: 'attachment-1',
@@ -142,7 +139,8 @@ describe('ProposalOverview', () => {
     expect(screen.getByText('Anexo contractual')).toBeDefined()
     expect(screen.getByText('Backups y seguridad')).toBeDefined()
     expect(screen.getByText('Desarrollos de gran alcance')).toBeDefined()
-    expect(screen.getByText('Seleccionado')).toBeDefined()
+    expect(screen.getByText('Recomendado')).toBeDefined()
+    expect(screen.queryByText('Seleccionado')).toBeNull()
     expect(screen.getByText('Informe final.pdf')).toBeDefined()
   })
 })

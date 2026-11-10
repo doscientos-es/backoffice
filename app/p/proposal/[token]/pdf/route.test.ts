@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
+
 const state = vi.hoisted(() => ({
   isTeam: false,
   unlocked: true,
@@ -122,7 +124,39 @@ describe('GET /p/proposal/[token]/pdf', () => {
     expect(renderProposalPdf).toHaveBeenCalledWith(
       expect.objectContaining({
         maintenanceOffer: expect.objectContaining({ plans: expect.any(Array) }),
-        maintenanceSelectedPlanId: null,
+      }),
+    )
+  })
+
+  it('does not add unsigned maintenance options or a legacy choice to the quoted items', async () => {
+    const { GET } = await import('./route')
+    state.proposal = {
+      ...state.proposal,
+      maintenance_options: DEFAULT_MAINTENANCE_OFFER,
+      maintenance_selected_plan_id: 'growth',
+    }
+    await GET(request(), context)
+    expect(renderProposalPdf).toHaveBeenCalledWith(
+      expect.objectContaining({ maintenanceOffer: DEFAULT_MAINTENANCE_OFFER, items: [] }),
+    )
+  })
+
+  it('preserves maintenance already contracted in a historical signed snapshot', async () => {
+    const { GET } = await import('./route')
+    state.proposal = { ...state.proposal, status: 'accepted' }
+    state.acceptance = {
+      document_snapshot: {
+        proposal: {
+          maintenance_options: DEFAULT_MAINTENANCE_OFFER,
+          maintenance_selected_plan_id: 'growth',
+          items: [],
+        },
+      },
+    }
+    await GET(request(), context)
+    expect(renderProposalPdf).toHaveBeenCalledWith(
+      expect.objectContaining({
+        items: [expect.objectContaining({ description: 'Mantenimiento web · Crecimiento' })],
       }),
     )
   })

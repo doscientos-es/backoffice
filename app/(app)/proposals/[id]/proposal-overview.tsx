@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Markdown } from '@/components/ui/markdown'
 import { BILLING_CYCLE_LABELS, type BillingCycle, type DiscountType } from '@/lib/finance'
 import type { EditablePair } from '@/lib/proposals/key-points'
-import type { MaintenanceOffer } from '@/lib/proposals/maintenance'
+import { type MaintenanceOffer, recommendedMaintenancePlanId } from '@/lib/proposals/maintenance'
 import { recurringAmount } from '@/lib/proposals/recurring'
 import type { PaymentPlanItem, ScopeModule } from '@/lib/proposals/scope'
 import { formatDate, formatEUR } from '@/lib/utils'
@@ -57,7 +57,6 @@ type Props = {
   changeManagementTerms: string | null
   legalTerms: string | null
   maintenanceOffer: MaintenanceOffer | null
-  maintenanceSelectedPlanId: string | null
   attachments: AttachmentItem[]
   team: TeamMember[]
   mainContent?: ReactNode
@@ -88,7 +87,6 @@ export function ProposalOverview({
   changeManagementTerms,
   legalTerms,
   maintenanceOffer,
-  maintenanceSelectedPlanId,
   attachments,
   team,
   mainContent,
@@ -317,8 +315,7 @@ export function ProposalOverview({
                     IVA
                   </p>
                   {maintenanceOffer.plans.map((plan) => {
-                    const recommended = maintenanceOffer.recommended_plan_id === plan.id
-                    const selected = maintenanceSelectedPlanId === plan.id
+                    const recommended = recommendedMaintenancePlanId(maintenanceOffer) === plan.id
                     return (
                       <article key={plan.id} className="rounded-lg border border-border p-4">
                         <header className="flex flex-wrap items-start justify-between gap-3">
@@ -328,7 +325,6 @@ export function ProposalOverview({
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
                             {recommended ? <Badge variant="info">Recomendado</Badge> : null}
-                            {selected ? <Badge variant="success">Seleccionado</Badge> : null}
                             <span className="text-sm font-semibold tabular-nums">
                               {formatEUR(
                                 recurringAmount(plan.monthly_price, maintenanceOffer.billing_cycle),

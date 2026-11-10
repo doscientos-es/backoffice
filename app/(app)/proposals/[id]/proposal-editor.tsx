@@ -11,7 +11,6 @@ import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { VersionConflictDialog } from '@/components/ui/version-conflict-dialog'
 import { computeProposalTotals, type LineItem } from '@/lib/finance'
 import { createEmptyPair, type EditablePair } from '@/lib/proposals/key-points'
-import { selectedMaintenancePlan } from '@/lib/proposals/maintenance'
 import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import {
   PAYMENT_SCHEDULE_TEMPLATES,
@@ -78,7 +77,6 @@ export function ProposalEditor(props: ProposalEditorProps) {
     paymentTermsCustomized,
     changeManagementTerms,
     maintenanceOptions,
-    maintenanceSelectedPlanId,
     items,
   } = draft
   const router = useRouter()
@@ -147,12 +145,11 @@ export function ProposalEditor(props: ProposalEditorProps) {
     () => computeProposalTotals(items, { type: draft.discountType, value: draft.discountValue }),
     [items, draft.discountType, draft.discountValue],
   )
-  const selectedMaintenance = selectedMaintenancePlan(maintenanceOptions, maintenanceSelectedPlanId)
   const stepComplete = [
     Boolean(title.trim() && validUntil),
     Boolean(contextMarkdown.trim() || pairs.length || scopeModules.length || deliverables.trim()),
     Boolean(items.some((item) => item.description.trim() && Number(item.quantity) > 0)),
-    !maintenanceOptions.enabled || Boolean(selectedMaintenance),
+    !maintenanceOptions.enabled || maintenanceOptions.plans.length > 0,
   ]
   const currentStep = EDITOR_STEPS[activeStep] ?? EDITOR_STEPS[0]
   const nextStep = EDITOR_STEPS[activeStep + 1] ?? currentStep
@@ -425,7 +422,6 @@ export function ProposalEditor(props: ProposalEditorProps) {
                 locked={locked}
                 teamMembers={teamMembers}
                 proposalTotals={proposalTotals}
-                selectedMaintenance={selectedMaintenance}
               />
             ) : null}
           </main>
@@ -455,9 +451,7 @@ export function ProposalEditor(props: ProposalEditorProps) {
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Mantenimiento</span>
                   <span className="text-right font-medium">
-                    {selectedMaintenance
-                      ? `${formatEUR(selectedMaintenance.monthly_price)} / ${maintenanceOptions.billing_cycle === 'monthly' ? 'mes' : maintenanceOptions.billing_cycle === 'quarterly' ? 'trimestre' : 'año'}`
-                      : 'Pendiente'}
+                    {maintenanceOptions.plans.length} opciones
                   </span>
                 </div>
               ) : null}

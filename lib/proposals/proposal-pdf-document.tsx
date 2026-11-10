@@ -10,7 +10,7 @@ import {
 } from '@react-pdf/renderer'
 
 import type { KeyPoint } from '@/lib/proposals/key-points'
-import type { MaintenanceOffer } from '@/lib/proposals/maintenance'
+import { type MaintenanceOffer, recommendedMaintenancePlanId } from '@/lib/proposals/maintenance'
 import {
   PAYMENT_SCHEDULE_LABELS,
   type PaymentSchedule,
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   maintenancePlanName: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 9.5 },
-  maintenanceSelection: {
+  maintenanceRecommendation: {
     color: BRAND,
     fontFamily: 'Helvetica-Bold',
     fontSize: 7.5,
@@ -260,7 +260,6 @@ export type ProposalPdfData = {
   }
   items: ProposalPdfItem[]
   maintenanceOffer: MaintenanceOffer
-  maintenanceSelectedPlanId: string | null
   portalUrl: string
   companyName: string | null
   companyNif?: string | null
@@ -411,13 +410,8 @@ function LegalTerms({ source }: { source: string }) {
   )
 }
 
-function MaintenancePlanList({
-  offer,
-  selectedPlanId,
-}: {
-  offer: MaintenanceOffer
-  selectedPlanId: string | null
-}) {
+function MaintenancePlanList({ offer }: { offer: MaintenanceOffer }) {
+  const recommendedPlanId = recommendedMaintenancePlanId(offer)
   return (
     <View style={styles.maintenanceTable}>
       <View style={styles.tableHeader}>
@@ -427,12 +421,14 @@ function MaintenancePlanList({
         </Text>
       </View>
       {offer.plans.map((plan) => {
-        const selected = plan.id === selectedPlanId
+        const recommended = plan.id === recommendedPlanId
         return (
           <View key={plan.id} style={styles.maintenanceRow} wrap={false}>
             <View style={{ width: '74%' }}>
               <Text style={styles.maintenancePlanName}>{plan.name}</Text>
-              {selected ? <Text style={styles.maintenanceSelection}>Plan elegido</Text> : null}
+              {recommended ? (
+                <Text style={styles.maintenanceRecommendation}>Recomendado</Text>
+              ) : null}
               <Text style={styles.maintenanceSummary}>{plan.summary}</Text>
               <Text style={styles.maintenanceListLabel}>Incluye</Text>
               <Text style={styles.maintenanceList}>{plan.coverage.join(' · ')}</Text>
@@ -801,13 +797,10 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             <Text style={styles.sectionLabel}>{copy.maintenance}</Text>
             <Text style={styles.sectionTitle}>{data.maintenanceOffer.heading}</Text>
             <Text style={styles.body}>{data.maintenanceOffer.intro}</Text>
-            <MaintenancePlanList
-              offer={data.maintenanceOffer}
-              selectedPlanId={data.maintenanceSelectedPlanId}
-            />
+            <MaintenancePlanList offer={data.maintenanceOffer} />
             <Text style={styles.body}>
-              Selecciona desde la propuesta online la cobertura que mejor se ajuste al mantenimiento
-              de tu sistema.
+              Opciones de mantenimiento para valorar, con nuestra recomendación destacada. No están
+              incluidas en el importe de la propuesta.
             </Text>
           </View>
         ) : null}

@@ -16,7 +16,6 @@ import { Markdown } from '@/components/ui/markdown'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { computeProposalTotals, LineItem } from '@/lib/finance'
-import type { selectedMaintenancePlan } from '@/lib/proposals/maintenance'
 import { PAYMENT_SCHEDULE_LABELS, type PaymentSchedule } from '@/lib/proposals/scope'
 import { formatEUR } from '@/lib/utils'
 
@@ -423,20 +422,16 @@ export function ProposalReviewSection({
   locked,
   teamMembers,
   proposalTotals,
-  selectedMaintenance,
 }: SectionProps & {
   teamMembers: ProposalEditorProps['teamMembers']
   proposalTotals: ReturnType<typeof computeProposalTotals>
-  selectedMaintenance: ReturnType<typeof selectedMaintenancePlan>
 }) {
-  const { maintenanceOptions, maintenanceSelectedPlanId, teamMemberIds } = draft
+  const { maintenanceOptions, teamMemberIds } = draft
   return (
     <div className="flex flex-col gap-5">
       <MaintenanceOfferEditor
         offer={maintenanceOptions}
-        selectedPlanId={maintenanceSelectedPlanId}
         onChange={setField('maintenanceOptions')}
-        onSelectedPlanChange={setField('maintenanceSelectedPlanId')}
         locked={locked}
       />
       <section className="rounded-xl border border-border bg-card p-5">
@@ -485,9 +480,7 @@ export function ProposalReviewSection({
             <div className="rounded-lg bg-background p-3">
               <p className="text-xs text-muted-foreground">Mantenimiento</p>
               <p className="mt-1 text-lg font-semibold">
-                {selectedMaintenance
-                  ? `${selectedMaintenance.name} · ${formatEUR(selectedMaintenance.monthly_price)} / ${maintenanceOptions.billing_cycle === 'monthly' ? 'mes' : maintenanceOptions.billing_cycle === 'quarterly' ? 'trimestre' : 'año'}`
-                  : 'Pendiente de elegir'}
+                {maintenanceOptions.plans.length} opciones · no incluidas en el importe
               </p>
             </div>
           ) : null}

@@ -24,6 +24,16 @@ describe('proposal maintenance offer', () => {
     ).toBeNull()
   })
 
+  it.each([1, 2, 3])('preserves a custom offer with %i options', (count) => {
+    const plans = DEFAULT_MAINTENANCE_OFFER.plans.slice(0, count)
+    const offer = {
+      ...DEFAULT_MAINTENANCE_OFFER,
+      plans,
+      recommended_plan_id: plans[0]!.id,
+    }
+    expect(parseMaintenanceOffer(offer)).toEqual(offer)
+  })
+
   it('keeps legacy snapshots valid by defaulting their exclusions to an empty list', () => {
     const legacyOffer = {
       ...DEFAULT_MAINTENANCE_OFFER,

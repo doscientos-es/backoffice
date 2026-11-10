@@ -1,18 +1,36 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
+import {
+  DEFAULT_MAINTENANCE_OFFER,
+  MAINTENANCE_LIMITS,
+  type MaintenanceOffer,
+  maintenanceOfferInput,
+} from '@/lib/proposals/maintenance'
 
 import { MaintenanceOfferEditor } from './maintenance-offer-editor'
+
+function EditableOffer({ onChange }: { onChange: (offer: MaintenanceOffer) => void }) {
+  const [offer, setOffer] = useState(DEFAULT_MAINTENANCE_OFFER)
+  return (
+    <MaintenanceOfferEditor
+      offer={offer}
+      onChange={(next) => {
+        setOffer(next)
+        onChange(next)
+      }}
+      locked={false}
+    />
+  )
+}
 
 describe('MaintenanceOfferEditor', () => {
   it('uses the default maintenance heading', () => {
     render(
       <MaintenanceOfferEditor
         offer={DEFAULT_MAINTENANCE_OFFER}
-        selectedPlanId={null}
         onChange={vi.fn()}
-        onSelectedPlanChange={vi.fn()}
         locked={false}
       />,
     )
@@ -26,9 +44,7 @@ describe('MaintenanceOfferEditor', () => {
     render(
       <MaintenanceOfferEditor
         offer={DEFAULT_MAINTENANCE_OFFER}
-        selectedPlanId={null}
         onChange={onChange}
-        onSelectedPlanChange={vi.fn()}
         locked={false}
       />,
     )
@@ -58,9 +74,7 @@ describe('MaintenanceOfferEditor', () => {
     render(
       <MaintenanceOfferEditor
         offer={DEFAULT_MAINTENANCE_OFFER}
-        selectedPlanId={null}
         onChange={onChange}
-        onSelectedPlanChange={vi.fn()}
         locked={false}
       />,
     )
@@ -72,15 +86,12 @@ describe('MaintenanceOfferEditor', () => {
     )
   })
 
-  it('disables maintenance for a punctual proposal and clears its selected plan', () => {
+  it('disables maintenance for a punctual proposal', () => {
     const onChange = vi.fn()
-    const onSelectedPlanChange = vi.fn()
     const { rerender } = render(
       <MaintenanceOfferEditor
         offer={DEFAULT_MAINTENANCE_OFFER}
-        selectedPlanId="growth"
         onChange={onChange}
-        onSelectedPlanChange={onSelectedPlanChange}
         locked={false}
       />,
     )
@@ -88,16 +99,64 @@ describe('MaintenanceOfferEditor', () => {
     fireEvent.click(screen.getByLabelText('Incluir mantenimiento en esta propuesta'))
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }))
-    expect(onSelectedPlanChange).toHaveBeenCalledWith(null)
     rerender(
       <MaintenanceOfferEditor
         offer={{ ...DEFAULT_MAINTENANCE_OFFER, enabled: false }}
-        selectedPlanId={null}
         onChange={onChange}
-        onSelectedPlanChange={onSelectedPlanChange}
         locked={false}
       />,
     )
     expect(screen.queryByLabelText('Título de mantenimiento')).toBeNull()
+  })
+
+  it('starts with three plans, supports two or one, and repairs a removed recommendation', () => {
+    const onChange = vi.fn()
+    render(<EditableOffer onChange={onChange} />)
+    expect(screen.getAllByRole('button', { name: /Eliminar el plan/ })).toHaveLength(3)
+    expect(screen.queryByRole('button', { name: /Seleccionar/ })).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar el plan Crecimiento' }))
+    const twoPlans = onChange.mock.lastCall![0]
+    expect(twoPlans.plans).toHaveLength(2)
+    expect(twoPlans.recommended_plan_id).toBe('essential')
+    expect(maintenanceOfferInput.safeParse(twoPlans).success).toBe(true)
+    expect((screen.getByLabelText('Recomendar el plan Esencial') as HTMLInputElement).checked).toBe(
+      true,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar el plan Evolución' }))
+    const onePlan = onChange.mock.lastCall![0]
+    expect(onePlan.plans).toHaveLength(1)
+    expect(maintenanceOfferInput.safeParse(onePlan).success).toBe(true)
+    const remove = screen.getByRole('button', { name: 'Eliminar el plan Esencial' })
+    expect((remove as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(remove)
+    expect(onChange).toHaveBeenCalledTimes(2)
+  })
+
+  it('adds independent editable plans up to the supported limit', () => {
+    const onChange = vi.fn()
+    render(<EditableOffer onChange={onChange} />)
+    const add = screen.getByRole('button', { name: 'Añadir plan' })
+    for (let count = 3; count < MAINTENANCE_LIMITS.maxPlans; count++) fireEvent.click(add)
+    const offer = onChange.mock.lastCall![0] as MaintenanceOffer
+    expect(offer.plans).toHaveLength(MAINTENANCE_LIMITS.maxPlans)
+    expect(new Set(offer.plans.map((plan) => plan.id)).size).toBe(MAINTENANCE_LIMITS.maxPlans)
+    expect(offer.recommended_plan_id).toBe('growth')
+    expect((add as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.change(screen.getByLabelText('Nombre del plan 4'), { target: { value: 'A medida' } })
+    expect(onChange.mock.lastCall![0].plans[3].name).toBe('A medida')
+    expect(DEFAULT_MAINTENANCE_OFFER.plans).toHaveLength(3)
+  })
+
+  it('prevents adding, removing or recommending plans when locked', () => {
+    const onChange = vi.fn()
+    render(<MaintenanceOfferEditor offer={DEFAULT_MAINTENANCE_OFFER} onChange={onChange} locked />)
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir plan' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar el plan Esencial' }))
+    expect(
+      (screen.getByLabelText('Recomendar el plan Esencial') as HTMLInputElement).disabled,
+    ).toBe(true)
+    expect(onChange).not.toHaveBeenCalled()
   })
 })

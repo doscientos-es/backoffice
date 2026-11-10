@@ -14,7 +14,6 @@ const ENGAGEMENT_POINTS = {
   pdf_download: 6,
   deck_completed: 10,
   whatsapp_click: 8,
-  maintenance_selected: 10,
   sign_form_opened: 15,
 } as const
 
@@ -37,7 +36,6 @@ const DEDUPE_WINDOW_MS: Record<EngagementType, number | null> = {
   pdf_download: 24 * HOUR,
   deck_completed: 24 * HOUR * 365,
   whatsapp_click: 24 * HOUR,
-  maintenance_selected: 24 * HOUR,
   sign_form_opened: 24 * HOUR,
 }
 

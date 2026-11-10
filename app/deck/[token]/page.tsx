@@ -6,11 +6,6 @@ import { getCurrentUser } from '@/lib/auth'
 import type { BillingCycle } from '@/lib/finance'
 import { scopedLogger } from '@/lib/logger'
 import { type KeyPoint, parseKeyPoints } from '@/lib/proposals/key-points'
-import {
-  maintenancePlanAsLineItem,
-  parseMaintenanceOffer,
-  selectedMaintenancePlan,
-} from '@/lib/proposals/maintenance'
 import { insertPageViewEvent, recordClientProposalView } from '@/lib/proposals/record-client-view'
 import { type PaymentSchedule, parseScopeModules, type ScopeModule } from '@/lib/proposals/scope'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -222,15 +217,7 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
     client_logo_url: client?.logo_url ?? null,
   }
 
-  const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options)
-  const maintenancePlan = selectedMaintenancePlan(
-    maintenanceOffer,
-    (proposal.maintenance_selected_plan_id as string | null) ?? null,
-  )
   const deckItems = (items ?? []) as unknown as DeckProposalItem[]
-  if (maintenancePlan) {
-    deckItems.push(maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle))
-  }
   const teamById = new Map(
     ((team ?? []) as unknown as DeckTeamMember[]).map((member) => [member.id, member]),
   )

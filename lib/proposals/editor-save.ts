@@ -4,7 +4,6 @@ import 'server-only'
 import { requirePermission } from '@/lib/auth'
 import { scopedLogger } from '@/lib/logger'
 import { isProposalEditable } from '@/lib/proposals/items'
-import { parseMaintenanceOffer, selectedMaintenancePlan } from '@/lib/proposals/maintenance'
 import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import { formatProposalValidationIssues } from '@/lib/proposals/validation'
 import { UpdateProposalInput, UpdateProposalTeamInput } from '@/lib/schemas/proposal'
@@ -31,14 +30,6 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
     return { ok: false, error: errors.join('\n') || 'Datos de la propuesta no válidos' }
   }
   const { id, expected_version, items, ...rest } = parsed.data
-
-  const maintenanceOffer = parseMaintenanceOffer(rest.maintenance_options)
-  if (
-    rest.maintenance_selected_plan_id &&
-    !selectedMaintenancePlan(maintenanceOffer, rest.maintenance_selected_plan_id)
-  ) {
-    return { ok: false, error: 'Mantenimiento: el plan seleccionado no existe en esta propuesta' }
-  }
 
   const supabase = await createServerClient()
 
@@ -94,13 +85,12 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
   if (rest.discount_type !== undefined) patch.discount_type = rest.discount_type
   if (rest.discount_value !== undefined) patch.discount_value = rest.discount_value
   if (rest.discount_reason !== undefined) patch.discount_reason = rest.discount_reason
-  if (rest.maintenance_options !== undefined) patch.maintenance_options = rest.maintenance_options
-  if (rest.maintenance_selected_plan_id !== undefined) {
-    patch.maintenance_selected_plan_id = rest.maintenance_selected_plan_id
-    patch.maintenance_selection_source = rest.maintenance_selected_plan_id ? 'team' : null
-    patch.maintenance_selected_at = rest.maintenance_selected_plan_id
-      ? new Date().toISOString()
-      : null
+  if (rest.maintenance_options !== undefined) {
+    patch.maintenance_options = rest.maintenance_options
+    // Maintenance options are informational; discard any selection from the previous flow.
+    patch.maintenance_selected_plan_id = null
+    patch.maintenance_selection_source = null
+    patch.maintenance_selected_at = null
   }
 
   if (

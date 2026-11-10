@@ -57,7 +57,6 @@ describe('proposal PDF helpers', () => {
         },
       ],
       maintenanceOffer: DEFAULT_MAINTENANCE_OFFER,
-      maintenanceSelectedPlanId: 'growth',
       portalUrl: 'https://example.test/p/proposal/token',
       companyName: 'Doscientos S.L.',
       iban: 'ES12 3456 7890 1234 5678 9012',
@@ -83,5 +82,8 @@ describe('proposal PDF helpers', () => {
     expect(fullText).toContain('SEAÑADIRÁELIVACORRESPONDIENTE')
     expect(fullText).toContain('TOTAL INICIAL PREVISTO CON IVA'.replace(/ /g, ''))
     expect(fullText).toContain('1210,00€')
+    expect(fullText).toContain('RECOMENDADO')
+    expect(fullText).not.toContain('PLANELEGIDO')
+    expect(fullText).not.toContain('SELECCIONADESDELAPROPUESTAONLINE')
   })
 })

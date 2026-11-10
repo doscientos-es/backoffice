@@ -227,9 +227,9 @@ describe('updateProposal', () => {
           },
         ],
       },
-      maintenance_selected_plan_id: 'essential',
-      maintenance_selection_source: 'team',
-      maintenance_selected_at: expect.any(String),
+      maintenance_selected_plan_id: null,
+      maintenance_selection_source: null,
+      maintenance_selected_at: null,
     })
   })
 

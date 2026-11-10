@@ -25,7 +25,6 @@ export type ProposalEditorProps = {
   initialChangeManagementTerms: string | null
   initialLegalTerms?: string | null
   initialMaintenanceOptions: MaintenanceOffer | null
-  initialMaintenanceSelectedPlanId: string | null
   teamMembers: ProposalTeamMember[]
   initialTeamMemberIds: string[]
   initialItems: EditableItem[]

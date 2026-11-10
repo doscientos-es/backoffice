@@ -14,11 +14,7 @@ import { scopedLogger } from '@/lib/logger'
 import { isPortalUnlocked } from '@/lib/portal/access'
 import { formatPortalEUR, resolvePortalLanguage } from '@/lib/portal/language'
 import { parseKeyPoints } from '@/lib/proposals/key-points'
-import {
-  maintenancePlanAsLineItem,
-  parseMaintenanceOffer,
-  selectedMaintenancePlan,
-} from '@/lib/proposals/maintenance'
+import { parseMaintenanceOffer } from '@/lib/proposals/maintenance'
 import { effectiveProposalTerms } from '@/lib/proposals/proposal-acceptance'
 import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import {
@@ -252,16 +248,7 @@ export default async function PortalProposalPage({
     recurringPaymentTerms(baseItems, (proposal.created_at as string | null) ?? null)
   const changeManagementTerms = (proposal.change_management_terms as string | null) ?? null
   const maintenanceOffer = parseMaintenanceOffer(proposal.maintenance_options)
-  const maintenancePlan = selectedMaintenancePlan(
-    maintenanceOffer,
-    (proposal.maintenance_selected_plan_id as string | null) ?? null,
-  )
-  const safeItems: ProposalItem[] = maintenancePlan
-    ? [
-        ...displayBaseItems,
-        maintenancePlanAsLineItem(maintenancePlan, maintenanceOffer.billing_cycle),
-      ]
-    : displayBaseItems
+  const safeItems: ProposalItem[] = displayBaseItems
 
   // Recompute totals on the fly so we can show separate buckets for one-time
   // and recurring lines. The stored `proposals.total` reflects the one-time
@@ -475,13 +462,7 @@ export default async function PortalProposalPage({
           </article>
           {maintenanceOffer.enabled ? (
             <div className={`${PROPOSAL_SURFACE_CLASS} overflow-hidden`}>
-              <ProposalMaintenanceOptions
-                token={token}
-                offer={maintenanceOffer}
-                selectedPlanId={(proposal.maintenance_selected_plan_id as string | null) ?? null}
-                disabled={isDraft || responded || expired || isTeam}
-                language={portalLanguage}
-              />
+              <ProposalMaintenanceOptions offer={maintenanceOffer} language={portalLanguage} />
             </div>
           ) : null}
           {/* Response area — hidden for draft previews */}

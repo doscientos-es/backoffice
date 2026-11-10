@@ -126,7 +126,7 @@ export function proposalAcceptanceSnapshot(
       payment_terms: proposal.payment_terms ?? null,
       change_management_terms: proposal.change_management_terms ?? null,
       maintenance_options: proposal.maintenance_options ?? null,
-      maintenance_selected_plan_id: proposal.maintenance_selected_plan_id ?? null,
+      maintenance_selected_plan_id: null,
       terms: proposal.terms ?? null,
       legal_terms: (proposal.legal_terms as string | null) ?? DEFAULT_PROPOSAL_LEGAL_TERMS,
       notes: proposal.notes ?? null,
