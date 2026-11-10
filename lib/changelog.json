@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.177",
+      "date": "2026-11-10",
+      "title": "v0.1.177",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add source field to lead forms and update related tests"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "aa489fa1b93b3c3b3ef970e8a465b6ad26914dd1",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add source field to lead forms and update related tests"
+        }
+      ]
+    },
+    {
       "version": "0.1.176",
       "date": "2026-11-08",
       "title": "v0.1.176",

@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-10 — v0.1.177
+
+### Nuevas funciones
+
+- Add source field to lead forms and update related tests
+
 ## 2026-11-08 — v0.1.176
 
 ### Nuevas funciones
