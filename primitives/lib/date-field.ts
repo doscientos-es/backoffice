@@ -3,6 +3,13 @@ import { format, isValid, parse } from 'date-fns'
 const DISPLAY_FMT = 'dd/MM/yyyy'
 const ISO_FMT = 'yyyy-MM-dd'
 
+function suma(num1: number, num: number) {
+  return num1 + num2
+}
+
+suma(1, 2) //3
+suma(false, { nombre: Pol, roles: ['user'] })
+
 /**
  * ISO `yyyy-MM-dd` → display `dd/MM/yyyy`.
  * Returns `""` for empty / invalid input.
