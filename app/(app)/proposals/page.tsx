@@ -143,42 +143,40 @@ export default async function ProposalsPage({
   }
 
   const ascending = sort !== 'created_at' ? dir !== 'desc' : false
-  const [{ data: clients }, { data, error, count }] = await Promise.all([
-    clientsQuery,
-    (async () => {
-      const { data: leadClient } = await leadClientQuery
-      let listQuery = query
-      if (leadId && UUID_PATTERN.test(leadId)) {
-        listQuery = leadClient
-          ? listQuery.or(`lead_id.eq.${leadId},client_id.eq.${leadClient.id}`)
-          : listQuery.eq('lead_id', leadId)
-      }
-      return listQuery.order(sort, { ascending, nullsFirst: false }).range(from, to)
-    })(),
-  ])
+  const proposalsPromise = (async () => {
+    const { data: leadClient } = await leadClientQuery
+    let listQuery = query
+    if (leadId && UUID_PATTERN.test(leadId)) {
+      listQuery = leadClient
+        ? listQuery.or(`lead_id.eq.${leadId},client_id.eq.${leadClient.id}`)
+        : listQuery.eq('lead_id', leadId)
+    }
+    return listQuery.order(sort, { ascending, nullsFirst: false }).range(from, to)
+  })()
+  const detailsPromise = (async () => {
+    const { data } = await proposalsPromise
+    const proposalIds = (data ?? []).map((proposal) => proposal.id as string)
+    const [pricesResult, viewStats] = await Promise.all([
+      canSeePrices && proposalIds.length
+        ? supabase
+            .from('proposal_prices')
+            .select('proposal_id, total')
+            .in('proposal_id', proposalIds)
+        : Promise.resolve({ data: [] }),
+      getProposalViewStats(supabase, proposalIds),
+    ])
+    const pricesByProposal = new Map<string, number>()
+    for (const price of pricesResult.data ?? []) {
+      pricesByProposal.set(price.proposal_id as string, Number(price.total) || 0)
+    }
+    return { pricesByProposal, viewStats }
+  })()
+  const [{ data: clients }, { data, error, count }, { pricesByProposal, viewStats }] =
+    await Promise.all([clientsQuery, proposalsPromise, detailsPromise])
   const CLIENT_FILTER_OPTIONS = (clients ?? []).map((c) => ({
     value: c.id,
     label: c.name,
   }))
-
-  const pricesByProposal = new Map<string, number>()
-  if (canSeePrices && data?.length) {
-    const { data: prices } = await supabase
-      .from('proposal_prices')
-      .select('proposal_id, total')
-      .in(
-        'proposal_id',
-        data.map((proposal) => proposal.id as string),
-      )
-    for (const price of prices ?? []) {
-      pricesByProposal.set(price.proposal_id as string, Number(price.total) || 0)
-    }
-  }
-
-  const viewStats = await getProposalViewStats(
-    supabase,
-    (data ?? []).map((proposal) => proposal.id as string),
-  )
 
   const newAction = (
     <Button asChild size="sm">

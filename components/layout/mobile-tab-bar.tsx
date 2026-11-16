@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { startNavProgress } from '@/components/layout/nav-progress'
+import { NavigationPendingIndicator } from '@/components/layout/navigation-pending-indicator'
 import type { CurrentUser } from '@/lib/auth'
 import { visibleNavigationGroups } from '@/lib/navigation/navigation'
 
@@ -28,9 +30,11 @@ export function MobileTabBar({ user }: { user: CurrentUser }) {
             href={item.href}
             className="app-mobile-tab"
             aria-current={active ? 'page' : undefined}
+            onNavigate={() => startNavProgress(item.href)}
           >
             <Icon aria-hidden="true" />
             <span>{item.label}</span>
+            <NavigationPendingIndicator />
           </Link>
         )
       })}

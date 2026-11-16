@@ -4,6 +4,8 @@ import { ChevronDown, Pin, PinOff } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 
+import { startNavProgress } from '@/components/layout/nav-progress'
+import { NavigationPendingIndicator } from '@/components/layout/navigation-pending-indicator'
 import type { NavigationGroup, NavigationItem } from '@/lib/navigation/navigation'
 import { mergeRecentItems, RECENTS_STORAGE_KEY, type RecentItem } from '@/lib/navigation/shortcuts'
 import { cn } from '@/lib/utils'
@@ -80,7 +82,10 @@ function NavigationLink({
       <Link
         href={item.href}
         aria-current={active ? 'page' : undefined}
-        onClick={onNavigate}
+        onNavigate={() => {
+          startNavProgress(item.href)
+          onNavigate?.()
+        }}
         className={cn(
           'relative flex items-center gap-2.5 rounded-md px-2.5 py-2 pr-8 text-sm transition-colors',
           'before:absolute before:top-1/2 before:left-0 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity',
@@ -96,6 +101,7 @@ function NavigationLink({
           )}
         />
         <span className="truncate">{item.label}</span>
+        <NavigationPendingIndicator />
       </Link>
       <button
         type="button"
