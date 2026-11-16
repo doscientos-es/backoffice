@@ -39,7 +39,7 @@ function dayDiff(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS)
 }
 
-function quarterOf(date: string): QuarterlyPeriod {
+export function quarterOf(date: string): QuarterlyPeriod {
   const month = Number(date.slice(5, 7))
   const period = quarterlyPeriod(date.slice(0, 4), String(Math.ceil(month / 3)))
   if (!period) throw new Error(`Fecha inválida: ${date}`)

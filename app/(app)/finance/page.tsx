@@ -15,6 +15,7 @@ import { FinanceOverviewChart } from './_components/finance-overview-chart'
 import { FinanceRangeSelector } from './_components/finance-range-selector'
 import { ChartSkeleton, DetailsSkeleton, KpisSkeleton } from './_components/finance-skeletons'
 import { QuarterlyHandoff } from './_components/quarterly-handoff'
+import { QuarterlyVatForecast } from './_components/quarterly-vat-forecast'
 
 export const metadata: Metadata = { title: 'Finanzas · doscientos' }
 export const dynamic = 'force-dynamic'
@@ -53,6 +54,10 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
 
       <SectionBoundary pending={null} label="No se pudo cargar el cierre trimestral">
         <QuarterlyHandoff />
+      </SectionBoundary>
+
+      <SectionBoundary pending={null} label="No se pudo calcular la previsión de IVA">
+        <QuarterlyVatForecast />
       </SectionBoundary>
 
       <FinanceRangeSelector current={range} />
