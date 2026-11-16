@@ -230,7 +230,7 @@ export default async function ProposalDetailPage({
   const { data: proposal, error: proposalError } = await supabase
     .from('proposals')
     .select(
-      'id, number, title, status, delivered_at, client_id, lead_id, project_id, version, payment_plan, payment_schedule, valid_until, notes, demo_url, context_markdown, problems, solutions, terms, scope_modules, deliverables, acceptance_criteria, change_management_terms, legal_terms, maintenance_selected_plan_id, portal_token, is_client_visible, portal_password_hash, sent_at, viewed_at, responded_at, created_at, clients(id, name, nif, billing_address_street, email, phone, contact_person), leads(id, name, company, email, phone), projects(id, name)',
+      'id, number, title, status, delivered_at, client_id, lead_id, project_id, version, payment_plan, payment_schedule, valid_until, notes, demo_url, context_markdown, problems, solutions, terms, scope_modules, development_approach, deliverables, acceptance_criteria, change_management_terms, legal_terms, maintenance_selected_plan_id, portal_token, is_client_visible, portal_password_hash, sent_at, viewed_at, responded_at, created_at, clients(id, name, nif, billing_address_street, email, phone, contact_person), leads(id, name, company, email, phone), projects(id, name)',
     )
     .eq('id', id)
     .is('deleted_at', null)
@@ -597,6 +597,7 @@ export default async function ProposalDetailPage({
             initialSolutions={toEditableKeyPoints(parseKeyPoints(proposal.solutions))}
             initialTerms={(proposal.terms as string | null) ?? null}
             initialScopeModules={parseScopeModules(proposal.scope_modules)}
+            initialDevelopmentApproach={(proposal.development_approach as string | null) ?? null}
             initialDeliverables={(proposal.deliverables as string | null) ?? null}
             initialAcceptanceCriteria={(proposal.acceptance_criteria as string | null) ?? null}
             initialPaymentSchedule={(proposal.payment_schedule as PaymentSchedule | null) ?? null}
@@ -643,6 +644,7 @@ export default async function ProposalDetailPage({
             subtotal: Number(item.subtotal),
           }))}
           scopeModules={parseScopeModules(proposal.scope_modules)}
+          developmentApproach={(proposal.development_approach as string | null) ?? null}
           contextMarkdown={(proposal.context_markdown as string | null) ?? null}
           problemSolutionPairs={zipKeyPoints(
             parseKeyPoints(proposal.problems),

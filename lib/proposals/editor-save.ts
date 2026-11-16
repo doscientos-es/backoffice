@@ -73,6 +73,8 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
     patch.scope_modules =
       rest.scope_modules && rest.scope_modules.length > 0 ? rest.scope_modules : null
   }
+  if (rest.development_approach !== undefined)
+    patch.development_approach = rest.development_approach
   if (rest.deliverables !== undefined) patch.deliverables = rest.deliverables
   if (rest.acceptance_criteria !== undefined) patch.acceptance_criteria = rest.acceptance_criteria
   if (rest.payment_schedule !== undefined) patch.payment_schedule = rest.payment_schedule

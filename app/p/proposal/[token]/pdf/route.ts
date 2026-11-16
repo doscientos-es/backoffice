@@ -238,6 +238,7 @@ export async function GET(
     problems: parseKeyPoints(documentSource.problems),
     solutions: parseKeyPoints(documentSource.solutions),
     scopeModules: parseScopeModules(documentSource.scope_modules),
+    developmentApproach: (documentSource.development_approach as string | null) ?? null,
     deliverables: (documentSource.deliverables as string | null) ?? null,
     acceptanceCriteria: (documentSource.acceptance_criteria as string | null) ?? null,
     paymentSchedule: (documentSource.payment_schedule as PaymentSchedule | null) ?? 'half_half',

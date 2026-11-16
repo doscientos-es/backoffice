@@ -7,6 +7,7 @@ const FIELD_LABELS: Record<string, string> = {
   change_management_terms: 'Gestión de cambios',
   context_markdown: 'Contexto',
   demo_url: 'Enlace de la demo',
+  development_approach: 'Cómo trabajaremos durante el desarrollo',
   deliverables: 'Entregables',
   notes: 'Notas',
   payment_schedule: 'Forma de pago',

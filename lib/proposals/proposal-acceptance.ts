@@ -121,6 +121,10 @@ export function proposalAcceptanceSnapshot(
       scope_modules: proposal.scope_modules ?? null,
       deliverables: proposal.deliverables ?? null,
       acceptance_criteria: proposal.acceptance_criteria ?? null,
+      // Preserve legacy document hashes when this optional section is absent.
+      ...(typeof proposal.development_approach === 'string' && proposal.development_approach.trim()
+        ? { development_approach: proposal.development_approach }
+        : {}),
       payment_schedule: proposal.payment_schedule ?? null,
       payment_plan: proposal.payment_plan ?? null,
       payment_terms: proposal.payment_terms ?? null,

@@ -241,6 +241,7 @@ export type ProposalPdfData = {
   problems: KeyPoint[]
   solutions: KeyPoint[]
   scopeModules: ScopeModule[]
+  developmentApproach?: string | null
   deliverables: string | null
   acceptanceCriteria: string | null
   paymentSchedule: PaymentSchedule
@@ -527,6 +528,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const validUntil = date(data.validUntil)
   const hasRecurring = data.items.some((item) => item.billingCycle && item.billingCycle !== 'none')
   const deliverables = data.deliverables?.trim()
+  const developmentApproach = data.developmentApproach?.trim()
   const acceptanceCriteria = data.acceptanceCriteria?.trim()
   const initialPaymentPercentage = paymentInitialPercentage(data.paymentSchedule)
   const hasConditions = Boolean(data.paymentTerms || data.changeManagementTerms)
@@ -621,6 +623,19 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
         ) : null}
 
+        {developmentApproach ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {ca
+                ? 'Com treballarem durant el desenvolupament'
+                : en
+                  ? 'How we will work during development'
+                  : 'Cómo trabajaremos durante el desarrollo'}
+            </Text>
+            <Text style={styles.body}>{printableMarkdown(developmentApproach)}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{copy.parties}</Text>
           <View style={styles.point}>
@@ -656,6 +671,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             data.problems.length ||
             data.solutions.length ||
             data.scopeModules.length ||
+            developmentApproach ||
             deliverables ||
             acceptanceCriteria,
           )}

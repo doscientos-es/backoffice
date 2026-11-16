@@ -44,6 +44,7 @@ export type DeckProposal = {
   solutions: KeyPoint[]
   terms: string | null
   scope_modules: ScopeModule[]
+  development_approach?: string | null
   deliverables: string | null
   acceptance_criteria: string | null
   payment_schedule: PaymentSchedule
@@ -198,6 +199,7 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
     solutions: parseKeyPoints(proposal.solutions),
     terms: (proposal.terms as string | null) ?? null,
     scope_modules: parseScopeModules(proposal.scope_modules),
+    development_approach: (proposal.development_approach as string | null) ?? null,
     deliverables: (proposal.deliverables as string | null) ?? null,
     acceptance_criteria: (proposal.acceptance_criteria as string | null) ?? null,
     payment_schedule: (proposal.payment_schedule as PaymentSchedule | null) ?? 'half_half',

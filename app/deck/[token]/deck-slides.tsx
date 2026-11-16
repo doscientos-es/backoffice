@@ -734,6 +734,23 @@ export function buildSlides(
       element: wm(<DeliverySlide proposal={proposal} />),
     })
   }
+  if (proposal.development_approach?.trim()) {
+    slides.push({
+      key: 'development-approach',
+      label: 'Cómo trabajaremos',
+      accent: 'white',
+      element: wm(
+        <SectionSlide label="Desarrollo" title="Cómo trabajaremos durante el desarrollo">
+          <div className="w-full max-w-3xl text-left">
+            <Markdown
+              source={proposal.development_approach}
+              className="deck-markdown text-base text-zinc-700 sm:text-lg"
+            />
+          </div>
+        </SectionSlide>,
+      ),
+    })
+  }
   if (team.length > 0) {
     slides.push({
       key: 'team',

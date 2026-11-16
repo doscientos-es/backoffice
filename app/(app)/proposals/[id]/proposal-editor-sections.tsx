@@ -177,7 +177,14 @@ export function ProposalScopeSection({
   generating: boolean
   handleGenerateNarrative: () => Promise<void>
 }) {
-  const { contextMarkdown, pairs, scopeModules, deliverables, acceptanceCriteria } = draft
+  const {
+    contextMarkdown,
+    pairs,
+    scopeModules,
+    developmentApproach,
+    deliverables,
+    acceptanceCriteria,
+  } = draft
   return (
     <div className="flex flex-col gap-5">
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
@@ -270,6 +277,23 @@ export function ProposalScopeSection({
             </FormRow>
           </div>
         </details>
+      </section>
+      <section className="rounded-xl border border-border bg-card p-5">
+        <FormRow
+          label="Cómo trabajaremos durante el desarrollo"
+          htmlFor="development-approach"
+          hint="Opcional. Se mostrará después del alcance en la propuesta, el enlace público, el deck y el PDF. Si lo dejas vacío, no aparecerá."
+        >
+          <Textarea
+            id="development-approach"
+            value={developmentApproach}
+            onChange={(event) => setField('developmentApproach')(event.target.value)}
+            disabled={locked}
+            maxLength={20_000}
+            rows={6}
+            placeholder="Describe la dinámica de trabajo, la comunicación y las revisiones con el cliente."
+          />
+        </FormRow>
       </section>
     </div>
   )

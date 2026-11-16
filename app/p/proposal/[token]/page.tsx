@@ -41,7 +41,7 @@ import {
   SectionNav,
 } from './_components/respond-controls'
 import { ResponseArea } from './_components/response-area'
-import { ScopeSection } from './_components/scope-section'
+import { DevelopmentApproachSection, ScopeSection } from './_components/scope-section'
 import { TeamSection } from './_components/team-section'
 import { NotesSection, SpecsSection, TermsSection } from './_components/terms-section'
 import { ProposalWhatsAppWidget } from './_components/whatsapp-widget'
@@ -240,6 +240,7 @@ export default async function PortalProposalPage({
   const legalTerms = (proposal.legal_terms as string | null) ?? null
   const contractualAnnex = effectiveProposalTerms(terms, legalTerms)
   const scopeModules = parseScopeModules(proposal.scope_modules)
+  const developmentApproach = ((proposal.development_approach as string | null) ?? '').trim()
   const deliverables = ((proposal.deliverables as string | null) ?? '').trim()
   const acceptanceCriteria = ((proposal.acceptance_criteria as string | null) ?? '').trim()
   const paymentSchedule = (proposal.payment_schedule as PaymentSchedule | null) ?? 'half_half'
@@ -287,6 +288,10 @@ export default async function PortalProposalPage({
   const navItems: NavItem[] = [
     hasNarrative && { id: 'contexto', label: tr('Contexto', 'Context', 'Context') },
     hasScope && { id: 'alcance', label: tr('Alcance', 'Abast', 'Scope') },
+    Boolean(developmentApproach) && {
+      id: 'desarrollo',
+      label: tr('Cómo trabajaremos', 'Com treballarem', 'How we work'),
+    },
     team.length > 0 && { id: 'equipo', label: tr('Equipo', 'Equip', 'Team') },
     { id: 'inversion', label: tr('Inversión', 'Inversió', 'Investment') },
     Boolean(paymentTerms || changeManagementTerms) && {
@@ -424,6 +429,7 @@ export default async function PortalProposalPage({
                 tr={tr}
               />
             </div>
+            <DevelopmentApproachSection source={developmentApproach} tr={tr} />
             <TeamSection team={team} tr={tr} />
             <div
               id="inversion"

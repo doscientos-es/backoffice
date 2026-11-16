@@ -117,6 +117,12 @@ export const UpdateProposalInput = z.object({
   solutions: keyPointListField,
   terms: proposalMarkdownField(20_000),
   scope_modules: scopeModulesInput.nullable().optional(),
+  development_approach: z
+    .string()
+    .trim()
+    .max(20_000)
+    .nullish()
+    .transform((value) => (value === undefined ? undefined : value || null)),
   deliverables: proposalMarkdownField(20_000),
   acceptance_criteria: proposalMarkdownField(20_000),
   payment_schedule: paymentScheduleInput.optional(),

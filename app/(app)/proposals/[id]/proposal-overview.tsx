@@ -48,6 +48,7 @@ type Props = {
   paymentTerms: string | null
   items: Item[]
   scopeModules: ScopeModule[]
+  developmentApproach?: string | null
   contextMarkdown: string | null
   problemSolutionPairs: EditablePair[]
   deliverables: string | null
@@ -78,6 +79,7 @@ export function ProposalOverview({
   paymentTerms,
   items,
   scopeModules,
+  developmentApproach,
   contextMarkdown,
   problemSolutionPairs,
   deliverables,
@@ -263,6 +265,17 @@ export function ProposalOverview({
               {deliverables ? <Markdown source={deliverables} /> : null}
               {acceptanceCriteria ? <Markdown source={acceptanceCriteria} /> : null}
               {notes ? <Markdown source={notes} /> : null}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {developmentApproach?.trim() ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Cómo trabajaremos durante el desarrollo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Markdown source={developmentApproach} />
             </CardContent>
           </Card>
         ) : null}

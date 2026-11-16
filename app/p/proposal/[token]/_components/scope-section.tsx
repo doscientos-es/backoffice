@@ -8,6 +8,29 @@ import { PROPOSAL_SURFACE_CLASS, SectionLabel } from './primitives'
 
 type ScopeModule = ReturnType<typeof parseScopeModules>[number]
 
+export function DevelopmentApproachSection({ source, tr }: { source?: string | null; tr: Tr }) {
+  const content = source?.trim()
+  if (!content) return null
+  return (
+    <section
+      id="desarrollo"
+      className={`${PROPOSAL_SURFACE_CLASS} scroll-mt-16 px-6 py-10 sm:px-10`}
+    >
+      <SectionLabel className="text-center">
+        {tr(
+          'Cómo trabajaremos durante el desarrollo',
+          'Com treballarem durant el desenvolupament',
+          'How we will work during development',
+        )}
+      </SectionLabel>
+      <Markdown
+        source={content}
+        className="mt-6 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300"
+      />
+    </section>
+  )
+}
+
 function ScopeBullets({
   label,
   items,

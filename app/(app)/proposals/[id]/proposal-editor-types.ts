@@ -17,6 +17,7 @@ export type ProposalEditorProps = {
   initialSolutions: EditableKeyPoint[]
   initialTerms: string | null
   initialScopeModules: ScopeModule[]
+  initialDevelopmentApproach?: string | null
   initialDeliverables: string | null
   initialAcceptanceCriteria: string | null
   initialPaymentSchedule: PaymentSchedule | null
