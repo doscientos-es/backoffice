@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-16 — v0.1.181
+
+### Nuevas funciones
+
+- Add loading indicator for navigation transitions
+
 ## 2026-11-16 — v0.1.180
 
 ### Nuevas funciones

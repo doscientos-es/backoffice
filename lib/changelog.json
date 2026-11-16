@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.181",
+      "date": "2026-11-16",
+      "title": "v0.1.181",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add loading indicator for navigation transitions"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "9dfd26d373bf2e311aa9a9339b28e6dffdd9a48e",
+          "type": "feat",
+          "scope": "navigation",
+          "breaking": false,
+          "description": "Add loading indicator for navigation transitions"
+        }
+      ]
+    },
+    {
       "version": "0.1.180",
       "date": "2026-11-16",
       "title": "v0.1.180",
