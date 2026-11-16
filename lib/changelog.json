@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.182",
+      "date": "2026-11-16",
+      "title": "v0.1.182",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add ProposalSharingCard component for client sharing"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "683bfc38c89696511616a2a58fe4ecb748f4ddcd",
+          "type": "feat",
+          "scope": "proposal-sharing",
+          "breaking": false,
+          "description": "Add ProposalSharingCard component for client sharing"
+        }
+      ]
+    },
+    {
       "version": "0.1.181",
       "date": "2026-11-16",
       "title": "v0.1.181",

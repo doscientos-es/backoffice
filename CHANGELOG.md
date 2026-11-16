@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-16 — v0.1.182
+
+### Nuevas funciones
+
+- Add ProposalSharingCard component for client sharing
+
 ## 2026-11-16 — v0.1.181
 
 ### Nuevas funciones
