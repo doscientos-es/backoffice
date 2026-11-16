@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-16 — v0.1.180
+
+### Nuevas funciones
+
+- Add quarterly VAT forecast component and related logic
+
 ## 2026-11-10 — v0.1.177
 
 ### Nuevas funciones

@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.180",
+      "date": "2026-11-16",
+      "title": "v0.1.180",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add quarterly VAT forecast component and related logic"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "23cf4b736dce9b71701a946aa7649c0164ca4acf",
+          "type": "feat",
+          "scope": "finance",
+          "breaking": false,
+          "description": "Add quarterly VAT forecast component and related logic"
+        }
+      ]
+    },
+    {
       "version": "0.1.177",
       "date": "2026-11-10",
       "title": "v0.1.177",
