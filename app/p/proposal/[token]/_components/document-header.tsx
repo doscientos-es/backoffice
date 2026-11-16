@@ -1,4 +1,4 @@
-import { Clock, Download } from 'lucide-react'
+import { CalendarDays, Clock, Download } from 'lucide-react'
 
 import { formatPortalDate } from '@/lib/portal/language'
 
@@ -40,19 +40,20 @@ export function DocumentHeader({
       : null
   const urgent = daysLeft !== null && daysLeft <= 2
   return (
-    <header className="px-6 py-10 text-center text-zinc-950 sm:px-12 sm:py-16">
+    <header className="px-2 pt-8 pb-4 text-center text-zinc-950 sm:px-8 sm:pt-12 sm:pb-6">
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <p className="text-sm font-medium">
+        <p className="text-xs font-semibold tracking-wide text-zinc-700 sm:text-sm">
           {copy.proposal} · {proposalNumber}
         </p>
         <StatusPill status={status} label={statusLabel} />
       </div>
-      <h1 className="mx-auto mt-7 max-w-3xl text-3xl leading-[1.08] font-semibold tracking-tight break-words sm:text-5xl lg:text-6xl">
+      <h1 className="mx-auto mt-6 max-w-3xl text-3xl leading-[1.1] font-semibold tracking-tight break-words sm:text-5xl">
         {title}
       </h1>
-      <div className="mt-7 flex flex-col items-center justify-center gap-5">
+      <div className="mt-6 flex flex-col items-center justify-center gap-5">
         {validUntil ? (
-          <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-sm text-zinc-800">
+          <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-sm text-zinc-700">
+            <CalendarDays aria-hidden className="size-4" />
             <span>
               {copy.validUntil}{' '}
               <strong className="font-semibold text-zinc-950">
@@ -71,7 +72,7 @@ export function DocumentHeader({
         ) : null}
         <a
           href={`/p/proposal/${token}/pdf?lang=${language}`}
-          className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-white/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950"
+          className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 shadow-sm ring-1 ring-black/5 hover:bg-white/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950"
         >
           <Download className="size-3.5" />
           {copy.download}
@@ -91,8 +92,8 @@ export function RecipientBlock({
   logoUrl: string | null
 }) {
   return (
-    <div className="flex items-center justify-center gap-3 px-6 pt-8">
-      <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#BDFF7B] text-lg font-semibold text-zinc-950">
+    <div className="flex items-center justify-center gap-4 px-6 py-6 sm:px-8">
+      <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#BDFF7B] text-lg font-semibold text-zinc-950">
         {logoUrl ? (
           // biome-ignore lint/performance/noImgElement: URL externa del logo del cliente, no compatible con next/image
           <img src={logoUrl} alt={`Logo ${name}`} className="size-full object-contain p-1.5" />
@@ -100,9 +101,11 @@ export function RecipientBlock({
           <span aria-hidden>{name.trim().slice(0, 1).toUpperCase()}</span>
         )}
       </div>
-      <div className="min-w-0">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{label}</p>
-        <p className="text-sm font-semibold break-words text-zinc-900 dark:text-zinc-100">{name}</p>
+      <div className="min-w-0 text-left">
+        <p className="text-xs font-medium text-zinc-500">{label}</p>
+        <p className="mt-0.5 text-base leading-snug font-semibold break-words text-zinc-900">
+          {name}
+        </p>
       </div>
     </div>
   )

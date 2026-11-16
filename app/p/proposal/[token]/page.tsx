@@ -371,19 +371,21 @@ export default async function PortalProposalPage({
               statusLabel={statusLabel}
             />
             <SectionNav items={navItems} />
-            <div className={PROPOSAL_SURFACE_CLASS}>
+            <div className={`${PROPOSAL_SURFACE_CLASS} shadow-sm ring-1 ring-black/5`}>
               <RecipientBlock
                 label={copy.recipient}
                 name={recipientName}
                 logoUrl={client?.logo_url ?? null}
               />
               {!responded && !expired ? (
-                <DecisionSummary
-                  language={portalLanguage}
-                  tr={tr}
-                  totals={totals}
-                  canRespond={canRespond}
-                />
+                <div className="mx-6 border-t border-zinc-100 sm:mx-8">
+                  <DecisionSummary
+                    language={portalLanguage}
+                    tr={tr}
+                    totals={totals}
+                    canRespond={canRespond}
+                  />
+                </div>
               ) : null}
             </div>
 

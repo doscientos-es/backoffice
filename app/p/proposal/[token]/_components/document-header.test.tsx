@@ -68,6 +68,20 @@ describe('RecipientBlock', () => {
     expect(screen.queryByRole('img')).toBeNull()
   })
 
+  it('centers the recipient with balanced vertical padding, including long names', () => {
+    render(
+      <RecipientBlock label="Dirigido a" name="Un nombre de cliente muy largo" logoUrl={null} />,
+    )
+    const recipient = screen.getByText('Dirigido a').parentElement?.parentElement
+
+    expect(recipient?.classList.contains('items-center')).toBe(true)
+    expect(recipient?.classList.contains('justify-center')).toBe(true)
+    expect(recipient?.classList.contains('py-6')).toBe(true)
+    expect(
+      screen.getByText('Un nombre de cliente muy largo').classList.contains('break-words'),
+    ).toBe(true)
+  })
+
   it('keeps the client logo and its accessible name when supplied', () => {
     render(<RecipientBlock label="Dirigido a" name="Acme Studio" logoUrl="/example-logo.svg" />)
     expect(screen.getByRole('img', { name: 'Logo Acme Studio' }).getAttribute('src')).toBe(

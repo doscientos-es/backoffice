@@ -248,7 +248,7 @@ export function SectionNav({ items }: { items: NavItem[] }) {
     <nav
       ref={navRef}
       aria-label="Secciones"
-      className="sticky top-2 z-30 w-fit max-w-full self-center overflow-x-auto rounded-full bg-white/95 backdrop-blur dark:bg-zinc-950/95"
+      className="sticky top-2 z-30 w-fit max-w-full self-center overflow-x-auto rounded-full bg-white/95 shadow-sm ring-1 ring-black/5 backdrop-blur dark:bg-zinc-950/95"
     >
       <ul ref={listRef} className="relative flex w-max gap-1 p-1">
         {indicator ? (
