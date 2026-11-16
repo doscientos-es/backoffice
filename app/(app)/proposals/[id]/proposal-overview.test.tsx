@@ -26,6 +26,12 @@ describe('ProposalOverview', () => {
         maintenanceOffer={null}
         attachments={[]}
         team={[]}
+        sidebarTop={
+          <>
+            <div data-testid="proposal-info">Información</div>
+            <div data-testid="proposal-sharing">Compartir con el cliente</div>
+          </>
+        }
         sidebar={<div data-testid="proposal-sidebar">Aperturas recientes</div>}
       />,
     )
@@ -33,6 +39,11 @@ describe('ProposalOverview', () => {
     const sidebar = screen.getByTestId('proposal-sidebar')
     expect(sidebar.parentElement?.className).toContain('flex')
     expect(sidebar.parentElement?.parentElement?.className).toContain('grid')
+    const info = screen.getByTestId('proposal-info')
+    const sharing = screen.getByTestId('proposal-sharing')
+    expect(info.nextElementSibling).toBe(sharing)
+    expect(sharing.nextElementSibling?.textContent).toContain('Equipo del proyecto')
+    expect(sharing.parentElement).toBe(sidebar.parentElement)
   })
 
   it('highlights the pre-tax investment and keeps VAT and the payable total explicit', () => {

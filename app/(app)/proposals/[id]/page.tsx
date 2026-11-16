@@ -13,7 +13,6 @@ import { notFound } from 'next/navigation'
 import { BackLink } from '@/components/layout/back-link'
 import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
 import { PageHeader } from '@/components/layout/page-header'
-import { PortalAccessControls } from '@/components/portal/portal-access-controls'
 import type { AttachmentItem } from '@/components/ui/attachment-section'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -58,10 +57,9 @@ import { type EditableItem, ProposalEditor } from './proposal-editor'
 import { ProposalFollowUpAssistant } from './proposal-follow-up-assistant'
 import { ProposalOverview } from './proposal-overview'
 import { ProposalPaymentPlan } from './proposal-payment-plan'
+import { ProposalSharingCard } from './proposal-sharing-card'
 import { type ProposalSpec, ProposalSpecs } from './proposal-specs'
 import { ReopenProposalButton } from './reopen-proposal-button'
-import { SendPreviewButton } from './send-preview-button'
-import { ShareLinks } from './share-links'
 
 type Surface = 'portal' | 'deck'
 
@@ -661,42 +659,6 @@ export default async function ProposalDetailPage({
           team={visibleTeam}
           mainContent={
             <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Compartir con el cliente</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                  {token ? (
-                    <>
-                      <ShareLinks
-                        token={token}
-                        proposalTitle={proposal.title as string}
-                        portalViewedAt={portalViewedAt}
-                        deckViewedAt={deckViewedAt}
-                        isDraft={status === 'draft'}
-                      />
-                      <PortalAccessControls
-                        id={id}
-                        initialVisible={(proposal.is_client_visible as boolean | null) ?? true}
-                        hasPassword={Boolean(proposal.portal_password_hash)}
-                        action={updateProposalPortalAccess}
-                      />
-                    </>
-                  ) : null}
-                  {locked ? (
-                    <p className="text-xs text-muted-foreground">
-                      La propuesta ya ha sido respondida.
-                    </p>
-                  ) : (
-                    <SendPreviewButton
-                      id={id}
-                      defaultEmail={recipientEmail}
-                      alreadySent={Boolean(proposal.sent_at)}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-
               {status === 'accepted' ? (
                 <>
                   <DeliveryNoteCard
@@ -858,64 +820,80 @@ export default async function ProposalDetailPage({
             </>
           }
           sidebarTop={
-            <Card className="min-w-0">
-              <CardHeader>
-                <CardTitle>Información</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DetailGrid>
-                  <DetailRow label="Estado">
-                    <StatusBadge meta={PROPOSAL_STATUS} value={status} />
-                  </DetailRow>
-                  <DetailRow label={client ? 'Cliente' : 'Lead'}>
-                    {client ? (
-                      <Link href={`/clients/${client.id}`} className="hover:underline">
-                        {client.name}
-                      </Link>
-                    ) : lead ? (
-                      <Link href={`/leads/${lead.id}`} className="hover:underline">
-                        {lead.company ? `${lead.name} · ${lead.company}` : lead.name}
-                      </Link>
-                    ) : (
-                      '—'
-                    )}
-                  </DetailRow>
-                  <DetailRow label="Proyecto">
-                    <LinkProjectButton
-                      proposalId={id}
-                      currentProject={project}
-                      availableProjects={
-                        (availableProjects ?? []) as { id: string; name: string }[]
-                      }
-                    />
-                  </DetailRow>
-                  <DetailRow label="Enviada">
-                    {formatDate(proposal.sent_at as string | null)}
-                  </DetailRow>
-                  <DetailRow label="Vista">
-                    {formatDate(proposal.viewed_at as string | null)}
-                  </DetailRow>
-                  <DetailRow label="Respondida">
-                    {formatDate(proposal.responded_at as string | null)}
-                  </DetailRow>
-                  {deliveredAt ? (
-                    <DetailRow label="Entregada">{formatDate(deliveredAt)}</DetailRow>
-                  ) : null}
-                  {status === 'accepted' && latestAcceptance ? (
-                    <>
-                      <DetailRow label="Firmada por">
-                        {`${latestAcceptance.signer_name as string}${latestAcceptance.signer_role ? ` · ${latestAcceptance.signer_role as string}` : ''}`}
-                      </DetailRow>
-                      <DetailRow label="Huella del documento">
-                        <span className="font-mono text-xs">
-                          {latestAcceptance.document_hash as string}
-                        </span>
-                      </DetailRow>
-                    </>
-                  ) : null}
-                </DetailGrid>
-              </CardContent>
-            </Card>
+            <>
+              <Card className="min-w-0">
+                <CardHeader>
+                  <CardTitle>Información</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <DetailGrid>
+                    <DetailRow label="Estado">
+                      <StatusBadge meta={PROPOSAL_STATUS} value={status} />
+                    </DetailRow>
+                    <DetailRow label={client ? 'Cliente' : 'Lead'}>
+                      {client ? (
+                        <Link href={`/clients/${client.id}`} className="hover:underline">
+                          {client.name}
+                        </Link>
+                      ) : lead ? (
+                        <Link href={`/leads/${lead.id}`} className="hover:underline">
+                          {lead.company ? `${lead.name} · ${lead.company}` : lead.name}
+                        </Link>
+                      ) : (
+                        '—'
+                      )}
+                    </DetailRow>
+                    <DetailRow label="Proyecto">
+                      <LinkProjectButton
+                        proposalId={id}
+                        currentProject={project}
+                        availableProjects={
+                          (availableProjects ?? []) as { id: string; name: string }[]
+                        }
+                      />
+                    </DetailRow>
+                    <DetailRow label="Enviada">
+                      {formatDate(proposal.sent_at as string | null)}
+                    </DetailRow>
+                    <DetailRow label="Vista">
+                      {formatDate(proposal.viewed_at as string | null)}
+                    </DetailRow>
+                    <DetailRow label="Respondida">
+                      {formatDate(proposal.responded_at as string | null)}
+                    </DetailRow>
+                    {deliveredAt ? (
+                      <DetailRow label="Entregada">{formatDate(deliveredAt)}</DetailRow>
+                    ) : null}
+                    {status === 'accepted' && latestAcceptance ? (
+                      <>
+                        <DetailRow label="Firmada por">
+                          {`${latestAcceptance.signer_name as string}${latestAcceptance.signer_role ? ` · ${latestAcceptance.signer_role as string}` : ''}`}
+                        </DetailRow>
+                        <DetailRow label="Huella del documento">
+                          <span className="font-mono text-xs">
+                            {latestAcceptance.document_hash as string}
+                          </span>
+                        </DetailRow>
+                      </>
+                    ) : null}
+                  </DetailGrid>
+                </CardContent>
+              </Card>
+              <ProposalSharingCard
+                id={id}
+                title={proposal.title as string}
+                token={token}
+                portalViewedAt={portalViewedAt}
+                deckViewedAt={deckViewedAt}
+                isDraft={status === 'draft'}
+                locked={locked}
+                visible={(proposal.is_client_visible as boolean | null) ?? true}
+                hasPassword={Boolean(proposal.portal_password_hash)}
+                recipientEmail={recipientEmail}
+                alreadySent={Boolean(proposal.sent_at)}
+                accessAction={updateProposalPortalAccess}
+              />
+            </>
           }
           sidebar={
             <ProposalSidebar

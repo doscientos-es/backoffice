@@ -60,7 +60,7 @@ export function PortalAccessControls({
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border/60 p-3">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-sm leading-tight font-medium">Visibilidad</span>
           <Badge variant={initialVisible ? 'success' : 'neutral'}>
@@ -82,14 +82,14 @@ export function PortalAccessControls({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-sm leading-tight font-medium">Contraseña</span>
           <Badge variant={hasPassword ? 'info' : 'neutral'}>
             {hasPassword ? 'Protegida' : 'Sin contraseña'}
           </Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {hasPassword ? (
             <Button
               type="button"
@@ -109,7 +109,7 @@ export function PortalAccessControls({
       </div>
 
       {editing ? (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Input
             type="password"
             value={password}
