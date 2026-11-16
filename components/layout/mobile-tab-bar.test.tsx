@@ -1,17 +1,25 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { CurrentUser } from '@/lib/auth'
 
 import { MobileTabBar } from './mobile-tab-bar'
 
+const navigation = vi.hoisted(() => ({ start: vi.fn() }))
 vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: React.ComponentProps<'a'>) => (
-    <a href={href} {...props}>
+  default: ({
+    children,
+    href,
+    onNavigate,
+    ...props
+  }: React.ComponentProps<'a'> & { onNavigate?: () => void }) => (
+    <a href={href} onClick={onNavigate} {...props}>
       {children}
     </a>
   ),
+  useLinkStatus: () => ({ pending: false }),
 }))
+vi.mock('@/components/layout/nav-progress', () => ({ startNavProgress: navigation.start }))
 vi.mock('next/navigation', () => ({ usePathname: () => '/tasks/new' }))
 vi.mock('@/lib/navigation/navigation', () => ({
   visibleNavigationGroups: () => [
@@ -37,5 +45,11 @@ describe('MobileTabBar', () => {
     expect(screen.getByRole('link', { name: 'Inicio' }).getAttribute('href')).toBe('/inicio')
     expect(screen.getByRole('link', { name: 'Tareas' }).getAttribute('aria-current')).toBe('page')
     expect(screen.queryByRole('link', { name: 'Recordatorios' })).toBeNull()
+  })
+
+  it('starts navigation feedback for mobile tabs', () => {
+    render(<MobileTabBar user={user} />)
+    fireEvent.click(screen.getByRole('link', { name: 'Leads' }))
+    expect(navigation.start).toHaveBeenCalledWith('/leads')
   })
 })

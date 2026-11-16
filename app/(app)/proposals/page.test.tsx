@@ -138,6 +138,35 @@ describe('ProposalsPage follow-up filters', () => {
     )
   })
 
+  it('loads proposal prices and view statistics concurrently without waiting for clients', async () => {
+    results.set('proposal_list', { data: [{ id: 'proposal-1', title: 'Test', status: 'draft' }] })
+    let finishClients!: (value: unknown) => void
+    let finishPrices!: (value: unknown) => void
+    results.set(
+      'clients',
+      new Promise((resolve) => {
+        finishClients = resolve
+      }),
+    )
+    results.set(
+      'proposal_prices',
+      new Promise((resolve) => {
+        finishPrices = resolve
+      }),
+    )
+    const page = ProposalsPage({ searchParams: Promise.resolve({}) })
+    try {
+      await vi.waitFor(() => {
+        expect(builders.get('proposal_prices')?.then).toHaveBeenCalled()
+        expect(builders.get('proposal_view_events')?.then).toHaveBeenCalled()
+      })
+    } finally {
+      finishClients({ data: [] })
+      finishPrices({ data: [{ proposal_id: 'proposal-1', total: 120 }] })
+    }
+    await expect(page).resolves.toBeDefined()
+  })
+
   it('still waits for the selected lead client before building the proposal filter', async () => {
     const lead = '00000000-0000-4000-8000-000000000001'
     let finish!: (value: { data: { id: string } }) => void

@@ -5,9 +5,20 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { isNavigationItemActive, NavigationTree } from '@/components/layout/navigation-tree'
 
+const navigation = vi.hoisted(() => ({ pending: false, start: vi.fn() }))
 vi.mock('next/link', () => ({
-  default: ({ children }: { children: ReactNode }) => children,
+  default: ({
+    children,
+    href,
+    onNavigate,
+  }: {
+    children: ReactNode
+    href: string
+    onNavigate: () => void
+  }) => createElement('a', { href, onClick: onNavigate }, children),
+  useLinkStatus: () => ({ pending: navigation.pending }),
 }))
+vi.mock('@/components/layout/nav-progress', () => ({ startNavProgress: navigation.start }))
 
 const groups = [
   {
@@ -43,5 +54,24 @@ describe('isNavigationItemActive', () => {
 
     expect(screen.queryByText('Publicidad')).toBeNull()
     expect(section.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('starts navigation feedback only when the link navigates', () => {
+    const onNavigate = vi.fn()
+    render(createElement(NavigationTree, { groups, pathname: '/inicio', onNavigate }))
+    fireEvent.click(screen.getByRole('link', { name: 'Publicidad' }))
+    expect(navigation.start).toHaveBeenCalledWith('/marketing')
+    expect(onNavigate).toHaveBeenCalledOnce()
+  })
+
+  it('shows an accessible pending indicator while a link is loading', () => {
+    navigation.pending = true
+    try {
+      render(createElement(NavigationTree, { groups, pathname: '/inicio' }))
+      expect(screen.getAllByRole('status')).toHaveLength(2)
+      expect(screen.getAllByText('Cargando sección')).toHaveLength(2)
+    } finally {
+      navigation.pending = false
+    }
   })
 })
