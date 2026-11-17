@@ -103,6 +103,41 @@ describe('ProposalEditor', () => {
     },
   )
 
+  it('starts the development approach empty without making it required', async () => {
+    render(<ProposalEditor {...props} />)
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 2: Alcance/ }))
+    expect(
+      (screen.getByLabelText('Cómo trabajaremos durante el desarrollo') as HTMLTextAreaElement)
+        .value,
+    ).toBe('')
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
+    await waitFor(() =>
+      expect(saveProposal).toHaveBeenCalledWith(
+        expect.objectContaining({ development_approach: null }),
+      ),
+    )
+  })
+
+  it.each(['Revisaremos los avances cada semana.', '', ' \n '])(
+    'saves edits or clears the development approach: %s',
+    async (value) => {
+      render(<ProposalEditor {...props} initialDevelopmentApproach="Dinámica anterior" />)
+      fireEvent.click(screen.getByRole('tab', { name: /Paso 2: Alcance/ }))
+      const field = screen.getByLabelText('Cómo trabajaremos durante el desarrollo')
+      expect((field as HTMLTextAreaElement).value).toBe('Dinámica anterior')
+      fireEvent.change(field, { target: { value } })
+      expect(saveProposal).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
+      await waitFor(() =>
+        expect(saveProposal).toHaveBeenCalledWith(
+          expect.objectContaining({ development_approach: value.trim() || null }),
+        ),
+      )
+    },
+  )
+
   it('persists a proposal without maintenance', async () => {
     render(
       <ProposalEditor

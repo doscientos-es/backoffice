@@ -88,6 +88,32 @@ describe('saveProposalEditorDraft', () => {
       )
     },
   )
+  it.each(['  Revisiones semanales.  ', null, '', ' \n '])(
+    'validates and persists the development approach in the atomic save: %s',
+    async (development_approach) => {
+      expect(await saveProposalEditorDraft({ ...input, development_approach })).toEqual({
+        ok: true,
+        version: 2,
+      })
+      expect(db.rpc).toHaveBeenCalledWith(
+        'update_proposal_items_versioned',
+        expect.objectContaining({
+          p_patch: expect.objectContaining({
+            development_approach: development_approach?.trim() || null,
+          }),
+        }),
+      )
+    },
+  )
+  it('rejects an oversized development approach before writing', async () => {
+    expect(
+      await saveProposalEditorDraft({ ...input, development_approach: 'x'.repeat(20_001) }),
+    ).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('Cómo trabajaremos durante el desarrollo'),
+    })
+    expect(db.rpc).not.toHaveBeenCalled()
+  })
   it('rejects an invalid demo before writing', async () => {
     expect(
       await saveProposalEditorDraft({ ...input, demo_url: 'javascript:alert(1)' }),

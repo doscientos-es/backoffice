@@ -47,6 +47,42 @@ describe('buildSlides', () => {
     expect(slides).not.toContainEqual(expect.objectContaining({ key: 'context' }))
   })
 
+  it.each([undefined, null, '', ' \n '])(
+    'omits the development approach slide for empty content: %s',
+    (development_approach) => {
+      expect(
+        buildSlides({ ...proposal, development_approach }, [], 'portal-token'),
+      ).not.toContainEqual(expect.objectContaining({ key: 'development-approach' }))
+    },
+  )
+
+  it('renders development Markdown after the complete scope and before the team', () => {
+    const slides = buildSlides(
+      {
+        ...proposal,
+        scope_modules: [{ id: 'module-1', title: 'Portal', included: [], excluded: [] }],
+        deliverables: 'Portal publicado',
+        development_approach: '**Revisión semanal** con el cliente.',
+      },
+      [],
+      'portal-token',
+      [{ id: 'member-1', name: 'Equipo', job_title: null, avatar_url: null }],
+    )
+    expect(slides.map((slide) => slide.key)).toEqual([
+      'cover',
+      'scope-module-1',
+      'delivery',
+      'development-approach',
+      'team',
+      'closing',
+    ])
+    render(slides.find((slide) => slide.key === 'development-approach')?.element)
+    expect(
+      screen.getByRole('heading', { name: 'Cómo trabajaremos durante el desarrollo' }),
+    ).toBeDefined()
+    expect(screen.getByText('Revisión semanal').tagName).toBe('STRONG')
+  })
+
   it('includes the delivery slide when either field has meaningful content', () => {
     const slides = buildSlides(
       { ...proposal, deliverables: '- Sitio web publicado' },

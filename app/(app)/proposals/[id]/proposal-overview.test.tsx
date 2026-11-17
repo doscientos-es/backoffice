@@ -4,47 +4,52 @@ import { describe, expect, it } from 'vitest'
 import { ProposalOverview } from './proposal-overview'
 
 describe('ProposalOverview', () => {
-  it('renders additional proposal context in the right sidebar', () => {
-    render(
-      <ProposalOverview
-        subtotal={1000}
-        taxAmount={210}
-        total={1200}
-        validUntil={null}
-        paymentPlan={[]}
-        paymentTerms={null}
-        items={[]}
-        scopeModules={[]}
-        contextMarkdown={null}
-        problemSolutionPairs={[]}
-        deliverables={null}
-        acceptanceCriteria={null}
-        notes={null}
-        terms={null}
-        changeManagementTerms={null}
-        legalTerms={null}
-        maintenanceOffer={null}
-        attachments={[]}
-        team={[]}
-        sidebarTop={
-          <>
-            <div data-testid="proposal-info">Información</div>
-            <div data-testid="proposal-sharing">Compartir con el cliente</div>
-          </>
-        }
-        sidebar={<div data-testid="proposal-sidebar">Aperturas recientes</div>}
-      />,
-    )
+  it.each([undefined, null, '', ' \n '])(
+    'omits empty development content and keeps the sidebar: %s',
+    (developmentApproach) => {
+      render(
+        <ProposalOverview
+          subtotal={1000}
+          taxAmount={210}
+          total={1200}
+          validUntil={null}
+          paymentPlan={[]}
+          paymentTerms={null}
+          items={[]}
+          scopeModules={[]}
+          developmentApproach={developmentApproach}
+          contextMarkdown={null}
+          problemSolutionPairs={[]}
+          deliverables={null}
+          acceptanceCriteria={null}
+          notes={null}
+          terms={null}
+          changeManagementTerms={null}
+          legalTerms={null}
+          maintenanceOffer={null}
+          attachments={[]}
+          team={[]}
+          sidebarTop={
+            <>
+              <div data-testid="proposal-info">Información</div>
+              <div data-testid="proposal-sharing">Compartir con el cliente</div>
+            </>
+          }
+          sidebar={<div data-testid="proposal-sidebar">Aperturas recientes</div>}
+        />,
+      )
 
-    const sidebar = screen.getByTestId('proposal-sidebar')
-    expect(sidebar.parentElement?.className).toContain('flex')
-    expect(sidebar.parentElement?.parentElement?.className).toContain('grid')
-    const info = screen.getByTestId('proposal-info')
-    const sharing = screen.getByTestId('proposal-sharing')
-    expect(info.nextElementSibling).toBe(sharing)
-    expect(sharing.nextElementSibling?.textContent).toContain('Equipo del proyecto')
-    expect(sharing.parentElement).toBe(sidebar.parentElement)
-  })
+      const sidebar = screen.getByTestId('proposal-sidebar')
+      expect(sidebar.parentElement?.className).toContain('flex')
+      expect(sidebar.parentElement?.parentElement?.className).toContain('grid')
+      const info = screen.getByTestId('proposal-info')
+      const sharing = screen.getByTestId('proposal-sharing')
+      expect(info.nextElementSibling).toBe(sharing)
+      expect(sharing.nextElementSibling?.textContent).toContain('Equipo del proyecto')
+      expect(sharing.parentElement).toBe(sidebar.parentElement)
+      expect(screen.queryByText('Cómo trabajaremos durante el desarrollo')).toBeNull()
+    },
+  )
 
   it('highlights the pre-tax investment and keeps VAT and the payable total explicit', () => {
     render(
@@ -95,6 +100,7 @@ describe('ProposalOverview', () => {
         items={[]}
         scopeModules={[]}
         contextMarkdown="El cliente necesita automatizar ventas."
+        developmentApproach="Revisaremos los avances cada semana."
         problemSolutionPairs={[
           {
             id: 'pair-1',
@@ -104,7 +110,7 @@ describe('ProposalOverview', () => {
             solutionDescription: 'Conectaremos el CRM con la web.',
           },
         ]}
-        deliverables={null}
+        deliverables="Portal publicado."
         acceptanceCriteria={null}
         notes={null}
         terms="Licencias a cargo del cliente."
@@ -143,6 +149,11 @@ describe('ProposalOverview', () => {
     )
 
     expect(screen.getByText('El cliente necesita automatizar ventas.')).toBeDefined()
+    expect(screen.getByText('Revisaremos los avances cada semana.')).toBeDefined()
+    const scope = document.getElementById('proposal-scope')
+    expect(scope?.nextElementSibling?.textContent).toContain(
+      'Cómo trabajaremos durante el desarrollo',
+    )
     expect(screen.getByText('Problema · Carga manual')).toBeDefined()
     expect(screen.getByText('Solución · Automatización')).toBeDefined()
     expect(screen.getByText('Licencias a cargo del cliente.')).toBeDefined()
