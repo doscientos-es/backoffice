@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.183",
+      "date": "2026-11-17",
+      "title": "v0.1.183",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Improve layout and styling for recipient block",
+            "Improve layout and styling for recipient block"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "a2525ccd097730739964be0144c3ddc06bbd7a0a",
+          "type": "feat",
+          "scope": "document-header",
+          "breaking": false,
+          "description": "Improve layout and styling for recipient block"
+        },
+        {
+          "sha": "30747bec76af6a0e6d83b184f706efbbbfeec234",
+          "type": "feat",
+          "scope": "document-header",
+          "breaking": false,
+          "description": "Improve layout and styling for recipient block"
+        }
+      ]
+    },
+    {
       "version": "0.1.182",
       "date": "2026-11-16",
       "title": "v0.1.182",
