@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-17 — v0.1.184
+
+### Nuevas funciones
+
+- Add anti-indexing header for public documents
+
 ## 2026-11-17 — v0.1.183
 
 ### Nuevas funciones

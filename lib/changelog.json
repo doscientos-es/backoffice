@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.184",
+      "date": "2026-11-17",
+      "title": "v0.1.184",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add anti-indexing header for public documents"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "c36d559f1fd636ff832d09c4f6fe0c18768b4bcf",
+          "type": "feat",
+          "scope": "next.config",
+          "breaking": false,
+          "description": "Add anti-indexing header for public documents"
+        }
+      ]
+    },
+    {
       "version": "0.1.183",
       "date": "2026-11-17",
       "title": "v0.1.183",
