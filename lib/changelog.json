@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.186",
+      "date": "2026-11-18",
+      "title": "v0.1.186",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add abaco_interest field and billing source for invoices"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "18f3bdb74723ba7a03eec1979562ba8a2f0f2048",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add abaco_interest field and billing source for invoices"
+        }
+      ]
+    },
+    {
       "version": "0.1.185",
       "date": "2026-11-18",
       "title": "v0.1.185",

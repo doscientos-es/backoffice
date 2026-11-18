@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-18 — v0.1.186
+
+### Nuevas funciones
+
+- Add abaco_interest field and billing source for invoices
+
 ## 2026-11-18 — v0.1.185
 
 ### Nuevas funciones
