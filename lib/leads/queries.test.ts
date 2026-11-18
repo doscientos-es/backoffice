@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
   auditTimelineCalls: [] as Array<{ name: string; args: Record<string, unknown> }>,
   leadSelect: '',
   leadSelections: [] as string[],
+  eqCalls: [] as [string, unknown][],
   inCalls: [] as [string, unknown[]][],
   searchFilters: [] as string[],
   leadOperations: [] as string[],
@@ -63,7 +64,10 @@ vi.mock('@/lib/supabase/server', () => ({
           selection = selectedColumns
           return builder
         },
-        eq: () => builder,
+        eq: (column: string, value: unknown) => {
+          if (table === 'leads') state.eqCalls.push([column, value])
+          return builder
+        },
         is: () => builder,
         order: () => {
           if (table === 'leads') state.leadOperations.push('order')
@@ -131,10 +135,33 @@ describe('listLeads client avatar enrichment', () => {
     state.auditTimelineCalls = []
     state.leadSelect = ''
     state.leadSelections = []
+    state.eqCalls = []
     state.inCalls = []
     state.searchFilters = []
     state.leadOperations = []
   })
+
+  it.each(['board', 'list'] as const)(
+    'filters the %s by sold product, not by prior interest',
+    async (view) => {
+      state.rows = [{ id: 'lead-1', status: 'won', won_product: 'abaco' }]
+      const result = await listLeads({
+        view,
+        q: '',
+        status: null,
+        source: null,
+        solutionType: null,
+        wonProduct: 'abaco',
+        assignee: null,
+        attention: null,
+        page: 1,
+      })
+
+      expect(state.eqCalls).toContainEqual(['won_product', 'abaco'])
+      expect(state.eqCalls.map(([column]) => column)).not.toContain('abaco_interest')
+      expect(result.leads[0]).toMatchObject({ status: 'won', won_product: 'abaco' })
+    },
+  )
 
   it.each(['board', 'list'] as const)(
     'applies all search words on the server before %s pagination',

@@ -20,6 +20,7 @@ import { suggestedCallDurationMinutes } from '@/lib/leads/meeting-duration'
 import { buildLeadNextActions } from '@/lib/leads/next-actions'
 import { suggestLeadOwner } from '@/lib/leads/owner-suggestion'
 import { getLeadDetail } from '@/lib/leads/queries'
+import { leadSaleProductLabel } from '@/lib/leads/sale-products'
 import type { LeadCompanyResearch as LeadCompanyResearchData } from '@/lib/leads/types'
 import { leadDisplayName } from '@/lib/leads/utils'
 import { listActiveMembers } from '@/lib/members/queries'
@@ -222,7 +223,6 @@ export default async function LeadDetailPage({
                     email: (lead.email as string | null) ?? null,
                     phone: (lead.phone as string | null) ?? null,
                     source: (lead.source as string | null) ?? null,
-                    abaco_interest: lead.abaco_interest,
                     language: (lead.language as 'es' | 'ca' | 'en' | null) ?? null,
                     notes: (lead.notes as string | null) ?? null,
                     estimated_value:
@@ -247,11 +247,14 @@ export default async function LeadDetailPage({
                 <Link href={`/clients/${linkedClientId}`}>Ver cliente</Link>
               </Button>
             ) : null}
-            <LeadStatusSelect
-              leadId={lead.id as string}
-              status={lead.status as string}
-              leadName={displayName}
-            />
+            {canEdit && (
+              <LeadStatusSelect
+                leadId={lead.id as string}
+                status={lead.status as string}
+                leadName={displayName}
+                wonProduct={lead.won_product}
+              />
+            )}
           </>
         }
       />
@@ -341,6 +344,11 @@ export default async function LeadDetailPage({
                         <DetailRow label="Estado">
                           <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
                         </DetailRow>
+                        {lead.won_product && (
+                          <DetailRow label="Producto vendido">
+                            {leadSaleProductLabel(lead.won_product)}
+                          </DetailRow>
+                        )}
                         {lead.score != null && (
                           <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
                         )}

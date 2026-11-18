@@ -32,6 +32,24 @@ export async function validateAndRecordClientFiscalIdentity(
   const country = String(client.billing_address_country ?? 'ES')
     .trim()
     .toUpperCase()
+  const result = await checkClientFiscalIdentity(aeatNif, name, country)
+  const evidence = {
+    p_client_id: clientId,
+    p_submitted_nif: aeatNif,
+    p_submitted_name: name,
+    p_status: result.status,
+    p_aeat_name: result.aeatName,
+    p_aeat_result: result.aeatResult,
+    p_detail: result.message,
+  }
+  const { error: recordError } = checkedBy
+    ? await admin.rpc('record_client_fiscal_verification', { ...evidence, p_checked_by: checkedBy })
+    : await admin.rpc('record_abaco_client_fiscal_verification', evidence)
+  if (recordError) throw new Error(recordError.message)
+  return { status: result.status, aeatName: result.aeatName, message: result.message }
+}
+
+export async function checkClientFiscalIdentity(aeatNif: string, name: string, country: string) {
   let status: Result['status']
   let aeatName: string | null = null
   let aeatResult: string | null = null
@@ -40,7 +58,7 @@ export async function validateAndRecordClientFiscalIdentity(
   if (country !== 'ES') {
     status = 'not_applicable'
     message = 'La comprobación VNifV2 solo cubre destinatarios españoles.'
-  } else if (!submittedNif || !name) {
+  } else if (!aeatNif || !name) {
     status = 'invalid'
     message = 'Introduce NIF y razón social antes de validar.'
   } else {
@@ -60,20 +78,7 @@ export async function validateAndRecordClientFiscalIdentity(
     }
   }
 
-  const evidence = {
-    p_client_id: clientId,
-    p_submitted_nif: aeatNif,
-    p_submitted_name: name,
-    p_status: status,
-    p_aeat_name: aeatName,
-    p_aeat_result: aeatResult,
-    p_detail: message,
-  }
-  const { error: recordError } = checkedBy
-    ? await admin.rpc('record_client_fiscal_verification', { ...evidence, p_checked_by: checkedBy })
-    : await admin.rpc('record_abaco_client_fiscal_verification', evidence)
-  if (recordError) throw new Error(recordError.message)
-  return { status, aeatName, message }
+  return { status, aeatName, aeatResult, message }
 }
 
 export async function ensureInvoiceRecipientVerified(invoiceId: string, _checkedBy: string) {

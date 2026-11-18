@@ -8,6 +8,7 @@ create table public.abaco_billing_accounts (
 create table public.abaco_subscription_invoice_requests (
   payment_id uuid primary key,
   tenant_id uuid not null references public.abaco_billing_accounts(tenant_id),
+  merchant_order text not null unique,
   payload jsonb not null,
   invoice_id uuid unique references public.invoices(id),
   email_first_attempt_at timestamptz,
@@ -20,7 +21,7 @@ alter table public.abaco_subscription_invoice_requests enable row level security
 revoke all on public.abaco_billing_accounts, public.abaco_subscription_invoice_requests
   from public, anon, authenticated;
 
-create function public.prepare_abaco_billing_account(p_tenant uuid, p_recipient jsonb)
+create function public.prepare_abaco_billing_account(p_tenant uuid, p_recipient jsonb, p_proof jsonb default null)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare
   client public.clients%rowtype;
@@ -29,6 +30,10 @@ declare
 begin
   if p_tenant is null or coalesce(tax_id, '') !~ '^[A-Z0-9]{9}$' then
     raise exception 'Identidad fiscal no válida' using errcode = '22023';
+  end if;
+  if not exists (select 1 from public.settings where id = 1 and nullif(btrim(invoice_series), '') is not null
+    and nullif(btrim(company_nif), '') is not null and nullif(btrim(company_name), '') is not null) then
+    return jsonb_build_object('status', 'unavailable');
   end if;
   perform pg_advisory_xact_lock(hashtextextended('abaco-account:' || p_tenant, 0));
   perform pg_advisory_xact_lock(hashtextextended('abaco-tax-id:' || tax_id, 0));
@@ -41,6 +46,9 @@ begin
     if cardinality(matches) = 1 then
       select * into strict client from public.clients where id = matches[1] for update;
     else
+      if p_proof->>'status' is distinct from 'verified' then
+        return jsonb_build_object('status', 'new_recipient');
+      end if;
       insert into public.clients (name, nif, email, billing_address_street, billing_address_zip,
         billing_address_city, billing_address_province, billing_address_country)
       values (p_recipient->>'legal_name', tax_id, p_recipient->>'email', p_recipient->>'street',
@@ -61,7 +69,11 @@ begin
     or client.fiscal_verified_at is null
     or client.fiscal_verified_nif is distinct from tax_id
     or client.fiscal_verified_name is distinct from client.name then
-    return jsonb_build_object('status', 'fiscal_verification_required', 'clientId', client.id);
+    if p_proof->>'status' is distinct from 'verified' then
+      return jsonb_build_object('status', 'fiscal_verification_required', 'clientId', client.id);
+    end if;
+    perform public.record_abaco_client_fiscal_verification(client.id, tax_id, client.name, 'verified',
+      p_proof->>'aeatName', p_proof->>'aeatResult', p_proof->>'message');
   end if;
   return jsonb_build_object('status', 'ready', 'clientId', client.id);
 end;
@@ -102,7 +114,8 @@ grant execute on function public.record_abaco_client_fiscal_verification(uuid,te
 -- additional principal is the backend processing an invoice linked to a durable Ábaco event.
 create function public.can_issue_abaco_subscription_invoice(p_invoice uuid) returns boolean
 language sql stable security definer set search_path = '' as $$
-  select coalesce(auth.role() = 'service_role', false) and exists (
+  select coalesce(auth.role() = 'service_role', false)
+    and current_setting('app.abaco_invoice_issuance', true) is not distinct from p_invoice::text and exists (
     select 1 from public.abaco_subscription_invoice_requests r join public.invoices i on i.id = r.invoice_id
     where i.id = p_invoice and i.billing_source = 'abaco_subscription'
   );
@@ -165,8 +178,9 @@ begin
     (v_paid_at at time zone 'Europe/Madrid')::date, true) returning id into invoice_id;
   insert into public.invoice_items(invoice_id, description, quantity, unit_price, vat_rate)
     values (invoice_id, concept, 1, base, vat);
-  insert into public.abaco_subscription_invoice_requests(payment_id, tenant_id, payload, invoice_id)
-    values (payment, tenant, p_event, invoice_id);
+  insert into public.abaco_subscription_invoice_requests(payment_id, tenant_id, merchant_order, payload, invoice_id)
+    values (payment, tenant, p_event->>'order', p_event, invoice_id);
+  perform set_config('app.abaco_invoice_issuance', invoice_id::text, true);
   perform public.issue_invoice_with_number_and_verifactu_outbox(invoice_id, p_software);
   insert into public.invoice_payments(invoice_id, amount, status, payment_method, confirmed_at)
     values (invoice_id, total, 'confirmed', 'card', v_paid_at);
@@ -177,9 +191,9 @@ end;
 $$;
 
 revoke all on function public.can_issue_abaco_subscription_invoice(uuid) from public, anon, authenticated, service_role;
-revoke all on function public.prepare_abaco_billing_account(uuid,jsonb) from public, anon, authenticated;
+revoke all on function public.prepare_abaco_billing_account(uuid,jsonb,jsonb) from public, anon, authenticated;
 revoke all on function public.issue_abaco_subscription_invoice(jsonb,jsonb) from public, anon, authenticated;
-grant execute on function public.prepare_abaco_billing_account(uuid,jsonb),
+grant execute on function public.prepare_abaco_billing_account(uuid,jsonb,jsonb),
   public.issue_abaco_subscription_invoice(jsonb,jsonb) to service_role;
 
 create function public.begin_abaco_invoice_email(p_payment uuid) returns text
@@ -221,3 +235,5 @@ revoke all on function public.begin_abaco_invoice_email(uuid), public.finish_aba
   from public, anon, authenticated;
 grant execute on function public.begin_abaco_invoice_email(uuid), public.finish_abaco_invoice_email(uuid,text)
   to service_role;
+
+notify pgrst, 'reload schema';

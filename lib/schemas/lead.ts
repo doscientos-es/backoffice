@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { type LeadSaleProduct, parseLeadSaleProduct } from '@/lib/leads/sale-products'
 import { todayIsoLocal } from '@/lib/utils/date'
 
 import { assignableUuid, optionalEmail, optionalText, optionalUuid, requiredText } from './common'
@@ -31,7 +32,6 @@ export const CreateLeadInput = z.object({
   phone: optionalText(40),
   company: optionalText(160),
   source: optionalText(80),
-  abaco_interest: z.boolean().optional(),
   language: z.enum(['es', 'ca', 'en']).nullable().optional(),
   notes: optionalText(4000),
   estimated_value: z.number().min(0).max(99_999_999.99).nullable().optional(),
@@ -68,6 +68,17 @@ export const UpdateLeadStatusInput = z
     leadId: z.string().uuid(),
     status: LeadStatus,
     lostReason: optionalText(500),
+    wonProduct: z
+      .custom<LeadSaleProduct>(
+        (value) => parseLeadSaleProduct(value) !== null,
+        'Producto no válido',
+      )
+      .nullable()
+      .optional(),
+  })
+  .refine((v) => v.status === 'won' || v.wonProduct === undefined, {
+    message: 'Solo se asigna un producto al marcar el lead como ganado',
+    path: ['wonProduct'],
   })
   .refine(
     (v) => {

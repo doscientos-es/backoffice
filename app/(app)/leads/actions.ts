@@ -272,18 +272,24 @@ export async function convertLeadToClientForm(formData: FormData): Promise<void>
 export const updateLeadStatus = defineAction({
   name: 'leads.updateStatus',
   schema: UpdateLeadStatusInput,
+  roles: ['owner', 'admin', 'member'],
   revalidate: (_payload, input) => ['/leads', `/leads/${input.leadId}`],
   handler: async (data, { user }) => {
     const supabase = await createServerClient()
 
     // Read current status before updating so we can log `from → to`.
-    const { data: current } = await supabase
+    const { data: current, error: readError } = await supabase
       .from('leads')
-      .select('status')
+      .select('status, won_product')
       .eq('id', data.leadId)
-      .single()
+      .is('deleted_at', null)
+      .maybeSingle()
 
-    if (current?.status === data.status) return
+    if (readError) throw new Error(readError.message)
+    if (!current) throw new Error('No se encontró el lead')
+    const statusChanged = current.status !== data.status
+    const productChanged = data.wonProduct !== undefined && data.wonProduct !== current.won_product
+    if (!statusChanged && !productChanged) return
 
     const updates = buildLeadStatusPatch({
       status: data.status,
@@ -291,21 +297,35 @@ export const updateLeadStatus = defineAction({
       userId: user.id,
       now: new Date().toISOString(),
     })
-    const { error } = await supabase.from('leads').update(updates).eq('id', data.leadId)
+    if (data.wonProduct !== undefined) updates.won_product = data.wonProduct
+    const { data: updated, error } = await supabase
+      .from('leads')
+      .update(updates)
+      .eq('id', data.leadId)
+      .eq('status', current.status)
+      .is('deleted_at', null)
+      .select('id')
+      .maybeSingle()
     if (error) throw new Error(error.message)
+    if (!updated) throw new VersionConflictError()
 
     // Log the transition in the interactions timeline.
     await supabase.from('lead_interactions').insert({
       lead_id: data.leadId,
-      type: 'status_change',
-      subject: `Estado: ${current?.status ?? '?'} → ${data.status}`,
+      type: statusChanged ? 'status_change' : 'note',
+      subject: statusChanged
+        ? `Estado: ${current.status} → ${data.status}`
+        : 'Producto vendido actualizado',
       performed_by: user.id,
       payload: {
-        from: current?.status ?? null,
+        from: current.status,
         to: data.status,
         lost_reason: data.lostReason ?? null,
+        ...(data.wonProduct !== undefined && { won_product: data.wonProduct }),
       },
     })
+
+    if (!statusChanged) return
 
     // Fire-and-forget: notify Meta CAPI of every funnel stage transition so
     // the ad algorithm can optimise for lead quality, not just quantity.

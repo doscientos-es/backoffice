@@ -162,4 +162,9 @@ export const ServerSchema = PublicSchema.extend({
   // Set to a random string (e.g. `openssl rand -hex 32`).
   CRON_SECRET: z.string().optional().default(''),
   ABACO_BILLING_SECRET: z.string().optional().default(''),
+  ABACO_BILLING_PORTAL_URL: z
+    .string()
+    .url()
+    .regex(/^https:\/\//)
+    .optional(),
 })

@@ -9,6 +9,7 @@ import { MemberLabel } from '@/components/ui/member-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
 import { nextActionForKanban } from '@/lib/leads/kanban-policy'
+import { leadSaleProductLabel } from '@/lib/leads/sale-products'
 import type { LeadListItem } from '@/lib/leads/types'
 import { getLeadInitials, leadDisplayName } from '@/lib/leads/utils'
 import type { MemberOption } from '@/lib/members/queries'
@@ -122,6 +123,11 @@ export function LeadsList({
         content: (
           <div key="status" className="flex flex-col gap-0.5">
             <StatusBadge meta={LEAD_STATUS} value={l.status} />
+            {l.won_product && (
+              <span className="text-[11px] text-muted-foreground">
+                {leadSaleProductLabel(l.won_product)}
+              </span>
+            )}
             {(l.status === 'lost' || l.status === 'not_interested') && l.lost_reason && (
               <span className="max-w-36 truncate text-[11px] text-destructive/80">
                 {l.lost_reason}

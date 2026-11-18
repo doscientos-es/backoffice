@@ -23,6 +23,7 @@ const { db, authUser, googleCalendar, sendEmail } = vi.hoisted(() => ({
     queryError: null as string | null,
     marketingStatuses: [] as Array<string | null>,
     leadStatus: 'new' as string,
+    wonProduct: null as string | null,
     leadDetails: { name: 'Ana García', alias: 'Nube', company: 'Acme S.L.' } as {
       name: string
       alias: string | null
@@ -96,7 +97,12 @@ vi.mock('@/lib/supabase/server', () => ({
         return {
           data:
             table === 'leads'
-              ? { id: 'new-lead-uuid', name: 'Lead Test', status: db.leadStatus }
+              ? {
+                  id: 'new-lead-uuid',
+                  name: 'Lead Test',
+                  status: db.leadStatus,
+                  won_product: db.wonProduct,
+                }
               : table === 'lead_campaign_sends'
                 ? { id: 'campaign-send-uuid', tracking_token: 'tracking-token' }
                 : { id: 'interaction-uuid' },
@@ -159,6 +165,7 @@ vi.mock('@/lib/supabase/server', () => ({
           }
           if (table === 'leads' && selectedColumns.includes('mom_test_accessible')) return resolve()
           if (table === 'leads' && selectedColumns === 'status, lost_reason') return resolve()
+          if (table === 'leads' && selectedColumns === 'status, won_product') return resolve()
           if (table === 'leads' && selectedColumns === 'name, alias, company') return resolve()
           if (table === 'leads' && selectedColumns === 'id, name, alias, email, company')
             return resolve()
@@ -258,6 +265,7 @@ beforeEach(() => {
   db.updatedRows = []
   db.queryError = null
   db.leadStatus = 'new'
+  db.wonProduct = null
   db.leadDetails = { name: 'Ana García', alias: 'Nube', company: 'Acme S.L.' }
   db.recentCallPayloads = []
   db.leadMomTest = {
@@ -363,6 +371,42 @@ describe('updateLead', () => {
 })
 
 describe('updateLeadStatus', () => {
+  const leadId = '00000000-0000-0000-0000-000000000001'
+
+  it('records the won status and the sold product in the same update', async () => {
+    expect(await updateLeadStatus({ leadId, status: 'won', wonProduct: 'abaco' })).toMatchObject({
+      ok: true,
+    })
+    expect(db.updatedRows).toHaveLength(1)
+    expect(db.updatedRows[0]).toMatchObject({ table: 'leads', status: 'won', won_product: 'abaco' })
+    expect(db.insertedRows).toContainEqual(
+      expect.objectContaining({
+        table: 'lead_interactions',
+        payload: expect.objectContaining({ from: 'new', to: 'won', won_product: 'abaco' }),
+      }),
+    )
+  })
+
+  it('allows correcting the product on an already won lead without emitting another status change', async () => {
+    db.leadStatus = 'won'
+    db.wonProduct = 'abaco'
+    expect(await updateLeadStatus({ leadId, status: 'won', wonProduct: null })).toMatchObject({
+      ok: true,
+    })
+    expect(db.updatedRows[0]).toMatchObject({ status: 'won', won_product: null })
+    expect(db.insertedRows).toContainEqual(expect.objectContaining({ type: 'note' }))
+  })
+
+  it.each([
+    { status: 'new', wonProduct: 'abaco' },
+    { status: 'won', wonProduct: 'unlisted-product' },
+  ])('rejects invalid product assignments: %j', async (input) => {
+    const form = new FormData()
+    for (const [key, value] of Object.entries({ leadId, ...input })) form.set(key, value)
+    expect(await updateLeadStatus(form)).toMatchObject({ ok: false })
+    expect(db.updatedRows).toHaveLength(0)
+  })
+
   it('returns ok:true when the update succeeds', async () => {
     const result = await updateLeadStatus({
       leadId: '00000000-0000-0000-0000-000000000001',

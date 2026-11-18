@@ -1,3 +1,4 @@
+-- The filename matches the version assigned by Supabase Management API.
 alter table public.leads
   add column abaco_interest boolean not null default false;
 

@@ -240,7 +240,7 @@ export default async function InvoicesPage({
             ) : null,
             value: i.client_name ?? '',
           },
-          origen: { value: INVOICE_BILLING_SOURCE_LABELS[i.billing_source] },
+          origen: { content: INVOICE_BILLING_SOURCE_LABELS[i.billing_source] },
           propuesta: {
             content: i.proposal_url ? (
               <Link

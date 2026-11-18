@@ -2,13 +2,16 @@
 
 import { useState } from 'react'
 
+import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { useOptimisticUpdate } from '@/lib/hooks/use-optimistic-update'
+import { leadSaleProductLabel, type LeadSaleProduct } from '@/lib/leads/sale-products'
 import type { LeadStatusType } from '@/lib/schemas/lead'
 
 import { updateLeadStatus } from '../actions'
 import { CloseReasonDialog, type CloseReasonVariant } from '../close-reason-dialog'
 import { QuotedSuggestionDialog } from '../quoted-suggestion-dialog'
+import { WonProductDialog } from '../won-product-dialog'
 
 const OPTIONS = [
   { value: 'new', label: 'Nuevo' },
@@ -36,19 +39,26 @@ export function LeadStatusSelect({
   leadId,
   status,
   leadName,
+  wonProduct,
 }: {
   leadId: string
   status: string
   leadName: string
+  wonProduct: LeadSaleProduct | null
 }) {
-  const { value: currentStatus, commit } = useOptimisticUpdate<LeadStatusType>(
-    status as LeadStatusType,
-  )
+  const { value, commit } = useOptimisticUpdate({ status: status as LeadStatusType, wonProduct })
+  const currentStatus = value.status
   const [pendingClosure, setPendingClosure] = useState<CloseReasonVariant | null>(null)
+  const [showWonProduct, setShowWonProduct] = useState(false)
   const [showQuotedSuggestion, setShowQuotedSuggestion] = useState(false)
 
-  const apply = (to: LeadStatusType, lostReason?: string) => {
-    commit(to, () => updateLeadStatus({ leadId, status: to, lostReason }))
+  const apply = (
+    to: LeadStatusType,
+    options?: { lostReason?: string; wonProduct?: LeadSaleProduct | null },
+  ) => {
+    commit({ status: to, wonProduct: options?.wonProduct ?? null }, () =>
+      updateLeadStatus({ leadId, status: to, ...options }),
+    )
     if (to === 'quoted') setShowQuotedSuggestion(true)
   }
 
@@ -56,9 +66,14 @@ export function LeadStatusSelect({
     <div className="flex items-center gap-2">
       <Select
         value={currentStatus}
+        aria-label="Estado del lead"
         className="h-8 w-40"
         onChange={(e) => {
           const next = e.target.value as LeadStatusType
+          if (next === 'won') {
+            setShowWonProduct(true)
+            return
+          }
           const variant = CLOSURE_VARIANTS[next]
           if (variant) {
             setPendingClosure(variant)
@@ -74,6 +89,24 @@ export function LeadStatusSelect({
         ))}
       </Select>
 
+      {currentStatus === 'won' && (
+        <Button type="button" variant="outline" size="sm" onClick={() => setShowWonProduct(true)}>
+          {leadSaleProductLabel(value.wonProduct) ?? 'Asignar producto'}
+        </Button>
+      )}
+      {showWonProduct && (
+        <WonProductDialog
+          name={leadName}
+          product={value.wonProduct}
+          editing={currentStatus === 'won'}
+          onCancel={() => setShowWonProduct(false)}
+          onConfirm={(product) => {
+            setShowWonProduct(false)
+            apply('won', { wonProduct: product })
+          }}
+        />
+      )}
+
       <CloseReasonDialog
         lead={pendingClosure ? { id: leadId, name: leadName } : null}
         variant={pendingClosure ?? 'lost'}
@@ -82,7 +115,7 @@ export function LeadStatusSelect({
           if (!pendingClosure) return
           const next = pendingClosure
           setPendingClosure(null)
-          apply(next, reason)
+          apply(next, { lostReason: reason })
         }}
       />
 

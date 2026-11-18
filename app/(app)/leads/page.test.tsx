@@ -131,6 +131,21 @@ describe('leads search experience', () => {
     expect(controls?.props.className).toContain('leads-kanban-filter-controls')
   })
 
+  it.each(['board', 'list'])('exposes the sold product filter in the %s', async (view) => {
+    const page = await LeadsPage({ searchParams: Promise.resolve({ view, product: 'abaco' }) })
+    const filters =
+      view === 'list'
+        ? (page.props as Props).filters
+        : elements(page).find((node) => node.type === ListControls)?.props.filters
+
+    expect(filters).toContainEqual({
+      key: 'product',
+      label: 'Producto vendido',
+      options: [{ value: 'abaco', label: 'Ábaco' }],
+    })
+    expect(listLeads).toHaveBeenCalledWith(expect.objectContaining({ wonProduct: 'abaco' }))
+  })
+
   it('uses a responsive Doscientos button pair for creating leads', async () => {
     listLeads.mockResolvedValue({ leads: [{ id: 'lead-1' }], count: 1, error: null })
     const boardPage = await LeadsPage({ searchParams: Promise.resolve({}) })

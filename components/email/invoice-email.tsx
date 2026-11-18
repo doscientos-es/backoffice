@@ -14,6 +14,7 @@ export type InvoiceEmailProps = {
   total: string
   /** Formatted due date, e.g. "15 de junio de 2026" */
   dueDate: string
+  paid?: boolean
   /** Absolute URL to the public portal invoice page */
   portalUrl: string
   /** Absolute base URL of the app (for logo resolution) */
@@ -35,15 +36,17 @@ export function InvoiceEmail({
   invoiceNumber,
   total,
   dueDate,
+  paid = false,
   portalUrl,
   appUrl,
   message,
   language = 'es',
 }: InvoiceEmailProps) {
   const copy = language === 'ca' ? CA : language === 'en' ? EN : ES
+  const paidCopy = PAID[language]
   return (
     <EmailLayout
-      preview={`${copy.invoice} ${invoiceNumber} · ${total} · ${copy.due} ${dueDate}`}
+      preview={`${copy.invoice} ${invoiceNumber} · ${total} · ${paid ? paidCopy.date : copy.due} ${dueDate}`}
       appUrl={appUrl}
     >
       {/* Greeting */}
@@ -52,7 +55,7 @@ export function InvoiceEmail({
       </Text>
       <Text style={bodyStyle}>
         {copy.intro} <strong>{invoiceNumber}</strong> {copy.amount} <strong>{total}</strong>.{' '}
-        {copy.details}
+        {paid ? paidCopy.details : copy.details}
       </Text>
 
       {/* Optional custom message */}
@@ -71,7 +74,9 @@ export function InvoiceEmail({
         <Text style={{ ...valueStyle, marginBottom: 12 }}>{invoiceNumber}</Text>
         <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.total}</Text>
         <Text style={{ ...valueStyle, marginBottom: 12 }}>{total}</Text>
-        <Text style={{ ...labelStyle, marginBottom: 4 }}>{copy.dueDate}</Text>
+        <Text style={{ ...labelStyle, marginBottom: 4 }}>
+          {paid ? paidCopy.date : copy.dueDate}
+        </Text>
         <Text style={{ ...valueStyle, marginBottom: 0 }}>{dueDate}</Text>
       </Section>
 
@@ -93,13 +98,31 @@ export function InvoiceEmail({
           boxSizing: 'border-box',
         }}
       >
-        {copy.viewInvoice}
+        {paid ? paidCopy.link : copy.viewInvoice}
       </Button>
 
       <Hr style={{ borderColor: '#e4e4e7', margin: '28px 0 16px' }} />
       <Text style={{ ...bodyStyle, color: '#a1a1aa', fontSize: 12 }}>{copy.questions}</Text>
     </EmailLayout>
   )
+}
+
+const PAID = {
+  es: {
+    date: 'Fecha de cobro',
+    details: 'La factura ya está pagada. Puedes consultarla y descargarla desde este enlace.',
+    link: 'Ver factura',
+  },
+  ca: {
+    date: 'Data de cobrament',
+    details: 'La factura ja està pagada. Pots consultar-la i descarregar-la des d’aquest enllaç.',
+    link: 'Veure factura',
+  },
+  en: {
+    date: 'Payment date',
+    details: 'This invoice has already been paid. You can view and download it here.',
+    link: 'View invoice',
+  },
 }
 
 const ES = {

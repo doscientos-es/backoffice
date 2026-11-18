@@ -53,6 +53,7 @@ import {
   toggleLeadKanbanColumnPreference,
 } from '@/lib/leads/kanban-preferences'
 import { isRotting, STAGE_ROT_DAYS } from '@/lib/leads/pipeline'
+import { leadSaleProductLabel, type LeadSaleProduct } from '@/lib/leads/sale-products'
 import type { LeadListItem, LeadMemberRef } from '@/lib/leads/types'
 import { leadDisplayName } from '@/lib/leads/utils'
 import type { MemberOption } from '@/lib/members/queries'
@@ -77,6 +78,9 @@ const ReopenConfirmDialog = dynamic(() =>
 )
 const QuotedSuggestionDialog = dynamic(() =>
   import('./quoted-suggestion-dialog').then((m) => m.QuotedSuggestionDialog),
+)
+const WonProductDialog = dynamic(() =>
+  import('./won-product-dialog').then((m) => m.WonProductDialog),
 )
 const ScheduleReminderDialog = dynamic(() =>
   import('../reminders/schedule-reminder-dialog').then((m) => m.ScheduleReminderDialog),
@@ -173,7 +177,9 @@ function saveColumnPreferences(key: string, value: LeadKanbanColumnPreferences) 
   }
 }
 
-type Action = { type: 'move'; id: string; status: LeadStatus } | { type: 'remove'; id: string }
+type Action =
+  | { type: 'move'; id: string; status: LeadStatus; wonProduct: LeadSaleProduct | null }
+  | { type: 'remove'; id: string }
 
 export function LeadsKanban({
   leads,
@@ -196,7 +202,9 @@ export function LeadsKanban({
   const [optimistic, applyOptimistic] = useOptimistic(leads, (state, action: Action) =>
     action.type === 'remove'
       ? state.filter((l) => l.id !== action.id)
-      : state.map((l) => (l.id === action.id ? { ...l, status: action.status } : l)),
+      : state.map((l) =>
+          l.id === action.id ? { ...l, status: action.status, won_product: action.wonProduct } : l,
+        ),
   )
   const [columnPreferences, setColumnPreferences] = useState<LeadKanbanColumnPreferences>({
     compact: [],
@@ -232,6 +240,7 @@ export function LeadsKanban({
     name: string
     to: LeadKanbanColumnId
   } | null>(null)
+  const [pendingWin, setPendingWin] = useState<{ id: string; name: string } | null>(null)
   const [pendingSuggestion, setPendingSuggestion] = useState<{ id: string; name: string } | null>(
     null,
   )
@@ -245,11 +254,15 @@ export function LeadsKanban({
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
   const onDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id))
 
-  const commitMove = (id: string, status: LeadStatus, lostReason?: string) => {
+  const commitMove = (
+    id: string,
+    status: LeadStatus,
+    options?: { lostReason?: string; wonProduct?: LeadSaleProduct | null },
+  ) => {
     startTransition(async () => {
-      applyOptimistic({ type: 'move', id, status })
+      applyOptimistic({ type: 'move', id, status, wonProduct: options?.wonProduct ?? null })
       feedback.setPending()
-      const res = await updateLeadStatus({ leadId: id, status, lostReason })
+      const res = await updateLeadStatus({ leadId: id, status, ...options })
       if (!res.ok) feedback.setError(res.error)
       else feedback.setSuccess('Estado actualizado')
     })
@@ -277,6 +290,10 @@ export function LeadsKanban({
     }
 
     const status = STATUS_BY_COLUMN[column]
+    if (status === 'won') {
+      setPendingWin({ id: lead.id, name: leadDisplayName(lead) })
+      return
+    }
     if (status === 'lost' || status === 'not_interested') {
       setPendingClosure({ id: lead.id, name: leadDisplayName(lead), variant: status })
       return
@@ -375,9 +392,19 @@ export function LeadsKanban({
           if (!pendingClosure) return
           const { id, variant } = pendingClosure
           setPendingClosure(null)
-          commitMove(id, variant, reason)
+          commitMove(id, variant, { lostReason: reason })
         }}
       />
+      {pendingWin && (
+        <WonProductDialog
+          name={pendingWin.name}
+          onCancel={() => setPendingWin(null)}
+          onConfirm={(product) => {
+            commitMove(pendingWin.id, 'won', { wonProduct: product })
+            setPendingWin(null)
+          }}
+        />
+      )}
       <ReopenConfirmDialog
         lead={pendingReopen ? { id: pendingReopen.id, name: pendingReopen.name } : null}
         onCancel={() => setPendingReopen(null)}
@@ -664,6 +691,11 @@ function Card({
             {lead.urgency}
           </span>
         </div>
+      )}
+      {lead.won_product && (
+        <p className="truncate pl-8 text-[11px] font-medium text-muted-foreground">
+          {leadSaleProductLabel(lead.won_product)}
+        </p>
       )}
       {!isOverlay && lead.status === 'lost' && lead.lost_reason ? (
         <p

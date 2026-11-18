@@ -6,6 +6,7 @@ import { notDeleted } from '@/lib/supabase/filters'
 import { createServerClient } from '@/lib/supabase/server'
 
 import { suggestedCallDurationMinutes } from './meeting-duration'
+import { parseLeadSaleProduct } from './sale-products'
 import { buildLeadSearchFilters } from './search'
 import {
   LEAD_BOARD_LIMIT,
@@ -48,9 +49,9 @@ const MOM_TEST_COLUMNS =
 
 const COMPANY_RESEARCH_COLUMNS = 'company_research, company_researched_at'
 
-const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, language, notes, status, created_at, updated_at, estimated_value, score, temperature, engagement_score, last_engaged_at, ${LIST_QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
+const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, language, notes, status, won_product, created_at, updated_at, estimated_value, score, temperature, engagement_score, last_engaged_at, ${LIST_QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
 
-const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, abaco_interest, language, status, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
+const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, language, status, won_product, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
 
 const log = scopedLogger('leads.queries')
 
@@ -173,7 +174,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
   if (params.status) query = query.in('status', statusFilterValues(params.status))
   if (params.source) query = query.in('source', sourceFilterValues(params.source))
   if (params.solutionType) query = query.eq('solution_type', params.solutionType)
-  if (params.abacoInterest) query = query.eq('abaco_interest', true)
+  if (params.wonProduct) query = query.eq('won_product', params.wonProduct)
   if (params.assignee) query = query.eq('assigned_to', params.assignee)
   if (params.attention === 'unassigned') query = query.is('assigned_to', null)
   if (params.attention === 'urgent') query = query.eq('urgency', 'Inmediata')
@@ -214,6 +215,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     language: (l.language as 'es' | 'ca' | 'en' | null) ?? null,
     notes: (l.notes as string | null) ?? null,
     status: l.status as LeadStatus,
+    won_product: parseLeadSaleProduct(l.won_product),
     created_at: l.created_at as string,
     updated_at: (l.updated_at as string | null) ?? (l.created_at as string),
     estimated_value: l.estimated_value == null ? null : Number(l.estimated_value),
@@ -553,6 +555,7 @@ export async function getLeadDetail(
   return {
     lead: {
       ...lead,
+      won_product: parseLeadSaleProduct(lead.won_product),
       company_research: companyResearch.company_research,
       company_researched_at: companyResearch.company_researched_at,
       marketing_campaign_name: marketingCampaignName,

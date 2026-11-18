@@ -1,9 +1,12 @@
 import 'server-only'
 import { InvoiceEmail } from '@/components/email'
-import { validateAndRecordClientFiscalIdentity } from '@/lib/clients/fiscal-verification'
+import {
+  checkClientFiscalIdentity,
+  validateAndRecordClientFiscalIdentity,
+} from '@/lib/clients/fiscal-verification'
 import { renderEmail } from '@/lib/email/render'
 import { sendEmail } from '@/lib/email/resend'
-import { publicEnv, serverEnv } from '@/lib/env'
+import { serverEnv } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate, formatEUR } from '@/lib/utils'
 import { verifactuSoftwareSnapshotFromEnv } from '@/lib/verifactu/config'
@@ -17,20 +20,48 @@ export async function prepareAbacoSubscription(
 ): Promise<string> {
   await assertDurableVerifactuPackage()
   verifactuSoftwareSnapshotFromEnv()
-  if (!serverEnv().RESEND_API_KEY) return 'unavailable'
-  const { data, error } = await createAdminClient().rpc('prepare_abaco_billing_account', {
+  if (!serverEnv().RESEND_API_KEY || !serverEnv().ABACO_BILLING_PORTAL_URL) return 'unavailable'
+  const admin = createAdminClient()
+  const args = {
     p_tenant: tenantId,
     p_recipient: recipient,
-  })
+  }
+  const { data, error } = await admin.rpc('prepare_abaco_billing_account', args)
   if (error || !data?.status) throw new Error('No se pudo preparar el destinatario de Ábaco')
+  if (data.status === 'new_recipient') {
+    const proof = await checkClientFiscalIdentity(recipient.tax_id, recipient.legal_name, 'ES')
+    if (proof.status !== 'verified') {
+      return proof.status === 'unavailable' ? 'unavailable' : 'fiscal_identity_invalid'
+    }
+    const { data: verified, error: verifyError } = await admin.rpc(
+      'prepare_abaco_billing_account',
+      {
+        ...args,
+        p_proof: proof,
+      },
+    )
+    if (verifyError || !verified?.status)
+      throw new Error('No se pudo registrar el destinatario de Ábaco')
+    return verified.status
+  }
   if (data.status !== 'fiscal_verification_required') return data.status
 
   const result = await validateAndRecordClientFiscalIdentity(data.clientId, null)
-  if (result.status === 'verified') return 'ready'
+  if (result.status === 'verified') {
+    const { data: verified, error: verifyError } = await admin.rpc(
+      'prepare_abaco_billing_account',
+      args,
+    )
+    if (verifyError || !verified?.status)
+      throw new Error('No se pudo confirmar el destinatario de Ábaco')
+    return verified.status
+  }
   return result.status === 'unavailable' ? 'unavailable' : 'fiscal_identity_invalid'
 }
 
 export async function fulfillAbacoSubscription(payment: AbacoSubscriptionPayment) {
+  const portalBase = serverEnv().ABACO_BILLING_PORTAL_URL
+  if (!portalBase) throw new Error('Falta el dominio de facturación de Ábaco')
   await assertDurableVerifactuPackage()
   const admin = createAdminClient()
   const { data: id, error } = await admin.rpc('issue_abaco_subscription_invoice', {
@@ -60,7 +91,7 @@ export async function fulfillAbacoSubscription(payment: AbacoSubscriptionPayment
   if (stateError) throw new Error('No se pudo consultar el envío de Ábaco')
   if (state === 'fiscal_pending' || state === 'fiscal_review') return { status: state }
 
-  const appUrl = publicEnv.NEXT_PUBLIC_APP_URL.replace(/\/+$/, '')
+  const appUrl = portalBase.replace(/\/+$/, '')
   const portalUrl = `${appUrl}/p/invoice/${encodeURIComponent(invoice.portal_token)}?lang=es`
   const details = { invoiceNumber: invoice.full_number as string, portalUrl }
   if (state === 'sent') return { status: 'sent', ...details }
@@ -74,6 +105,7 @@ export async function fulfillAbacoSubscription(payment: AbacoSubscriptionPayment
         invoiceNumber: details.invoiceNumber,
         total: formatEUR(payment.totalCents / 100),
         dueDate: formatDate(payment.paidAt),
+        paid: true,
         portalUrl,
         appUrl,
         language: 'es',

@@ -9,6 +9,7 @@ import { requireUser } from '@/lib/auth'
 import { isAIEnabled, isGoogleEnabled } from '@/lib/env'
 import { SELECTABLE_LEAD_STATUSES } from '@/lib/leads/pipeline'
 import { listLeads } from '@/lib/leads/queries'
+import { LEAD_SALE_PRODUCTS, parseLeadSaleProduct } from '@/lib/leads/sale-products'
 import { LEAD_LIST_PAGE_SIZE, LEAD_SORT_COLUMNS, type LeadAttentionFilter } from '@/lib/leads/types'
 import { listActiveMembers } from '@/lib/members/queries'
 import { LEAD_STATUS, type LeadStatus } from '@/lib/status'
@@ -34,8 +35,8 @@ const SOURCE_FILTER_OPTIONS = LEAD_SOURCES.map((s) => ({ value: s, label: s }))
 const SOLUTION_FILTER_OPTIONS = SOLUTION_TYPES.map((s) => ({ value: s, label: s }))
 const PRODUCT_FILTER = {
   key: 'product',
-  label: 'Producto',
-  options: [{ value: 'abaco', label: 'Ábaco' }],
+  label: 'Producto vendido',
+  options: [...LEAD_SALE_PRODUCTS],
 }
 
 const ATTENTION_FILTER_OPTIONS: { value: LeadAttentionFilter; label: string }[] = [
@@ -74,7 +75,7 @@ export default async function LeadsPage({
   const solutionType = (SOLUTION_TYPES as readonly string[]).includes(sp.solution ?? '')
     ? (sp.solution as string)
     : null
-  const abacoInterest = sp.product === 'abaco'
+  const wonProduct = parseLeadSaleProduct(sp.product)
   const page = Math.max(1, Number.parseInt(sp.page ?? '1', 10) || 1)
   const leadIds = [
     ...new Set((sp.ids ?? '').split(',').filter((id) => UUID_PATTERN.test(id))),
@@ -106,7 +107,7 @@ export default async function LeadsPage({
     status,
     source,
     solutionType,
-    abacoInterest,
+    wonProduct,
     assignee,
     attention,
     page,
@@ -131,12 +132,21 @@ export default async function LeadsPage({
     !!status ||
     !!source ||
     !!solutionType ||
-    abacoInterest ||
+    !!wonProduct ||
     !!assignee ||
     !!attention
 
   // Changing any filter remounts the boundary so the skeleton shows again.
-  const boardKey = JSON.stringify([q, status, source, solutionType, assignee, attention, leadIds])
+  const boardKey = JSON.stringify([
+    q,
+    status,
+    source,
+    solutionType,
+    wonProduct,
+    assignee,
+    attention,
+    leadIds,
+  ])
 
   const actions = (
     <div className="ml-auto flex min-w-0 items-center gap-2">

@@ -2,6 +2,8 @@ import type { ReminderRow } from '@/lib/dashboard/types'
 import type { LeadNextAction } from '@/lib/leads/pipeline'
 import type { LeadStatus } from '@/lib/status'
 
+import type { LeadSaleProduct } from './sale-products'
+
 export const LEAD_LIST_PAGE_SIZE = 25
 export const LEAD_BOARD_LIMIT = 500
 export const RECENT_INTERACTIONS_PER_LEAD = 3
@@ -49,6 +51,7 @@ export type LeadListItem = {
   language?: 'es' | 'ca' | 'en' | null
   notes: string | null
   status: LeadStatus
+  won_product?: LeadSaleProduct | null
   created_at: string
   updated_at: string
   estimated_value: number | null
@@ -110,7 +113,7 @@ export type LeadListParams = {
   status: LeadStatus | null
   source: string | null
   solutionType: string | null
-  abacoInterest?: boolean
+  wonProduct?: LeadSaleProduct | null
   assignee: string | null
   attention: LeadAttentionFilter | null
   page: number
@@ -143,7 +146,7 @@ export type LeadCompanyResearch = {
 
 type LeadDetail = {
   id: string
-  abaco_interest?: boolean
+  won_product: LeadSaleProduct | null
   /** Internal optimistic-concurrency token. */
   version: number
   name: string
