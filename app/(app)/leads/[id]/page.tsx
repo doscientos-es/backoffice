@@ -222,6 +222,7 @@ export default async function LeadDetailPage({
                     email: (lead.email as string | null) ?? null,
                     phone: (lead.phone as string | null) ?? null,
                     source: (lead.source as string | null) ?? null,
+                    abaco_interest: lead.abaco_interest,
                     language: (lead.language as 'es' | 'ca' | 'en' | null) ?? null,
                     notes: (lead.notes as string | null) ?? null,
                     estimated_value:

@@ -48,6 +48,7 @@ export function LeadCreateDialog({ trigger, mobileTrigger, onCreated }: Props) {
       company: fd.get('company')?.toString() ?? '',
       email: fd.get('email')?.toString() ?? '',
       phone: fd.get('phone')?.toString() ?? '',
+      abaco_interest: fd.has('abaco_interest'),
       notes: fd.get('notes')?.toString() ?? '',
       estimated_value,
       company_size: fd.get('company_size')?.toString() ?? '',

@@ -27,6 +27,7 @@ export type SendEmailInput = {
   tags?: Record<string, string>
   headers?: Record<string, string>
   attachments?: Array<{ filename: string; content: Buffer | string }>
+  idempotencyKey?: string
   /** Overrides RESEND_API_KEY (e.g. the dedicated email marketing account). */
   apiKey?: string
 }
@@ -44,7 +45,7 @@ export async function sendEmail(
   if (!resend) {
     return { id: null, mocked: true }
   }
-  const { data, error } = await resend.emails.send({
+  const message = {
     from,
     to: input.to,
     cc: input.cc,
@@ -56,7 +57,11 @@ export async function sendEmail(
     tags: input.tags
       ? Object.entries(input.tags).map(([name, value]) => ({ name, value }))
       : undefined,
-  })
+  }
+  const { data, error } = await resend.emails.send(
+    message,
+    input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+  )
   if (error) throw new Error(error.message)
   return { id: data?.id ?? null, mocked: false }
 }

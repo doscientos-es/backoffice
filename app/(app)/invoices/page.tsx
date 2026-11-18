@@ -14,7 +14,12 @@ import { StatCard } from '@/components/layout/stat-card'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requireUser } from '@/lib/auth'
 import { listInvoices } from '@/lib/invoices/queries'
-import { INVOICE_LIST_PAGE_SIZE, INVOICE_SORT_COLUMNS } from '@/lib/invoices/types'
+import {
+  INVOICE_BILLING_SOURCE_LABELS,
+  INVOICE_LIST_PAGE_SIZE,
+  INVOICE_SORT_COLUMNS,
+  parseInvoiceBillingSource,
+} from '@/lib/invoices/types'
 import { INVOICE_STATUS, VERIFACTU_STATUS } from '@/lib/status'
 import { formatDate, formatEUR } from '@/lib/utils'
 import { parsePage, parseSortParam, parseStringParam } from '@/lib/utils/search-params'
@@ -44,6 +49,13 @@ const VERIFACTU_FILTER_OPTIONS = [
   { value: 'excluded', label: 'Excluida' },
 ]
 
+const BILLING_SOURCE_OPTIONS = Object.entries(INVOICE_BILLING_SOURCE_LABELS).map(
+  ([value, label]) => ({
+    value,
+    label,
+  }),
+)
+
 export default async function InvoicesPage({
   searchParams,
 }: {
@@ -55,11 +67,12 @@ export default async function InvoicesPage({
   const status = parseStringParam(sp, 'status')
   const verifactu = parseStringParam(sp, 'verifactu')
   const leadId = parseStringParam(sp, 'lead')
+  const billingSource = parseInvoiceBillingSource(parseStringParam(sp, 'origin'))
   const page = parsePage(sp)
   const { sort, dir } = parseSortParam(sp, INVOICE_SORT_COLUMNS, 'issue_date', 'desc')
 
   const [{ data, count, stats, error }, aeatHealth] = await Promise.all([
-    listInvoices({ q, status, verifactu, leadId, page, sort, dir }),
+    listInvoices({ q, status, verifactu, leadId, billingSource, page, sort, dir }),
     getVerifactuOperationalHealth(),
   ])
 
@@ -172,7 +185,11 @@ export default async function InvoicesPage({
           </section>
         </div>
       }
-      empty={q || status || verifactu || leadId ? 'Sin coincidencias.' : 'Aún no hay facturas.'}
+      empty={
+        q || status || verifactu || leadId || billingSource
+          ? 'Sin coincidencias.'
+          : 'Aún no hay facturas.'
+      }
       error={error ?? undefined}
       searchKey="q"
       searchPlaceholder="Buscar por cliente, nº o IDFACT…"
@@ -180,11 +197,13 @@ export default async function InvoicesPage({
       filters={[
         { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
         { key: 'verifactu', label: 'Verifactu', options: VERIFACTU_FILTER_OPTIONS },
+        { key: 'origin', label: 'Origen', options: BILLING_SOURCE_OPTIONS },
       ]}
       pagination={{ page, pageSize: INVOICE_LIST_PAGE_SIZE, total: count }}
       columns={[
         { key: 'n', label: 'Nº', sortKey: 'full_number', minWidth: '8rem' },
         { key: 'cliente', label: 'Cliente', sortKey: 'client_name', minWidth: '11rem' },
+        { key: 'origen', label: 'Origen' },
         { key: 'propuesta', label: 'Propuesta', minWidth: '12rem' },
         { key: 'conceptos', label: 'Conceptos', minWidth: '15rem' },
         { key: 'idfact', label: 'IDFACT', minWidth: '7rem' },
@@ -221,6 +240,7 @@ export default async function InvoicesPage({
             ) : null,
             value: i.client_name ?? '',
           },
+          origen: { value: INVOICE_BILLING_SOURCE_LABELS[i.billing_source] },
           propuesta: {
             content: i.proposal_url ? (
               <Link

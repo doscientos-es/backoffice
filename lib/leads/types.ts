@@ -110,6 +110,7 @@ export type LeadListParams = {
   status: LeadStatus | null
   source: string | null
   solutionType: string | null
+  abacoInterest?: boolean
   assignee: string | null
   attention: LeadAttentionFilter | null
   page: number
@@ -142,6 +143,7 @@ export type LeadCompanyResearch = {
 
 type LeadDetail = {
   id: string
+  abaco_interest?: boolean
   /** Internal optimistic-concurrency token. */
   version: number
   name: string

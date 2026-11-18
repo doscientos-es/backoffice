@@ -4,11 +4,26 @@
 
 export const INVOICE_LIST_PAGE_SIZE = 25
 
+export const INVOICE_BILLING_SOURCE_LABELS = {
+  backoffice: 'Backoffice',
+  abaco_subscription: 'Suscripción Ábaco',
+} as const
+
+export type InvoiceBillingSource = keyof typeof INVOICE_BILLING_SOURCE_LABELS
+
+export function parseInvoiceBillingSource(
+  value: string | undefined,
+): InvoiceBillingSource | undefined {
+  if (value === 'backoffice' || value === 'abaco_subscription') return value
+  return undefined
+}
+
 // ─── List ─────────────────────────────────────────────────────────────────────
 
 type InvoiceListItem = {
   id: string
   client_id: string
+  billing_source: InvoiceBillingSource
   full_number: string | null
   idfact: string | null
   concepts: string[]
@@ -47,6 +62,7 @@ export type InvoiceListParams = {
   status?: string
   verifactu?: string
   leadId?: string
+  billingSource?: InvoiceBillingSource
   page?: number
   sort?: string
   dir?: 'asc' | 'desc'

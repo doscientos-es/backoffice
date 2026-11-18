@@ -16,6 +16,7 @@ import {
   type InvoiceListResult,
   type InvoiceStatusPatch,
   type NewInvoiceData,
+  parseInvoiceBillingSource,
   type ProposalForInvoice,
   type ProposalItem,
 } from './types'
@@ -56,7 +57,7 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
         supabase
           .from('invoices')
           .select(
-            'id, client_id, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name, proposal_id, proposals(id, number, title), invoice_items(description, position)',
+            'id, client_id, billing_source, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name, proposal_id, proposals(id, number, title), invoice_items(description, position)',
             { count: 'exact' },
           ),
       )
@@ -68,6 +69,7 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
       }
       if (params.status) query = query.eq('status', params.status)
       if (params.verifactu) query = query.eq('verifactu_status', params.verifactu)
+      if (params.billingSource) query = query.eq('billing_source', params.billingSource)
       if (params.leadId)
         query = leadClient ? query.eq('client_id', leadClient.id) : query.is('id', null)
       const sortCol = params.sort ?? 'issue_date'
@@ -101,6 +103,7 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
     data: (listRes.data ?? []).map((i) => ({
       id: i.id as string,
       client_id: i.client_id as string,
+      billing_source: parseInvoiceBillingSource(i.billing_source) ?? 'backoffice',
       full_number: (i.full_number as string | null) ?? null,
       idfact: (i.idfact as string | null) ?? null,
       concepts: invoiceConcepts(

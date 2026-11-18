@@ -32,6 +32,11 @@ const STATUS_FILTER_OPTIONS = SELECTABLE_LEAD_STATUSES.map((value) => ({
 
 const SOURCE_FILTER_OPTIONS = LEAD_SOURCES.map((s) => ({ value: s, label: s }))
 const SOLUTION_FILTER_OPTIONS = SOLUTION_TYPES.map((s) => ({ value: s, label: s }))
+const PRODUCT_FILTER = {
+  key: 'product',
+  label: 'Producto',
+  options: [{ value: 'abaco', label: 'Ábaco' }],
+}
 
 const ATTENTION_FILTER_OPTIONS: { value: LeadAttentionFilter; label: string }[] = [
   { value: 'stale', label: 'Estancados' },
@@ -50,6 +55,7 @@ export default async function LeadsPage({
     status?: string
     source?: string
     solution?: string
+    product?: string
     assignee?: string
     attention?: string
     ids?: string
@@ -68,6 +74,7 @@ export default async function LeadsPage({
   const solutionType = (SOLUTION_TYPES as readonly string[]).includes(sp.solution ?? '')
     ? (sp.solution as string)
     : null
+  const abacoInterest = sp.product === 'abaco'
   const page = Math.max(1, Number.parseInt(sp.page ?? '1', 10) || 1)
   const leadIds = [
     ...new Set((sp.ids ?? '').split(',').filter((id) => UUID_PATTERN.test(id))),
@@ -99,6 +106,7 @@ export default async function LeadsPage({
     status,
     source,
     solutionType,
+    abacoInterest,
     assignee,
     attention,
     page,
@@ -123,6 +131,7 @@ export default async function LeadsPage({
     !!status ||
     !!source ||
     !!solutionType ||
+    abacoInterest ||
     !!assignee ||
     !!attention
 
@@ -170,6 +179,7 @@ export default async function LeadsPage({
           { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
           { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
           { key: 'solution', label: 'Necesidad', options: SOLUTION_FILTER_OPTIONS },
+          PRODUCT_FILTER,
           {
             key: 'assignee',
             label: 'Responsable',
@@ -213,6 +223,7 @@ export default async function LeadsPage({
           { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
           { key: 'source', label: 'Origen', options: SOURCE_FILTER_OPTIONS },
           { key: 'solution', label: 'Necesidad', options: SOLUTION_FILTER_OPTIONS },
+          PRODUCT_FILTER,
           {
             key: 'assignee',
             label: 'Responsable',

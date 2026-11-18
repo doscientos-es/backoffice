@@ -33,6 +33,7 @@ export type LeadFormDefaults = {
   email?: string | null
   phone?: string | null
   source?: string | null
+  abaco_interest?: boolean
   language?: 'es' | 'ca' | 'en' | null
   notes?: string | null
   estimated_value?: number | null
@@ -69,6 +70,10 @@ export function LeadFormFields({
   const isCustomSolution = solutionValue !== '' && !SOLUTION_TYPES.includes(solutionValue as never)
   return (
     <div className="flex flex-col gap-6">
+      <label className="flex items-center gap-2 text-sm font-medium">
+        <input type="checkbox" name="abaco_interest" defaultChecked={d.abaco_interest} />
+        Oportunidad de Ábaco
+      </label>
       {/* ── Contacto ─────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-4">
         <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">

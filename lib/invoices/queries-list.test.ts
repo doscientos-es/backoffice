@@ -98,4 +98,12 @@ describe('listInvoices loading', () => {
     expect(list?.filters.get('status')).toBe('issued')
     expect(list?.filters.get('verifactu_status')).toBe('accepted')
   })
+
+  it('can isolate Ábaco invoices without filtering by client', async () => {
+    await listInvoices({ billingSource: 'abaco_subscription', status: 'paid' })
+    const list = invoiceQueries.find((query) => query.select.includes('full_number'))
+    expect(list?.filters.get('billing_source')).toBe('abaco_subscription')
+    expect(list?.filters.get('status')).toBe('paid')
+    expect(mocks.from).not.toHaveBeenCalledWith('clients')
+  })
 })
