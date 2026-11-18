@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.187",
+      "date": "2026-11-18",
+      "title": "v0.1.187",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Implement billing integration with subscription handling"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "08f983825d0c70dd209ae84622e56a04a24461e6",
+          "type": "feat",
+          "scope": "abaco",
+          "breaking": false,
+          "description": "Implement billing integration with subscription handling"
+        }
+      ]
+    },
+    {
       "version": "0.1.186",
       "date": "2026-11-18",
       "title": "v0.1.186",
