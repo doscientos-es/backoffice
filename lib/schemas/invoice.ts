@@ -72,7 +72,7 @@ export const UpdateInvoiceInput = z.object({
   items: z.array(lineItemInput).min(1).optional(),
 })
 
-const PaymentMethod = z.enum(['transfer', 'card', 'bizum', 'cash', 'other'])
+const PaymentMethod = z.enum(['transfer', 'card', 'bizum', 'cash', 'direct_debit', 'other'])
 export type PaymentMethodType = z.infer<typeof PaymentMethod>
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethodType, string> = {
@@ -80,6 +80,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethodType, string> = {
   card: 'Tarjeta (Redsys)',
   bizum: 'Bizum',
   cash: 'Efectivo',
+  direct_debit: 'Adeudo bancario',
   other: 'Otro',
 }
 

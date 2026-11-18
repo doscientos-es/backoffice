@@ -5,6 +5,7 @@ import {
   CreateRectificationInput,
   InvoiceIdInput,
   InvoiceStatus,
+  RecordInvoicePaymentInput,
   SendInvoiceInput,
   UpdateInvoiceInput,
   UpdateInvoiceStatusInput,
@@ -56,6 +57,14 @@ describe('UpdateInvoiceStatusInput', () => {
   it('validates id + status', () => {
     expect(UpdateInvoiceStatusInput.safeParse({ id: uuid, status: 'issued' }).success).toBe(true)
     expect(UpdateInvoiceStatusInput.safeParse({ id: uuid, status: 'nope' }).success).toBe(false)
+  })
+})
+
+describe('RecordInvoicePaymentInput', () => {
+  it('accepts direct debit as a manual collection method', () => {
+    const payment = { id: uuid, amount: 25.5, paymentMethod: 'direct_debit' }
+
+    expect(RecordInvoicePaymentInput.parse(payment)).toEqual(payment)
   })
 })
 
