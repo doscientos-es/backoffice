@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.188",
+      "date": "2026-11-18",
+      "title": "v0.1.188",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add lead sale product classification and update status handling"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "7cb22596f53cae74048cb03b8bf53e45a48a1829",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add lead sale product classification and update status handling"
+        }
+      ]
+    },
+    {
       "version": "0.1.187",
       "date": "2026-11-18",
       "title": "v0.1.187",

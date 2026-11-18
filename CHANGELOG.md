@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-18 — v0.1.188
+
+### Nuevas funciones
+
+- Add lead sale product classification and update status handling
+
 ## 2026-11-18 — v0.1.187
 
 ### Nuevas funciones
