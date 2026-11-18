@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-18 — v0.1.185
+
+### Nuevas funciones
+
+- Add direct debit payment method and related tests
+
 ## 2026-11-17 — v0.1.184
 
 ### Nuevas funciones

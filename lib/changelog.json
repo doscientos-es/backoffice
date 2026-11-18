@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.185",
+      "date": "2026-11-18",
+      "title": "v0.1.185",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add direct debit payment method and related tests"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "a1aa68bf34690829e3528a6af3e502bd4074b75c",
+          "type": "feat",
+          "scope": "invoice",
+          "breaking": false,
+          "description": "Add direct debit payment method and related tests"
+        }
+      ]
+    },
+    {
       "version": "0.1.184",
       "date": "2026-11-17",
       "title": "v0.1.184",
