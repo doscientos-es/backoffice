@@ -36,7 +36,7 @@ begin
     join public.clients c on c.id = a.client_id where a.tenant_id = p_tenant for update of c;
   if not found then
     select array_agg(c.id) into matches from public.clients c where c.deleted_at is null
-      and regexp_replace(upper(c.nif), '^ES|[^A-Z0-9]', '', 'g') = tax_id;
+      and regexp_replace(regexp_replace(upper(c.nif), '[^A-Z0-9]', '', 'g'), '^ES([A-Z0-9]{9})$', '\1') = tax_id;
     if cardinality(matches) > 1 then return jsonb_build_object('status', 'ambiguous_client'); end if;
     if cardinality(matches) = 1 then
       select * into strict client from public.clients where id = matches[1] for update;
@@ -58,6 +58,7 @@ begin
   insert into public.abaco_billing_accounts(tenant_id, client_id) values (p_tenant, client.id)
     on conflict (tenant_id) do nothing;
   if client.fiscal_verification_status is distinct from 'verified'
+    or client.fiscal_verified_at is null
     or client.fiscal_verified_nif is distinct from tax_id
     or client.fiscal_verified_name is distinct from client.name then
     return jsonb_build_object('status', 'fiscal_verification_required', 'clientId', client.id);
@@ -65,6 +66,37 @@ begin
   return jsonb_build_object('status', 'ready', 'clientId', client.id);
 end;
 $$;
+
+alter table public.client_fiscal_verifications alter column checked_by drop not null;
+alter table public.client_fiscal_verifications add column source text not null default 'manual'
+  check ((source = 'manual' and checked_by is not null) or (source = 'abaco' and checked_by is null));
+
+-- Same evidence as a manual check, but explicitly attribute it to the integration.
+create function public.record_abaco_client_fiscal_verification(
+  p_client_id uuid, p_submitted_nif text, p_submitted_name text, p_status text,
+  p_aeat_name text, p_aeat_result text, p_detail text
+) returns void language plpgsql security definer set search_path = '' as $$
+declare client public.clients%rowtype;
+begin
+  select c.* into strict client from public.clients c where c.id = p_client_id and c.deleted_at is null
+    and exists (select 1 from public.abaco_billing_accounts a where a.client_id = c.id) for update;
+  if (client.nif, client.name, client.billing_address_country)
+      is distinct from (p_submitted_nif, p_submitted_name, 'ES') then
+    raise exception 'La identidad fiscal de Ábaco ha cambiado';
+  end if;
+  if client.fiscal_verification_status = 'verified' then return; end if;
+  perform set_config('app.aeat_validation', 'on', true);
+  update public.clients set fiscal_verification_status = p_status,
+    fiscal_verified_nif = case when p_status = 'verified' then p_submitted_nif end,
+    fiscal_verified_name = case when p_status = 'verified' then p_submitted_name end,
+    fiscal_verified_at = clock_timestamp() where id = p_client_id;
+  insert into public.client_fiscal_verifications (client_id, submitted_nif, submitted_name, status, aeat_name, aeat_result, detail, source)
+    values (p_client_id, p_submitted_nif, p_submitted_name, p_status, p_aeat_name, p_aeat_result, left(coalesce(p_detail, ''), 500), 'abaco');
+end;
+$$;
+revoke all on function public.record_abaco_client_fiscal_verification(uuid,text,text,text,text,text,text)
+  from public, anon, authenticated;
+grant execute on function public.record_abaco_client_fiscal_verification(uuid,text,text,text,text,text,text) to service_role;
 
 -- Keep the existing numbering lock, fiscal preflight, chain and outbox. The only
 -- additional principal is the backend processing an invoice linked to a durable Ábaco event.
@@ -153,9 +185,13 @@ grant execute on function public.prepare_abaco_billing_account(uuid,jsonb),
 create function public.begin_abaco_invoice_email(p_payment uuid) returns text
 language plpgsql security definer set search_path = '' as $$
 declare request public.abaco_subscription_invoice_requests%rowtype;
+  fiscal_status text;
 begin
   select * into strict request from public.abaco_subscription_invoice_requests r
     where r.payment_id = p_payment for update;
+  select i.verifactu_status::text into strict fiscal_status from public.invoices i where i.id = request.invoice_id;
+  if fiscal_status = 'rejected' then return 'fiscal_review'; end if;
+  if fiscal_status <> 'accepted' then return 'fiscal_pending'; end if;
   if request.email_sent_at is not null then return 'sent'; end if;
   -- Resend retains its idempotency key for 24 hours. Beyond that don't risk
   -- a second email when the response to the original attempt was lost.
@@ -169,10 +205,13 @@ $$;
 create function public.finish_abaco_invoice_email(p_payment uuid, p_provider_id text) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
+  perform 1 from public.abaco_subscription_invoice_requests r where r.payment_id = p_payment
+    and r.email_sent_at is null for update;
+  if not found then return; end if;
   insert into public.invoice_deliveries(invoice_id, channel, recipient, provider_message_id)
   select r.invoice_id, 'email', r.payload->'recipient'->>'email', p_provider_id
   from public.abaco_subscription_invoice_requests r
-  where r.payment_id = p_payment and r.email_sent_at is null for update;
+  where r.payment_id = p_payment;
   update public.abaco_subscription_invoice_requests set email_sent_at = now()
     where payment_id = p_payment and email_sent_at is null;
 end;

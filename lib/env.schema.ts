@@ -161,4 +161,5 @@ export const ServerSchema = PublicSchema.extend({
   // Shared secret for cron/internal endpoints (n8n, Vercel Cron, etc.).
   // Set to a random string (e.g. `openssl rand -hex 32`).
   CRON_SECRET: z.string().optional().default(''),
+  ABACO_BILLING_SECRET: z.string().optional().default(''),
 })

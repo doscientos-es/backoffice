@@ -12,7 +12,7 @@ type Result = {
 
 export async function validateAndRecordClientFiscalIdentity(
   clientId: string,
-  checkedBy: string,
+  checkedBy: string | null,
 ): Promise<Result> {
   const admin = createAdminClient()
   const { data: client, error } = await admin
@@ -60,7 +60,7 @@ export async function validateAndRecordClientFiscalIdentity(
     }
   }
 
-  const { error: recordError } = await admin.rpc('record_client_fiscal_verification', {
+  const evidence = {
     p_client_id: clientId,
     p_submitted_nif: aeatNif,
     p_submitted_name: name,
@@ -68,8 +68,10 @@ export async function validateAndRecordClientFiscalIdentity(
     p_aeat_name: aeatName,
     p_aeat_result: aeatResult,
     p_detail: message,
-    p_checked_by: checkedBy,
-  })
+  }
+  const { error: recordError } = checkedBy
+    ? await admin.rpc('record_client_fiscal_verification', { ...evidence, p_checked_by: checkedBy })
+    : await admin.rpc('record_abaco_client_fiscal_verification', evidence)
   if (recordError) throw new Error(recordError.message)
   return { status, aeatName, message }
 }
