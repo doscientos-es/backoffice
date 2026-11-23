@@ -39,8 +39,17 @@ const MUTED = '#657067'
 
 Font.registerHyphenationCallback((word) => [word])
 
+// Allow unusually long identifiers or names to wrap without changing ordinary words.
+function coverHyphenation(word: string): string[] {
+  return word.length > 20 ? (word.match(/.{1,12}/gu) ?? [word]) : [word]
+}
+
+function longCoverTitleHyphenation(word: string): string[] {
+  return word.length > 20 ? (word.match(/.{1,18}/gu) ?? [word]) : [word]
+}
+
 const styles = StyleSheet.create({
-  cover: { backgroundColor: BRAND, color: '#FFFFFF', fontFamily: 'Helvetica', padding: 48 },
+  cover: { backgroundColor: PAPER, color: INK, fontFamily: 'Helvetica', padding: 48 },
   page: {
     backgroundColor: PAPER,
     color: INK,
@@ -51,36 +60,33 @@ const styles = StyleSheet.create({
     paddingTop: 82,
   },
   brand: { fontFamily: 'Helvetica-Bold', fontSize: 11, letterSpacing: 1.2 },
-  brandLight: { color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 11, letterSpacing: 1.2 },
-  coverHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  coverHeader: { borderTopColor: ACCENT, borderTopWidth: 7, paddingTop: 18 },
+  coverBrand: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 14, letterSpacing: 0.5 },
   coverTag: {
-    borderColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 7,
-    letterSpacing: 0.9,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    textTransform: 'uppercase',
-  },
-  coverHero: { marginTop: 104 },
-  eyebrow: {
-    color: ACCENT,
+    color: BRAND,
     fontFamily: 'Helvetica-Bold',
     fontSize: 8,
-    letterSpacing: 1.3,
+    letterSpacing: 1,
+    lineHeight: 1.4,
     textTransform: 'uppercase',
   },
+  coverHero: { marginTop: 48 },
   coverTitle: {
+    color: INK,
     fontFamily: 'Helvetica-Bold',
-    fontSize: 31,
-    lineHeight: 1.08,
-    marginTop: 13,
-    maxWidth: 420,
+    fontSize: 34,
+    lineHeight: 1.12,
+    marginTop: 15,
   },
-  coverRecipient: { color: '#DDE9DB', fontSize: 12, lineHeight: 1.45, marginTop: 16 },
-  metricCard: { backgroundColor: '#355332', borderRadius: 16, marginTop: 50, padding: 21 },
+  coverRecipientLabel: { color: MUTED, fontSize: 9, marginTop: 20 },
+  coverRecipient: {
+    color: INK,
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 13,
+    lineHeight: 1.35,
+    marginTop: 5,
+  },
+  metricCard: { backgroundColor: BRAND, borderRadius: 14, marginTop: 24, padding: 20 },
   metricLabel: {
     color: '#DDE9DB',
     fontFamily: 'Helvetica-Bold',
@@ -88,15 +94,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.9,
     textTransform: 'uppercase',
   },
-  metricValue: { color: ACCENT, fontFamily: 'Helvetica-Bold', fontSize: 30, marginTop: 7 },
+  metricValue: { color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 27, marginTop: 7 },
   metricText: { color: '#DDE9DB', fontSize: 9, lineHeight: 1.4, marginTop: 6 },
+  coverSpacer: { flexGrow: 1, minHeight: 28 },
   coverFooter: {
-    bottom: 45,
-    color: '#DDE9DB',
+    borderTopColor: '#D9E1D7',
+    borderTopWidth: 1,
+    color: MUTED,
     fontSize: 8,
-    left: 48,
-    position: 'absolute',
-    right: 48,
+    paddingTop: 12,
   },
   header: {
     alignItems: 'center',
@@ -586,27 +592,31 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const hasConditions = Boolean(data.paymentTerms || data.changeManagementTerms)
   return (
     <Document title={`${copy.proposal} ${data.number ?? ''} · ${data.title}`} author="doscientos">
-      <Page size="A4" style={styles.cover}>
+      <Page size="A4" style={styles.cover} wrap>
         <View style={styles.coverHeader}>
-          <Text style={styles.brandLight}>doscientos</Text>
-          <Text style={styles.coverTag}>
-            {copy.proposal} {data.number ?? copy.custom}
-          </Text>
+          <Text style={styles.coverBrand}>doscientos</Text>
         </View>
         <View style={styles.coverHero}>
-          <Text style={styles.eyebrow}>
-            {tr(
-              'Una propuesta para avanzar',
-              'Una proposta per avançar',
-              'A proposal to move forward',
-            )}
+          <Text style={styles.coverTag} hyphenationCallback={coverHyphenation}>
+            {copy.proposal} · {data.number ?? copy.custom}
           </Text>
-          <Text style={styles.coverTitle}>{data.title}</Text>
-          <Text style={styles.coverRecipient}>
-            {copy.prepared} {data.recipientName}
+          <Text
+            style={[
+              styles.coverTitle,
+              { fontSize: data.title.length > 140 ? 21 : data.title.length > 80 ? 27 : 34 },
+            ]}
+            hyphenationCallback={
+              data.title.length > 140 ? longCoverTitleHyphenation : coverHyphenation
+            }
+          >
+            {data.title}
+          </Text>
+          <Text style={styles.coverRecipientLabel}>{copy.prepared}</Text>
+          <Text style={styles.coverRecipient} hyphenationCallback={coverHyphenation}>
+            {data.recipientName}
           </Text>
         </View>
-        <View style={styles.metricCard}>
+        <View style={styles.metricCard} wrap={false}>
           <Text style={styles.metricLabel}>{copy.investment}</Text>
           <Text style={styles.metricValue}>{money(data.subtotal)}</Text>
           <Text style={styles.metricText}>{copy.taxExcluded}</Text>
@@ -614,6 +624,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             <Text style={styles.metricText}>{`${copy.valid} ${validUntil}.`}</Text>
           ) : null}
         </View>
+        <View style={styles.coverSpacer} />
         <Text style={styles.coverFooter}>
           {ca ? 'Document confidencial' : en ? 'Confidential document' : 'Documento confidencial'} ·
           doscientos.es
