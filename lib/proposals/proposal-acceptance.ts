@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 
 import type { HandwrittenSignature } from './handwritten-signature'
 
-export const PROPOSAL_ACCEPTANCE_VERSION = 'doscientos-proposal-acceptance-v5'
+export const PROPOSAL_ACCEPTANCE_VERSION = 'doscientos-proposal-acceptance-v6'
 
 export const DEFAULT_PROPOSAL_LEGAL_TERMS = `1. **Contrato, partes y alcance.** La aceptación electrónica de esta propuesta, junto con sus anexos y condiciones particulares, formaliza el encargo entre Doscientos y el Cliente identificados en ella. Quien firma declara disponer de facultades suficientes para representar al Cliente. Solo están incluidos los trabajos y entregables descritos expresamente; cualquier cambio requerirá aceptación previa por escrito y, cuando proceda, presupuesto adicional.
 
@@ -41,9 +41,6 @@ export const DEFAULT_PROPOSAL_LEGAL_TERMS = `1. **Contrato, partes y alcance.** 
 const PROPOSAL_ACCEPTANCE_CONSENT =
   'Declaro que tengo capacidad suficiente para representar al Cliente y acepto íntegramente la propuesta, sus condiciones particulares y el anexo contractual.'
 
-const PROPOSAL_ACCEPTANCE_DOCUMENT_NOTICE =
-  'He podido leer, descargar y guardar la propuesta y el anexo contractual antes de firmar, y recibiré confirmación de la aceptación por correo electrónico.'
-
 const PROPOSAL_CONSUMER_EARLY_START_CONSENT =
   'Actúo como consumidor y solicito expresamente que los servicios comiencen durante el plazo de desistimiento de 14 días naturales. Reconozco que, si desisto, abonaré la parte proporcional ya prestada y que perderé el derecho de desistimiento cuando el servicio se haya ejecutado completamente.'
 
@@ -65,7 +62,7 @@ export type ProposalAcceptanceParty = {
 
 /** Full declaration text the signer consented to, stored with the acceptance evidence. */
 export function proposalAcceptanceConsentText(contract: ProposalAcceptanceContract): string {
-  const declarations = [PROPOSAL_ACCEPTANCE_CONSENT, PROPOSAL_ACCEPTANCE_DOCUMENT_NOTICE]
+  const declarations = [PROPOSAL_ACCEPTANCE_CONSENT]
   if (contract.client_capacity === 'consumer') {
     declarations.push(
       contract.consumer_early_start_requested

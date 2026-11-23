@@ -74,6 +74,7 @@ type ProposalRow = {
   id: string
   status: string
   document_revision?: number
+  client_capacity?: 'business' | 'consumer' | null
   provider_signature?: unknown
   valid_until?: string | null
   is_client_visible?: boolean | null
@@ -299,7 +300,7 @@ describe('portal proposal actions', () => {
       p_proposal_id: 'p1',
       p_document_revision: 1,
       p_signer_name: 'Ana Gómez',
-      p_evidence_version: 'doscientos-proposal-acceptance-v5',
+      p_evidence_version: 'doscientos-proposal-acceptance-v6',
       p_document_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
       p_document_snapshot: expect.objectContaining({
         parties: expect.objectContaining({
@@ -322,6 +323,19 @@ describe('portal proposal actions', () => {
     expect(await acceptProposal(VALID_TOKEN, SIGNATURE)).toEqual({
       ok: false,
       error: 'La propuesta ha cambiado. Actualiza la página antes de firmar',
+    })
+    expect(state.lastRpc).toBeNull()
+    expect(state.lastPatch).toBeNull()
+  })
+
+  it('rejects a capacity that differs from the issued proposal before any writes', async () => {
+    state.fetchResult = {
+      data: { id: 'p1', status: 'sent', client_capacity: 'consumer', clients: COMPLETE_CLIENT },
+      error: null,
+    }
+    expect(await acceptProposal(VALID_TOKEN, SIGNATURE)).toEqual({
+      ok: false,
+      error: 'El tipo de contratación no coincide con la propuesta. Contacta con nosotros.',
     })
     expect(state.lastRpc).toBeNull()
     expect(state.lastPatch).toBeNull()

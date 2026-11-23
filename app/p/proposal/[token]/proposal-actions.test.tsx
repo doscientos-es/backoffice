@@ -15,6 +15,7 @@ const signIntent = vi.mocked(trackSignIntent)
 const props = {
   token: '12345678-1234-4123-8123-123456789abc',
   documentRevision: 2,
+  clientCapacity: 'business' as const,
   needsFiscal: false,
   signerPrefill: 'Ana Gómez',
   legalTerms: '1. Condiciones de contratación',
@@ -47,7 +48,8 @@ describe('ProposalActions', () => {
     render(<ProposalActions {...props} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
-    fireEvent.click(screen.getByRole('radio', { name: 'Empresa o profesional' }))
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.getByText(/Esta propuesta es para una empresa o profesional/)).toBeDefined()
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar propuesta' }))
 
@@ -66,6 +68,10 @@ describe('ProposalActions', () => {
       ),
     )
     expect(await screen.findByText('Propuesta firmada y aceptada. Gracias.')).toBeDefined()
+    expect(
+      screen.getByRole('link', { name: 'Descargar la propuesta firmada' }).getAttribute('href'),
+    ).toBe(`/p/proposal/${props.token}/pdf?lang=es`)
+    expect(screen.getByRole('link', { name: 'Ver los siguientes pasos' })).toBeDefined()
   })
 
   it.each([false, true])('accepts after drawing (cleared: %s)', async (cleared) => {
@@ -86,7 +92,6 @@ describe('ProposalActions', () => {
     fireEvent.pointerDown(pad, { pointerId: 1, pointerType: 'touch', clientX: 40, clientY: 40 })
     fireEvent.pointerUp(pad, { pointerId: 1, pointerType: 'touch', clientX: 70, clientY: 60 })
     if (cleared) fireEvent.click(screen.getByRole('button', { name: 'Borrar firma' }))
-    fireEvent.click(screen.getByRole('radio', { name: 'Empresa o profesional' }))
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar propuesta' }))
 
@@ -106,10 +111,10 @@ describe('ProposalActions', () => {
   })
 
   it('records a consumer early-start request only when explicitly checked', async () => {
-    render(<ProposalActions {...props} />)
+    render(<ProposalActions {...props} clientCapacity="consumer" />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
-    fireEvent.click(screen.getByRole('radio', { name: 'Particular (consumidor)' }))
+    expect(screen.queryByRole('radio')).toBeNull()
     const [earlyStart, terms] = screen.getAllByRole('checkbox')
     fireEvent.click(earlyStart as HTMLElement)
     fireEvent.click(terms as HTMLElement)
@@ -129,13 +134,15 @@ describe('ProposalActions', () => {
     render(<ProposalActions {...props} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
+    expect(screen.queryByRole('link', { name: 'Descargar la propuesta en PDF' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Leer el anexo contractual completo' }))
 
     expect(screen.getByRole('dialog').textContent).toContain('Condiciones de contratación')
+    expect(screen.getByRole('link', { name: 'Descargar la propuesta en PDF' })).toBeDefined()
   })
 
   it('requires the client capacity to be selected', async () => {
-    render(<ProposalActions {...props} />)
+    render(<ProposalActions {...props} clientCapacity={null} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
     fireEvent.click(screen.getByRole('checkbox'))

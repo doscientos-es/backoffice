@@ -36,6 +36,8 @@ type SignatureForm = {
 type Props = {
   token: string
   documentRevision: number
+  /** Null preserves the signer choice for proposals issued before capacity was configured. */
+  clientCapacity: 'business' | 'consumer' | null
   /** When true, the visitor must provide fiscal data before accepting. */
   needsFiscal: boolean
   /** Best-effort prefill of the fiscal form from lead/client info. */
@@ -50,6 +52,7 @@ type Props = {
 export function ProposalActions({
   token,
   documentRevision,
+  clientCapacity,
   needsFiscal,
   fiscalPrefill,
   signerPrefill,
@@ -85,16 +88,22 @@ export function ProposalActions({
           address: 'Adreça de facturació *',
           phone: 'Telèfon',
           declaration:
-            'Declaro que tinc capacitat suficient per representar el Client i accepto íntegrament la proposta, les seves condicions particulars i l’annex contractual. He pogut llegir, descarregar i desar el document abans de signar, i rebré confirmació per correu electrònic.',
+            'Declaro que tinc capacitat suficient per representar el Client i accepto íntegrament la proposta, les seves condicions particulars i l’annex contractual.',
           capacity: 'Contractes com a',
           capacityError: 'Indica si contractes com a empresa/professional o com a consumidor.',
           capacityBusiness: 'Empresa o professional',
           capacityConsumer: 'Particular (consumidor)',
+          capacityNoticeBusiness:
+            'Aquesta proposta és per a una empresa o professional. Si no és correcte, contacta amb nosaltres abans de signar.',
+          capacityNoticeConsumer:
+            'Aquesta proposta és per a un consumidor. Si no és correcte, contacta amb nosaltres abans de signar.',
           earlyStart:
             'Sol·licito expressament que els serveis comencin durant el termini de desistiment de 14 dies naturals. Si desisteixo, abonaré la part proporcional ja prestada i perdré el dret de desistiment quan el servei s’hagi executat completament.',
           standardStart:
             'Si no ho sol·licites, els treballs començaran un cop passats els 14 dies naturals de desistiment, durant els quals pots desistir sense indicar el motiu.',
           downloadPdf: 'Descarregar la proposta en PDF',
+          downloadSigned: 'Descarregar la proposta signada',
+          continueAfterSigning: 'Veure els següents passos',
           readTerms: 'Llegir l’annex contractual complet',
           processing: 'En procés…',
           cancel: 'Cancel·lar',
@@ -139,17 +148,23 @@ export function ProposalActions({
             address: 'Billing address *',
             phone: 'Phone',
             declaration:
-              'I confirm that I have authority to represent the Client and fully accept this proposal, its specific terms, and the contractual annex. I was able to read, download, and save the document before signing, and I will receive confirmation by email.',
+              'I confirm that I have authority to represent the Client and fully accept this proposal, its specific terms, and the contractual annex.',
             capacity: 'You are contracting as',
             capacityError:
               'Select whether you are contracting as a business/professional or consumer.',
             capacityBusiness: 'Business or professional',
             capacityConsumer: 'Individual (consumer)',
+            capacityNoticeBusiness:
+              'This proposal is for a business or professional. If this is incorrect, contact us before signing.',
+            capacityNoticeConsumer:
+              'This proposal is for a consumer. If this is incorrect, contact us before signing.',
             earlyStart:
               'I expressly request that the services begin during the 14-calendar-day withdrawal period. If I withdraw, I will pay for the proportion already provided, and I will lose the right of withdrawal once the service has been fully performed.',
             standardStart:
               'If you do not request it, work will begin once the 14-calendar-day withdrawal period has ended, during which you may withdraw without giving a reason.',
             downloadPdf: 'Download the proposal as PDF',
+            downloadSigned: 'Download the signed proposal',
+            continueAfterSigning: 'See next steps',
             readTerms: 'Read the full contractual annex',
             processing: 'Processing…',
             cancel: 'Cancel',
@@ -193,16 +208,22 @@ export function ProposalActions({
             address: 'Dirección de facturación *',
             phone: 'Teléfono',
             declaration:
-              'Declaro que tengo capacidad suficiente para representar al Cliente y acepto íntegramente la propuesta, sus condiciones particulares y el anexo contractual. He podido leer, descargar y guardar el documento antes de firmar, y recibiré confirmación por correo electrónico.',
+              'Declaro que tengo capacidad suficiente para representar al Cliente y acepto íntegramente la propuesta, sus condiciones particulares y el anexo contractual.',
             capacity: 'Contratas como',
             capacityError: 'Indica si contratas como empresa/profesional o como consumidor.',
             capacityBusiness: 'Empresa o profesional',
             capacityConsumer: 'Particular (consumidor)',
+            capacityNoticeBusiness:
+              'Esta propuesta es para una empresa o profesional. Si no es correcto, contacta con nosotros antes de firmar.',
+            capacityNoticeConsumer:
+              'Esta propuesta es para un consumidor. Si no es correcto, contacta con nosotros antes de firmar.',
             earlyStart:
               'Solicito expresamente que los servicios comiencen durante el plazo de desistimiento de 14 días naturales. Si desisto, abonaré la parte proporcional ya prestada y perderé el derecho de desistimiento cuando el servicio se haya ejecutado completamente.',
             standardStart:
               'Si no lo solicitas, los trabajos comenzarán una vez transcurridos los 14 días naturales de desistimiento, durante los cuales puedes desistir sin indicar el motivo.',
             downloadPdf: 'Descargar la propuesta en PDF',
+            downloadSigned: 'Descargar la propuesta firmada',
+            continueAfterSigning: 'Ver los siguientes pasos',
             readTerms: 'Leer el anexo contractual completo',
             processing: 'Procesando…',
             cancel: 'Cancelar',
@@ -223,6 +244,7 @@ export function ProposalActions({
   const [showReject, setShowReject] = useState(false)
   const [showAccept, setShowAccept] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
+  const [accepted, setAccepted] = useState(false)
   const [reason, setReason] = useState('')
   const [fiscal, setFiscal] = useState<FiscalForm>(fiscalPrefill)
   const [drawing, setDrawing] = useState<SignatureValue | null>(null)
@@ -230,7 +252,7 @@ export function ProposalActions({
     signer_name: signerPrefill,
     signer_role: '',
     accepts_terms: false,
-    client_capacity: '',
+    client_capacity: clientCapacity ?? '',
     consumer_early_start: false,
   })
 
@@ -283,7 +305,7 @@ export function ProposalActions({
       fiscalData,
       documentRevision,
     )
-    if (res.ok) feedback.setSuccess(copy.accepted)
+    if (res.ok) setAccepted(true)
     else feedback.setError(res.error)
   }
 
@@ -302,6 +324,30 @@ export function ProposalActions({
 
   const patch = (k: keyof FiscalForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setFiscal((prev) => ({ ...prev, [k]: e.target.value }))
+
+  if (accepted) {
+    return (
+      <Card className="border-0 bg-transparent shadow-none ring-0">
+        <CardContent className="flex flex-col gap-4 py-6 text-center">
+          <p className="font-semibold" role="status">
+            {copy.accepted}
+          </p>
+          <a
+            href={`/p/proposal/${token}/pdf?lang=${language}`}
+            className={`inline-flex justify-center px-5 py-3 ${PROPOSAL_ACTION_CLASS}`}
+          >
+            {copy.downloadSigned}
+          </a>
+          <a
+            href={`/p/proposal/${token}?lang=${language}`}
+            className="text-sm underline underline-offset-4"
+          >
+            {copy.continueAfterSigning}
+          </a>
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (showAccept) {
     return (
@@ -415,63 +461,63 @@ export function ProposalActions({
               emptyLabel={copy.drawingEmpty}
               signedLabel={copy.drawingSigned}
             />
-            <fieldset className="flex flex-col gap-2" disabled={feedback.pending}>
-              <legend className="mb-1 text-sm font-medium">{copy.capacity}</legend>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {(
-                  [
-                    ['business', copy.capacityBusiness],
-                    ['consumer', copy.capacityConsumer],
-                  ] as const
-                ).map(([value, label]) => (
-                  <label
-                    key={value}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-border p-3 text-sm"
-                  >
-                    <input
-                      type="radio"
-                      name="client-capacity"
-                      value={value}
-                      checked={signature.client_capacity === value}
-                      onChange={() =>
-                        setSignature((previous) => ({ ...previous, client_capacity: value }))
-                      }
-                      className="size-4 shrink-0"
-                    />
-                    <span>{label}</span>
-                  </label>
-                ))}
-              </div>
-              {signature.client_capacity === 'consumer' ? (
-                <>
-                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={signature.consumer_early_start}
-                      onChange={(event) =>
-                        setSignature((previous) => ({
-                          ...previous,
-                          consumer_early_start: event.target.checked,
-                        }))
-                      }
-                      className="mt-0.5 size-4 shrink-0"
-                    />
-                    <span>{copy.earlyStart}</span>
-                  </label>
-                  {!signature.consumer_early_start ? (
-                    <p className="text-xs text-muted-foreground">{copy.standardStart}</p>
-                  ) : null}
-                </>
-              ) : null}
-            </fieldset>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              <a
-                href={`/p/proposal/${token}/pdf?lang=${language}`}
-                className="text-sm font-medium text-primary underline underline-offset-4"
-              >
-                {copy.downloadPdf}
-              </a>
-            </div>
+            {clientCapacity ? (
+              <p className="text-xs text-muted-foreground">
+                {clientCapacity === 'business'
+                  ? copy.capacityNoticeBusiness
+                  : copy.capacityNoticeConsumer}
+              </p>
+            ) : (
+              <fieldset className="flex flex-col gap-2" disabled={feedback.pending}>
+                <legend className="mb-1 text-sm font-medium">{copy.capacity}</legend>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {(
+                    [
+                      ['business', copy.capacityBusiness],
+                      ['consumer', copy.capacityConsumer],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <label
+                      key={value}
+                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-border p-3 text-sm"
+                    >
+                      <input
+                        type="radio"
+                        name="client-capacity"
+                        value={value}
+                        checked={signature.client_capacity === value}
+                        onChange={() =>
+                          setSignature((previous) => ({ ...previous, client_capacity: value }))
+                        }
+                        className="size-4 shrink-0"
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+            {signature.client_capacity === 'consumer' ? (
+              <>
+                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={signature.consumer_early_start}
+                    onChange={(event) =>
+                      setSignature((previous) => ({
+                        ...previous,
+                        consumer_early_start: event.target.checked,
+                      }))
+                    }
+                    className="mt-0.5 size-4 shrink-0"
+                  />
+                  <span>{copy.earlyStart}</span>
+                </label>
+                {!signature.consumer_early_start ? (
+                  <p className="text-xs text-muted-foreground">{copy.standardStart}</p>
+                ) : null}
+              </>
+            ) : null}
             <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 text-sm">
               <input
                 type="checkbox"
@@ -486,7 +532,7 @@ export function ProposalActions({
             </label>
             <button
               type="button"
-              className="w-fit text-sm font-medium text-primary underline underline-offset-4"
+              className="w-fit text-xs text-muted-foreground underline underline-offset-4"
               onClick={() => setShowTerms(true)}
             >
               {copy.readTerms}
@@ -518,6 +564,12 @@ export function ProposalActions({
               <DialogDescription>{copy.annexIntro}</DialogDescription>
             </DialogHeader>
             <Markdown source={legalTerms} className="text-sm leading-relaxed" />
+            <a
+              href={`/p/proposal/${token}/pdf?lang=${language}`}
+              className="w-fit text-sm text-muted-foreground underline underline-offset-4"
+            >
+              {copy.downloadPdf}
+            </a>
           </DialogContent>
         </Dialog>
       </>

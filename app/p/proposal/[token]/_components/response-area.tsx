@@ -128,9 +128,13 @@ export function ResponseArea({
         {accepted ? (
           <a
             href={`/p/proposal/${token}/pdf?lang=${language}`}
-            className="mt-1 text-xs font-medium underline underline-offset-4"
+            className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-[#2A4227] px-5 py-2 text-sm font-semibold text-white hover:bg-[#1f3320]"
           >
-            {tr('Descargar copia en PDF', 'Descarregar còpia en PDF', 'Download a PDF copy')}
+            {tr(
+              'Descargar propuesta firmada',
+              'Descarregar proposta signada',
+              'Download signed proposal',
+            )}
           </a>
         ) : null}
       </div>
