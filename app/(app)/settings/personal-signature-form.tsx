@@ -34,7 +34,7 @@ export function PersonalSignatureForm({ initial }: { initial: SignatureValue | n
         onChange={setSignature}
         disabled={pending}
         label="Firma manuscrita personal"
-        description="Dibuja tu firma y guárdala. Su uso en propuestas todavía no está activo."
+        description="Dibuja y guarda tu firma para utilizarla en las propuestas correspondientes."
         clearLabel="Borrar firma"
         emptyLabel="Firma aquí"
         signedLabel="Firma dibujada"
