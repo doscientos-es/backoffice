@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.190",
+      "date": "2026-11-23",
+      "title": "v0.1.190",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add handwritten signature functionality and validation",
+            "Add scheduling for meetings and enhance follow-up handling"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "caf51b6e6e82e7f34a4d3fd886c3472b4981b330",
+          "type": "feat",
+          "scope": "proposal-actions",
+          "breaking": false,
+          "description": "Add handwritten signature functionality and validation"
+        },
+        {
+          "sha": "9935ecbb6c040b86e659388ca4942ac08bfd5c20",
+          "type": "feat",
+          "scope": "call-dialog",
+          "breaking": false,
+          "description": "Add scheduling for meetings and enhance follow-up handling"
+        }
+      ]
+    },
+    {
       "version": "0.1.188",
       "date": "2026-11-18",
       "title": "v0.1.188",

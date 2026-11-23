@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-23 — v0.1.190
+
+### Nuevas funciones
+
+- Add handwritten signature functionality and validation
+- Add scheduling for meetings and enhance follow-up handling
+
 ## 2026-11-18 — v0.1.188
 
 ### Nuevas funciones
