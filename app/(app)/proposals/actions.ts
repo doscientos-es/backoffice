@@ -988,7 +988,7 @@ export async function markProposalAsAccepted(
 }
 
 /**
- * Reopens an accepted or rejected proposal so the team can make adjustments
+ * Reopens an issued proposal so the team can make adjustments
  * (e.g. a discount agreed in a follow-up meeting) and resend it for
  * re-acceptance. Access follows the proposal write permission and its RLS scope.
  *
@@ -1013,8 +1013,8 @@ export async function reopenProposal(
     .maybeSingle()
 
   if (readError || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
-  if (proposal.status !== 'accepted' && proposal.status !== 'rejected') {
-    return { ok: false, error: 'Solo se pueden reabrir propuestas aceptadas o rechazadas' }
+  if (!['sent', 'viewed', 'expired', 'accepted', 'rejected'].includes(proposal.status as string)) {
+    return { ok: false, error: 'Solo se pueden reabrir propuestas emitidas' }
   }
   if (proposal.delivered_at) {
     return { ok: false, error: 'La propuesta ya está terminada: el cliente firmó el albarán' }

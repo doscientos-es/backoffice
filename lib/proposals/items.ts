@@ -37,5 +37,5 @@ export function buildProposalTotalsPatch(
 }
 
 export function isProposalEditable(status: string | null | undefined): boolean {
-  return status !== 'accepted' && status !== 'rejected'
+  return status === 'draft'
 }

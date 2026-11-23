@@ -453,7 +453,7 @@ export default async function ProposalDetailPage({
         email: lead?.email ?? '',
         phone: lead?.phone ?? '',
       }
-  const locked = status === 'accepted' || status === 'rejected'
+  const locked = status !== 'draft'
   const editing = canEditProposal && !locked && (mode === 'edit' || ai_draft === '1')
   const configuredPaymentPlan = parsePaymentPlan(proposal.payment_plan)
   const paymentSchedule = paymentScheduleInput.safeParse(proposal.payment_schedule)
@@ -966,7 +966,7 @@ export default async function ProposalDetailPage({
                 portalViewedAt={portalViewedAt}
                 deckViewedAt={deckViewedAt}
                 isDraft={status === 'draft'}
-                locked={locked}
+                locked={status === 'accepted' || status === 'rejected'}
                 visible={(proposal.is_client_visible as boolean | null) ?? true}
                 hasPassword={Boolean(proposal.portal_password_hash)}
                 recipientEmail={recipientEmail}

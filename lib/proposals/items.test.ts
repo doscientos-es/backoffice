@@ -25,9 +25,11 @@ describe('proposal item helpers', () => {
     expect(buildProposalTotalsPatch(items)).toEqual({ subtotal: 200, tax_amount: 42, total: 242 })
   })
 
-  it('only allows draft and sent proposals to be edited', () => {
+  it('only allows draft proposals to be edited', () => {
     expect(isProposalEditable('draft')).toBe(true)
-    expect(isProposalEditable('sent')).toBe(true)
+    expect(isProposalEditable('sent')).toBe(false)
+    expect(isProposalEditable('viewed')).toBe(false)
+    expect(isProposalEditable('expired')).toBe(false)
     expect(isProposalEditable('accepted')).toBe(false)
     expect(isProposalEditable('rejected')).toBe(false)
   })
