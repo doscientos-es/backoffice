@@ -2,6 +2,12 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
 
+import type {
+  acceptProposal as AcceptProposalAction,
+  initiateProposalPayment as InitiateProposalPaymentAction,
+  rejectProposal as RejectProposalAction,
+} from './actions'
+
 const {
   assertRedsysConfigured,
   createDepositInvoice,
@@ -167,9 +173,9 @@ const COMPLETE_CLIENT = {
   billing_address_street: 'Calle Mayor 1, Madrid',
 }
 
-let acceptProposal: typeof import('./actions').acceptProposal
-let initiateProposalPayment: typeof import('./actions').initiateProposalPayment
-let rejectProposal: typeof import('./actions').rejectProposal
+let acceptProposal: typeof AcceptProposalAction
+let initiateProposalPayment: typeof InitiateProposalPaymentAction
+let rejectProposal: typeof RejectProposalAction
 
 beforeAll(async () => {
   const actions = await import('./actions')

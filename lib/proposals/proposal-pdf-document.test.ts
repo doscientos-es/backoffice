@@ -149,9 +149,10 @@ describe('proposal PDF helpers', () => {
             await task.destroy()
           }
         }
+        if (!data.acceptance) throw new Error('Missing acceptance fixture')
         const withoutDrawing = await renderProposalPdf({
           ...data,
-          acceptance: { ...data.acceptance!, handwrittenSignature: null },
+          acceptance: { ...data.acceptance, handwrittenSignature: null },
         })
         expect(await countPaths(pdf)).toBeGreaterThan(await countPaths(withoutDrawing))
         const withoutProvider = await renderProposalPdf({ ...data, providerSignature: null })
