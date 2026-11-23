@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest'
 
 import { renderEmail } from '@/lib/email/render'
@@ -8,7 +9,7 @@ const resource = {
   slug: 'calculadora-coste-oculto',
   title: 'Calculadora del coste del trabajo manual',
   description: 'Calcula el coste anual de un proceso repetitivo.',
-  href: 'https://doscientos.es/automatizar-excel?ref=email-confirmacion#calculadora-coste',
+  href: 'https://example.test/calculadora',
   cta: 'Abrir calculadora',
 }
 
@@ -16,8 +17,8 @@ describe('LeadConfirmationEmail', () => {
   it('explains the service and links cases and the cost calculator', async () => {
     const html = await renderEmail(
       LeadConfirmationEmail({
-        leadName: 'María López',
-        appUrl: 'https://app.doscientos.es',
+        leadName: 'Persona Ejemplo',
+        appUrl: 'https://example.test',
         resource,
         calculatorCost: '12500',
         calculatorHours: '420',
@@ -25,11 +26,11 @@ describe('LeadConfirmationEmail', () => {
     )
 
     expect(html).toContain('Hola')
-    expect(html).toContain('María')
+    expect(html).toContain('Persona')
     expect(html).toContain('próximas horas laborables')
     expect(html).toContain('software a medida')
     expect(html).toContain('Ver casos de éxito')
-    expect(html).toContain('https://doscientos.es/projects?ref=email-confirmacion')
+    expect(html).toContain('/projects?ref=email-confirmacion')
     expect(html).toContain('Probar la calculadora de costes')
     expect(html).toContain('Resultado de tu calculadora')
     expect(html).toContain('Horas estimadas al año')
@@ -41,15 +42,15 @@ describe('LeadConfirmationEmail', () => {
   it('renders the Catalan confirmation copy and localized links', async () => {
     const html = await renderEmail(
       LeadConfirmationEmail({
-        leadName: 'Marta Soler',
-        appUrl: 'https://app.doscientos.es',
+        leadName: 'Persona Prova',
+        appUrl: 'https://example.test',
         resource,
         language: 'ca',
       }),
     )
     expect(html).toContain('Sol·licitud rebuda')
     expect(html).toContain('Hem rebut les teves dades')
-    expect(html).toContain('https://doscientos.es/ca/projects?ref=email-confirmacion')
+    expect(html).toContain('/ca/projects?ref=email-confirmacion')
     expect(html).toContain('Què passarà ara?')
   })
 })

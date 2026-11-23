@@ -83,10 +83,19 @@ describe('POST /api/attachments/upload', () => {
     expect((await POST(uploadRequest(makePdf()))).status).toBe(403)
   })
 
-  it('returns 413 when file exceeds 50 MB', async () => {
-    const big = new File([new Uint8Array(52_428_801)], 'big.pdf', { type: 'application/pdf' })
-    expect((await POST(uploadRequest(big))).status).toBe(413)
-  }, 30_000)
+  it.each([
+    [52_428_800, 201],
+    [52_428_801, 413],
+  ])('enforces the 50 MB limit for a file of %i bytes', async (size, expectedStatus) => {
+    const file = makePdf()
+    Object.defineProperty(file, 'size', { value: size })
+    const formData = new FormData()
+    formData.set('file', file)
+    const request = new NextRequest('http://localhost/api/attachments/upload', { method: 'POST' })
+    vi.spyOn(request, 'formData').mockResolvedValue(formData)
+
+    expect((await POST(request)).status).toBe(expectedStatus)
+  })
 
   it('returns 400 for disallowed MIME type', async () => {
     const zip = new File([new Uint8Array(100)], 'archive.zip', { type: 'application/zip' })

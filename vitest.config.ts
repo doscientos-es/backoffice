@@ -5,6 +5,8 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     environment: 'happy-dom',
+    // Isolated VM contexts avoid the startup cost of a separate process per worker.
+    pool: 'vmThreads',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
     include: [
