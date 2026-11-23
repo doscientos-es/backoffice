@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { createProposalDraftInvoices, crm, sendProposalAcceptedEmail, state } = vi.hoisted(() => ({
   createProposalDraftInvoices: vi.fn(async () => ({ ids: [], created: 0 })),
@@ -15,6 +15,7 @@ const { createProposalDraftInvoices, crm, sendProposalAcceptedEmail, state } = v
       error: null as null | { message: string },
     },
     inserts: [] as Array<Record<string, unknown>>,
+    itemInsertError: false,
     updates: [] as Array<Record<string, unknown>>,
     updateNoResult: false,
     updateFilters: {} as Record<string, unknown>,
@@ -79,9 +80,14 @@ vi.mock('@/lib/supabase/server', () => ({
           return { data: null, error: null }
         },
         single: async () => ({ data: { id: state.proposal.id }, error: null }),
-        // biome-ignore lint/suspicious/noThenProperty: intentional Supabase builder mock
         then: (resolve: (value: unknown) => unknown) =>
-          Promise.resolve({ data: table === 'proposals' ? [] : null, error: null }).then(resolve),
+          Promise.resolve({
+            data: table === 'proposals' ? [] : null,
+            error:
+              table === 'proposal_items' && state.itemInsertError
+                ? { message: 'insert failed' }
+                : null,
+          }).then(resolve),
       }
       return builder
     },
@@ -110,6 +116,12 @@ import {
 const ID = '494d62cb-fd56-4650-b131-9e3a927a20ad'
 
 describe('createProposalAction', () => {
+  beforeEach(() => {
+    state.itemInsertError = false
+  })
+  afterEach(() => {
+    state.itemInsertError = false
+  })
   it('persists the optional demo URL in the draft', async () => {
     state.inserts = []
     const result = await createProposalAction({
@@ -125,6 +137,20 @@ describe('createProposalAction', () => {
         demo_url: 'https://example.test/demo',
       }),
     )
+  })
+
+  it('returns the draft id when saving initial items fails', async () => {
+    state.itemInsertError = true
+    const result = await createProposalAction({
+      lead_id: ID,
+      title: 'Propuesta',
+      items: [{ description: 'Servicio', quantity: 1, unit_price: 100 }],
+    })
+    expect(result).toMatchObject({
+      ok: false,
+      id: ID,
+      error: expect.stringContaining('no se guardaron las partidas'),
+    })
   })
 })
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { CircleAlert as AlertCircle, Check, ChevronLeft, ChevronRight, Save } from 'lucide-react'
+import { CircleAlert as AlertCircle, ChevronLeft, ChevronRight, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -18,6 +18,8 @@ import {
   type PaymentSchedule,
   type ScopeModule,
 } from '@/lib/proposals/scope'
+import { formatProposalValidationIssues } from '@/lib/proposals/validation'
+import { UpdateProposalInput } from '@/lib/schemas/proposal'
 import { formatEUR } from '@/lib/utils'
 
 import { saveProposalEditor } from '../actions'
@@ -38,8 +40,75 @@ const EDITOR_STEPS = [
   { label: 'Datos', description: 'Base de la propuesta' },
   { label: 'Alcance', description: 'Qué vamos a entregar' },
   { label: 'Precio', description: 'Partidas y condiciones' },
-  { label: 'Revisión', description: 'Equipo y comprobación final' },
+  { label: 'Revisión', description: 'Mantenimiento y equipo' },
 ] as const
+
+function stepForField(field: unknown): number {
+  if (
+    [
+      'context_markdown',
+      'problems',
+      'solutions',
+      'scope_modules',
+      'development_approach',
+      'deliverables',
+      'acceptance_criteria',
+    ].includes(String(field))
+  )
+    return 1
+  if (
+    [
+      'items',
+      'payment_schedule',
+      'payment_plan',
+      'payment_terms',
+      'change_management_terms',
+      'terms',
+      'legal_terms',
+      'discount_type',
+      'discount_value',
+      'discount_reason',
+    ].includes(String(field))
+  )
+    return 2
+  if (['maintenance_options', 'team_member_ids'].includes(String(field))) return 3
+  return 0
+}
+
+function focusInvalidField(path: (string | number)[], fallback: HTMLElement | null) {
+  const ids: Record<string, string> = {
+    title: 'proposal-title',
+    demo_url: 'proposal-demo-url',
+    valid_until: 'valid-until',
+    notes: 'notes',
+    context_markdown: 'context-markdown',
+    deliverables: 'deliverables',
+    acceptance_criteria: 'acceptance-criteria',
+    development_approach: 'development-approach',
+    payment_schedule: 'payment-schedule',
+    change_management_terms: 'change-management',
+    terms: 'terms',
+    legal_terms: 'legal-terms',
+  }
+  const lineLabels: Record<string, string> = {
+    description: 'Descripción',
+    quantity: 'Cantidad',
+    unit_price: 'Precio unitario',
+    vat_rate: 'IVA',
+    discount_percent: 'Descuento',
+    discount_reason: 'Motivo del descuento',
+  }
+  const [field, line, child] = path
+  const target =
+    field === 'items' && typeof line === 'number' && lineLabels[String(child)]
+      ? document.querySelector<HTMLElement>(
+          `[aria-label="${lineLabels[String(child)]} línea ${line + 1}"]`,
+        )
+      : document.getElementById(ids[String(field)] ?? '')
+  const details = target?.closest('details')
+  if (details) details.open = true
+  ;(target ?? fallback)?.focus()
+}
 
 /**
  * Inline editor for the proposal detail page. Changes remain local until the
@@ -91,7 +160,19 @@ export function ProposalEditor(props: ProposalEditorProps) {
   const automaticDraftStarted = useRef(false)
 
   const [activeStep, setActiveStep] = useState(0)
+  const [validationErrors, setValidationErrors] = useState<
+    Array<{ message: string; step: number; path: (string | number)[] }>
+  >([])
+  const saving = useRef(false)
+  const errorSummary = useRef<HTMLDivElement>(null)
   const stepTabRefs = useRef<Array<HTMLButtonElement | null>>([])
+
+  useEffect(() => {
+    if (saveFeedback.state.status === 'error') {
+      errorSummary.current?.scrollIntoView?.({ block: 'nearest' })
+      errorSummary.current?.focus()
+    }
+  }, [saveFeedback.state])
 
   function handleItemsChange(nextItems: LineItem[]) {
     const next = ensureCalendarYearProration(nextItems, initialCreatedAt) as EditableItem[]
@@ -145,12 +226,6 @@ export function ProposalEditor(props: ProposalEditorProps) {
     () => computeProposalTotals(items, { type: draft.discountType, value: draft.discountValue }),
     [items, draft.discountType, draft.discountValue],
   )
-  const stepComplete = [
-    Boolean(title.trim() && validUntil),
-    Boolean(contextMarkdown.trim() || pairs.length || scopeModules.length || deliverables.trim()),
-    Boolean(items.some((item) => item.description.trim() && Number(item.quantity) > 0)),
-    !maintenanceOptions.enabled || maintenanceOptions.plans.length > 0,
-  ]
   const currentStep = EDITOR_STEPS[activeStep] ?? EDITOR_STEPS[0]
   const nextStep = EDITOR_STEPS[activeStep + 1] ?? currentStep
 
@@ -179,6 +254,20 @@ export function ProposalEditor(props: ProposalEditorProps) {
   }
 
   async function handleSave() {
+    if (saving.current) return
+    const parsed = UpdateProposalInput.safeParse(payload)
+    if (!parsed.success) {
+      const errors = parsed.error.issues.map((issue) => ({
+        message: formatProposalValidationIssues([issue])[0] ?? issue.message,
+        step: stepForField(issue.path[0]),
+        path: issue.path,
+      }))
+      setValidationErrors(errors)
+      saveFeedback.setError('Revisa los campos indicados antes de guardar.')
+      return
+    }
+    setValidationErrors([])
+    saving.current = true
     saveFeedback.setPending()
     try {
       const result = await saveProposalEditor(payload)
@@ -191,10 +280,12 @@ export function ProposalEditor(props: ProposalEditorProps) {
       setExpectedVersion(result.version)
       saveFeedback.setSuccess('Propuesta guardada')
       router.push(`/proposals/${id}`)
-    } catch (error) {
+    } catch {
       saveFeedback.setError(
-        error instanceof Error ? error.message : 'No se pudo guardar la propuesta',
+        'No se pudo confirmar el guardado. Tus cambios siguen aquí; comprueba la propuesta antes de reintentar.',
       )
+    } finally {
+      saving.current = false
     }
   }
 
@@ -309,15 +400,37 @@ export function ProposalEditor(props: ProposalEditorProps) {
           : null}
 
         {saveFeedback.state.status === 'error' && saveErrors.length > 0 ? (
-          <Alert variant="destructive" className="border-destructive/30 bg-destructive/5 px-4 py-3">
+          <Alert
+            ref={errorSummary}
+            tabIndex={-1}
+            role="alert"
+            variant="destructive"
+            className="border-destructive/30 bg-destructive/5 px-4 py-3"
+          >
             <AlertCircle className="size-4" aria-hidden />
             <AlertTitle>No se ha podido guardar la propuesta</AlertTitle>
             <AlertDescription>
-              <p>Revisa y corrige estos campos. Tus cambios siguen en esta pantalla.</p>
+              <p>Tus cambios siguen en esta pantalla.</p>
               <ul className="mt-2 list-disc space-y-1 pl-5">
-                {saveErrors.map((error) => (
-                  <li key={error}>{error}</li>
-                ))}
+                {validationErrors.length
+                  ? validationErrors.map(({ message, step, path }) => (
+                      <li key={`${path.join('.')}-${message}`}>
+                        {message}{' '}
+                        <button
+                          type="button"
+                          className="font-medium underline"
+                          onClick={() => {
+                            setActiveStep(step)
+                            requestAnimationFrame(() =>
+                              focusInvalidField(path, stepTabRefs.current[step] ?? null),
+                            )
+                          }}
+                        >
+                          Ir a {EDITOR_STEPS[step]?.label ?? 'Datos'}
+                        </button>
+                      </li>
+                    ))
+                  : saveErrors.map((error) => <li key={error}>{error}</li>)}
               </ul>
             </AlertDescription>
           </Alert>
@@ -344,14 +457,14 @@ export function ProposalEditor(props: ProposalEditorProps) {
                   id={`proposal-step-tab-${index}`}
                   aria-controls="proposal-editor-panel"
                   aria-selected={active}
-                  aria-label={`Paso ${index + 1}: ${step.label}, ${stepComplete[index] ? 'completado' : 'pendiente'}`}
+                  aria-label={`Paso ${index + 1}: ${step.label}`}
                   tabIndex={active ? 0 : -1}
                   className={`flex min-w-36 flex-1 items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-w-0 ${active ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
                 >
                   <span
-                    className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${active ? 'bg-primary-foreground/20 text-primary-foreground' : stepComplete[index] ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
+                    className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${active ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
                   >
-                    {stepComplete[index] ? <Check className="size-3.5" aria-hidden /> : index + 1}
+                    {index + 1}
                   </span>
                   <span className="min-w-0">
                     <span className="block text-sm font-semibold">{step.label}</span>
@@ -387,6 +500,7 @@ export function ProposalEditor(props: ProposalEditorProps) {
                 hasEmptyDraftFields={hasEmptyDraftFields}
                 generating={generating}
                 handleGenerateDraft={handleGenerateDraft}
+                aiFeedback={aiFeedback}
                 notesPreview={notesPreview}
                 setNotesPreview={setNotesPreview}
               />
@@ -464,24 +578,10 @@ export function ProposalEditor(props: ProposalEditorProps) {
                 </div>
               ) : null}
             </div>
-            <div className="border-t border-border pt-3">
-              <p className="mb-2 text-xs font-medium text-muted-foreground">Completitud</p>
-              <div className="flex flex-col gap-2">
-                {EDITOR_STEPS.map((step, index) => (
-                  <div key={step.label} className="flex items-center gap-2 text-xs">
-                    <Check
-                      className={`size-3.5 ${stepComplete[index] ? 'text-primary' : 'text-muted-foreground/40'}`}
-                      aria-hidden
-                    />
-                    <span
-                      className={stepComplete[index] ? 'text-foreground' : 'text-muted-foreground'}
-                    >
-                      {step.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <p className="border-t border-border pt-3 text-xs text-muted-foreground">
+              Los cambios se guardan al pulsar «Guardar y ver propuesta». Podrás revisarla antes de
+              enviarla.
+            </p>
           </aside>
         </div>
 

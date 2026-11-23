@@ -39,6 +39,7 @@ export function ProposalDetailsSection({
   hasEmptyDraftFields,
   generating,
   handleGenerateDraft,
+  aiFeedback,
   notesPreview,
   setNotesPreview,
 }: SectionProps & {
@@ -49,6 +50,7 @@ export function ProposalDetailsSection({
   hasEmptyDraftFields: boolean
   generating: boolean
   handleGenerateDraft: () => Promise<void>
+  aiFeedback: ReturnType<typeof useFormFeedback>
   notesPreview: boolean
   setNotesPreview: Dispatch<SetStateAction<boolean>>
 }) {
@@ -127,6 +129,7 @@ export function ProposalDetailsSection({
         </div>
       ) : null}
 
+      <FormFeedback state={aiFeedback.state} pendingLabel="Preparando…" />
       <div className="grid gap-5 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)]">
         <FormRow
           label="Válida hasta"
@@ -143,7 +146,9 @@ export function ProposalDetailsSection({
         </FormRow>
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Notas</span>
+            <label htmlFor="notes" className="text-sm font-medium">
+              Notas
+            </label>
             {notes ? (
               <button
                 type="button"
@@ -165,7 +170,7 @@ export function ProposalDetailsSection({
               onChange={(event) => setField('notes')(event.target.value)}
               disabled={locked}
               rows={5}
-              placeholder="Notas internas o para el cliente… (soporta Markdown)"
+              placeholder="Notas para la propuesta… (soporta Markdown)"
             />
           )}
         </div>

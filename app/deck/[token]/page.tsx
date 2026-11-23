@@ -7,6 +7,7 @@ import type { BillingCycle } from '@/lib/finance'
 import { scopedLogger } from '@/lib/logger'
 import { resolvePortalLanguage } from '@/lib/portal/language'
 import { type KeyPoint, parseKeyPoints } from '@/lib/proposals/key-points'
+import { proposalTr } from '@/lib/proposals/public-copy'
 import { insertPageViewEvent, recordClientProposalView } from '@/lib/proposals/record-client-view'
 import { type PaymentSchedule, parseScopeModules, type ScopeModule } from '@/lib/proposals/scope'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -67,25 +68,37 @@ export type DeckProposal = {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>
+  searchParams: Promise<{ lang?: string }>
 }): Promise<Metadata> {
   const { token } = await params
+  const { lang } = await searchParams
   const admin = createAdminClient()
   const { data } = await admin
     .from('proposals')
-    .select('number, title, status, clients(name)')
+    .select('number, title, status, clients(name, leads(language)), leads(language)')
     .eq('portal_token', token)
     .is('deleted_at', null)
     .maybeSingle()
 
+  const language = resolvePortalLanguage(
+    (data?.leads as { language?: string | null } | null)?.language ??
+      (data?.clients as { leads?: { language?: string | null } | null } | null)?.leads?.language,
+    lang,
+  )
+  const tr = proposalTr(language)
   if (!data || data.status === 'draft') {
-    return { title: 'Propuesta · doscientos', robots: { index: false, follow: false } }
+    return {
+      title: `${tr('Propuesta', 'Proposta', 'Proposal')} · doscientos`,
+      robots: { index: false, follow: false },
+    }
   }
   const clientName = (data as unknown as { clients: { name: string } | null }).clients?.name ?? null
-  const suffix = clientName ? ` para ${clientName}` : ''
+  const suffix = clientName ? ` ${tr('para', 'per a', 'for')} ${clientName}` : ''
   return {
-    title: `Propuesta ${data.number as string}${suffix} · doscientos`,
+    title: `${tr('Propuesta', 'Proposta', 'Proposal')} ${data.number as string}${suffix} · doscientos`,
     description: (data.title as string) ?? undefined,
     robots: { index: false, follow: false },
   }

@@ -23,6 +23,8 @@ type BaseProps = {
   'aria-label'?: string
   'aria-invalid'?: React.AriaAttributes['aria-invalid']
   'aria-describedby'?: string
+  /** Opt in to retaining invalid text and reporting it to the parent. */
+  onInvalidChange?: (invalid: boolean) => void
 }
 
 /** Uncontrolled: value lives in the form DOM (server actions / FormData). */
@@ -102,9 +104,14 @@ export function DateField(props: Props) {
     setText(masked)
     const iso = displayToIso(masked)
     setInternalIso(iso)
+    props.onInvalidChange?.(Boolean(masked && !iso))
+    if (props.onInvalidChange && isControlled && (!masked || iso)) {
+      ;(props as ControlledProps).onChange(iso)
+    }
   }
 
   function handleBlur() {
+    if (props.onInvalidChange && text && !internalIso) return
     // Reformat on blur: either pretty-print a valid date or clear partial input
     setText(internalIso ? isoToDisplay(internalIso) : '')
     if (isControlled) {
@@ -116,6 +123,7 @@ export function DateField(props: Props) {
     const iso = e.target.value
     setInternalIso(iso)
     setText(isoToDisplay(iso))
+    props.onInvalidChange?.(false)
     if (isControlled) {
       ;(props as ControlledProps).onChange(iso)
     }

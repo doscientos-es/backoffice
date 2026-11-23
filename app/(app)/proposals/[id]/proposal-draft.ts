@@ -181,7 +181,7 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
   return {
     id,
     expected_version: expectedVersion,
-    title,
+    title: title.trim(),
     client_capacity: clientCapacity,
     valid_until: validUntil || null,
     notes: notes || null,
@@ -198,12 +198,12 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
     payment_plan: paymentPlan,
     payment_terms: paymentTerms || null,
     change_management_terms: changeManagementTerms || null,
-    legal_terms: legalTerms || null,
+    legal_terms: legalTerms,
     maintenance_options: maintenanceOptions,
     discount_type: discountType,
     discount_value: discountType === 'none' ? 0 : discountValue,
     discount_reason: discountType === 'none' ? null : discountReason || null,
-    items,
+    items: items.map((item) => ({ ...item, description: item.description.trim() })),
     team_member_ids: teamMemberIds,
   }
 }

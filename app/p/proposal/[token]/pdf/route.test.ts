@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
 import type * as NextServer from 'next/server'
+import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
@@ -150,6 +150,24 @@ describe('GET /p/proposal/[token]/pdf', () => {
 
     expect(response.status).toBe(307)
     expect(response.headers.get('location')).toBe(`https://app.example.test/p/proposal/${TOKEN}`)
+  })
+
+  it('preserves the requested language when a PDF requires unlocking', async () => {
+    const { GET } = await import('./route')
+    state.unlocked = false
+    const response = await GET(request('?lang=en'), context)
+    expect(response.headers.get('location')).toBe(
+      `https://app.example.test/p/proposal/${TOKEN}?lang=en`,
+    )
+  })
+
+  it('uses the requested language in preference to the lead language', async () => {
+    const { GET } = await import('./route')
+    state.proposal = { ...state.proposal, leads: { language: 'ca' } }
+    await GET(request('?lang=en'), context)
+    expect(renderProposalPdf).toHaveBeenCalledWith(expect.objectContaining({ language: 'en' }))
+    await GET(request(), context)
+    expect(renderProposalPdf).toHaveBeenLastCalledWith(expect.objectContaining({ language: 'ca' }))
   })
 
   it('returns the attachment to a team member previewing a draft', async () => {

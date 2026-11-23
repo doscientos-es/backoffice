@@ -93,6 +93,68 @@ describe('buildSlides', () => {
     expect(slides).toContainEqual(expect.objectContaining({ key: 'delivery' }))
   })
 
+  it.each([
+    [
+      'ca',
+      'Termini estimat: 2 setmanes',
+      'Forma de pagament',
+      '50 % en acceptar · 50 % en el lliurament',
+      'Veure i acceptar la proposta',
+    ],
+    [
+      'en',
+      'Estimated duration: 2 weeks',
+      'Payment terms',
+      '50 % on acceptance · 50 % on delivery',
+      'View and accept proposal',
+    ],
+  ] as const)(
+    'localizes slides and preserves the %s language in links',
+    (language, duration, payment, schedule, accept) => {
+      const slides = buildSlides(
+        {
+          ...proposal,
+          scope_modules: [
+            {
+              id: 'scope',
+              title: 'Custom scope',
+              included: ['Custom content'],
+              excluded: [],
+              duration_mode: 'weeks',
+              duration_weeks: 2,
+            },
+          ],
+          payment_terms: 'Custom terms',
+        },
+        [],
+        'portal-token',
+        [],
+        undefined,
+        language,
+      )
+      render(
+        <div>
+          {slides.map((slide) => (
+            <div key={slide.key}>{slide.element}</div>
+          ))}
+        </div>,
+      )
+      expect(screen.getByText(duration)).toBeDefined()
+      expect(screen.getByText(payment)).toBeDefined()
+      expect(screen.getByText(schedule)).toBeDefined()
+      expect(screen.getByText('Custom content')).toBeDefined()
+      expect(screen.getByRole('link', { name: accept }).getAttribute('href')).toBe(
+        `/p/proposal/portal-token?lang=${language}`,
+      )
+      expect(
+        document.querySelector(`a[href="/p/proposal/portal-token/pdf?lang=${language}"]`),
+      ).not.toBeNull()
+      expect(slides.find((slide) => slide.key === 'scope-scope')?.label).toBe(
+        language === 'ca' ? 'Mòdul 1' : 'Module 1',
+      )
+    },
+  )
+
   it('emphasizes pre-VAT pricing and still shows the estimated total including VAT', () => {
     const slides = buildSlides(
       proposal,

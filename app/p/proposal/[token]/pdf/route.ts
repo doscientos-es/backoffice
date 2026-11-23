@@ -5,9 +5,9 @@ import { getCurrentUser, hasMfaAccess } from '@/lib/auth'
 import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv } from '@/lib/env'
 import {
+  type BillingCycle,
   computeLineSubtotal,
   computeProposalTotals,
-  type BillingCycle,
   type DiscountType,
 } from '@/lib/finance'
 import { isPortalUnlocked } from '@/lib/portal/access'
@@ -129,7 +129,11 @@ export async function GET(
       token,
       (proposal.portal_password_hash as string | null) ?? null,
     )
-    if (!unlocked) return NextResponse.redirect(new URL(`/p/proposal/${token}`, req.url))
+    if (!unlocked) {
+      const target = new URL(`/p/proposal/${token}`, req.url)
+      if (req.nextUrl.searchParams.has('lang')) target.searchParams.set('lang', language)
+      return NextResponse.redirect(target)
+    }
 
     // Downloading the PDF to read or forward it is a sign of interest.
     if (['sent', 'viewed'].includes(proposal.status as string)) {

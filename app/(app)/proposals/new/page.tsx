@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { BackLink } from '@/components/layout/back-link'
 import { PageHeader } from '@/components/layout/page-header'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { requireUser } from '@/lib/auth'
 import { isAIEnabled } from '@/lib/env'
 import { createServerClient } from '@/lib/supabase/server'
@@ -25,7 +26,7 @@ export default async function NewProposalPage({
   const { client_id, lead_id } = await searchParams
 
   const supabase = await createServerClient()
-  const [{ data: clients }, { data: leads }, { data: projects }] = await Promise.all([
+  const [clientsResult, leadsResult, projectsResult] = await Promise.all([
     supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
     supabase
       .from('leads')
@@ -35,6 +36,7 @@ export default async function NewProposalPage({
       .order('name'),
     supabase.from('projects').select('id, name, client_id').is('deleted_at', null).order('name'),
   ])
+  const loadFailed = clientsResult.error || leadsResult.error || projectsResult.error
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,21 +44,30 @@ export default async function NewProposalPage({
         title="Nueva propuesta"
         back={<BackLink href="/proposals" label="Volver a propuestas" />}
       />
-      <NewProposalForm
-        clients={(clients ?? []) as Array<{ id: string; name: string }>}
-        leads={
-          (leads ?? []) as Array<{
-            id: string
-            name: string
-            company: string | null
-            status: string
-          }>
-        }
-        projects={(projects ?? []) as Array<{ id: string; name: string; client_id: string }>}
-        initialClientId={client_id}
-        initialLeadId={lead_id}
-        aiEnabled={isAIEnabled()}
-      />
+      {loadFailed ? (
+        <Alert variant="destructive">
+          <AlertTitle>No se pudieron cargar los datos para crear la propuesta</AlertTitle>
+          <AlertDescription>Actualiza la página para volver a intentarlo.</AlertDescription>
+        </Alert>
+      ) : (
+        <NewProposalForm
+          clients={(clientsResult.data ?? []) as Array<{ id: string; name: string }>}
+          leads={
+            (leadsResult.data ?? []) as Array<{
+              id: string
+              name: string
+              company: string | null
+              status: string
+            }>
+          }
+          projects={
+            (projectsResult.data ?? []) as Array<{ id: string; name: string; client_id: string }>
+          }
+          initialClientId={client_id}
+          initialLeadId={lead_id}
+          aiEnabled={isAIEnabled()}
+        />
+      )}
     </div>
   )
 }

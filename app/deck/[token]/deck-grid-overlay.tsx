@@ -1,12 +1,12 @@
-"use client";
+'use client'
 
-import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { X } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
-import type { PortalLanguage } from "@/lib/portal/language";
-import { proposalTr } from "@/lib/proposals/public-copy";
+import type { PortalLanguage } from '@/lib/portal/language'
+import { proposalTr } from '@/lib/proposals/public-copy'
 
-import type { DeckSlide } from "./deck-slides";
+import type { DeckSlide } from './deck-slides'
 
 export function DeckGridOverlay({
   slides,
@@ -15,55 +15,55 @@ export function DeckGridOverlay({
   onClose,
   language,
 }: {
-  slides: DeckSlide[];
-  current: number;
-  onSelect: (index: number) => void;
-  onClose: () => void;
-  language: PortalLanguage;
+  slides: DeckSlide[]
+  current: number
+  onSelect: (index: number) => void
+  onClose: () => void
+  language: PortalLanguage
 }) {
-  const tr = proposalTr(language);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const tr = proposalTr(language)
+  const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
-    const el = dialogRef.current;
-    if (el && !el.open) el.showModal();
+    const el = dialogRef.current
+    if (el && !el.open) el.showModal()
     return () => {
-      if (el?.open) el.close();
-    };
-  }, []);
+      if (el?.open) el.close()
+    }
+  }, [])
 
   return (
     <dialog
       ref={dialogRef}
       className="deck-grid-overlay no-print"
       aria-label={tr(
-        "Vista general de diapositivas",
-        "Vista general de diapositives",
-        "Slide overview",
+        'Vista general de diapositivas',
+        'Vista general de diapositives',
+        'Slide overview',
       )}
       onCancel={(e) => {
-        e.preventDefault();
-        onClose();
+        e.preventDefault()
+        onClose()
       }}
     >
       <div className="mb-6 flex items-center justify-between gap-3 sm:mb-8">
         <div className="min-w-0">
           <p className="mb-1 text-[10px] font-semibold tracking-[0.25em] text-white/40 uppercase sm:text-xs sm:tracking-[0.3em]">
-            {tr("Vista general", "Vista general", "Overview")}
+            {tr('Vista general', 'Vista general', 'Overview')}
           </p>
           <h2 className="truncate text-lg font-bold text-white sm:text-2xl">
-            {slides.length} {tr("diapositivas", "diapositives", "slides")}
+            {slides.length} {tr('diapositivas', 'diapositives', 'slides')}
           </h2>
         </div>
         <button
           type="button"
           onClick={onClose}
-          aria-label={tr("Cerrar", "Tancar", "Close")}
+          aria-label={tr('Cerrar', 'Tancar', 'Close')}
           className="deck-btn flex-shrink-0"
-          style={{ color: "rgba(255,255,255,0.85)" }}
+          style={{ color: 'rgba(255,255,255,0.85)' }}
         >
           <X className="size-4" />
-          <span className="deck-btn-label">{tr("Cerrar", "Tancar", "Close")}</span>
+          <span className="deck-btn-label">{tr('Cerrar', 'Tancar', 'Close')}</span>
         </button>
       </div>
 
@@ -76,13 +76,13 @@ export function DeckGridOverlay({
             data-accent={slide.accent}
             data-active={i === current}
             className="deck-grid-card"
-            aria-label={`${tr("Ir a", "Anar a", "Go to")} ${slide.label}`}
+            aria-label={`${tr('Ir a', 'Anar a', 'Go to')} ${slide.label}`}
           >
-            <span className="deck-grid-card-index">{String(i + 1).padStart(2, "0")}</span>
+            <span className="deck-grid-card-index">{String(i + 1).padStart(2, '0')}</span>
             <span>{slide.label}</span>
           </button>
         ))}
       </div>
     </dialog>
-  );
+  )
 }

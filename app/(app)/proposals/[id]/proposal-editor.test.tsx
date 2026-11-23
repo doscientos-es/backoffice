@@ -44,7 +44,9 @@ const props = {
   initialMaintenanceOptions: DEFAULT_MAINTENANCE_OFFER,
   teamMembers: [],
   initialTeamMemberIds: [],
-  initialItems: [],
+  initialItems: [
+    { id: 'line-1', description: 'Pendiente de definir', quantity: 1, unit_price: 0, vat_rate: 21 },
+  ],
   initialDiscountType: 'none' as const,
   initialDiscountValue: 0,
   initialDiscountReason: null,
@@ -208,6 +210,42 @@ describe('ProposalEditor', () => {
     expect(document.activeElement).toBe(reviewTab)
     expect(reviewTab.getAttribute('aria-selected')).toBe('true')
     expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe('proposal-step-tab-3')
+  })
+
+  it('shows actionable errors and opens the section containing a hidden invalid field', async () => {
+    render(<ProposalEditor {...props} initialLegalTerms="" />)
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
+    expect(saveProposal).not.toHaveBeenCalled()
+    expect(
+      screen.getByText(/Anexo contractual: El anexo contractual no puede estar vacío/),
+    ).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: 'Ir a Precio' }))
+    await waitFor(() => {
+      const field = screen.getByLabelText('Anexo contractual')
+      expect(field.closest('details')?.open).toBe(true)
+      expect(document.activeElement).toBe(field)
+    })
+  })
+
+  it('keeps edits visible after an unexpected save failure', async () => {
+    saveProposal.mockRejectedValueOnce(new Error('network error'))
+    render(<ProposalEditor {...props} />)
+    fireEvent.change(screen.getByLabelText('Título'), { target: { value: 'Sin perder cambios' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
+    expect(await screen.findByText(/No se pudo confirmar el guardado/)).toBeDefined()
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 1: Datos/ }))
+    expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Sin perder cambios')
+  })
+
+  it('rejects whitespace-only titles without sending the draft', () => {
+    render(<ProposalEditor {...props} />)
+    fireEvent.change(screen.getByLabelText('Título'), { target: { value: '   ' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
+    expect(screen.getByText(/Título: Campo obligatorio/)).toBeDefined()
+    expect(saveProposal).not.toHaveBeenCalled()
   })
   it('keeps edits and retries with the saved version after a team failure', async () => {
     saveProposal.mockResolvedValueOnce({

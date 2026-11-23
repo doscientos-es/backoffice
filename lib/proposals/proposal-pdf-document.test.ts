@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest'
 import { extractPdfPages } from '../internal-documents/pdf-text'
 import { DEFAULT_MAINTENANCE_OFFER } from './maintenance'
 import {
+  type ProposalPdfData,
   printableMarkdown,
   proposalPdfFilename,
   renderProposalPdf,
-  type ProposalPdfData,
 } from './proposal-pdf-document'
 
 describe('proposal PDF helpers', () => {
@@ -20,6 +20,119 @@ describe('proposal PDF helpers', () => {
       'Alcance Ver detalle',
     )
   })
+
+  it.each([
+    [
+      'ca',
+      'Termini estimat: 2 setmanes',
+      'Forma de pagament',
+      'Signant',
+      'Signatura del proveïdor',
+      'Descompte',
+    ],
+    [
+      'en',
+      'Estimated duration: 2 weeks',
+      'Payment terms',
+      'Signer',
+      'Provider signature',
+      'Discount',
+    ],
+  ] as const)(
+    'renders fixed PDF labels in %s without changing contractual content',
+    async (language, duration, payment, signer, provider, discount) => {
+      const data: ProposalPdfData = {
+        language,
+        number: 'P-001',
+        title: 'Custom title',
+        recipientName: 'Example',
+        validUntil: '2026-12-25',
+        context: 'Custom context',
+        problems: [{ id: 'problem', title: 'Custom challenge', description: null }],
+        solutions: [{ id: 'solution', title: 'Custom solution', description: null }],
+        scopeModules: [
+          {
+            id: 'scope',
+            title: 'Custom scope',
+            included: ['Custom inclusion'],
+            excluded: ['Custom exclusion'],
+            duration_mode: 'weeks',
+            duration_weeks: 2,
+          },
+        ],
+        deliverables: 'Custom deliverable',
+        acceptanceCriteria: 'Custom criteria',
+        paymentSchedule: 'half_half',
+        paymentTerms: 'Custom payment terms',
+        changeManagementTerms: 'Custom scope terms',
+        legalTerms: 'Original contractual text',
+        notes: null,
+        subtotal: 100,
+        taxAmount: 21,
+        total: 121,
+        discounts: { gross: 110, lineDiscount: 10, globalDiscount: 0 },
+        items: [
+          {
+            id: 'item',
+            description: 'Custom item',
+            quantity: 1,
+            unitPrice: 100,
+            vatRate: 21,
+            subtotal: 100,
+            billingCycle: 'monthly',
+          },
+        ],
+        maintenanceOffer: DEFAULT_MAINTENANCE_OFFER,
+        portalUrl: 'https://example.test/proposal',
+        companyName: 'Example',
+        iban: 'TEST-IBAN',
+        providerSignature: {
+          member_id: '00000000-0000-4000-8000-000000000001',
+          name: 'Provider',
+          job_title: null,
+          drawing: {
+            version: 1,
+            strokes: [
+              [
+                { x: 10, y: 20 },
+                { x: 30, y: 40 },
+              ],
+            ],
+          },
+        },
+        acceptance: {
+          signerName: 'Client',
+          signerRole: null,
+          acceptedAt: '2026-09-10T12:34:56.000Z',
+          documentHash: 'a'.repeat(64),
+          consentText: 'Original consent text',
+        },
+      }
+      const pdf = await renderProposalPdf(data)
+      const { pages } = await extractPdfPages(
+        pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer,
+      )
+      const text = pages
+        .map((page) => page.content)
+        .join(' ')
+        .replace(/\s+/g, '')
+        .toLocaleUpperCase()
+      for (const expected of [
+        duration,
+        payment,
+        signer,
+        provider,
+        discount,
+        'Original contractual text',
+        'Original consent text',
+        'Custom inclusion',
+      ]) {
+        expect(text).toContain(expected.replace(/\s+/g, '').toLocaleUpperCase())
+      }
+      expect(text).not.toContain('PLAZOESTIMADO')
+      expect(text).not.toContain('FIRMADELPROVEEDOR')
+    },
+  )
 
   it.each([undefined, null, '', ' \n ', 'Revisión semanal con el cliente.'])(
     'renders a valid PDF with the optional development approach: %s',

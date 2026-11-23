@@ -135,7 +135,7 @@ async function insertDraftProposal(
   supabase: Awaited<ReturnType<typeof createServerClient>>,
   userId: string,
   data: CreateProposalInputType,
-): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; id: string } | { ok: false; error: string; id?: string }> {
   const items = ensureCalendarYearProration(data.items, new Date())
   const totals = buildProposalTotalsPatch(items)
   const automaticPaymentTerms = recurringPaymentTerms(items, new Date())
@@ -165,7 +165,7 @@ async function insertDraftProposal(
 
   if (error || !proposal) {
     log.error({ err: error }, 'create_proposal_failed')
-    return { ok: false, error: error?.message ?? 'No se pudo crear la propuesta' }
+    return { ok: false, error: 'No se pudo crear la propuesta. Vuelve a intentarlo.' }
   }
 
   const { error: itemsError } = await supabase
@@ -173,7 +173,13 @@ async function insertDraftProposal(
     .insert(buildProposalItemRows(items, proposal.id))
   if (itemsError) {
     log.error({ err: itemsError, proposalId: proposal.id }, 'create_proposal_items_failed')
-    return { ok: false, error: itemsError.message }
+    revalidatePath('/proposals')
+    return {
+      ok: false,
+      id: proposal.id as string,
+      error:
+        'Se creó el borrador, pero no se guardaron las partidas. Copia los datos de esta pantalla y completa las partidas en el borrador antes de enviarlo.',
+    }
   }
 
   return { ok: true, id: proposal.id as string }
@@ -203,7 +209,7 @@ export async function createSubscriptionFromProposal(
 /** Creates a draft proposal and returns its ID on success. */
 export async function createProposalAction(
   input: unknown,
-): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; id: string } | { ok: false; error: string; id?: string }> {
   const user = await requirePermission('proposals.write')
   await requirePermission('proposals.prices')
 

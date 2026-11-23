@@ -13,7 +13,7 @@ import {
   FormRow,
 } from '@doscientos/ui'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 describe('@doscientos/ui adapters', () => {
   it('renders accessible form feedback from the package', () => {
@@ -46,7 +46,7 @@ describe('@doscientos/ui adapters', () => {
     expect(group?.querySelectorAll('kbd')).toHaveLength(2)
   })
 
-  it('replaces an avatar fallback after its image loads', () => {
+  it('marks a loaded avatar image and hides its fallback through CSS', () => {
     render(
       <Avatar>
         <AvatarImage src="/ana.jpg" alt="Ana" />
@@ -54,8 +54,12 @@ describe('@doscientos/ui adapters', () => {
       </Avatar>,
     )
 
-    fireEvent.load(screen.getByRole('img', { name: 'Ana' }))
-    expect(screen.queryByText('AN')).toBeNull()
+    const image = screen.getByRole('img', { name: 'Ana' })
+    fireEvent.load(image)
+    expect(image.hasAttribute('data-loaded')).toBe(true)
+    expect(screen.getByText('AN').className).toContain(
+      'group-has-[[data-slot=avatar-image][data-loaded]]/avatar:invisible',
+    )
   })
 
   it('uses the package separator with its accessible orientation', () => {
@@ -78,8 +82,9 @@ describe('@doscientos/ui adapters', () => {
   })
 
   it('uses the package submit button while a client form is loading', () => {
+    const onSubmit = vi.fn()
     render(
-      <form>
+      <form onSubmit={onSubmit}>
         <SubmitButton loading pendingLabel="Guardando…">
           Guardar
         </SubmitButton>
@@ -87,6 +92,9 @@ describe('@doscientos/ui adapters', () => {
     )
 
     const button = screen.getByRole('button', { name: 'Guardando…' })
-    expect(button.hasAttribute('disabled')).toBe(true)
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    expect(button.getAttribute('type')).toBe('button')
+    fireEvent.click(button)
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 })
