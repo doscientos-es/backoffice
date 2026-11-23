@@ -314,13 +314,24 @@ export default async function ProposalDetailPage({
     .eq('proposal_id', id)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
-  const { data: latestAcceptance } = await supabase
-    .from('proposal_acceptances')
-    .select('signer_name, signer_role, accepted_at, document_hash')
-    .eq('proposal_id', id)
-    .order('accepted_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const { data: latestAcceptance } =
+    proposal.status === 'accepted' && proposal.responded_at
+      ? await supabase
+          .from('proposal_acceptances')
+          .select('signer_name, signer_role, accepted_at, document_hash')
+          .eq('proposal_id', id)
+          .eq('accepted_at', proposal.responded_at as string)
+          .limit(1)
+          .maybeSingle()
+      : { data: null }
+  const { data: acceptanceHistory } =
+    (user.role === 'owner' || user.role === 'admin') && canSeePrices
+      ? await supabase
+          .from('proposal_acceptances')
+          .select('id, accepted_at, signer_name')
+          .eq('proposal_id', id)
+          .order('accepted_at', { ascending: false })
+      : { data: [] }
   const { data: latestDeliveryNote } = await supabase
     .from('delivery_acceptances')
     .select(
@@ -881,6 +892,31 @@ export default async function ProposalDetailPage({
                   </DetailGrid>
                 </CardContent>
               </Card>
+              {token && acceptanceHistory && acceptanceHistory.length > 0 ? (
+                <Card className="min-w-0">
+                  <CardHeader>
+                    <CardTitle>Aceptaciones electrónicas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3 text-sm">
+                      {acceptanceHistory.map((acceptance) => (
+                        <li key={acceptance.id as string} className="flex flex-col gap-1">
+                          <span>
+                            {acceptance.signer_name as string} ·{' '}
+                            {formatDate(acceptance.accepted_at as string)}
+                          </span>
+                          <a
+                            className="text-primary hover:underline"
+                            href={`/p/proposal/${token}/pdf?acceptance=${acceptance.id as string}`}
+                          >
+                            Descargar documento firmado
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ) : null}
               <ProposalSharingCard
                 id={id}
                 title={proposal.title as string}

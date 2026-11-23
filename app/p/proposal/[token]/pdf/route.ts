@@ -1,6 +1,6 @@
 import { after, type NextRequest, NextResponse } from 'next/server'
 
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, hasMfaAccess } from '@/lib/auth'
 import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv } from '@/lib/env'
 import {
@@ -31,6 +31,7 @@ import {
 import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import { type PaymentSchedule, parseScopeModules } from '@/lib/proposals/scope'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -44,6 +45,18 @@ export async function GET(
   const admin = createAdminClient()
   const auth = await getCurrentUser()
   const isTeam = auth.ok
+  const acceptanceId = req.nextUrl.searchParams.get('acceptance')
+
+  // Historical signed documents are internal, even when the proposal URL is public.
+  if (acceptanceId !== null) {
+    if (
+      !auth.ok ||
+      !['owner', 'admin'].includes(auth.user.role) ||
+      !(await hasMfaAccess(auth.user.id))
+    ) {
+      return NextResponse.json({ error: 'Propuesta no encontrada' }, { status: 404 })
+    }
+  }
 
   const { data: proposal } = await admin
     .from('proposals')
@@ -54,6 +67,16 @@ export async function GET(
 
   if (!proposal || (proposal.status === 'draft' && !isTeam)) {
     return NextResponse.json({ error: 'Propuesta no encontrada' }, { status: 404 })
+  }
+  if (acceptanceId !== null) {
+    const supabase = await createServerClient()
+    const { data: accessible } = await supabase
+      .from('proposals')
+      .select('id')
+      .eq('id', proposal.id as string)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (!accessible) return NextResponse.json({ error: 'Propuesta no encontrada' }, { status: 404 })
   }
   const clientLanguage = (
     proposal.clients as { leads?: { language?: string | null } | null } | null
@@ -104,13 +127,27 @@ export async function GET(
     .select('company_name, company_nif, iban')
     .eq('id', 1)
     .maybeSingle()
-  const { data: acceptance } = await admin
-    .from('proposal_acceptances')
-    .select('signer_name, signer_role, accepted_at, document_hash, consent_text, document_snapshot')
-    .eq('proposal_id', proposal.id as string)
-    .order('accepted_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  // A reopened proposal may retain evidence from an earlier acceptance. Only
+  // the record created by the current response describes the current document.
+  const acceptanceQuery = () =>
+    admin
+      .from('proposal_acceptances')
+      .select(
+        'signer_name, signer_role, accepted_at, document_hash, consent_text, document_snapshot',
+      )
+      .eq('proposal_id', proposal.id as string)
+  const { data: acceptance, error: acceptanceError } =
+    acceptanceId !== null
+      ? await acceptanceQuery().eq('id', acceptanceId).maybeSingle()
+      : proposal.status === 'accepted' && proposal.responded_at
+        ? await acceptanceQuery()
+            .eq('accepted_at', proposal.responded_at as string)
+            .limit(1)
+            .maybeSingle()
+        : { data: null, error: null }
+  if (acceptanceId !== null && (acceptanceError || !acceptance)) {
+    return NextResponse.json({ error: 'Aceptación no encontrada' }, { status: 404 })
+  }
 
   const signedSnapshot = acceptance?.document_snapshot as {
     version?: string
@@ -127,6 +164,9 @@ export async function GET(
     } | null
   } | null
   const signedProposal = signedSnapshot?.proposal
+  if (acceptanceId !== null && (!signedProposal || !Array.isArray(signedProposal.items))) {
+    return NextResponse.json({ error: 'Documento histórico no disponible' }, { status: 404 })
+  }
   const documentSource = signedProposal ?? (proposal as Record<string, unknown>)
   const legalTerms =
     signedProposal && !('legal_terms' in signedProposal)
@@ -265,7 +305,7 @@ export async function GET(
     companyAddress: signedSnapshot?.parties?.provider?.address ?? null,
     iban: (settings?.iban as string | null) ?? null,
     acceptance:
-      proposal.status === 'accepted' && acceptance
+      (proposal.status === 'accepted' || acceptanceId !== null) && acceptance
         ? {
             signerName: acceptance.signer_name as string,
             signerRole: (acceptance.signer_role as string | null) ?? null,
