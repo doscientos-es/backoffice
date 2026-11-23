@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-23 — v0.1.208
+
+### Nuevas funciones
+
+- Improve hyphenation logic for long identifiers in PDF
+
 ## 2026-11-23 — v0.1.207
 
 ### Nuevas funciones

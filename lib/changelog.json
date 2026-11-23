@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.208",
+      "date": "2026-11-23",
+      "title": "v0.1.208",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Improve hyphenation logic for long identifiers in PDF"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "cb1c80e93e64a4bd803435417a2dc8682f319299",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Improve hyphenation logic for long identifiers in PDF"
+        }
+      ]
+    },
+    {
       "version": "0.1.207",
       "date": "2026-11-23",
       "title": "v0.1.207",
