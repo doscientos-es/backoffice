@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.202",
+      "date": "2026-11-23",
+      "title": "v0.1.202",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Streamline creation and localize public documents"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "45880d645f8fd60c074691c327ad44240fe46926",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Streamline creation and localize public documents"
+        }
+      ]
+    },
+    {
       "version": "0.1.201",
       "date": "2026-11-23",
       "title": "v0.1.201",

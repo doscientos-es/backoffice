@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-23 — v0.1.202
+
+### Nuevas funciones
+
+- Streamline creation and localize public documents
+
 ## 2026-11-23 — v0.1.201
 
 ### Nuevas funciones
