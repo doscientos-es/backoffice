@@ -28,6 +28,10 @@ declare
   v_provider jsonb;
 begin
   if old.status = 'draft' or new.status = old.status then return new; end if;
+  -- Older deployments request sent when reopening an answered proposal.
+  if old.status in ('accepted', 'rejected') and new.status = 'sent' then
+    new.status := 'draft';
+  end if;
   if new.status <> 'draft' then
     if old.status in ('accepted', 'rejected') then
       raise exception 'Reabre la propuesta antes de cambiar su respuesta';
@@ -109,8 +113,10 @@ declare fields text[] := array[
   'discount_type','discount_value','discount_reason'
 ];
 begin
-  if old.status <> 'draft' and (to_jsonb(new) - (array(select jsonb_object_keys(to_jsonb(new))) - fields))
-    is distinct from (to_jsonb(old) - (array(select jsonb_object_keys(to_jsonb(old))) - fields)) then
+  if old.status <> 'draft' and exists (
+    select 1 from unnest(fields) as f(name)
+    where to_jsonb(new) -> f.name is distinct from to_jsonb(old) -> f.name
+  ) then
     raise exception 'Reabre la propuesta para modificar su contenido';
   end if;
   if old.status not in ('draft', 'accepted') and new.payment_plan is distinct from old.payment_plan then
