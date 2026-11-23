@@ -14,6 +14,9 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import type { PortalLanguage } from '@/lib/portal/language'
+import { proposalTr } from '@/lib/proposals/public-copy'
+
 import { getDeckTapDirection } from './deck-navigation'
 import { buildSlides } from './deck-slides'
 import { DECK_STYLES } from './deck-styles'
@@ -27,35 +30,40 @@ const DeckGridOverlay = dynamic(
 const SWIPE_THRESHOLD = 60
 const HIDE_DELAY = 3000
 
-const SHORTCUTS = [
-  { key: '→ / Space', label: 'Siguiente diapositiva' },
-  { key: '←', label: 'Diapositiva anterior' },
-  { key: 'Home / End', label: 'Primera / última' },
-  { key: '1 – 9', label: 'Saltar a diapositiva N' },
-  { key: 'G', label: 'Vista general' },
-  { key: 'F', label: 'Pantalla completa' },
-  { key: 'P', label: 'Exportar PDF' },
-  { key: '?', label: 'Mostrar atajos' },
-  { key: 'Esc', label: 'Cerrar panel' },
-]
-
 export function DeckViewer({
   proposal,
   items,
   team,
   token,
   isDraft = false,
+  language = 'es',
 }: {
   proposal: DeckProposal
   items: DeckProposalItem[]
   team: DeckTeamMember[]
   token: string
   isDraft?: boolean
+  language?: PortalLanguage
 }) {
+  const tr = proposalTr(language)
+  const shortcuts = [
+    { key: '→ / Space', label: tr('Siguiente diapositiva', 'Diapositiva següent', 'Next slide') },
+    { key: '←', label: tr('Diapositiva anterior', 'Diapositiva anterior', 'Previous slide') },
+    { key: 'Home / End', label: tr('Primera / última', 'Primera / última', 'First / last') },
+    {
+      key: '1 – 9',
+      label: tr('Saltar a diapositiva N', 'Anar a la diapositiva N', 'Go to slide N'),
+    },
+    { key: 'G', label: tr('Vista general', 'Vista general', 'Overview') },
+    { key: 'F', label: tr('Pantalla completa', 'Pantalla completa', 'Full screen') },
+    { key: 'P', label: tr('Exportar PDF', 'Exportar PDF', 'Export PDF') },
+    { key: '?', label: tr('Mostrar atajos', 'Mostrar dreceres', 'Show shortcuts') },
+    { key: 'Esc', label: tr('Cerrar panel', 'Tancar el panell', 'Close panel') },
+  ]
   const watermark = proposal.client_email ?? proposal.client_name ?? undefined
   const slides = useMemo(
-    () => buildSlides(proposal, items, token, team, watermark),
-    [proposal, items, token, team, watermark],
+    () => buildSlides(proposal, items, token, team, watermark, language),
+    [proposal, items, token, team, watermark, language],
   )
   const total = slides.length
   const router = useRouter()
@@ -92,12 +100,12 @@ export function DeckViewer({
   useEffect(() => {
     if (current === total - 1) {
       try {
-        router.prefetch(`/p/proposal/${token}` as never)
+        router.prefetch(`/p/proposal/${token}?lang=${language}` as never)
       } catch {
         /* ignore */
       }
     }
-  }, [current, total, token, router])
+  }, [current, total, token, router, language])
 
   // Slide tracking
   useEffect(() => {
@@ -248,9 +256,15 @@ export function DeckViewer({
     <main className="deck-root">
       {isDraft && (
         <div className="no-print fixed inset-x-0 top-0 z-9999 flex items-center justify-center gap-2 bg-amber-400 px-4 py-1.5 text-xs font-semibold text-amber-950">
-          <span className="tracking-wider uppercase">Borrador</span>
+          <span className="tracking-wider uppercase">{tr('Borrador', 'Esborrany', 'Draft')}</span>
           <span className="opacity-60">·</span>
-          <span className="font-normal opacity-80">Vista previa — solo visible para el equipo</span>
+          <span className="font-normal opacity-80">
+            {tr(
+              'Vista previa — solo visible para el equipo',
+              'Vista prèvia — només visible per a l’equip',
+              'Preview — visible to the team only',
+            )}
+          </span>
         </div>
       )}
       <style>{DECK_STYLES}</style>
@@ -280,7 +294,7 @@ export function DeckViewer({
             className="deck-dot"
             data-active={i === current}
             onClick={() => goTo(i)}
-            aria-label={`Ir a diapositiva ${i + 1}`}
+            aria-label={`${tr('Ir a diapositiva', 'Anar a la diapositiva', 'Go to slide')} ${i + 1}`}
           />
         ))}
       </div>
@@ -289,7 +303,7 @@ export function DeckViewer({
           type="button"
           onClick={prev}
           disabled={current === 0}
-          aria-label="Anterior"
+          aria-label={tr('Anterior', 'Anterior', 'Previous')}
           className="deck-btn"
         >
           <ChevronLeft className="size-4" />
@@ -301,7 +315,7 @@ export function DeckViewer({
           type="button"
           onClick={next}
           disabled={current === total - 1}
-          aria-label="Siguiente"
+          aria-label={tr('Siguiente', 'Següent', 'Next')}
           className="deck-btn"
         >
           <ChevronRight className="size-4" />
@@ -310,8 +324,8 @@ export function DeckViewer({
         <button
           type="button"
           onClick={() => setGridOpen(true)}
-          aria-label="Vista general (G)"
-          title="Vista general (G)"
+          aria-label={`${tr('Vista general', 'Vista general', 'Overview')} (G)`}
+          title={`${tr('Vista general', 'Vista general', 'Overview')} (G)`}
           className="deck-btn"
         >
           <Grid3x3 className="size-4" />
@@ -319,8 +333,8 @@ export function DeckViewer({
         <button
           type="button"
           onClick={toggleFullscreen}
-          aria-label="Pantalla completa (F)"
-          title="Pantalla completa (F)"
+          aria-label={`${tr('Pantalla completa', 'Pantalla completa', 'Full screen')} (F)`}
+          title={`${tr('Pantalla completa', 'Pantalla completa', 'Full screen')} (F)`}
           className="deck-btn"
         >
           {fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
@@ -328,8 +342,8 @@ export function DeckViewer({
         <button
           type="button"
           onClick={() => window.print()}
-          aria-label="Exportar PDF (P)"
-          title="Exportar PDF (P)"
+          aria-label={`${tr('Exportar PDF', 'Exportar PDF', 'Export PDF')} (P)`}
+          title={`${tr('Exportar PDF', 'Exportar PDF', 'Export PDF')} (P)`}
           className="deck-btn"
         >
           <Printer className="size-4" />
@@ -339,8 +353,8 @@ export function DeckViewer({
         <button
           type="button"
           onClick={() => setShowHelp(true)}
-          aria-label="Atajos (?)"
-          title="Atajos (?)"
+          aria-label={`${tr('Atajos', 'Dreceres', 'Shortcuts')} (?)`}
+          title={`${tr('Atajos', 'Dreceres', 'Shortcuts')} (?)`}
           className="deck-btn"
         >
           <HelpCircle className="size-4" />
@@ -350,7 +364,11 @@ export function DeckViewer({
       {/* Arrow tooltip on first slide */}
       {showTooltip && current === 0 && (
         <div className="deck-tooltip no-print" aria-hidden onClick={() => setShowTooltip(false)}>
-          Usa las flechas → para navegar
+          {tr(
+            'Usa las flechas → para navegar',
+            'Fes servir les fletxes → per navegar',
+            'Use the arrow keys → to navigate',
+          )}
         </div>
       )}
 
@@ -376,34 +394,41 @@ export function DeckViewer({
           <div className="deck-overlay-help-inner" onClick={(e) => e.stopPropagation()}>
             {showHelp ? (
               <div className="mb-6 flex items-center justify-between">
-                <p className="text-sm font-semibold text-white/80">Atajos de teclado</p>
+                <p className="text-sm font-semibold text-white/80">
+                  {tr('Atajos de teclado', 'Dreceres de teclat', 'Keyboard shortcuts')}
+                </p>
                 <button
                   type="button"
                   className="deck-btn"
                   onClick={() => setShowHelp(false)}
-                  aria-label="Cerrar"
+                  aria-label={tr('Cerrar', 'Tancar', 'Close')}
                 >
                   <X className="size-4" />
                 </button>
               </div>
             ) : (
               <p className="mb-6 text-xs font-semibold tracking-[0.25em] text-white/40 uppercase">
-                Controles
+                {tr('Controles', 'Controls', 'Controls')}
               </p>
             )}
-            {SHORTCUTS.map((s) => (
+            {shortcuts.map((s) => (
               <div key={s.key} className="deck-shortcut-row">
                 <kbd className="deck-kbd">{s.key}</kbd>
                 <span className="deck-shortcut-label">{s.label}</span>
               </div>
             ))}
-            {!showHelp && <p className="mt-8 text-xs text-white/30">Haz clic para continuar</p>}
+            {!showHelp && (
+              <p className="mt-8 text-xs text-white/30">
+                {tr('Haz clic para continuar', 'Fes clic per continuar', 'Click to continue')}
+              </p>
+            )}
           </div>
         </div>
       )}
 
       {gridOpen && (
         <DeckGridOverlay
+          language={language}
           slides={slides}
           current={current}
           onSelect={(i) => {

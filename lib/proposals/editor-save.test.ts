@@ -75,6 +75,25 @@ describe('saveProposalEditorDraft', () => {
       { proposal_id: ID, member_id: MEMBER, position: 0 },
     ])
   })
+  it.each(['business', 'consumer'])(
+    'persists %s capacity in the versioned item save',
+    async (client_capacity) => {
+      expect(await saveProposalEditorDraft({ ...input, client_capacity })).toEqual({
+        ok: true,
+        version: 2,
+      })
+      expect(db.rpc).toHaveBeenCalledWith(
+        'update_proposal_items_versioned',
+        expect.objectContaining({ p_patch: expect.objectContaining({ client_capacity }) }),
+      )
+    },
+  )
+  it('rejects an invalid capacity before writing', async () => {
+    expect(await saveProposalEditorDraft({ ...input, client_capacity: 'unknown' })).toMatchObject({
+      ok: false,
+    })
+    expect(db.rpc).not.toHaveBeenCalled()
+  })
   it.each(['https://example.test/demo', null])(
     'persists demo URL %s in the atomic save',
     async (demo_url) => {

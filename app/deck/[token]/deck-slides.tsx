@@ -1,23 +1,21 @@
 import { ArrowRight, Download } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { createContext, type ReactNode, useContext } from 'react'
 
 import { LogoMark } from '@/components/branding'
 import { Markdown } from '@/components/ui/markdown'
-import {
-  BILLING_CYCLE_LABELS,
-  type BillingCycle,
-  computeProposalTotals,
-  type ProposalTotals,
-} from '@/lib/finance'
+import { type BillingCycle, computeProposalTotals, type ProposalTotals } from '@/lib/finance'
+import { formatPortalDate, formatPortalEUR, type PortalLanguage } from '@/lib/portal/language'
 import type { KeyPoint } from '@/lib/proposals/key-points'
 import {
-  PAYMENT_SCHEDULE_LABELS,
-  type ScopeModule,
-  scopeModuleDurationText,
-} from '@/lib/proposals/scope'
-import { formatDate, formatEUR } from '@/lib/utils'
+  proposalTr,
+  publicPaymentScheduleLabel,
+  publicScopeDuration,
+} from '@/lib/proposals/public-copy'
+import type { ScopeModule } from '@/lib/proposals/scope'
 
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from './page'
+
+const LanguageContext = createContext<PortalLanguage>('es')
 
 function buildTotals(items: DeckProposalItem[], proposal: DeckProposal): ProposalTotals {
   return computeProposalTotals(
@@ -78,6 +76,8 @@ function Stagger({
 }
 
 function CoverSlide({ proposal }: { proposal: DeckProposal }) {
+  const language = useContext(LanguageContext)
+  const tr = proposalTr(language)
   return (
     <div className="deck-slide bg-[#2A4227] p-6 text-center text-white sm:p-10 md:p-16 lg:p-24">
       <Stagger i={0}>
@@ -85,7 +85,7 @@ function CoverSlide({ proposal }: { proposal: DeckProposal }) {
       </Stagger>
       <Stagger i={1}>
         <p className="mb-4 text-[10px] font-semibold tracking-[0.25em] text-white/50 uppercase sm:mb-6 sm:text-xs sm:tracking-[0.3em]">
-          Propuesta {proposal.number}
+          {tr('Propuesta', 'Proposta', 'Proposal')} {proposal.number}
         </p>
       </Stagger>
       <Stagger i={2}>
@@ -105,7 +105,8 @@ function CoverSlide({ proposal }: { proposal: DeckProposal }) {
               />
             )}
             <p className="px-2 text-base font-light text-white/70 sm:text-xl md:text-2xl">
-              Preparado para <span className="font-medium text-white">{proposal.client_name}</span>
+              {tr('Preparado para', 'Preparat per a', 'Prepared for')}{' '}
+              <span className="font-medium text-white">{proposal.client_name}</span>
             </p>
           </div>
         </Stagger>
@@ -113,7 +114,8 @@ function CoverSlide({ proposal }: { proposal: DeckProposal }) {
       {proposal.valid_until && (
         <Stagger i={4}>
           <p className="mt-4 text-xs tracking-widest text-white/40 uppercase sm:mt-6 sm:text-sm">
-            Válida hasta {formatDate(proposal.valid_until)}
+            {tr('Válida hasta', 'Vàlida fins al', 'Valid until')}{' '}
+            {formatPortalDate(proposal.valid_until, language)}
           </p>
         </Stagger>
       )}
@@ -153,8 +155,12 @@ function SectionSlide({
 }
 
 function ContextSlide({ proposal }: { proposal: DeckProposal }) {
+  const tr = proposalTr(useContext(LanguageContext))
   return (
-    <SectionSlide label="Contexto" title="Dónde estamos hoy">
+    <SectionSlide
+      label={tr('Contexto', 'Context', 'Context')}
+      title={tr('Dónde estamos hoy', 'On som avui', 'Where we are today')}
+    >
       <div className="w-full max-w-3xl text-left">
         <Markdown
           source={proposal.context_markdown ?? ''}
@@ -218,17 +224,29 @@ function KeyPointsListSlide({
 }
 
 function CadenceBadge({ cycle }: { cycle: BillingCycle }) {
+  const tr = proposalTr(useContext(LanguageContext))
   if (cycle === 'none') return null
   return (
     <span className="inline-flex items-center rounded-full bg-[#2A4227]/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-[#2A4227] uppercase sm:text-xs">
-      {BILLING_CYCLE_LABELS[cycle]}
+      {
+        {
+          monthly: tr('Mensual', 'Mensual', 'Monthly'),
+          quarterly: tr('Trimestral', 'Trimestral', 'Quarterly'),
+          yearly: tr('Anual', 'Anual', 'Yearly'),
+        }[cycle]
+      }
     </span>
   )
 }
 
 function ServicesSlide({ items }: { items: DeckProposalItem[] }) {
+  const tr = proposalTr(useContext(LanguageContext))
   return (
-    <SectionSlide label="Servicios" title="Qué ofrecemos" accent="zinc">
+    <SectionSlide
+      label={tr('Servicios', 'Serveis', 'Services')}
+      title={tr('Qué ofrecemos', 'Què oferim', 'What we offer')}
+      accent="zinc"
+    >
       <ul className="flex w-full max-w-3xl flex-col gap-4 text-left sm:gap-6">
         {items.map((item, i) => {
           const cycle: BillingCycle = item.billing_cycle ?? 'none'
@@ -250,7 +268,7 @@ function ServicesSlide({ items }: { items: DeckProposalItem[] }) {
                 </div>
                 {item.quantity !== 1 && (
                   <p className="mt-0.5 text-xs text-zinc-500 sm:mt-1 sm:text-sm">
-                    {item.quantity} unidades
+                    {item.quantity} {tr('unidades', 'unitats', 'units')}
                   </p>
                 )}
               </div>
@@ -263,9 +281,12 @@ function ServicesSlide({ items }: { items: DeckProposalItem[] }) {
 }
 
 function ScopeModuleSlide({ module, index }: { module: ScopeModule; index: number }) {
+  const language = useContext(LanguageContext)
+  const tr = proposalTr(language)
+  const duration = publicScopeDuration(module, language)
   return (
     <SectionSlide
-      label={`Alcance · ${String(index + 1).padStart(2, '0')}`}
+      label={`${tr('Alcance', 'Abast', 'Scope')} · ${String(index + 1).padStart(2, '0')}`}
       title={module.title}
       accent="zinc"
     >
@@ -275,22 +296,30 @@ function ScopeModuleSlide({ module, index }: { module: ScopeModule; index: numbe
             {module.description}
           </p>
         ) : null}
-        {scopeModuleDurationText(module) ? (
+        {duration ? (
           <p className="mb-6 text-sm font-medium text-zinc-500">
-            Plazo estimado: {scopeModuleDurationText(module)}
+            {tr('Plazo estimado', 'Termini estimat', 'Estimated duration')}: {duration}
           </p>
         ) : null}
         <div className="grid gap-6 sm:grid-cols-2">
           {module.included.length > 0 ? (
-            <ScopeList title="Incluido" items={module.included} tone="included" />
+            <ScopeList
+              title={tr('Incluido', 'Inclòs', 'Included')}
+              items={module.included}
+              tone="included"
+            />
           ) : null}
           {module.excluded.length > 0 ? (
-            <ScopeList title="No incluido" items={module.excluded} tone="excluded" />
+            <ScopeList
+              title={tr('No incluido', 'No inclòs', 'Not included')}
+              items={module.excluded}
+              tone="excluded"
+            />
           ) : null}
         </div>
         {module.notes ? (
           <p className="mt-6 border-t border-zinc-200 pt-4 text-sm leading-relaxed text-zinc-500">
-            <strong>Notas:</strong> {module.notes}
+            <strong>{tr('Notas', 'Notes', 'Notes')}:</strong> {module.notes}
           </p>
         ) : null}
       </div>
@@ -327,20 +356,32 @@ function ScopeList({
 }
 
 function DeliverySlide({ proposal }: { proposal: DeckProposal }) {
+  const tr = proposalTr(useContext(LanguageContext))
   const deliverables = proposal.deliverables?.trim()
   const acceptanceCriteria = proposal.acceptance_criteria?.trim()
   return (
-    <SectionSlide label="Entrega" title="Cómo validaremos el proyecto">
+    <SectionSlide
+      label={tr('Entrega', 'Lliurament', 'Delivery')}
+      title={tr(
+        'Cómo validaremos el proyecto',
+        'Com validarem el projecte',
+        'How we will validate the project',
+      )}
+    >
       <div className="grid max-w-3xl gap-8 text-left sm:grid-cols-2">
         {deliverables ? (
           <div>
-            <p className="mb-3 text-sm font-semibold text-zinc-900">Entregables</p>
+            <p className="mb-3 text-sm font-semibold text-zinc-900">
+              {tr('Entregables', 'Lliurables', 'Deliverables')}
+            </p>
             <Markdown source={deliverables} className="deck-markdown text-sm text-zinc-600" />
           </div>
         ) : null}
         {acceptanceCriteria ? (
           <div>
-            <p className="mb-3 text-sm font-semibold text-zinc-900">Criterios de aceptación</p>
+            <p className="mb-3 text-sm font-semibold text-zinc-900">
+              {tr('Criterios de aceptación', 'Criteris d’acceptació', 'Acceptance criteria')}
+            </p>
             <Markdown source={acceptanceCriteria} className="deck-markdown text-sm text-zinc-600" />
           </div>
         ) : null}
@@ -356,51 +397,61 @@ function PricingTotals({
   totals: ProposalTotals
   globalReason?: string | null
 }) {
+  const language = useContext(LanguageContext)
+  const tr = proposalTr(language)
+  const formatEUR = (value: number) => formatPortalEUR(value, language)
   const { gross, lineDiscount, globalDiscount } = totals.discounts
   const recurring = hasRecurring(totals)
   const recurringBuckets = [
-    { label: 'Mensual', bucket: totals.monthly },
-    { label: 'Trimestral', bucket: totals.quarterly },
-    { label: 'Anual', bucket: totals.yearly },
+    { label: tr('Mensual', 'Mensual', 'Monthly'), bucket: totals.monthly },
+    { label: tr('Trimestral', 'Trimestral', 'Quarterly'), bucket: totals.quarterly },
+    { label: tr('Anual', 'Anual', 'Yearly'), bucket: totals.yearly },
   ].filter(({ bucket }) => bucket.total > 0)
   return (
     <div className="flex w-full flex-col items-end gap-3">
       <div className="flex flex-col items-end gap-2">
         {recurring ? (
           <p className="text-[10px] font-semibold tracking-[0.25em] text-zinc-400 uppercase sm:text-xs">
-            Inversión inicial
+            {tr('Inversión inicial', 'Inversió inicial', 'Initial investment')}
           </p>
         ) : null}
         {lineDiscount > 0 || globalDiscount > 0 ? (
           <div className="flex flex-col items-end gap-1 text-xs text-zinc-500 sm:text-sm">
             <div className="flex gap-6 sm:gap-12">
-              <span>Importe bruto</span>
+              <span>{tr('Importe bruto', 'Import brut', 'Gross amount')}</span>
               <span className="tabular-nums">{formatEUR(gross)}</span>
             </div>
             {lineDiscount > 0 ? (
               <div className="flex gap-6 text-emerald-700 sm:gap-12">
-                <span>Descuentos en partidas</span>
+                <span>
+                  {tr('Descuentos en partidas', 'Descomptes en partides', 'Line discounts')}
+                </span>
                 <span className="tabular-nums">−{formatEUR(lineDiscount)}</span>
               </div>
             ) : null}
             {globalDiscount > 0 ? (
               <div className="flex gap-6 text-emerald-700 sm:gap-12">
-                <span>Descuento{globalReason ? ` · ${globalReason}` : ''}</span>
+                <span>
+                  {tr('Descuento', 'Descompte', 'Discount')}
+                  {globalReason ? ` · ${globalReason}` : ''}
+                </span>
                 <span className="tabular-nums">−{formatEUR(globalDiscount)}</span>
               </div>
             ) : null}
           </div>
         ) : null}
         <div className="flex items-baseline gap-6 text-xl font-semibold text-zinc-900 sm:gap-12 sm:text-2xl">
-          <span>Importe antes de IVA</span>
+          <span>{tr('Importe antes de IVA', 'Import abans d’IVA', 'Amount before VAT')}</span>
           <span className="tabular-nums">{formatEUR(totals.oneTime.subtotal)}</span>
         </div>
         <div className="flex gap-6 text-xs text-zinc-500 sm:gap-12 sm:text-sm">
-          <span>IVA aplicable</span>
+          <span>{tr('IVA aplicable', 'IVA aplicable', 'Applicable VAT')}</span>
           <span className="tabular-nums">{formatEUR(totals.oneTime.taxAmount)}</span>
         </div>
         <div className="mt-1 flex gap-6 border-t border-zinc-200 pt-2 text-xs font-medium text-zinc-500 sm:gap-12 sm:text-sm">
-          <span>Total previsto con IVA</span>
+          <span>
+            {tr('Total previsto con IVA', 'Total previst amb IVA', 'Estimated total including VAT')}
+          </span>
           <span className="tabular-nums">{formatEUR(totals.oneTime.total)}</span>
         </div>
       </div>
@@ -408,16 +459,21 @@ function PricingTotals({
       {recurring ? (
         <div className="flex w-full flex-col items-end gap-2 border-t border-zinc-200 pt-4">
           <p className="text-[10px] font-semibold tracking-[0.25em] text-[#2A4227] uppercase sm:text-xs">
-            Mantenimiento recurrente
+            {tr('Mantenimiento recurrente', 'Manteniment recurrent', 'Recurring maintenance')}
           </p>
           {recurringBuckets.map(({ label, bucket }) => (
             <div key={label} className="flex flex-col items-end gap-1">
               <div className="flex gap-6 text-sm font-medium text-zinc-700 sm:gap-12 sm:text-base">
-                <span>{label} · antes de IVA</span>
+                <span>
+                  {label} · {tr('antes de IVA', 'abans d’IVA', 'before VAT')}
+                </span>
                 <span className="tabular-nums">{formatEUR(bucket.subtotal)}</span>
               </div>
               <div className="flex gap-6 text-[10px] text-zinc-500 sm:gap-12 sm:text-xs">
-                <span>IVA {formatEUR(bucket.taxAmount)} · Total con IVA</span>
+                <span>
+                  {tr('IVA', 'IVA', 'VAT')} {formatEUR(bucket.taxAmount)} ·{' '}
+                  {tr('Total con IVA', 'Total amb IVA', 'Total including VAT')}
+                </span>
                 <span className="tabular-nums">{formatEUR(bucket.total)}</span>
               </div>
             </div>
@@ -429,21 +485,27 @@ function PricingTotals({
 }
 
 function PricingSlide({ proposal, items }: { proposal: DeckProposal; items: DeckProposalItem[] }) {
+  const language = useContext(LanguageContext)
+  const tr = proposalTr(language)
+  const formatEUR = (value: number) => formatPortalEUR(value, language)
   const totals = buildTotals(items, proposal)
   return (
-    <SectionSlide label="Inversión" title="Detalle económico">
+    <SectionSlide
+      label={tr('Inversión', 'Inversió', 'Investment')}
+      title={tr('Detalle económico', 'Detall econòmic', 'Pricing details')}
+    >
       <div className="w-full max-w-3xl">
         <table className="mb-6 w-full text-left text-xs sm:mb-8 sm:text-sm md:text-base">
           <thead>
             <tr className="border-b border-zinc-200">
               <th className="py-2 text-left text-[10px] font-medium tracking-wider text-zinc-500 uppercase sm:py-3 sm:text-xs">
-                Descripción
+                {tr('Descripción', 'Descripció', 'Description')}
               </th>
               <th className="hidden py-3 text-right text-xs font-medium tracking-wider text-zinc-500 uppercase sm:table-cell">
-                Cant.
+                {tr('Cant.', 'Quant.', 'Qty.')}
               </th>
               <th className="hidden py-3 text-right text-xs font-medium tracking-wider text-zinc-500 uppercase sm:table-cell">
-                Precio
+                {tr('Precio', 'Preu', 'Price')}
               </th>
               <th className="py-2 text-right text-[10px] font-medium tracking-wider text-zinc-500 uppercase sm:py-3 sm:text-xs">
                 Subtotal
@@ -501,8 +563,16 @@ function PricingSlide({ proposal, items }: { proposal: DeckProposal; items: Deck
 }
 
 function TeamSlide({ team }: { team: DeckTeamMember[] }) {
+  const tr = proposalTr(useContext(LanguageContext))
   return (
-    <SectionSlide label="El equipo" title="Quién trabajará en tu proyecto">
+    <SectionSlide
+      label={tr('El equipo', 'L’equip', 'The team')}
+      title={tr(
+        'Quién trabajará en tu proyecto',
+        'Qui treballarà en el teu projecte',
+        'Who will work on your project',
+      )}
+    >
       <div className="flex max-w-3xl flex-wrap justify-center gap-6 sm:gap-10">
         {team.map((member, i) => (
           <div
@@ -544,10 +614,16 @@ function PricingBarChart({
   proposal: DeckProposal
   items: DeckProposalItem[]
 }) {
+  const language = useContext(LanguageContext)
+  const tr = proposalTr(language)
+  const formatEUR = (value: number) => formatPortalEUR(value, language)
   const maxVal = Math.max(...items.map((i) => i.subtotal), 1)
   const totals = buildTotals(items, proposal)
   return (
-    <SectionSlide label="Inversión" title="Detalle económico">
+    <SectionSlide
+      label={tr('Inversión', 'Inversió', 'Investment')}
+      title={tr('Detalle económico', 'Detall econòmic', 'Pricing details')}
+    >
       <div className="w-full max-w-3xl">
         <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:gap-5">
           {items.map((item, i) => {
@@ -584,21 +660,31 @@ function PricingBarChart({
 }
 
 function TermsSlide({ proposal }: { proposal: DeckProposal }) {
+  const language = useContext(LanguageContext)
+  const tr = proposalTr(language)
   return (
-    <SectionSlide label="Condiciones" title="Términos del acuerdo" accent="zinc">
+    <SectionSlide
+      label={tr('Condiciones', 'Condicions', 'Terms')}
+      title={tr('Términos del acuerdo', 'Termes de l’acord', 'Agreement terms')}
+      accent="zinc"
+    >
       <div className="w-full max-w-3xl text-left">
         {proposal.payment_terms ? (
           <div className="mb-6">
-            <p className="text-sm font-semibold text-zinc-900">Forma de pago</p>
+            <p className="text-sm font-semibold text-zinc-900">
+              {tr('Forma de pago', 'Forma de pagament', 'Payment terms')}
+            </p>
             <p className="mt-1 text-xs font-semibold tracking-wider text-[#2A4227] uppercase">
-              {PAYMENT_SCHEDULE_LABELS[proposal.payment_schedule]}
+              {publicPaymentScheduleLabel(proposal.payment_schedule, language)}
             </p>
             <p className="mt-2 text-sm leading-relaxed text-zinc-600">{proposal.payment_terms}</p>
           </div>
         ) : null}
         {proposal.change_management_terms ? (
           <div className="mb-6">
-            <p className="text-sm font-semibold text-zinc-900">Cambios de alcance</p>
+            <p className="text-sm font-semibold text-zinc-900">
+              {tr('Cambios de alcance', 'Canvis d’abast', 'Scope changes')}
+            </p>
             <p className="mt-2 text-sm leading-relaxed text-zinc-600">
               {proposal.change_management_terms}
             </p>
@@ -614,6 +700,8 @@ function TermsSlide({ proposal }: { proposal: DeckProposal }) {
 }
 
 function ClosingSlide({ proposal, token }: { proposal: DeckProposal; token: string }) {
+  const language = useContext(LanguageContext)
+  const tr = proposalTr(language)
   return (
     <div className="deck-slide bg-[#2A4227] p-6 text-center text-white sm:p-10 md:p-16 lg:p-24">
       <Stagger i={0}>
@@ -621,29 +709,41 @@ function ClosingSlide({ proposal, token }: { proposal: DeckProposal; token: stri
       </Stagger>
       <Stagger i={1}>
         <h2 className="mb-4 text-4xl font-bold tracking-tight sm:mb-6 sm:text-5xl md:text-6xl lg:text-7xl">
-          ¿Hablamos?
+          {tr('¿Hablamos?', 'En parlem?', 'Shall we talk?')}
         </h2>
       </Stagger>
       <Stagger i={2}>
         <p className="mb-8 max-w-xl px-2 text-base leading-relaxed font-light text-white/60 sm:mb-12 sm:text-lg md:text-xl">
-          Estamos listos para empezar. Cuando confirmes, arrancamos.
+          {tr(
+            'Estamos listos para empezar. Cuando confirmes, arrancamos.',
+            'Estem preparats per començar. Quan confirmis, ens posem en marxa.',
+            'We are ready to start when you confirm.',
+          )}
         </p>
       </Stagger>
       <Stagger i={3}>
         <div className="flex flex-col items-center gap-3">
           <a
-            href={`/p/proposal/${token}`}
+            href={`/p/proposal/${token}?lang=${language}`}
             className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#2A4227] shadow-lg transition-all hover:gap-4 hover:bg-white/90 sm:gap-3 sm:px-8 sm:py-4 sm:text-base"
           >
-            Ver propuesta y aceptar
+            {tr(
+              'Ver propuesta y aceptar',
+              'Veure i acceptar la proposta',
+              'View and accept proposal',
+            )}
             <ArrowRight className="size-4 sm:size-5" />
           </a>
           <a
-            href={`/p/proposal/${token}/pdf`}
+            href={`/p/proposal/${token}/pdf?lang=${language}`}
             className="inline-flex items-center gap-2 rounded-full border border-white/35 px-5 py-2.5 text-xs font-semibold text-white/90 transition-colors hover:border-white hover:bg-white/10"
           >
             <Download className="size-3.5" />
-            Descargar propuesta en PDF
+            {tr(
+              'Descargar propuesta en PDF',
+              'Descarregar la proposta en PDF',
+              'Download proposal as PDF',
+            )}
           </a>
         </div>
       </Stagger>
@@ -664,14 +764,19 @@ export function buildSlides(
   token: string,
   team: DeckTeamMember[] = [],
   watermark?: string,
+  language: PortalLanguage = 'es',
 ): DeckSlide[] {
-  const wm = (el: ReactNode): ReactNode =>
-    watermark ? <SlideWrapper watermark={watermark}>{el}</SlideWrapper> : el
+  const tr = proposalTr(language)
+  const wm = (el: ReactNode): ReactNode => (
+    <LanguageContext.Provider value={language}>
+      {watermark ? <SlideWrapper watermark={watermark}>{el}</SlideWrapper> : el}
+    </LanguageContext.Provider>
+  )
 
   const slides: DeckSlide[] = []
   slides.push({
     key: 'cover',
-    label: 'Portada',
+    label: tr('Portada', 'Portada', 'Cover'),
     accent: 'green',
     element: wm(<CoverSlide proposal={proposal} />),
   })
@@ -681,7 +786,7 @@ export function buildSlides(
   if (proposal.context_markdown?.trim()) {
     slides.push({
       key: 'context',
-      label: 'Contexto',
+      label: tr('Contexto', 'Context', 'Context'),
       accent: 'white',
       element: wm(<ContextSlide proposal={proposal} />),
     })
@@ -689,12 +794,12 @@ export function buildSlides(
   if (proposal.problems.length > 0) {
     slides.push({
       key: 'problems',
-      label: 'Retos',
+      label: tr('Retos', 'Reptes', 'Challenges'),
       accent: 'zinc',
       element: wm(
         <KeyPointsListSlide
-          label="Retos detectados"
-          title="Lo que queremos resolver"
+          label={tr('Retos detectados', 'Reptes detectats', 'Challenges identified')}
+          title={tr('Lo que queremos resolver', 'Allò que volem resoldre', 'What we want to solve')}
           items={proposal.problems}
           accent="zinc"
           badgeVariant="muted"
@@ -705,12 +810,12 @@ export function buildSlides(
   if (proposal.solutions.length > 0) {
     slides.push({
       key: 'solutions',
-      label: 'Solución',
+      label: tr('Solución', 'Solució', 'Solution'),
       accent: 'white',
       element: wm(
         <KeyPointsListSlide
-          label="Nuestra propuesta"
-          title="Cómo lo abordamos"
+          label={tr('Nuestra propuesta', 'La nostra proposta', 'Our proposal')}
+          title={tr('Cómo lo abordamos', 'Com ho abordem', 'How we approach it')}
           items={proposal.solutions}
           accent="white"
           badgeVariant="brand"
@@ -721,7 +826,7 @@ export function buildSlides(
   proposal.scope_modules.forEach((module, index) => {
     slides.push({
       key: `scope-${module.id}`,
-      label: `Módulo ${index + 1}`,
+      label: `${tr('Módulo', 'Mòdul', 'Module')} ${index + 1}`,
       accent: 'zinc',
       element: wm(<ScopeModuleSlide module={module} index={index} />),
     })
@@ -729,7 +834,7 @@ export function buildSlides(
   if (proposal.deliverables?.trim() || proposal.acceptance_criteria?.trim()) {
     slides.push({
       key: 'delivery',
-      label: 'Entrega',
+      label: tr('Entrega', 'Lliurament', 'Delivery'),
       accent: 'white',
       element: wm(<DeliverySlide proposal={proposal} />),
     })
@@ -737,10 +842,17 @@ export function buildSlides(
   if (proposal.development_approach?.trim()) {
     slides.push({
       key: 'development-approach',
-      label: 'Cómo trabajaremos',
+      label: tr('Cómo trabajaremos', 'Com treballarem', 'How we will work'),
       accent: 'white',
       element: wm(
-        <SectionSlide label="Desarrollo" title="Cómo trabajaremos durante el desarrollo">
+        <SectionSlide
+          label={tr('Desarrollo', 'Desenvolupament', 'Development')}
+          title={tr(
+            'Cómo trabajaremos durante el desarrollo',
+            'Com treballarem durant el desenvolupament',
+            'How we will work during development',
+          )}
+        >
           <div className="w-full max-w-3xl text-left">
             <Markdown
               source={proposal.development_approach}
@@ -754,7 +866,7 @@ export function buildSlides(
   if (team.length > 0) {
     slides.push({
       key: 'team',
-      label: 'Equipo',
+      label: tr('Equipo', 'Equip', 'Team'),
       accent: 'white',
       element: wm(<TeamSlide team={team} />),
     })
@@ -762,7 +874,7 @@ export function buildSlides(
   if (items.length > 0) {
     slides.push({
       key: 'services',
-      label: 'Servicios',
+      label: tr('Servicios', 'Serveis', 'Services'),
       accent: 'zinc',
       element: wm(<ServicesSlide items={items} />),
     })
@@ -772,19 +884,24 @@ export function buildSlides(
       ) : (
         <PricingSlide proposal={proposal} items={items} />
       )
-    slides.push({ key: 'pricing', label: 'Inversión', accent: 'white', element: wm(pricing) })
+    slides.push({
+      key: 'pricing',
+      label: tr('Inversión', 'Inversió', 'Investment'),
+      accent: 'white',
+      element: wm(pricing),
+    })
   }
   if (proposal.payment_terms || proposal.change_management_terms || proposal.terms) {
     slides.push({
       key: 'terms',
-      label: 'Condiciones',
+      label: tr('Condiciones', 'Condicions', 'Terms'),
       accent: 'zinc',
       element: wm(<TermsSlide proposal={proposal} />),
     })
   }
   slides.push({
     key: 'closing',
-    label: 'Cierre',
+    label: tr('Cierre', 'Tancament', 'Closing'),
     accent: 'green',
     element: wm(<ClosingSlide proposal={proposal} token={token} />),
   })

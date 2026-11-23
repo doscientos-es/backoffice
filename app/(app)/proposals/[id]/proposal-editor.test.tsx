@@ -86,6 +86,20 @@ describe('ProposalEditor', () => {
     )
   })
 
+  it('defaults to business and saves the selected consumer capacity', async () => {
+    render(<ProposalEditor {...props} />)
+    const capacity = screen.getByLabelText('Tipo de contratación') as HTMLSelectElement
+    expect(capacity.value).toBe('business')
+    fireEvent.change(capacity, { target: { value: 'consumer' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
+    await waitFor(() =>
+      expect(saveProposal).toHaveBeenCalledWith(
+        expect.objectContaining({ client_capacity: 'consumer' }),
+      ),
+    )
+  })
+
   it.each(['https://example.test/new-demo', ''])(
     'saves an edited or removed demo URL',
     async (value) => {

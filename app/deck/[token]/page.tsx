@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 import type { BillingCycle } from '@/lib/finance'
 import { scopedLogger } from '@/lib/logger'
+import { resolvePortalLanguage } from '@/lib/portal/language'
 import { type KeyPoint, parseKeyPoints } from '@/lib/proposals/key-points'
 import { insertPageViewEvent, recordClientProposalView } from '@/lib/proposals/record-client-view'
 import { type PaymentSchedule, parseScopeModules, type ScopeModule } from '@/lib/proposals/scope'
@@ -90,8 +91,15 @@ export async function generateMetadata({
   }
 }
 
-export default async function DeckPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function DeckPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>
+  searchParams: Promise<{ lang?: string }>
+}) {
   const { token } = await params
+  const { lang } = await searchParams
   const admin = createAdminClient()
 
   // Resolve auth first so team members can preview drafts.
@@ -100,7 +108,7 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
 
   const { data: proposal, error: proposalError } = await admin
     .from('proposals')
-    .select('*, clients(name, email, logo_url)')
+    .select('*, clients(name, email, logo_url, leads(language)), leads(language)')
     .eq('portal_token', token)
     .is('deleted_at', null)
     .maybeSingle()
@@ -114,6 +122,11 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
   if (!proposal || (proposal.status === 'draft' && !isTeam)) notFound()
 
   const isDraft = proposal.status === 'draft'
+  const language = resolvePortalLanguage(
+    (proposal.leads as { language?: string | null } | null)?.language ??
+      (proposal.clients as { leads?: { language?: string | null } | null } | null)?.leads?.language,
+    lang,
+  )
 
   const [{ data: items }, { data: proposalTeam }] = await Promise.all([
     admin
@@ -234,6 +247,7 @@ export default async function DeckPage({ params }: { params: Promise<{ token: st
       team={deckTeam}
       token={token}
       isDraft={isDraft}
+      language={language}
     />
   )
 }

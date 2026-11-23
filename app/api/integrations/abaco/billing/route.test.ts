@@ -81,4 +81,12 @@ describe('Ábaco subscription integration', () => {
     expect(await response.json()).toEqual({ status: 'fiscal_pending' })
     expect(fulfill).toHaveBeenCalledWith(payment)
   })
+
+  it('accepts subscription invoices for the standard plan', async () => {
+    fulfill.mockResolvedValue({ status: 'fiscal_pending' })
+    const standard = { ...payment, plan: 'standard' }
+    const response = await post({ action: 'issue', payment: standard })
+    expect(response.status).toBe(200)
+    expect(fulfill).toHaveBeenCalledWith(standard)
+  })
 })

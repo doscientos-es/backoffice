@@ -11,19 +11,23 @@ import {
   View,
 } from '@react-pdf/renderer'
 
+import { formatPortalDate, formatPortalEUR, type PortalLanguage } from '@/lib/portal/language'
 import {
-  handwrittenStrokePath,
   type HandwrittenSignature,
+  handwrittenStrokePath,
   type ProviderSignature,
 } from '@/lib/proposals/handwritten-signature'
 import type { KeyPoint } from '@/lib/proposals/key-points'
 import { type MaintenanceOffer, recommendedMaintenancePlanId } from '@/lib/proposals/maintenance'
 import {
-  PAYMENT_SCHEDULE_LABELS,
+  proposalTr,
+  publicPaymentScheduleLabel,
+  publicScopeDuration,
+} from '@/lib/proposals/public-copy'
+import {
   type PaymentSchedule,
   paymentInitialPercentage,
   type ScopeModule,
-  scopeModuleDurationText,
 } from '@/lib/proposals/scope'
 
 const BRAND = '#2A4227'
@@ -305,17 +309,8 @@ function SignatureDrawing({ signature }: { signature: HandwrittenSignature }) {
   )
 }
 
-function money(value: number): string {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)
-}
-
-function date(value: string | null): string | null {
-  if (!value) return null
-  return new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date(value))
-}
-
-function dateTime(value: string): string {
-  return new Intl.DateTimeFormat('es-ES', {
+function dateTime(value: string, language: PortalLanguage): string {
+  return new Intl.DateTimeFormat(`${language}-${language === 'en' ? 'GB' : 'ES'}`, {
     dateStyle: 'long',
     timeStyle: 'short',
     timeZone: 'UTC',
@@ -374,7 +369,14 @@ function PointList({ points }: { points: KeyPoint[] }) {
   )
 }
 
-function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
+function ScopeModuleList({
+  modules,
+  language,
+}: {
+  modules: ScopeModule[]
+  language: PortalLanguage
+}) {
+  const tr = proposalTr(language)
   return (
     <>
       {modules.map((module, index) => (
@@ -383,26 +385,32 @@ function ScopeModuleList({ modules }: { modules: ScopeModule[] }) {
             style={styles.pointTitle}
           >{`${String(index + 1).padStart(2, '0')} · ${module.title}`}</Text>
           {module.description ? <Text style={styles.pointText}>{module.description}</Text> : null}
-          {scopeModuleDurationText(module) ? (
+          {publicScopeDuration(module, language) ? (
             <Text
               style={styles.pointText}
-            >{`Plazo estimado: ${scopeModuleDurationText(module)}`}</Text>
+            >{`${tr('Plazo estimado', 'Termini estimat', 'Estimated duration')}: ${publicScopeDuration(module, language)}`}</Text>
           ) : null}
           {module.included.length > 0 ? (
             <Text style={[styles.pointText, { color: BRAND, fontFamily: 'Helvetica-Bold' }]}>
-              Incluido
+              {tr('Incluido', 'Inclòs', 'Included')}
             </Text>
           ) : null}
           {module.included.map((item) => (
             <Text key={`included-${item}`} style={styles.bullet}>{`• ${item}`}</Text>
           ))}
           {module.excluded.length > 0 ? (
-            <Text style={[styles.pointText, { fontFamily: 'Helvetica-Bold' }]}>No incluido</Text>
+            <Text style={[styles.pointText, { fontFamily: 'Helvetica-Bold' }]}>
+              {tr('No incluido', 'No inclòs', 'Not included')}
+            </Text>
           ) : null}
           {module.excluded.map((item) => (
             <Text key={`excluded-${item}`} style={styles.bullet}>{`• ${item}`}</Text>
           ))}
-          {module.notes ? <Text style={styles.pointText}>{`Notas: ${module.notes}`}</Text> : null}
+          {module.notes ? (
+            <Text
+              style={styles.pointText}
+            >{`${tr('Notas', 'Notes', 'Notes')}: ${module.notes}`}</Text>
+          ) : null}
         </View>
       ))}
     </>
@@ -438,14 +446,23 @@ function LegalTerms({ source }: { source: string }) {
   )
 }
 
-function MaintenancePlanList({ offer }: { offer: MaintenanceOffer }) {
+function MaintenancePlanList({
+  offer,
+  language,
+}: {
+  offer: MaintenanceOffer
+  language: PortalLanguage
+}) {
+  const tr = proposalTr(language)
   const recommendedPlanId = recommendedMaintenancePlanId(offer)
   return (
     <View style={styles.maintenanceTable}>
       <View style={styles.tableHeader}>
-        <Text style={[styles.tableHeaderText, { width: '74%' }]}>Cobertura</Text>
+        <Text style={[styles.tableHeaderText, { width: '74%' }]}>
+          {tr('Cobertura', 'Cobertura', 'Coverage')}
+        </Text>
         <Text style={[styles.tableHeaderText, { textAlign: 'right', width: '26%' }]}>
-          Cuota mensual
+          {tr('Cuota mensual', 'Quota mensual', 'Monthly fee')}
         </Text>
       </View>
       {offer.plans.map((plan) => {
@@ -455,21 +472,27 @@ function MaintenancePlanList({ offer }: { offer: MaintenanceOffer }) {
             <View style={{ width: '74%' }}>
               <Text style={styles.maintenancePlanName}>{plan.name}</Text>
               {recommended ? (
-                <Text style={styles.maintenanceRecommendation}>Recomendado</Text>
+                <Text style={styles.maintenanceRecommendation}>
+                  {tr('Recomendado', 'Recomanat', 'Recommended')}
+                </Text>
               ) : null}
               <Text style={styles.maintenanceSummary}>{plan.summary}</Text>
-              <Text style={styles.maintenanceListLabel}>Incluye</Text>
+              <Text style={styles.maintenanceListLabel}>{tr('Incluye', 'Inclou', 'Includes')}</Text>
               <Text style={styles.maintenanceList}>{plan.coverage.join(' · ')}</Text>
               {plan.exclusions.length > 0 ? (
                 <>
-                  <Text style={styles.maintenanceListLabel}>No incluye</Text>
+                  <Text style={styles.maintenanceListLabel}>
+                    {tr('No incluye', 'No inclou', 'Excludes')}
+                  </Text>
                   <Text style={styles.maintenanceList}>{plan.exclusions.join(' · ')}</Text>
                 </>
               ) : null}
             </View>
             <View style={{ width: '26%' }}>
-              <Text style={styles.maintenancePrice}>{`${money(plan.monthly_price)} / mes`}</Text>
-              <Text style={styles.maintenanceVat}>+ IVA</Text>
+              <Text
+                style={styles.maintenancePrice}
+              >{`${formatPortalEUR(plan.monthly_price, language)} / ${tr('mes', 'mes', 'month')}`}</Text>
+              <Text style={styles.maintenanceVat}>+ {tr('IVA', 'IVA', 'VAT')}</Text>
             </View>
           </View>
         )
@@ -480,6 +503,8 @@ function MaintenancePlanList({ offer }: { offer: MaintenanceOffer }) {
 
 function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const language = data.language ?? 'es'
+  const tr = proposalTr(language)
+  const money = (value: number) => formatPortalEUR(value, language)
   const ca = language === 'ca'
   const en = language === 'en'
   const copy = {
@@ -552,7 +577,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         : 'No se ha solicitado el inicio anticipado; los servicios comenzarán tras el plazo de desistimiento.',
     declaration: ca ? 'Declaració acceptada' : en ? 'Accepted declaration' : 'Declaración aceptada',
   }
-  const validUntil = date(data.validUntil)
+  const validUntil = data.validUntil ? formatPortalDate(data.validUntil, language) : null
   const hasRecurring = data.items.some((item) => item.billingCycle && item.billingCycle !== 'none')
   const deliverables = data.deliverables?.trim()
   const developmentApproach = data.developmentApproach?.trim()
@@ -569,7 +594,13 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </Text>
         </View>
         <View style={styles.coverHero}>
-          <Text style={styles.eyebrow}>Una propuesta para avanzar</Text>
+          <Text style={styles.eyebrow}>
+            {tr(
+              'Una propuesta para avanzar',
+              'Una proposta per avançar',
+              'A proposal to move forward',
+            )}
+          </Text>
           <Text style={styles.coverTitle}>{data.title}</Text>
           <Text style={styles.coverRecipient}>
             {copy.prepared} {data.recipientName}
@@ -600,7 +631,9 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         {data.context ? (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{copy.context}</Text>
-            <Text style={styles.sectionTitle}>El punto de partida</Text>
+            <Text style={styles.sectionTitle}>
+              {tr('El punto de partida', 'El punt de partida', 'The starting point')}
+            </Text>
             <Text style={styles.body}>{printableMarkdown(data.context)}</Text>
           </View>
         ) : null}
@@ -608,15 +641,21 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         {data.problems.length > 0 ? (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{copy.challenges}</Text>
-            <Text style={styles.sectionTitle}>Lo que queremos resolver</Text>
+            <Text style={styles.sectionTitle}>
+              {tr('Lo que queremos resolver', 'Allò que volem resoldre', 'What we want to solve')}
+            </Text>
             <PointList points={data.problems} />
           </View>
         ) : null}
 
         {data.solutions.length > 0 ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Nuestra propuesta</Text>
-            <Text style={styles.sectionTitle}>Cómo lo abordamos</Text>
+            <Text style={styles.sectionLabel}>
+              {tr('Nuestra propuesta', 'La nostra proposta', 'Our proposal')}
+            </Text>
+            <Text style={styles.sectionTitle}>
+              {tr('Cómo lo abordamos', 'Com ho abordem', 'How we approach it')}
+            </Text>
             <PointList points={data.solutions} />
           </View>
         ) : null}
@@ -627,23 +666,35 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             break={Boolean(data.context || data.problems.length || data.solutions.length)}
           >
             <Text style={styles.sectionLabel}>{copy.proposalScope}</Text>
-            <Text style={styles.sectionTitle}>Qué incluye esta propuesta</Text>
-            <ScopeModuleList modules={data.scopeModules} />
+            <Text style={styles.sectionTitle}>
+              {tr(
+                'Qué incluye esta propuesta',
+                'Què inclou aquesta proposta',
+                'What this proposal includes',
+              )}
+            </Text>
+            <ScopeModuleList modules={data.scopeModules} language={language} />
           </View>
         ) : null}
 
         {deliverables || acceptanceCriteria ? (
           <View style={styles.section} break={data.scopeModules.length > 0}>
-            <Text style={styles.sectionLabel}>Entrega y validación</Text>
+            <Text style={styles.sectionLabel}>
+              {tr('Entrega y validación', 'Lliurament i validació', 'Delivery and validation')}
+            </Text>
             {deliverables ? (
               <>
-                <Text style={styles.pointTitle}>Entregables</Text>
+                <Text style={styles.pointTitle}>
+                  {tr('Entregables', 'Lliurables', 'Deliverables')}
+                </Text>
                 <Text style={styles.body}>{printableMarkdown(deliverables)}</Text>
               </>
             ) : null}
             {acceptanceCriteria ? (
               <>
-                <Text style={[styles.pointTitle, { marginTop: 12 }]}>Criterios de aceptación</Text>
+                <Text style={[styles.pointTitle, { marginTop: 12 }]}>
+                  {tr('Criterios de aceptación', 'Criteris d’acceptació', 'Acceptance criteria')}
+                </Text>
                 <Text style={styles.body}>{printableMarkdown(acceptanceCriteria)}</Text>
               </>
             ) : null}
@@ -704,7 +755,9 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           )}
         >
           <Text style={styles.sectionLabel}>{copy.economics}</Text>
-          <Text style={styles.sectionTitle}>Inversión y alcance</Text>
+          <Text style={styles.sectionTitle}>
+            {tr('Inversión y alcance', 'Inversió i abast', 'Investment and scope')}
+          </Text>
           <View style={styles.investment}>
             <Text style={styles.investmentLabel}>{copy.investment}</Text>
             <Text style={styles.investmentValue}>{money(data.subtotal)}</Text>
@@ -729,7 +782,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
                   <Text style={styles.itemDescription}>{item.description}</Text>
                   <Text
                     style={styles.itemMeta}
-                  >{`${item.quantity} × ${money(item.unitPrice)} · IVA ${item.vatRate}% · ${cycleLabel(item.billingCycle, language)}`}</Text>
+                  >{`${item.quantity} × ${money(item.unitPrice)} · ${tr('IVA', 'IVA', 'VAT')} ${item.vatRate}% · ${cycleLabel(item.billingCycle, language)}`}</Text>
                   {item.discountPercent && item.discountPercent > 0 ? (
                     <Text style={styles.itemMeta}>
                       {`−${item.discountPercent}%${item.discountReason ? ` · ${item.discountReason}` : ''}`}
@@ -748,8 +801,11 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           </View>
           {hasRecurring ? (
             <Text style={styles.body}>
-              Las líneas recurrentes se muestran con su cadencia correspondiente y no forman parte
-              de la inversión inicial.
+              {tr(
+                'Las líneas recurrentes se muestran con su cadencia correspondiente y no forman parte de la inversión inicial.',
+                'Les partides recurrents es mostren amb la seva periodicitat i no formen part de la inversió inicial.',
+                'Recurring items are shown with their billing frequency and are not part of the initial investment.',
+              )}
             </Text>
           ) : null}
           {data.discounts &&
@@ -796,33 +852,47 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             </Text>
             {data.paymentTerms ? (
               <>
-                <Text style={styles.pointTitle}>Forma de pago</Text>
+                <Text style={styles.pointTitle}>
+                  {tr('Forma de pago', 'Forma de pagament', 'Payment terms')}
+                </Text>
                 <Text style={styles.pointText}>
-                  {PAYMENT_SCHEDULE_LABELS[data.paymentSchedule]}
+                  {publicPaymentScheduleLabel(data.paymentSchedule, language)}
                 </Text>
                 <Text style={styles.body}>{printableMarkdown(data.paymentTerms)}</Text>
               </>
             ) : null}
             {data.changeManagementTerms ? (
               <>
-                <Text style={[styles.pointTitle, { marginTop: 12 }]}>Cambios de alcance</Text>
+                <Text style={[styles.pointTitle, { marginTop: 12 }]}>
+                  {tr('Cambios de alcance', 'Canvis d’abast', 'Scope changes')}
+                </Text>
                 <Text style={styles.body}>{printableMarkdown(data.changeManagementTerms)}</Text>
               </>
             ) : null}
             {data.iban ? (
               <>
                 <Text style={[styles.pointTitle, { marginTop: hasConditions ? 12 : 0 }]}>
-                  Pago por transferencia
+                  {tr(
+                    'Pago por transferencia',
+                    'Pagament per transferència',
+                    'Payment by bank transfer',
+                  )}
                 </Text>
                 <Text style={styles.pointText}>
-                  También puede abonar el primer plazo antes de recibir la factura con estos datos.
+                  {tr(
+                    'También puede abonar el primer plazo antes de recibir la factura con estos datos.',
+                    'També podeu abonar el primer termini abans de rebre la factura amb aquestes dades.',
+                    'You can also pay the first instalment before receiving the invoice using these details.',
+                  )}
                 </Text>
                 <Text style={styles.body}>
-                  Beneficiario: {data.companyName ?? '—'}
+                  {tr('Beneficiario', 'Beneficiari', 'Beneficiary')}: {data.companyName ?? '—'}
                   {`\n`}IBAN: {data.iban}
-                  {`\n`}Concepto: Propuesta {data.number ?? data.title}
+                  {`\n`}
+                  {tr('Concepto', 'Concepte', 'Reference')}: {copy.proposal}{' '}
+                  {data.number ?? data.title}
                   {initialPaymentPercentage !== null
-                    ? `\nPrimer plazo (${initialPaymentPercentage}%): ${money((data.total * initialPaymentPercentage) / 100)}`
+                    ? `\n${tr('Primer plazo', 'Primer termini', 'First instalment')} (${initialPaymentPercentage}%): ${money((data.total * initialPaymentPercentage) / 100)}`
                     : ''}
                 </Text>
               </>
@@ -840,16 +910,21 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             <Text style={styles.sectionLabel}>{copy.maintenance}</Text>
             <Text style={styles.sectionTitle}>{data.maintenanceOffer.heading}</Text>
             <Text style={styles.body}>{data.maintenanceOffer.intro}</Text>
-            <MaintenancePlanList offer={data.maintenanceOffer} />
+            <MaintenancePlanList offer={data.maintenanceOffer} language={language} />
             <Text style={styles.body}>
-              Opciones de mantenimiento para valorar, con nuestra recomendación destacada. No están
-              incluidas en el importe de la propuesta.
+              {tr(
+                'Opciones de mantenimiento para valorar, con nuestra recomendación destacada. No están incluidas en el importe de la propuesta.',
+                'Opcions de manteniment per valorar, amb la nostra recomanació destacada. No estan incloses en l’import de la proposta.',
+                'Maintenance options for consideration, with our recommendation highlighted. They are not included in the proposal amount.',
+              )}
             </Text>
           </View>
         ) : null}
         {data.providerSignature && !data.acceptance ? (
           <View style={styles.acceptance} wrap={false}>
-            <Text style={styles.sectionLabel}>Firma del proveedor</Text>
+            <Text style={styles.sectionLabel}>
+              {tr('Firma del proveedor', 'Signatura del proveïdor', 'Provider signature')}
+            </Text>
             <SignatureDrawing signature={data.providerSignature.drawing} />
             <Text style={styles.body}>
               {data.providerSignature.name}
@@ -865,17 +940,19 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
               <SignatureDrawing signature={data.acceptance.handwrittenSignature} />
             ) : null}
             <Text style={styles.body}>
-              {`Firmante: ${data.acceptance.signerName}${data.acceptance.signerRole ? ` · ${data.acceptance.signerRole}` : ''}`}
+              {`${tr('Firmante', 'Signant', 'Signer')}: ${data.acceptance.signerName}${data.acceptance.signerRole ? ` · ${data.acceptance.signerRole}` : ''}`}
             </Text>
             <Text
               style={styles.body}
-            >{`Fecha y hora (UTC): ${dateTime(data.acceptance.acceptedAt)}`}</Text>
+            >{`${tr('Fecha y hora', 'Data i hora', 'Date and time')} (UTC): ${dateTime(data.acceptance.acceptedAt, language)}`}</Text>
             <Text style={styles.body}>
-              {`Emisor: ${data.companyName ?? 'doscientos'}${data.companyNif ? ` · NIF ${data.companyNif}` : ''}`}
+              {`${tr('Emisor', 'Emissor', 'Issuer')}: ${data.companyName ?? 'doscientos'}${data.companyNif ? ` · ${copy.taxId} ${data.companyNif}` : ''}`}
             </Text>
             {data.providerSignature ? (
               <View wrap={false}>
-                <Text style={[styles.pointTitle, { marginTop: 10 }]}>Firma del proveedor</Text>
+                <Text style={[styles.pointTitle, { marginTop: 10 }]}>
+                  {tr('Firma del proveedor', 'Signatura del proveïdor', 'Provider signature')}
+                </Text>
                 <SignatureDrawing signature={data.providerSignature.drawing} />
                 <Text style={styles.body}>
                   {data.providerSignature.name}
@@ -901,7 +978,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             ) : null}
             <Text
               style={styles.acceptanceHash}
-            >{`Huella SHA-256 del documento aceptado: ${data.acceptance.documentHash}`}</Text>
+            >{`${tr('Huella SHA-256 del documento aceptado', 'Empremta SHA-256 del document acceptat', 'SHA-256 fingerprint of the accepted document')}: ${data.acceptance.documentHash}`}</Text>
           </View>
         ) : data.acceptedWithoutSignature ? (
           <View style={styles.acceptance} break wrap={false}>
@@ -911,10 +988,18 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         ) : (
           <View style={styles.cta} wrap={false}>
             <Text style={styles.ctaText}>
-              ¿Todo claro? Revisa la propuesta online y confírmala para que podamos empezar.
+              {tr(
+                '¿Todo claro? Revisa la propuesta online y confírmala para que podamos empezar.',
+                'Tot clar? Revisa la proposta en línia i confirma-la perquè puguem començar.',
+                'All clear? Review and confirm the proposal online so we can get started.',
+              )}
             </Text>
             <Link src={data.portalUrl} style={styles.ctaLink}>
-              Revisar y aceptar la propuesta →
+              {tr(
+                'Revisar y aceptar la propuesta →',
+                'Revisar i acceptar la proposta →',
+                'Review and accept the proposal →',
+              )}
             </Link>
           </View>
         )}

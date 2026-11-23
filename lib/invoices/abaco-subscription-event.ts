@@ -18,7 +18,7 @@ const payment = z
     paidAt: z.string().datetime({ offset: true }),
     startsAt: z.string().datetime({ offset: true }),
     endsAt: z.string().datetime({ offset: true }),
-    plan: z.enum(['solo', 'team', 'business', 'scale']),
+    plan: z.enum(['solo', 'team', 'business', 'scale', 'standard']),
     interval: z.enum(['month', 'year']),
     netCents: z.number().int().positive().max(100_000_000),
     totalCents: z.number().int().positive().max(121_000_000),

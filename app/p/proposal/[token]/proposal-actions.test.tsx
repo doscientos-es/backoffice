@@ -110,25 +110,28 @@ describe('ProposalActions', () => {
       })
   })
 
-  it('records a consumer early-start request only when explicitly checked', async () => {
-    render(<ProposalActions {...props} clientCapacity="consumer" />)
+  it.each([false, true])(
+    'records a consumer early-start request only when checked: %s',
+    async (early) => {
+      render(<ProposalActions {...props} clientCapacity="consumer" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
-    expect(screen.queryByRole('radio')).toBeNull()
-    const [earlyStart, terms] = screen.getAllByRole('checkbox')
-    fireEvent.click(earlyStart as HTMLElement)
-    fireEvent.click(terms as HTMLElement)
-    fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar propuesta' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
+      expect(screen.queryByRole('radio')).toBeNull()
+      const [earlyStart, terms] = screen.getAllByRole('checkbox')
+      if (early) fireEvent.click(earlyStart as HTMLElement)
+      fireEvent.click(terms as HTMLElement)
+      fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar propuesta' }))
 
-    await waitFor(() =>
-      expect(accept).toHaveBeenCalledWith(
-        props.token,
-        expect.objectContaining({ client_capacity: 'consumer', consumer_early_start: true }),
-        undefined,
-        2,
-      ),
-    )
-  })
+      await waitFor(() =>
+        expect(accept).toHaveBeenCalledWith(
+          props.token,
+          expect.objectContaining({ client_capacity: 'consumer', consumer_early_start: early }),
+          undefined,
+          2,
+        ),
+      )
+    },
+  )
 
   it('lets the signer review the full contractual annex before accepting', () => {
     render(<ProposalActions {...props} />)
@@ -152,5 +155,21 @@ describe('ProposalActions', () => {
       await screen.findByText('Indica si contratas como empresa/profesional o como consumidor.'),
     ).toBeDefined()
     expect(accept).not.toHaveBeenCalled()
+  })
+
+  it('preserves the consumer selection on proposals without a configured capacity', async () => {
+    render(<ProposalActions {...props} clientCapacity={null} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Particular (consumidor)' }))
+    fireEvent.click(screen.getAllByRole('checkbox')[1] as HTMLElement)
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar propuesta' }))
+    await waitFor(() =>
+      expect(accept).toHaveBeenCalledWith(
+        props.token,
+        expect.objectContaining({ client_capacity: 'consumer', consumer_early_start: false }),
+        undefined,
+        2,
+      ),
+    )
   })
 })
