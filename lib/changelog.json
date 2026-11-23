@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.205",
+      "date": "2026-11-23",
+      "title": "v0.1.205",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Implement referral discount handling in subscription invoices"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "3fadd7078d5ca153f5e68b21bb8be0b51632cc73",
+          "type": "feat",
+          "scope": "invoice",
+          "breaking": false,
+          "description": "Implement referral discount handling in subscription invoices"
+        }
+      ]
+    },
+    {
       "version": "0.1.204",
       "date": "2026-11-23",
       "title": "v0.1.204",

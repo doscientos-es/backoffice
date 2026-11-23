@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-23 — v0.1.205
+
+### Nuevas funciones
+
+- Implement referral discount handling in subscription invoices
+
 ## 2026-11-23 — v0.1.204
 
 ### Mejoras
