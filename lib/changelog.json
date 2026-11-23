@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.201",
+      "date": "2026-11-23",
+      "title": "v0.1.201",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Update client capacity handling and improve UI elements"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "bb5d87f133468c38e8be836361f7622aec9226f7",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Update client capacity handling and improve UI elements"
+        }
+      ]
+    },
+    {
       "version": "0.1.197",
       "date": "2026-11-23",
       "title": "v0.1.197",
