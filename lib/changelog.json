@@ -1,6 +1,44 @@
 {
   "releases": [
     {
+      "version": "0.1.197",
+      "date": "2026-11-23",
+      "title": "v0.1.197",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Implement versioned acceptance for proposals with signatures",
+            "Add provider signature handling and document revision checks",
+            "Handle status transitions when reopening proposals"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "a2281ec6f169881c779d4f30c799fda54f382900",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Implement versioned acceptance for proposals with signatures"
+        },
+        {
+          "sha": "3241ce67268530b15006ee12ff7d107351a431ff",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add provider signature handling and document revision checks"
+        },
+        {
+          "sha": "9ef76276d4f64409491c39350a2391d67b9c3ad7",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Handle status transitions when reopening proposals"
+        }
+      ]
+    },
+    {
       "version": "0.1.196",
       "date": "2026-11-23",
       "title": "v0.1.196",

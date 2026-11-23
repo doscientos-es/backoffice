@@ -2,6 +2,14 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-23 — v0.1.197
+
+### Nuevas funciones
+
+- Implement versioned acceptance for proposals with signatures
+- Add provider signature handling and document revision checks
+- Handle status transitions when reopening proposals
+
 ## 2026-11-23 — v0.1.196
 
 ### Nuevas funciones
