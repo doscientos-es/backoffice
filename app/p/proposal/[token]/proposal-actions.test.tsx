@@ -14,6 +14,7 @@ const accept = vi.mocked(acceptProposal)
 const signIntent = vi.mocked(trackSignIntent)
 const props = {
   token: '12345678-1234-4123-8123-123456789abc',
+  documentRevision: 2,
   needsFiscal: false,
   signerPrefill: 'Ana Gómez',
   legalTerms: '1. Condiciones de contratación',
@@ -61,6 +62,7 @@ describe('ProposalActions', () => {
           consumer_early_start: false,
         },
         undefined,
+        2,
       ),
     )
     expect(await screen.findByText('Propuesta firmada y aceptada. Gracias.')).toBeDefined()
@@ -118,6 +120,7 @@ describe('ProposalActions', () => {
         props.token,
         expect.objectContaining({ client_capacity: 'consumer', consumer_early_start: true }),
         undefined,
+        2,
       ),
     )
   })

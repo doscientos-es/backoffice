@@ -68,6 +68,22 @@ describe('proposal PDF helpers', () => {
         portalUrl: 'https://example.test/p/proposal/token',
         companyName: 'Doscientos S.L.',
         iban: 'ES12 3456 7890 1234 5678 9012',
+        providerSignature: developmentApproach?.trim()
+          ? {
+              member_id: '00000000-0000-4000-8000-000000000001',
+              name: 'Responsable ficticio',
+              job_title: 'Director',
+              drawing: {
+                version: 1,
+                strokes: [
+                  [
+                    { x: 11, y: 20 },
+                    { x: 30, y: 40 },
+                  ],
+                ],
+              },
+            }
+          : null,
         acceptance: developmentApproach?.trim()
           ? {
               signerName: 'Ana Gómez',
@@ -138,6 +154,9 @@ describe('proposal PDF helpers', () => {
           acceptance: { ...data.acceptance!, handwrittenSignature: null },
         })
         expect(await countPaths(pdf)).toBeGreaterThan(await countPaths(withoutDrawing))
+        const withoutProvider = await renderProposalPdf({ ...data, providerSignature: null })
+        expect(await countPaths(pdf)).toBeGreaterThan(await countPaths(withoutProvider))
+        expect(fullText).toContain('RESPONSABLEFICTICIO')
         expect(fullText).toContain(heading)
         expect(fullText).toContain('REVISIÓNSEMANALCONELCLIENTE.')
         expect(fullText.indexOf(heading)).toBeGreaterThan(

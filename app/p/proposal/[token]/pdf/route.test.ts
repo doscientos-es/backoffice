@@ -355,6 +355,45 @@ describe('GET /p/proposal/[token]/pdf', () => {
     )
   })
 
+  it('uses only the signature captured in each document, never a newer live signature', async () => {
+    const { GET } = await import('./route')
+    const signature = (name: string) => ({
+      member_id: '00000000-0000-4000-8000-000000000001',
+      name,
+      job_title: null,
+      drawing: { version: 1, strokes: [[{ x: 10, y: 20 }]] },
+    })
+    state.proposal = { ...state.proposal, provider_signature: signature('Actual') }
+    await GET(request(), context)
+    expect(renderProposalPdf).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        providerSignature: signature('Actual'),
+      }),
+    )
+
+    state.isTeam = true
+    state.acceptance = {
+      id: 'acceptance-1',
+      proposal_id: 'proposal-1',
+      signer_name: 'Cliente',
+      accepted_at: '2026-09-10T12:34:56.000Z',
+      document_snapshot: { proposal: { items: [] }, provider_signature: signature('Anterior') },
+    }
+    await GET(request('?acceptance=acceptance-1'), context)
+    expect(renderProposalPdf).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        providerSignature: signature('Anterior'),
+      }),
+    )
+    state.acceptance.document_snapshot = { proposal: { items: [] } }
+    await GET(request('?acceptance=acceptance-1'), context)
+    expect(renderProposalPdf).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        providerSignature: null,
+      }),
+    )
+  })
+
   it('keeps historical acceptances unavailable to clients, non-admins and unverified admins', async () => {
     const { GET } = await import('./route')
     const historicalRequest = request('?acceptance=acceptance-1')
