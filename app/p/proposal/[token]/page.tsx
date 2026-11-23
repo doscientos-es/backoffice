@@ -312,6 +312,7 @@ export default async function PortalProposalPage({
     >
       <ProposalActions
         token={token}
+        documentRevision={proposal.document_revision as number}
         language={portalLanguage}
         needsFiscal={needsFiscal}
         fiscalPrefill={fiscalPrefill}

@@ -110,6 +110,7 @@ export function proposalAcceptanceSnapshot(
     parties,
     contract,
     ...(handwrittenSignature ? { handwritten_signature: handwrittenSignature } : {}),
+    ...(proposal.provider_signature ? { provider_signature: proposal.provider_signature } : {}),
     proposal: {
       id: proposal.id ?? null,
       number: proposal.number ?? null,

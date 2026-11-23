@@ -30,6 +30,17 @@ export const HandwrittenSignatureSchema = z
 
 export type HandwrittenSignature = z.infer<typeof HandwrittenSignatureSchema>
 
+export const ProviderSignatureSchema = z
+  .object({
+    member_id: z.string().uuid(),
+    name: z.string().min(1),
+    job_title: z.string().nullable(),
+    drawing: HandwrittenSignatureSchema,
+  })
+  .strict()
+
+export type ProviderSignature = z.infer<typeof ProviderSignatureSchema>
+
 /** Matches the pad's SVG geometry, including a visible dot for a single point. */
 export function handwrittenStrokePath(stroke: HandwrittenSignature['strokes'][number]): string {
   const coordinate = (value: number) => Math.round(value * 10) / 10

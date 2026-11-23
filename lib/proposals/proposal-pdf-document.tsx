@@ -14,6 +14,7 @@ import {
 import {
   handwrittenStrokePath,
   type HandwrittenSignature,
+  type ProviderSignature,
 } from '@/lib/proposals/handwritten-signature'
 import type { KeyPoint } from '@/lib/proposals/key-points'
 import { type MaintenanceOffer, recommendedMaintenancePlanId } from '@/lib/proposals/maintenance'
@@ -272,6 +273,7 @@ export type ProposalPdfData = {
   companyNif?: string | null
   companyAddress?: string | null
   iban: string | null
+  providerSignature?: ProviderSignature | null
   acceptance?: {
     signerName: string
     signerRole: string | null
@@ -283,6 +285,24 @@ export type ProposalPdfData = {
     handwrittenSignature?: HandwrittenSignature | null
   } | null
   acceptedWithoutSignature?: boolean
+}
+
+function SignatureDrawing({ signature }: { signature: HandwrittenSignature }) {
+  return (
+    <Svg width={210} height={84} viewBox="0 0 600 240">
+      {signature.strokes.map((stroke, index) => (
+        <Path
+          key={index}
+          d={handwrittenStrokePath(stroke)}
+          fill="none"
+          stroke="#111827"
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ))}
+    </Svg>
+  )
 }
 
 function money(value: number): string {
@@ -827,24 +847,22 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             </Text>
           </View>
         ) : null}
+        {data.providerSignature && !data.acceptance ? (
+          <View style={styles.acceptance} wrap={false}>
+            <Text style={styles.sectionLabel}>Firma del proveedor</Text>
+            <SignatureDrawing signature={data.providerSignature.drawing} />
+            <Text style={styles.body}>
+              {data.providerSignature.name}
+              {data.providerSignature.job_title ? ` · ${data.providerSignature.job_title}` : ''}
+            </Text>
+          </View>
+        ) : null}
         {data.acceptance ? (
           <View style={styles.acceptance} break>
             <Text style={styles.sectionLabel}>{copy.acceptance}</Text>
             <Text style={[styles.sectionTitle, { fontSize: 15 }]}>{copy.signed}</Text>
             {data.acceptance.handwrittenSignature ? (
-              <Svg width={210} height={84} viewBox="0 0 600 240">
-                {data.acceptance.handwrittenSignature.strokes.map((stroke, index) => (
-                  <Path
-                    key={index}
-                    d={handwrittenStrokePath(stroke)}
-                    fill="none"
-                    stroke="#111827"
-                    strokeWidth={3}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                ))}
-              </Svg>
+              <SignatureDrawing signature={data.acceptance.handwrittenSignature} />
             ) : null}
             <Text style={styles.body}>
               {`Firmante: ${data.acceptance.signerName}${data.acceptance.signerRole ? ` · ${data.acceptance.signerRole}` : ''}`}
@@ -855,6 +873,16 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             <Text style={styles.body}>
               {`Emisor: ${data.companyName ?? 'doscientos'}${data.companyNif ? ` · NIF ${data.companyNif}` : ''}`}
             </Text>
+            {data.providerSignature ? (
+              <View wrap={false}>
+                <Text style={[styles.pointTitle, { marginTop: 10 }]}>Firma del proveedor</Text>
+                <SignatureDrawing signature={data.providerSignature.drawing} />
+                <Text style={styles.body}>
+                  {data.providerSignature.name}
+                  {data.providerSignature.job_title ? ` · ${data.providerSignature.job_title}` : ''}
+                </Text>
+              </View>
+            ) : null}
             {data.acceptance.clientCapacity ? (
               <Text style={styles.body}>
                 {`${copy.capacity}: ${data.acceptance.clientCapacity === 'consumer' ? copy.consumer : copy.business}`}

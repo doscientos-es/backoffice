@@ -36,6 +36,7 @@ import {
   type EngagementType,
   recordProposalEngagement,
 } from '@/lib/proposals/engagement'
+import { ProviderSignatureSchema } from '@/lib/proposals/handwritten-signature'
 import {
   PROPOSAL_ACCEPTANCE_VERSION,
   proposalAcceptanceConsentText,
@@ -133,6 +134,7 @@ async function acceptWithFiscal(
   token: string,
   signatureInput: unknown,
   fiscalInput: unknown,
+  documentRevision: unknown,
 ): Promise<ActionResult> {
   const parsed = ProposalPortalToken.safeParse(token)
   if (!parsed.success) return { ok: false, error: 'Token inválido' }
@@ -148,7 +150,7 @@ async function acceptWithFiscal(
   const { data: proposal, error: fetchError } = await admin
     .from('proposals')
     .select(
-      'id, number, status, title, currency, subtotal, tax_amount, total, discount_type, discount_value, discount_reason, valid_until, context_markdown, problems, solutions, terms, legal_terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_plan, payment_terms, change_management_terms, maintenance_options, maintenance_selected_plan_id, is_client_visible, portal_password_hash, client_id, lead_id, clients(name, nif, billing_address_street), leads(name, email, phone, company)',
+      'id, number, status, document_revision, provider_signature, title, currency, subtotal, tax_amount, total, discount_type, discount_value, discount_reason, valid_until, context_markdown, problems, solutions, terms, legal_terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_plan, payment_terms, change_management_terms, maintenance_options, maintenance_selected_plan_id, is_client_visible, portal_password_hash, client_id, lead_id, clients(name, nif, billing_address_street), leads(name, email, phone, company)',
     )
     .eq('portal_token', parsed.data)
     .is('deleted_at', null)
@@ -164,6 +166,15 @@ async function acceptWithFiscal(
     return { ok: false, error: 'Propuesta expirada' }
   }
   if (proposal.status === 'draft') return { ok: false, error: 'Propuesta no disponible' }
+  if (!Number.isInteger(documentRevision) || documentRevision !== proposal.document_revision) {
+    return { ok: false, error: 'La propuesta ha cambiado. Actualiza la página antes de firmar' }
+  }
+  if (
+    proposal.provider_signature &&
+    !ProviderSignatureSchema.safeParse(proposal.provider_signature).success
+  ) {
+    return { ok: false, error: 'No se pudo preparar la firma de la propuesta' }
+  }
 
   // Decide whether we need fiscal data: leads always require it, clients
   // only when their row is missing the legal minimum (name + NIF + address).
@@ -285,8 +296,9 @@ async function acceptWithFiscal(
   const forwarded = requestHeaders.get('x-forwarded-for')
   const ip = forwarded?.split(',')[0]?.trim() ?? requestHeaders.get('x-real-ip') ?? ''
   const portalTokenHash = createHash('sha256').update(parsed.data).digest('hex')
-  const { error: acceptanceError } = await admin.rpc('accept_proposal_with_evidence', {
+  const { error: acceptanceError } = await admin.rpc('accept_proposal_with_evidence_versioned', {
     p_proposal_id: proposal.id,
+    p_document_revision: documentRevision as number,
     p_accepted_at: acceptedAt,
     p_signer_name: parsedSignature.data.signer_name,
     p_signer_role: parsedSignature.data.signer_role ?? '',
@@ -423,8 +435,9 @@ export async function acceptProposal(
   token: string,
   signature: AcceptProposalContractSignatureType,
   fiscal?: unknown,
+  documentRevision?: number,
 ): Promise<ActionResult> {
-  return acceptWithFiscal(token, signature, fiscal)
+  return acceptWithFiscal(token, signature, fiscal, documentRevision)
 }
 
 export async function rejectProposal(token: string, reason?: string): Promise<ActionResult> {

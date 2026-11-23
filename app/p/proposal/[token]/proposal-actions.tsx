@@ -35,6 +35,7 @@ type SignatureForm = {
 
 type Props = {
   token: string
+  documentRevision: number
   /** When true, the visitor must provide fiscal data before accepting. */
   needsFiscal: boolean
   /** Best-effort prefill of the fiscal form from lead/client info. */
@@ -48,6 +49,7 @@ type Props = {
 
 export function ProposalActions({
   token,
+  documentRevision,
   needsFiscal,
   fiscalPrefill,
   signerPrefill,
@@ -279,6 +281,7 @@ export function ProposalActions({
         ...(drawing ? { handwritten_signature: drawing } : {}),
       },
       fiscalData,
+      documentRevision,
     )
     if (res.ok) feedback.setSuccess(copy.accepted)
     else feedback.setError(res.error)

@@ -67,6 +67,8 @@ vi.mock('@/lib/proposals/engagement', () => ({
 type ProposalRow = {
   id: string
   status: string
+  document_revision?: number
+  provider_signature?: unknown
   valid_until?: string | null
   is_client_visible?: boolean | null
   portal_password_hash?: string | null
@@ -122,7 +124,12 @@ vi.mock('@/lib/supabase/admin', () => ({
         in: () => chain,
         order: () => chain,
         limit: () => chain,
-        maybeSingle: async () => (isPrimary ? state.fetchResult : empty),
+        maybeSingle: async () =>
+          isPrimary && state.fetchResult.data
+            ? { ...state.fetchResult, data: { document_revision: 1, ...state.fetchResult.data } }
+            : isPrimary
+              ? state.fetchResult
+              : empty,
         single: async () => empty,
         insert: () => chain,
         update: (patch: Record<string, unknown>) => {
@@ -166,7 +173,8 @@ let rejectProposal: typeof import('./actions').rejectProposal
 
 beforeAll(async () => {
   const actions = await import('./actions')
-  acceptProposal = actions.acceptProposal
+  acceptProposal = (token, signature, fiscal, revision = 1) =>
+    actions.acceptProposal(token, signature, fiscal, revision)
   initiateProposalPayment = actions.initiateProposalPayment
   rejectProposal = actions.rejectProposal
 }, 30_000)
@@ -280,9 +288,10 @@ describe('portal proposal actions', () => {
 
     const result = await acceptProposal(VALID_TOKEN, SIGNATURE)
     expect(result).toEqual({ ok: true })
-    expect(state.lastRpc?.name).toBe('accept_proposal_with_evidence')
+    expect(state.lastRpc?.name).toBe('accept_proposal_with_evidence_versioned')
     expect(state.lastRpc?.args).toMatchObject({
       p_proposal_id: 'p1',
+      p_document_revision: 1,
       p_signer_name: 'Ana Gómez',
       p_evidence_version: 'doscientos-proposal-acceptance-v5',
       p_document_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
@@ -297,6 +306,37 @@ describe('portal proposal actions', () => {
     expect(createProposalDraftInvoices).toHaveBeenCalledWith(expect.anything(), 'p1', null)
     expect(notifyInvoiceDraftsReady).toHaveBeenCalledWith(expect.anything(), 'p1', [])
     expect(revalidatePath).toHaveBeenCalledWith(`/p/proposal/${VALID_TOKEN}`)
+  })
+
+  it('rejects a stale page before writing fiscal data or recording acceptance', async () => {
+    state.fetchResult = {
+      data: { id: 'p1', status: 'sent', document_revision: 2, clients: COMPLETE_CLIENT },
+      error: null,
+    }
+    expect(await acceptProposal(VALID_TOKEN, SIGNATURE)).toEqual({
+      ok: false,
+      error: 'La propuesta ha cambiado. Actualiza la página antes de firmar',
+    })
+    expect(state.lastRpc).toBeNull()
+    expect(state.lastPatch).toBeNull()
+  })
+
+  it('includes the issued provider signature in the hashed acceptance evidence', async () => {
+    const provider = {
+      member_id: '00000000-0000-4000-8000-000000000001',
+      name: 'Responsable',
+      job_title: null,
+      drawing: { version: 1, strokes: [[{ x: 10, y: 20 }]] },
+    }
+    state.fetchResult = {
+      data: { id: 'p1', status: 'sent', clients: COMPLETE_CLIENT, provider_signature: provider },
+      error: null,
+    }
+    expect(await acceptProposal(VALID_TOKEN, SIGNATURE)).toEqual({ ok: true })
+    const args = state.lastRpc?.args
+    expect(args?.p_document_snapshot).toMatchObject({ provider_signature: provider })
+    const { proposalAcceptanceHash } = await import('@/lib/proposals/proposal-acceptance')
+    expect(args?.p_document_hash).toBe(proposalAcceptanceHash(args?.p_document_snapshot))
   })
 
   it('records consumer capacity and the early-start request in the signed evidence', async () => {
