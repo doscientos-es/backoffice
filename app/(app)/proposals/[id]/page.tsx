@@ -898,6 +898,9 @@ export default async function ProposalDetailPage({
                     <CardTitle>Aceptaciones electrónicas</CardTitle>
                   </CardHeader>
                   <CardContent>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      PDFs reconstruidos a partir de la evidencia guardada, no copias originales.
+                    </p>
                     <ul className="space-y-3 text-sm">
                       {acceptanceHistory.map((acceptance) => (
                         <li key={acceptance.id as string} className="flex flex-col gap-1">
@@ -909,7 +912,7 @@ export default async function ProposalDetailPage({
                             className="text-primary hover:underline"
                             href={`/p/proposal/${token}/pdf?acceptance=${acceptance.id as string}`}
                           >
-                            Descargar documento firmado
+                            Consultar aceptación guardada
                           </a>
                         </li>
                       ))}

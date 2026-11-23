@@ -19,10 +19,7 @@ import {
   parseMaintenanceOffer,
   selectedMaintenancePlan,
 } from '@/lib/proposals/maintenance'
-import {
-  DEFAULT_PROPOSAL_LEGAL_TERMS,
-  effectiveProposalTerms,
-} from '@/lib/proposals/proposal-acceptance'
+import { effectiveProposalTerms } from '@/lib/proposals/proposal-acceptance'
 import {
   type ProposalPdfItem,
   proposalPdfFilename,
@@ -164,13 +161,13 @@ export async function GET(
     } | null
   } | null
   const signedProposal = signedSnapshot?.proposal
-  if (acceptanceId !== null && (!signedProposal || !Array.isArray(signedProposal.items))) {
+  if (acceptance && (!signedProposal || !Array.isArray(signedProposal.items))) {
     return NextResponse.json({ error: 'Documento histórico no disponible' }, { status: 404 })
   }
   const documentSource = signedProposal ?? (proposal as Record<string, unknown>)
   const legalTerms =
     signedProposal && !('legal_terms' in signedProposal)
-      ? ((documentSource.terms as string | null) ?? DEFAULT_PROPOSAL_LEGAL_TERMS)
+      ? ((documentSource.terms as string | null) ?? '')
       : effectiveProposalTerms(
           (documentSource.terms as string | null) ?? null,
           (documentSource.legal_terms as string | null) ?? null,
@@ -202,7 +199,7 @@ export async function GET(
   const pdfItems: ProposalPdfItem[] = (signedItems as Array<Record<string, unknown>>).map(
     (item): ProposalPdfItem => ({
       id: String(item.id),
-      description: String(item.description ?? ''),
+      description: typeof item.description === 'string' ? item.description : '',
       quantity: Number(item.quantity ?? 0),
       unitPrice: Number(item.unit_price ?? 0),
       vatRate: Number(item.vat_rate ?? 0),
@@ -266,10 +263,7 @@ export async function GET(
     recipientName:
       signedSnapshot?.parties?.client?.name ??
       signedSnapshot?.fiscal_data?.name ??
-      client?.name ??
-      lead?.company ??
-      lead?.name ??
-      'Cliente',
+      (signedProposal ? 'Cliente' : (client?.name ?? lead?.company ?? lead?.name ?? 'Cliente')),
     recipientNif:
       signedSnapshot?.parties?.client?.nif ??
       (signedSnapshot?.fiscal_data as { nif?: string } | null)?.nif ??
@@ -284,7 +278,9 @@ export async function GET(
     deliverables: (documentSource.deliverables as string | null) ?? null,
     acceptanceCriteria: (documentSource.acceptance_criteria as string | null) ?? null,
     paymentSchedule: (documentSource.payment_schedule as PaymentSchedule | null) ?? 'half_half',
-    paymentTerms: (documentSource.payment_terms as string | null) ?? automaticPaymentTerms,
+    paymentTerms:
+      (documentSource.payment_terms as string | null) ??
+      (signedProposal ? null : automaticPaymentTerms),
     changeManagementTerms: (documentSource.change_management_terms as string | null) ?? null,
     legalTerms,
     notes: (documentSource.notes as string | null) ?? null,
@@ -299,11 +295,15 @@ export async function GET(
     maintenanceOffer,
     portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${token}?lang=${language}`,
     companyName:
-      signedSnapshot?.parties?.provider?.name ?? (settings?.company_name as string | null) ?? null,
+      signedSnapshot?.parties?.provider?.name ??
+      (signedProposal ? null : ((settings?.company_name as string | null) ?? null)),
     companyNif:
-      signedSnapshot?.parties?.provider?.nif ?? (settings?.company_nif as string | null) ?? null,
+      signedSnapshot?.parties?.provider?.nif ??
+      (signedProposal ? null : ((settings?.company_nif as string | null) ?? null)),
     companyAddress: signedSnapshot?.parties?.provider?.address ?? null,
-    iban: (settings?.iban as string | null) ?? null,
+    // Older acceptance evidence did not capture the bank account. Never add
+    // today's details to a reconstruction of a historical signed document.
+    iban: signedProposal ? null : ((settings?.iban as string | null) ?? null),
     acceptance:
       (proposal.status === 'accepted' || acceptanceId !== null) && acceptance
         ? {

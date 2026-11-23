@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import type * as NextServer from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_MAINTENANCE_OFFER } from '@/lib/proposals/maintenance'
@@ -38,7 +39,7 @@ vi.mock('@/lib/portal/access', () => ({ isPortalUnlocked: async () => state.unlo
 vi.mock('@/lib/proposals/engagement', () => ({ recordProposalEngagement: vi.fn() }))
 // `after` only works inside a real request scope; run the callback inline here.
 vi.mock('next/server', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('next/server')>()),
+  ...(await importOriginal<typeof NextServer>()),
   after: (task: () => unknown) => void task(),
 }))
 vi.mock('@/lib/proposals/proposal-pdf-document', () => ({
@@ -364,12 +365,32 @@ describe('GET /p/proposal/[token]/pdf', () => {
       signer_name: 'Ejemplo',
       accepted_at: '2026-09-10T12:34:56.000Z',
       document_hash: 'a'.repeat(64),
-      document_snapshot: { proposal: { title: 'Versión anterior', items: [] } },
+      document_snapshot: {
+        proposal: {
+          title: 'Versión anterior',
+          items: [
+            {
+              id: 'annual',
+              description: 'Servicio anual',
+              quantity: 1,
+              unit_price: 100,
+              vat_rate: 21,
+              billing_cycle: 'yearly',
+            },
+          ],
+        },
+      },
     }
     expect((await GET(request('?acceptance=acceptance-1'), context)).status).toBe(200)
     expect(renderProposalPdf).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Versión anterior',
+        iban: null,
+        recipientName: 'Cliente',
+        companyName: null,
+        companyNif: null,
+        paymentTerms: null,
+        legalTerms: '',
         acceptance: expect.objectContaining({ signerName: 'Ejemplo' }),
       }),
     )
@@ -386,6 +407,13 @@ describe('GET /p/proposal/[token]/pdf', () => {
     expect((await GET(request('?acceptance=acceptance-1'), context)).status).toBe(404)
     state.acceptance = { id: 'acceptance-1', proposal_id: 'proposal-1', document_snapshot: {} }
     expect((await GET(request('?acceptance=acceptance-1'), context)).status).toBe(404)
+    state.proposal = {
+      ...state.proposal,
+      status: 'accepted',
+      responded_at: '2026-09-10T12:34:56.000Z',
+    }
+    state.acceptance.accepted_at = '2026-09-10T12:34:56.000Z'
+    expect((await GET(request(), context)).status).toBe(404)
     expect(renderProposalPdf).not.toHaveBeenCalled()
   })
 })
