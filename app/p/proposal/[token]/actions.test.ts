@@ -284,7 +284,7 @@ describe('portal proposal actions', () => {
     expect(state.lastRpc?.args).toMatchObject({
       p_proposal_id: 'p1',
       p_signer_name: 'Ana Gómez',
-      p_evidence_version: 'doscientos-proposal-acceptance-v4',
+      p_evidence_version: 'doscientos-proposal-acceptance-v5',
       p_document_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
       p_document_snapshot: expect.objectContaining({
         parties: expect.objectContaining({
@@ -316,6 +316,51 @@ describe('portal proposal actions', () => {
       }),
       p_consent_text: expect.stringContaining('solicito expresamente'),
     })
+  })
+
+  it('binds a validated handwritten signature to the immutable acceptance snapshot and hash', async () => {
+    state.fetchResult = {
+      data: { id: 'p1', status: 'sent', lead_id: null, client_id: 'c1', clients: COMPLETE_CLIENT },
+      error: null,
+    }
+    const drawing = {
+      version: 1 as const,
+      strokes: [
+        [
+          { x: 10, y: 20 },
+          { x: 50, y: 60 },
+        ],
+      ],
+    }
+    await acceptProposal(VALID_TOKEN, { ...SIGNATURE, handwritten_signature: drawing })
+    const args = state.lastRpc?.args
+    expect(args?.p_document_snapshot).toMatchObject({ handwritten_signature: drawing })
+    const { proposalAcceptanceHash } = await import('@/lib/proposals/proposal-acceptance')
+    expect(args?.p_document_hash).toBe(proposalAcceptanceHash(args?.p_document_snapshot))
+    expect(args?.p_document_hash).not.toBe(
+      proposalAcceptanceHash({
+        ...(args?.p_document_snapshot as Record<string, unknown>),
+        handwritten_signature: { version: 1, strokes: [[{ x: 11, y: 20 }]] },
+      }),
+    )
+  })
+
+  it('rejects invalid or excessive signature data before accessing the database', async () => {
+    const result = await acceptProposal(VALID_TOKEN, {
+      ...SIGNATURE,
+      handwritten_signature: { version: 1, strokes: [[{ x: -1, y: 20 }]] },
+    })
+    expect(result.ok).toBe(false)
+    expect(state.lastRpc).toBeNull()
+    const { HandwrittenSignatureSchema } = await import('@/lib/proposals/handwritten-signature')
+    expect(
+      HandwrittenSignatureSchema.safeParse({
+        version: 1,
+        strokes: Array.from({ length: 4 }, () =>
+          Array.from({ length: 1600 }, () => ({ x: 0, y: 0 })),
+        ),
+      }).success,
+    ).toBe(false)
   })
 
   it('rejects a viewed proposal and stores the rejection reason', async () => {

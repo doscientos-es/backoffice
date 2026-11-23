@@ -1,5 +1,9 @@
-@import 'tailwindcss';
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme' layer(theme);
+@import 'tailwindcss/preflight' layer(base);
 @import '@doscientos/ui/styles.css';
+/* Application utilities must come last so responsive dialog widths override UI defaults. */
+@import 'tailwindcss/utilities' layer(utilities);
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 

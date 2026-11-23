@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 
 import { extractPdfPages } from '../internal-documents/pdf-text'
 import { DEFAULT_MAINTENANCE_OFFER } from './maintenance'
-import { printableMarkdown, proposalPdfFilename, renderProposalPdf } from './proposal-pdf-document'
+import {
+  printableMarkdown,
+  proposalPdfFilename,
+  renderProposalPdf,
+  type ProposalPdfData,
+} from './proposal-pdf-document'
 
 describe('proposal PDF helpers', () => {
   it('creates a safe download filename from the proposal number', () => {
@@ -19,7 +24,7 @@ describe('proposal PDF helpers', () => {
   it.each([undefined, null, '', ' \n ', 'Revisión semanal con el cliente.'])(
     'renders a valid PDF with the optional development approach: %s',
     async (developmentApproach) => {
-      const pdf = await renderProposalPdf({
+      const data: ProposalPdfData = {
         number: 'P-001',
         title: 'Automatización comercial',
         recipientName: 'Acme SL',
@@ -63,7 +68,25 @@ describe('proposal PDF helpers', () => {
         portalUrl: 'https://example.test/p/proposal/token',
         companyName: 'Doscientos S.L.',
         iban: 'ES12 3456 7890 1234 5678 9012',
-      })
+        acceptance: developmentApproach?.trim()
+          ? {
+              signerName: 'Ana Gómez',
+              signerRole: null,
+              acceptedAt: '2026-09-10T12:34:56.000Z',
+              documentHash: 'a'.repeat(64),
+              handwrittenSignature: {
+                version: 1,
+                strokes: [
+                  [
+                    { x: 10, y: 20 },
+                    { x: 50, y: 60 },
+                  ],
+                ],
+              },
+            }
+          : null,
+      }
+      const pdf = await renderProposalPdf(data)
 
       expect(pdf.subarray(0, 4).toString()).toBe('%PDF')
 
@@ -90,6 +113,31 @@ describe('proposal PDF helpers', () => {
       expect(fullText).not.toContain('SELECCIONADESDELAPROPUESTAONLINE')
       const heading = 'CÓMOTRABAJAREMOSDURANTEELDESARROLLO'
       if (developmentApproach?.trim()) {
+        const { getDocument, OPS } = await import('pdfjs-dist/legacy/build/pdf.mjs')
+        const countPaths = async (bytes: Buffer) => {
+          const task = getDocument({
+            data: Uint8Array.from(bytes),
+            useWorkerFetch: false,
+            useWasm: false,
+            useSystemFonts: true,
+          })
+          try {
+            const document = await task.promise
+            let count = 0
+            for (let i = 1; i <= document.numPages; i++) {
+              const operators = await (await document.getPage(i)).getOperatorList()
+              count += operators.fnArray.filter((op) => op === OPS.constructPath).length
+            }
+            return count
+          } finally {
+            await task.destroy()
+          }
+        }
+        const withoutDrawing = await renderProposalPdf({
+          ...data,
+          acceptance: { ...data.acceptance!, handwrittenSignature: null },
+        })
+        expect(await countPaths(pdf)).toBeGreaterThan(await countPaths(withoutDrawing))
         expect(fullText).toContain(heading)
         expect(fullText).toContain('REVISIÓNSEMANALCONELCLIENTE.')
         expect(fullText.indexOf(heading)).toBeGreaterThan(

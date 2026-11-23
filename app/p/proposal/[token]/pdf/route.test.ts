@@ -187,6 +187,15 @@ describe('GET /p/proposal/[token]/pdf', () => {
           client: { name: 'Acme SL', nif: 'B22222222', address: 'Madrid' },
         },
         contract: { client_capacity: 'consumer', consumer_early_start_requested: true },
+        handwritten_signature: {
+          version: 1,
+          strokes: [
+            [
+              { x: 10, y: 20 },
+              { x: 30, y: 40 },
+            ],
+          ],
+        },
         proposal: {
           number: 'P-001',
           title: 'Título firmado',
@@ -233,6 +242,15 @@ describe('GET /p/proposal/[token]/pdf', () => {
           consentText: 'Acepto la propuesta y solicito inicio anticipado.',
           clientCapacity: 'consumer',
           consumerEarlyStartRequested: true,
+          handwrittenSignature: {
+            version: 1,
+            strokes: [
+              [
+                { x: 10, y: 20 },
+                { x: 30, y: 40 },
+              ],
+            ],
+          },
         },
       }),
     )

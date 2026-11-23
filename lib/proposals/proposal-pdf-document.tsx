@@ -3,12 +3,18 @@ import {
   Font,
   Link,
   Page,
+  Path,
   renderToBuffer,
   StyleSheet,
+  Svg,
   Text,
   View,
 } from '@react-pdf/renderer'
 
+import {
+  handwrittenStrokePath,
+  type HandwrittenSignature,
+} from '@/lib/proposals/handwritten-signature'
 import type { KeyPoint } from '@/lib/proposals/key-points'
 import { type MaintenanceOffer, recommendedMaintenancePlanId } from '@/lib/proposals/maintenance'
 import {
@@ -274,6 +280,7 @@ export type ProposalPdfData = {
     consentText?: string | null
     clientCapacity?: 'business' | 'consumer' | null
     consumerEarlyStartRequested?: boolean
+    handwrittenSignature?: HandwrittenSignature | null
   } | null
   acceptedWithoutSignature?: boolean
 }
@@ -824,6 +831,21 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           <View style={styles.acceptance} break>
             <Text style={styles.sectionLabel}>{copy.acceptance}</Text>
             <Text style={[styles.sectionTitle, { fontSize: 15 }]}>{copy.signed}</Text>
+            {data.acceptance.handwrittenSignature ? (
+              <Svg width={210} height={84} viewBox="0 0 600 240">
+                {data.acceptance.handwrittenSignature.strokes.map((stroke, index) => (
+                  <Path
+                    key={index}
+                    d={handwrittenStrokePath(stroke)}
+                    fill="none"
+                    stroke="#111827"
+                    strokeWidth={3}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ))}
+              </Svg>
+            ) : null}
             <Text style={styles.body}>
               {`Firmante: ${data.acceptance.signerName}${data.acceptance.signerRole ? ` · ${data.acceptance.signerRole}` : ''}`}
             </Text>

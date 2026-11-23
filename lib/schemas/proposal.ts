@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { isProposalDemoUrl } from '@/lib/proposals/demo-url'
+import { HandwrittenSignatureSchema } from '@/lib/proposals/handwritten-signature'
 import { KEY_POINTS_LIMITS } from '@/lib/proposals/key-points'
 import { maintenanceOfferInput } from '@/lib/proposals/maintenance'
 import { paymentPlanInput, paymentScheduleInput, scopeModulesInput } from '@/lib/proposals/scope'
@@ -218,5 +219,6 @@ export const AcceptProposalSignature = z.object({
 export const AcceptProposalContractSignature = AcceptProposalSignature.extend({
   client_capacity: z.enum(['business', 'consumer']),
   consumer_early_start: z.boolean().default(false),
+  handwritten_signature: HandwrittenSignatureSchema.optional(),
 })
 export type AcceptProposalContractSignatureType = z.input<typeof AcceptProposalContractSignature>

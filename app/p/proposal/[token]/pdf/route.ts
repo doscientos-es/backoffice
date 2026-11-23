@@ -12,6 +12,7 @@ import {
 import { isPortalUnlocked } from '@/lib/portal/access'
 import { resolvePortalLanguage } from '@/lib/portal/language'
 import { recordProposalEngagement } from '@/lib/proposals/engagement'
+import { HandwrittenSignatureSchema } from '@/lib/proposals/handwritten-signature'
 import { parseKeyPoints } from '@/lib/proposals/key-points'
 import {
   maintenancePlanAsLineItem,
@@ -113,6 +114,7 @@ export async function GET(
 
   const signedSnapshot = acceptance?.document_snapshot as {
     version?: string
+    handwritten_signature?: unknown
     proposal?: Record<string, unknown>
     fiscal_data?: { name?: string } | null
     parties?: {
@@ -273,6 +275,9 @@ export async function GET(
             clientCapacity: signedSnapshot?.contract?.client_capacity ?? null,
             consumerEarlyStartRequested:
               signedSnapshot?.contract?.consumer_early_start_requested ?? false,
+            handwrittenSignature:
+              HandwrittenSignatureSchema.safeParse(signedSnapshot?.handwritten_signature).data ??
+              null,
           }
         : null,
     acceptedWithoutSignature: proposal.status === 'accepted' && !acceptance,

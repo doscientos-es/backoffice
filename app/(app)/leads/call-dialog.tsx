@@ -15,6 +15,7 @@ import {
 import { FileText, LoaderCircle as Loader2, Phone, Sparkles, UserRound } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type SubmitEvent, useEffect, useState } from 'react'
+import { sileo } from 'sileo'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -24,6 +25,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { Textarea } from '@/components/ui/textarea'
+import { DEFAULT_MEETING_DURATION, type MeetingDuration } from '@/lib/calendar/date-presets'
 import { publicEnv } from '@/lib/env'
 import { buildLeadWhatsAppMessage } from '@/lib/leads/whatsapp'
 import { buildBookingUrl } from '@/lib/recovery/utils'
@@ -31,13 +33,13 @@ import { defaultFollowUpDateTime } from '@/lib/reminders/date-presets'
 import type { CallOutcome } from '@/lib/schemas/lead'
 import { cn } from '@/lib/utils'
 import { todayIsoLocal } from '@/lib/utils/date'
-import { datetimeLocalToIso } from '@/lib/utils/date-time'
+import { addMinutesToDatetimeLocal, datetimeLocalToIso } from '@/lib/utils/date-time'
 
 import { createReminder } from '../reminders/actions'
 import { EmailComposer } from './[id]/email-composer'
 import type { MomTestValues } from './[id]/mom-test-checklist'
 import { MomTestQuickDialog } from './[id]/mom-test-quick-dialog'
-import { logLeadCall } from './actions'
+import { logLeadCall, scheduleLeadMeeting } from './actions'
 import { CallDateField } from './call-date-field'
 import { CallDigestDialog } from './call-digest-dialog'
 import { NextCallSection } from './next-call-section'
@@ -244,6 +246,7 @@ export function QCallDialog({
   leadLanguage,
   senderName,
   aiEnabled,
+  googleEnabled,
   openInitially = false,
   defaultDurationMinutes = null,
   defaultOutcome = 'connected',
@@ -258,6 +261,7 @@ export function QCallDialog({
   leadLanguage?: string | null
   senderName: string
   aiEnabled?: boolean
+  googleEnabled?: boolean
   openInitially?: boolean
   defaultDurationMinutes?: number | null
   defaultOutcome?: CallOutcome
@@ -279,6 +283,9 @@ export function QCallDialog({
   const [followUpAt, setFollowUpAt] = useState(defaultFollowUpDateTime)
   const [nextCallEnabled, setNextCallEnabled] = useState(false)
   const [nextCallAt, setNextCallAt] = useState(defaultFollowUpDateTime)
+  const [nextCallKind, setNextCallKind] = useState<'call' | 'meet'>('call')
+  const [nextMeetDuration, setNextMeetDuration] =
+    useState<MeetingDuration>(DEFAULT_MEETING_DURATION)
   // Meet notes import
   const [showImport, setShowImport] = useState(false)
   const [importUrl, setImportUrl] = useState('')
@@ -337,7 +344,11 @@ export function QCallDialog({
       return
     }
     if (nextCallEnabled && !(new Date(nextCallAt).getTime() > Date.now())) {
-      feedback.setError('Elige una fecha y hora futuras para la próxima llamada.')
+      feedback.setError('Elige una fecha y hora futuras para el próximo seguimiento.')
+      return
+    }
+    if (nextCallEnabled && nextCallKind === 'meet' && !googleEnabled) {
+      feedback.setError('Google Workspace no está configurado.')
       return
     }
     if (outcome === 'connected' && differentContact && saveContact && !contactName.trim()) {
@@ -371,25 +382,41 @@ export function QCallDialog({
         remindAt: datetimeLocalToIso(followUpAt),
       })
     }
-    let scheduleFailed = false
+    let scheduleError: string | null = null
     if (nextCallEnabled && nextCallAt) {
-      // action_type 'call' + future start_at is what places the lead in the
-      // "Reunión agendada" board column.
-      const scheduled = await createReminder({
-        leadId,
-        title: `Llamar a ${leadName}`,
-        actionType: 'call',
-        remindAt: datetimeLocalToIso(nextCallAt),
-      })
-      scheduleFailed = !scheduled.ok
+      try {
+        const scheduled =
+          nextCallKind === 'meet'
+            ? await scheduleLeadMeeting({
+                leadId,
+                title: `Consultoría ${leadName} - Doscientos`,
+                start: datetimeLocalToIso(nextCallAt),
+                end: datetimeLocalToIso(addMinutesToDatetimeLocal(nextCallAt, nextMeetDuration)),
+                attendeeEmails: leadEmail ? [leadEmail] : undefined,
+                withMeet: true,
+              })
+            : await createReminder({
+                leadId,
+                title: `Llamar a ${leadName}`,
+                actionType: 'call',
+                remindAt: datetimeLocalToIso(nextCallAt),
+              })
+        if (!scheduled.ok) scheduleError = scheduled.error || 'Error inesperado'
+      } catch (error) {
+        scheduleError = error instanceof Error ? error.message : 'Error inesperado'
+      }
     }
-    const successMessage = scheduleFailed
-      ? 'Llamada registrada, pero no se pudo agendar la próxima llamada'
-      : res.relatedContactError
-        ? `Llamada registrada, pero el contacto no se pudo guardar: ${res.relatedContactError}`
-        : res.relatedContactSaved
-          ? 'Llamada y contacto relacionado registrados'
-          : 'Llamada registrada'
+    if (scheduleError) {
+      sileo.error({
+        title: 'Llamada registrada, pero no se pudo agendar el seguimiento',
+        description: scheduleError,
+      })
+    }
+    const successMessage = res.relatedContactError
+      ? `Llamada registrada, pero el contacto no se pudo guardar: ${res.relatedContactError}`
+      : res.relatedContactSaved
+        ? 'Llamada y contacto relacionado registrados'
+        : 'Llamada registrada'
     feedback.setSuccess(successMessage)
     setNotes('')
     setTranscript('')
@@ -398,6 +425,8 @@ export function QCallDialog({
     setCallDate(todayIsoLocal())
     setFollowUpEnabled(false)
     setNextCallEnabled(false)
+    setNextCallKind('call')
+    setNextMeetDuration(DEFAULT_MEETING_DURATION)
     setDifferentContact(false)
     setContactName('')
     setContactRole('')
@@ -684,6 +713,12 @@ export function QCallDialog({
               onEnabledChange={setNextCallEnabled}
               value={nextCallAt}
               onChange={setNextCallAt}
+              kind={nextCallKind}
+              onKindChange={setNextCallKind}
+              googleEnabled={googleEnabled}
+              leadEmail={leadEmail}
+              duration={nextMeetDuration}
+              onDurationChange={setNextMeetDuration}
             />
             <div className="flex shrink-0 items-center justify-end gap-3">
               <FormFeedback state={feedback.state} pendingLabel="Guardando…" />

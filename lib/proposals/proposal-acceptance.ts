@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto'
 
-export const PROPOSAL_ACCEPTANCE_VERSION = 'doscientos-proposal-acceptance-v4'
+import type { HandwrittenSignature } from './handwritten-signature'
+
+export const PROPOSAL_ACCEPTANCE_VERSION = 'doscientos-proposal-acceptance-v5'
 
 export const DEFAULT_PROPOSAL_LEGAL_TERMS = `1. **Contrato, partes y alcance.** La aceptación electrónica de esta propuesta, junto con sus anexos y condiciones particulares, formaliza el encargo entre Doscientos y el Cliente identificados en ella. Quien firma declara disponer de facultades suficientes para representar al Cliente. Solo están incluidos los trabajos y entregables descritos expresamente; cualquier cambio requerirá aceptación previa por escrito y, cuando proceda, presupuesto adicional.
 
@@ -101,11 +103,13 @@ export function proposalAcceptanceSnapshot(
   fiscalData: unknown,
   parties: { provider: ProposalAcceptanceParty; client: ProposalAcceptanceParty } | null = null,
   contract: ProposalAcceptanceContract | null = null,
+  handwrittenSignature?: HandwrittenSignature,
 ) {
   return {
     version: PROPOSAL_ACCEPTANCE_VERSION,
     parties,
     contract,
+    ...(handwrittenSignature ? { handwritten_signature: handwrittenSignature } : {}),
     proposal: {
       id: proposal.id ?? null,
       number: proposal.number ?? null,

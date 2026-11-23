@@ -50,7 +50,7 @@ describe('recordClientProposalView', () => {
         eventType: 'proposal_viewed',
         entityId: 'proposal-1',
         link: '/leads/lead-1',
-        body: 'Ha abierto el presupuesto · P-2026-001',
+        body: 'Web · Ha abierto el presupuesto · P-2026-001',
       }),
     )
   })
@@ -92,7 +92,8 @@ describe('recordClientProposalView', () => {
     expect(dispatchNotifications).toHaveBeenCalledWith(
       expect.objectContaining({
         recipientIds: ['owner-1'],
-        body: 'Ha vuelto a abrir el presupuesto · P-2026-001 (2 visitas)',
+        link: '/leads/lead-1',
+        body: 'Web · Ha vuelto a abrir el presupuesto · P-2026-001 (2 visitas)',
       }),
     )
   })
@@ -106,10 +107,32 @@ describe('recordClientProposalView', () => {
     expect(dispatchNotifications).toHaveBeenCalledWith(
       expect.objectContaining({
         recipientIds: ['author-1'],
-        body: 'Ha abierto la presentación · P-2026-001',
+        body: 'Web · Ha abierto la presentación · P-2026-001',
       }),
     )
   })
+
+  it.each([
+    { title: 'Web', number: null, body: 'Web · Ha abierto el presupuesto' },
+    { title: '  ', number: 'P-2026-001', body: 'P-2026-001 · Ha abierto el presupuesto' },
+    { title: null, number: null, body: 'Propuesta · Ha abierto el presupuesto' },
+    { title: 'P-2026-001', number: 'P-2026-001', body: 'P-2026-001 · Ha abierto el presupuesto' },
+  ])(
+    'uses an available proposal label when title or number is missing',
+    async ({ title, number, body }) => {
+      state.results = [{ count: 1 }]
+      const { recordClientProposalView } = await import('./record-client-view')
+
+      await recordClientProposalView(
+        { ...proposal, title, number, lead_id: null, client_id: null },
+        'portal',
+      )
+
+      expect(dispatchNotifications).toHaveBeenCalledWith(
+        expect.objectContaining({ body, link: '/proposals/proposal-1' }),
+      )
+    },
+  )
 })
 
 describe('recordClientSignIntent', () => {

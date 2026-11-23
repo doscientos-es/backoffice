@@ -99,6 +99,7 @@ export function LeadQuickActionGroups({
         leadEmail={leadEmail}
         senderName={senderName}
         aiEnabled={aiEnabled}
+        googleEnabled={googleEnabled}
         openInitially={openCallInitially}
         defaultDurationMinutes={defaultDurationMinutes}
         defaultOutcome={defaultCallOutcome}

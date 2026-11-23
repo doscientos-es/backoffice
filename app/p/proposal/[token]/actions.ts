@@ -278,6 +278,7 @@ async function acceptWithFiscal(
     fiscal,
     parties,
     contract,
+    parsedSignature.data.handwritten_signature,
   )
   const acceptedAt = new Date().toISOString()
   const requestHeaders = await headers()

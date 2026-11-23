@@ -20,6 +20,18 @@ const SURFACE_LABEL: Record<ProposalViewSurface, string> = {
   deck: 'la presentación',
 }
 
+function viewSubject(
+  proposal: ViewedProposal,
+  surface: ProposalViewSurface,
+  returning: boolean,
+): string {
+  const title = proposal.title?.trim()
+  const number = proposal.number?.trim()
+  const label = title || number || 'Propuesta'
+  const numberSuffix = title && number && title !== number ? ` · ${number}` : ''
+  return `${label} · ${returning ? 'Ha vuelto a abrir' : 'Ha abierto'} ${SURFACE_LABEL[surface]}${numberSuffix}`
+}
+
 /**
  * Inserts a page-level open into proposal_view_events. External (client) opens
  * are skipped when one for the same proposal and surface was already recorded
@@ -97,8 +109,7 @@ export async function recordClientProposalView(
   if (count !== 1) return 'none'
 
   const leadId = await resolveLeadId(admin, proposal)
-  const label = proposal.number ?? proposal.title ?? 'Propuesta'
-  const subject = `Ha abierto ${SURFACE_LABEL[surface]} · ${label}`
+  const subject = viewSubject(proposal, surface, false)
 
   if (leadId) {
     const { error } = await admin.from('lead_interactions').insert({
@@ -155,13 +166,12 @@ async function notifyReturnVisit(
   const leadId = await resolveLeadId(admin, proposal)
   const recipientId = await resolveRecipientId(admin, proposal, leadId)
   if (!recipientId) return true
-  const label = proposal.number ?? proposal.title ?? 'Propuesta'
   await dispatchNotifications({
     recipientIds: [recipientId],
     eventType: 'proposal_viewed',
     entityType: 'proposal',
     entityId: proposal.id,
-    body: `Ha vuelto a abrir ${SURFACE_LABEL[surface]} · ${label} (${visits} visitas)`,
+    body: `${viewSubject(proposal, surface, true)} (${visits} visitas)`,
     link: leadId ? `/leads/${leadId}` : `/proposals/${proposal.id}`,
   })
   return true

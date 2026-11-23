@@ -4,6 +4,8 @@ import { CalendarClock } from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { MEETING_DURATIONS, type MeetingDuration } from '@/lib/calendar/date-presets'
 import { cn } from '@/lib/utils'
 import { toDatetimeLocalValue } from '@/lib/utils/date-time'
 
@@ -37,12 +39,24 @@ export function NextCallSection({
   onEnabledChange,
   value,
   onChange,
+  kind,
+  onKindChange,
+  googleEnabled,
+  leadEmail,
+  duration,
+  onDurationChange,
 }: {
   idPrefix: string
   enabled: boolean
   onEnabledChange: (v: boolean) => void
   value: string
   onChange: (v: string) => void
+  kind: 'call' | 'meet'
+  onKindChange: (v: 'call' | 'meet') => void
+  googleEnabled?: boolean
+  leadEmail: string | null
+  duration: MeetingDuration
+  onDurationChange: (v: MeetingDuration) => void
 }) {
   const isPast = enabled && new Date(value).getTime() <= Date.now()
   const summary = describe(value)
@@ -59,7 +73,7 @@ export function NextCallSection({
         <span className="flex flex-col gap-0.5">
           <span className="flex items-center gap-1.5 font-medium">
             <CalendarClock className="size-3.5 text-violet-600 dark:text-violet-400" />
-            Agendar próxima llamada
+            Agendar próxima llamada o videollamada
           </span>
           {!enabled ? (
             <span className="text-muted-foreground">
@@ -70,6 +84,53 @@ export function NextCallSection({
       </label>
       {enabled ? (
         <>
+          <fieldset className="flex flex-wrap gap-4 text-xs">
+            <legend className="mb-1 font-medium">Tipo de seguimiento</legend>
+            <label className="flex items-center gap-1.5">
+              <input
+                type="radio"
+                name={`${idPrefix}-kind`}
+                checked={kind === 'call'}
+                onChange={() => onKindChange('call')}
+              />
+              Llamada telefónica
+            </label>
+            <label className="flex items-center gap-1.5">
+              <input
+                type="radio"
+                name={`${idPrefix}-kind`}
+                checked={kind === 'meet'}
+                disabled={!googleEnabled}
+                onChange={() => onKindChange('meet')}
+              />
+              Videollamada Google Meet
+            </label>
+          </fieldset>
+          {!googleEnabled ? (
+            <p className="text-xs text-muted-foreground">Google Workspace no está configurado.</p>
+          ) : kind === 'meet' ? (
+            <>
+              <label htmlFor={`${idPrefix}-duration`} className="text-xs font-medium">
+                Duración
+              </label>
+              <Select
+                id={`${idPrefix}-duration`}
+                value={duration}
+                onChange={(e) => onDurationChange(Number(e.target.value) as MeetingDuration)}
+              >
+                {MEETING_DURATIONS.map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {minutes} minutos
+                  </option>
+                ))}
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {leadEmail
+                  ? `Se enviará una invitación a ${leadEmail}.`
+                  : 'Este lead no tiene email registrado; no recibirá una invitación.'}
+              </p>
+            </>
+          ) : null}
           <fieldset className="m-0 flex min-w-0 flex-wrap gap-1.5 border-0 p-0">
             <legend className="sr-only">Fechas rápidas</legend>
             {PRESETS.map((preset) => {
@@ -95,7 +156,7 @@ export function NextCallSection({
           <Input
             id={`${idPrefix}-at`}
             type="datetime-local"
-            aria-label="Fecha y hora de la próxima llamada"
+            aria-label="Fecha y hora del próximo seguimiento"
             value={value}
             min={toDatetimeLocalValue(new Date())}
             onChange={(e) => onChange(e.target.value)}
