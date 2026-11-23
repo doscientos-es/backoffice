@@ -9,6 +9,7 @@ type ProposalTeamMember = { id: string; name: string; job_title: string | null }
 export type ProposalEditorProps = {
   id: string
   initialTitle: string
+  initialClientCapacity?: 'business' | 'consumer' | null
   initialValidUntil: string | null
   initialNotes: string | null
   initialDemoUrl: string | null

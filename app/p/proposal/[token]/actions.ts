@@ -150,7 +150,7 @@ async function acceptWithFiscal(
   const { data: proposal, error: fetchError } = await admin
     .from('proposals')
     .select(
-      'id, number, status, document_revision, provider_signature, title, currency, subtotal, tax_amount, total, discount_type, discount_value, discount_reason, valid_until, context_markdown, problems, solutions, terms, legal_terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_plan, payment_terms, change_management_terms, maintenance_options, maintenance_selected_plan_id, is_client_visible, portal_password_hash, client_id, lead_id, clients(name, nif, billing_address_street), leads(name, email, phone, company)',
+      'id, number, status, document_revision, provider_signature, client_capacity, title, currency, subtotal, tax_amount, total, discount_type, discount_value, discount_reason, valid_until, context_markdown, problems, solutions, terms, legal_terms, scope_modules, deliverables, acceptance_criteria, payment_schedule, payment_plan, payment_terms, change_management_terms, maintenance_options, maintenance_selected_plan_id, is_client_visible, portal_password_hash, client_id, lead_id, clients(name, nif, billing_address_street), leads(name, email, phone, company)',
     )
     .eq('portal_token', parsed.data)
     .is('deleted_at', null)
@@ -168,6 +168,15 @@ async function acceptWithFiscal(
   if (proposal.status === 'draft') return { ok: false, error: 'Propuesta no disponible' }
   if (!Number.isInteger(documentRevision) || documentRevision !== proposal.document_revision) {
     return { ok: false, error: 'La propuesta ha cambiado. Actualiza la página antes de firmar' }
+  }
+  if (
+    proposal.client_capacity &&
+    proposal.client_capacity !== parsedSignature.data.client_capacity
+  ) {
+    return {
+      ok: false,
+      error: 'El tipo de contratación no coincide con la propuesta. Contacta con nosotros.',
+    }
   }
   if (
     proposal.provider_signature &&

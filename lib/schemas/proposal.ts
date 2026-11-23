@@ -106,6 +106,7 @@ export const UpdateProposalInput = z.object({
   id: z.string().uuid(),
   expected_version: z.coerce.number().int().positive(),
   title: z.string().min(1).max(200).optional(),
+  client_capacity: z.enum(['business', 'consumer']).optional(),
   valid_until: z
     .string()
     .optional()

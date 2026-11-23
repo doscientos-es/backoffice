@@ -58,6 +58,7 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
 
   const patch: Record<string, unknown> = {}
   if (rest.title !== undefined) patch.title = rest.title
+  if (rest.client_capacity !== undefined) patch.client_capacity = rest.client_capacity
   if (rest.valid_until !== undefined) patch.valid_until = rest.valid_until
   if (rest.notes !== undefined) patch.notes = rest.notes
   if (rest.demo_url !== undefined) patch.demo_url = rest.demo_url

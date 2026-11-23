@@ -16,6 +16,7 @@ import type { ProposalEditorProps } from './proposal-editor-types'
 export type InitialProposalDraft = Pick<
   ProposalEditorProps,
   | 'initialTitle'
+  | 'initialClientCapacity'
   | 'initialValidUntil'
   | 'initialNotes'
   | 'initialDemoUrl'
@@ -43,6 +44,7 @@ export type InitialProposalDraft = Pick<
 
 export function createProposalDraft({
   initialTitle,
+  initialClientCapacity,
   initialValidUntil,
   initialNotes,
   initialDemoUrl,
@@ -80,6 +82,7 @@ export function createProposalDraft({
   )
   return {
     title: initialTitle,
+    clientCapacity: initialClientCapacity ?? 'business',
     validUntil: initialValidUntil ?? '',
     notes: initialNotes ?? '',
     demoUrl: initialDemoUrl ?? '',
@@ -123,6 +126,7 @@ export function createProposalDraft({
 
 export type ProposalDraft = {
   title: string
+  clientCapacity: 'business' | 'consumer'
   validUntil: string
   notes: string
   demoUrl: string
@@ -150,6 +154,7 @@ export type ProposalDraft = {
 export function proposalDraftPayload(id: string, expectedVersion: number, draft: ProposalDraft) {
   const {
     title,
+    clientCapacity,
     validUntil,
     notes,
     demoUrl,
@@ -177,6 +182,7 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
     id,
     expected_version: expectedVersion,
     title,
+    client_capacity: clientCapacity,
     valid_until: validUntil || null,
     notes: notes || null,
     demo_url: demoUrl || null,

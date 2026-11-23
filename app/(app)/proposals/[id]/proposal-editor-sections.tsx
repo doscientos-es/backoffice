@@ -52,7 +52,7 @@ export function ProposalDetailsSection({
   notesPreview: boolean
   setNotesPreview: Dispatch<SetStateAction<boolean>>
 }) {
-  const { title, validUntil, notes } = draft
+  const { title, clientCapacity, validUntil, notes } = draft
   return (
     <section className="flex flex-col gap-5 rounded-xl border border-border bg-card p-5">
       <header>
@@ -71,6 +71,24 @@ export function ProposalDetailsSection({
           placeholder="Título de la propuesta"
           aria-label="Título"
         />
+      </FormRow>
+
+      <FormRow
+        label="Tipo de contratación"
+        htmlFor="client-capacity"
+        hint="Comprueba si el cliente contrata para su actividad profesional o como consumidor."
+      >
+        <Select
+          id="client-capacity"
+          value={clientCapacity}
+          onChange={(event) =>
+            setField('clientCapacity')(event.target.value as 'business' | 'consumer')
+          }
+          disabled={locked}
+        >
+          <option value="business">Empresa o profesional</option>
+          <option value="consumer">Particular (consumidor)</option>
+        </Select>
       </FormRow>
 
       <FormRow
