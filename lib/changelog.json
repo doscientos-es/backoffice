@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.196",
+      "date": "2026-11-23",
+      "title": "v0.1.196",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add document revision and provider signature handling"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "6c228c1b671b1ac1f286ffec7f9ca4b612f85abf",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add document revision and provider signature handling"
+        }
+      ]
+    },
+    {
       "version": "0.1.194",
       "date": "2026-11-23",
       "title": "v0.1.194",
