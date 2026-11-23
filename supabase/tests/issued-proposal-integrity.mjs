@@ -114,5 +114,18 @@ assert.equal(
   (await db.query('select count(*)::int as count from proposal_revisions')).rows[0].count,
   2,
 )
+await db.exec(`
+  delete from team_member_signatures;
+  insert into proposals (id, status, title) values
+    ('00000000-0000-0000-0000-000000000005', 'draft', 'Sin firma');
+  update proposals set status = 'sent' where id = '00000000-0000-0000-0000-000000000005';
+  select public.accept_proposal_with_evidence('00000000-0000-0000-0000-000000000005',
+    now(),'Cliente','','Acepto','v','{}','hash','token','','');
+`)
+assert.equal(
+  (await db.query("select status from proposals where id = '00000000-0000-0000-0000-000000000005'"))
+    .rows[0].status,
+  'accepted',
+)
 await db.close()
 console.log('Issued proposal integrity SQL checks passed')
