@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.192",
+      "date": "2026-11-23",
+      "title": "v0.1.192",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Update acceptance retrieval logic for reopened proposals"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "fdbab6dedb82e50327f249a7a695155d785408af",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Update acceptance retrieval logic for reopened proposals"
+        }
+      ]
+    },
+    {
       "version": "0.1.190",
       "date": "2026-11-23",
       "title": "v0.1.190",
