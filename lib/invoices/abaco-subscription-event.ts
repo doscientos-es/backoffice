@@ -20,14 +20,27 @@ const payment = z
     endsAt: z.string().datetime({ offset: true }),
     plan: z.enum(['solo', 'team', 'business', 'scale', 'standard']),
     interval: z.enum(['month', 'year']),
-    netCents: z.number().int().positive().max(100_000_000),
-    totalCents: z.number().int().positive().max(121_000_000),
+    netCents: z.number().int().nonnegative().max(100_000_000),
+    totalCents: z.number().int().nonnegative().max(121_000_000),
     vatPercent: z.literal(21),
     recipient,
+    referralDiscount: z
+      .object({
+        originalNetCents: z.number().int().positive().max(100_000_000),
+        discountCents: z.number().int().positive().max(121_000_000),
+      })
+      .optional(),
   })
   .refine(
     (p) =>
       p.totalCents === p.netCents + Math.floor((p.netCents * p.vatPercent + 50) / 100) &&
+      (p.referralDiscount
+        ? p.referralDiscount.originalNetCents > p.netCents &&
+          p.referralDiscount.discountCents ===
+            p.referralDiscount.originalNetCents +
+              Math.floor((p.referralDiscount.originalNetCents * p.vatPercent + 50) / 100) -
+              p.totalCents
+        : p.netCents > 0) &&
       Date.parse(p.endsAt) > Date.parse(p.startsAt),
     'El importe o periodo no coincide con el cobro',
   )

@@ -89,4 +89,32 @@ describe('Ábaco subscription integration', () => {
     expect(response.status).toBe(200)
     expect(fulfill).toHaveBeenCalledWith(standard)
   })
+
+  it.each([
+    { netCents: 983, totalCents: 1189, discountCents: 21 },
+    { netCents: 0, totalCents: 0, discountCents: 1210 },
+  ])('accepts consistent referral discounts, including a free invoice', async (amounts) => {
+    fulfill.mockResolvedValue({ status: 'fiscal_pending' })
+    const discounted = {
+      ...payment,
+      netCents: amounts.netCents,
+      totalCents: amounts.totalCents,
+      referralDiscount: { originalNetCents: 1000, discountCents: amounts.discountCents },
+    }
+    expect((await post({ action: 'issue', payment: discounted })).status).toBe(200)
+    expect(fulfill).toHaveBeenCalledWith(discounted)
+  })
+
+  it.each([
+    { netCents: 0, totalCents: 0 },
+    { netCents: 0, totalCents: 0, referralDiscount: { originalNetCents: 1000, discountCents: 1 } },
+    {
+      netCents: 999,
+      totalCents: 1209,
+      referralDiscount: { originalNetCents: 999, discountCents: 1 },
+    },
+  ])('rejects invalid free or discounted invoices (%j)', async (override) => {
+    expect((await post({ action: 'issue', payment: { ...payment, ...override } })).status).toBe(422)
+    expect(fulfill).not.toHaveBeenCalled()
+  })
 })
