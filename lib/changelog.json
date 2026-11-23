@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.204",
+      "date": "2026-11-23",
+      "title": "v0.1.204",
+      "sections": [
+        {
+          "title": "Mejoras",
+          "items": [
+            "Improve test performance by reusing worker processes"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "79e23518c8aa85ae3d5206b32d8e6a4620e21591",
+          "type": "perf",
+          "scope": "config",
+          "breaking": false,
+          "description": "Improve test performance by reusing worker processes"
+        }
+      ]
+    },
+    {
       "version": "0.1.202",
       "date": "2026-11-23",
       "title": "v0.1.202",

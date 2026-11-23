@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-23 — v0.1.204
+
+### Mejoras
+
+- Improve test performance by reusing worker processes
+
 ## 2026-11-23 — v0.1.202
 
 ### Nuevas funciones
