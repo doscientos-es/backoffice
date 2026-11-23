@@ -12,8 +12,6 @@ import { TaskCreateDialog } from '../../tasks/task-create-dialog'
 import { LeadNextActionReminderItem } from './lead-next-action-reminder-item'
 import { LeadNextActionTaskItem } from './lead-next-action-task-item'
 
-export type { NextAction } from '@/lib/leads/next-actions'
-
 type NextActionsCardProps = {
   canEdit: boolean
   leadId: string

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const HistoryItemSchema = z.object({
+const HistoryItemSchema = z.object({
   id: z.string().uuid(),
   type: z.string(),
   subject: z.string().nullable(),

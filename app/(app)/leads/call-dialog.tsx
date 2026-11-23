@@ -46,7 +46,7 @@ import { NextCallSection } from './next-call-section'
 import { QuickActionTile } from './quick-action-tile'
 import { WhatsAppComposer } from './whatsapp-composer'
 
-export const CALL_NOTES_MAX_LENGTH = 8_000
+const CALL_NOTES_MAX_LENGTH = 8_000
 
 function LastAttemptDialog({
   leadId,

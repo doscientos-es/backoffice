@@ -813,33 +813,3 @@ export const deleteEmailMarketingList = defineAction({
     if (error) throw new Error(error.message)
   },
 })
-
-export async function addEmailMarketingStepForm(formData: FormData): Promise<void> {
-  const result = await addEmailMarketingStep(formData)
-  if (!result.ok) throw new Error(result.error)
-  revalidatePath(PATH)
-}
-
-export async function setEmailMarketingSequenceStatusForm(formData: FormData): Promise<void> {
-  const result = await setEmailMarketingSequenceStatus(formData)
-  if (!result.ok) throw new Error(result.error)
-  revalidatePath(PATH)
-}
-
-export async function deleteEmailMarketingStepForm(formData: FormData): Promise<void> {
-  const result = await deleteEmailMarketingStep(formData)
-  if (!result.ok) throw new Error(result.error)
-  revalidatePath(PATH)
-}
-
-export async function updateEmailMarketingStepForm(formData: FormData): Promise<void> {
-  const result = await updateEmailMarketingStep(formData)
-  if (!result.ok) throw new Error(result.error)
-  revalidatePath(PATH)
-}
-
-export async function retryEmailMarketingStepForm(formData: FormData): Promise<void> {
-  const result = await retryEmailMarketingStep(formData)
-  if (!result.ok) throw new Error(result.error)
-  revalidatePath(PATH)
-}

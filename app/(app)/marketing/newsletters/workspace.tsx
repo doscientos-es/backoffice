@@ -27,7 +27,7 @@ const contactStatuses: Record<string, string> = {
   bounced: 'Rebotado',
   complained: 'Queja',
 }
-export const sequenceStatuses: Record<
+const sequenceStatuses: Record<
   string,
   { label: string; variant: 'neutral' | 'success' | 'warning' }
 > = {

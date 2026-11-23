@@ -1,7 +1,7 @@
-export const MARKETING_FOOTER_MESSAGE =
+const MARKETING_FOOTER_MESSAGE =
   'Si prefieres que no volvamos a contactarte, puedes solicitar tu baja aquí:'
-export const MARKETING_UNSUBSCRIBE_LABEL = 'Dejar de recibir correos'
-export const MARKETING_PRIVACY_LABEL = 'Política de privacidad'
+const MARKETING_UNSUBSCRIBE_LABEL = 'Dejar de recibir correos'
+const MARKETING_PRIVACY_LABEL = 'Política de privacidad'
 
 function escapeAttribute(value: string): string {
   return value.replace(

@@ -49,7 +49,7 @@ export type EmailMarketingSequence = {
   steps: EmailMarketingStep[]
 }
 
-export type EmailMarketingRecipientEvent = {
+type EmailMarketingRecipientEvent = {
   id: string
   email: string
   name: string | null
