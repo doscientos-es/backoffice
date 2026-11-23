@@ -23,7 +23,11 @@ describe('proposal PDF helpers', () => {
 
   it.each([
     ['short', 'Marca', 'Cliente', null],
+    ['single long word', 'W'.repeat(20), 'Cliente', null],
+    ['short-size limit', 'W'.repeat(80), 'M'.repeat(160), '2026-12-25'],
+    ['medium-size limit', 'W'.repeat(140), 'M'.repeat(160), '2026-12-25'],
     ['long words', 'W'.repeat(200), 'M'.repeat(160), '2026-12-25'],
+    ['long text', `${'Solución digital '.repeat(11)}integral`, 'Empresa de ejemplo', null],
   ])(
     'keeps %s cover content inside the page without overlapping',
     async (_, title, recipient, validUntil) => {
@@ -59,41 +63,38 @@ describe('proposal PDF helpers', () => {
         const page = await (await task.promise).getPage(1)
         const viewport = page.getViewport({ scale: 1 })
         const content = await page.getTextContent()
-        const items = content.items.filter((item) => 'str' in item && item.str.trim() !== '')
+        const items = content.items
+          .filter((item) => 'str' in item)
+          .filter((item) => item.str.trim() !== '')
         const text = items
-          .map((item) => ('str' in item ? item.str : ''))
+          .map((item) => item.str)
           .join('')
           .replace(/[\s-]/g, '')
-        expect(text).toContain(title)
-        expect(text).toContain(recipient)
+        expect(text).toContain(title.replace(/\s+/g, ''))
+        expect(text).toContain(recipient.replace(/\s+/g, ''))
         expect(text).toContain('INVERSIÓNINICIAL')
         expect(text).toContain('1000,00€')
         expect(text).toContain('Documentoconfidencial')
         if (validUntil) expect(text).toContain('Válidahastael')
 
         for (const item of items) {
-          if (!('str' in item)) continue
           expect(item.transform[4]).toBeGreaterThanOrEqual(30)
           expect(item.transform[4] + item.width).toBeLessThanOrEqual(viewport.width - 30)
           expect(item.transform[5]).toBeGreaterThan(25)
           expect(item.transform[5] + item.height).toBeLessThan(viewport.height - 25)
         }
-        const titleItems = items.filter(
-          (item) => 'str' in item && item.str.includes(title.slice(0, 3)),
-        )
-        const recipientItems = items.filter(
-          (item) => 'str' in item && item.str.includes(recipient.slice(0, 3)),
-        )
-        const investment = items.find((item) => 'str' in item && item.str.includes('INVERSIÓN'))
+        const titleItems = items.filter((item) => item.str.includes(title.slice(0, 3)))
+        const recipientItems = items.filter((item) => item.str.includes(recipient.slice(0, 3)))
+        const investment = items.find((item) => item.str.includes('1000'))
         expect(titleItems.length).toBeGreaterThan(0)
         expect(recipientItems.length).toBeGreaterThan(0)
-        expect(investment && 'str' in investment).toBeTruthy()
-        if (!investment || !('str' in investment)) throw new Error('Missing investment label')
+        expect(investment).toBeDefined()
+        if (!investment) throw new Error('Missing investment amount')
         expect(Math.min(...titleItems.map((item) => item.transform[5]))).toBeGreaterThan(
           Math.max(...recipientItems.map((item) => item.transform[5] + item.height)),
         )
         expect(Math.min(...recipientItems.map((item) => item.transform[5]))).toBeGreaterThan(
-          investment.transform[5] + investment.height,
+          investment.transform[5] + investment.height + 12,
         )
       } finally {
         await task.destroy()

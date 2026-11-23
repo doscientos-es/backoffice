@@ -39,14 +39,21 @@ const MUTED = '#657067'
 
 Font.registerHyphenationCallback((word) => [word])
 
-// Allow unusually long identifiers or names to wrap without changing ordinary words.
-function coverHyphenation(word: string): string[] {
-  return word.length > 20 ? (word.match(/.{1,12}/gu) ?? [word]) : [word]
+// Allow long unbroken identifiers and names to wrap within the cover.
+function coverHyphenation(chunkSize: number, threshold = chunkSize) {
+  return (word: string): string[] => {
+    const characters = Array.from(word)
+    if (characters.length <= threshold) return [word]
+    const parts: string[] = []
+    for (let i = 0; i < characters.length; i += chunkSize) {
+      parts.push(characters.slice(i, i + chunkSize).join(''))
+    }
+    return parts
+  }
 }
 
-function longCoverTitleHyphenation(word: string): string[] {
-  return word.length > 20 ? (word.match(/.{1,18}/gu) ?? [word]) : [word]
-}
+const coverWordBreaks = coverHyphenation(12, 15)
+const longCoverTitleWordBreaks = coverHyphenation(18)
 
 const styles = StyleSheet.create({
   cover: { backgroundColor: PAPER, color: INK, fontFamily: 'Helvetica', padding: 48 },
@@ -597,7 +604,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           <Text style={styles.coverBrand}>doscientos</Text>
         </View>
         <View style={styles.coverHero}>
-          <Text style={styles.coverTag} hyphenationCallback={coverHyphenation}>
+          <Text style={styles.coverTag} hyphenationCallback={coverWordBreaks}>
             {copy.proposal} · {data.number ?? copy.custom}
           </Text>
           <Text
@@ -606,13 +613,13 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
               { fontSize: data.title.length > 140 ? 21 : data.title.length > 80 ? 27 : 34 },
             ]}
             hyphenationCallback={
-              data.title.length > 140 ? longCoverTitleHyphenation : coverHyphenation
+              data.title.length > 80 ? longCoverTitleWordBreaks : coverWordBreaks
             }
           >
             {data.title}
           </Text>
           <Text style={styles.coverRecipientLabel}>{copy.prepared}</Text>
-          <Text style={styles.coverRecipient} hyphenationCallback={coverHyphenation}>
+          <Text style={styles.coverRecipient} hyphenationCallback={coverWordBreaks}>
             {data.recipientName}
           </Text>
         </View>
