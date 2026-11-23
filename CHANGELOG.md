@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-23 — v0.1.194
+
+### Nuevas funciones
+
+- Add personal signature functionality and storage
+- Implement proposal revisions and update reopening logic
+
 ## 2026-11-23 — v0.1.193
 
 ### Nuevas funciones

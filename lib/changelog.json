@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.194",
+      "date": "2026-11-23",
+      "title": "v0.1.194",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add personal signature functionality and storage",
+            "Implement proposal revisions and update reopening logic"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "8c6cb907dd097bc30e111ee2bef5237c32e708f2",
+          "type": "feat",
+          "scope": "signature",
+          "breaking": false,
+          "description": "Add personal signature functionality and storage"
+        },
+        {
+          "sha": "ef2adead097b25ee69e1a6f42edb6f4893aa52e6",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Implement proposal revisions and update reopening logic"
+        }
+      ]
+    },
+    {
       "version": "0.1.193",
       "date": "2026-11-23",
       "title": "v0.1.193",
