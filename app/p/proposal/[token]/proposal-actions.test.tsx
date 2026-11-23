@@ -66,6 +66,43 @@ describe('ProposalActions', () => {
     expect(await screen.findByText('Propuesta firmada y aceptada. Gracias.')).toBeDefined()
   })
 
+  it.each([false, true])('accepts after drawing (cleared: %s)', async (cleared) => {
+    render(<ProposalActions {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar' }))
+    const pad = screen.getByRole('group', { name: 'Firma manuscrita (opcional)' })
+    vi.spyOn(pad, 'getBoundingClientRect').mockReturnValue({
+      left: 10,
+      top: 20,
+      width: 300,
+      height: 120,
+      right: 310,
+      bottom: 140,
+      x: 10,
+      y: 20,
+      toJSON: () => ({}),
+    })
+    fireEvent.pointerDown(pad, { pointerId: 1, pointerType: 'touch', clientX: 40, clientY: 40 })
+    fireEvent.pointerUp(pad, { pointerId: 1, pointerType: 'touch', clientX: 70, clientY: 60 })
+    if (cleared) fireEvent.click(screen.getByRole('button', { name: 'Borrar firma' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Empresa o profesional' }))
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y aceptar propuesta' }))
+
+    await waitFor(() => expect(accept).toHaveBeenCalledTimes(1))
+    const sent = accept.mock.calls[0]?.[1]
+    if (cleared) expect(sent).not.toHaveProperty('handwritten_signature')
+    else
+      expect(sent).toHaveProperty('handwritten_signature', {
+        version: 1,
+        strokes: [
+          [
+            { x: 60, y: 40 },
+            { x: 120, y: 80 },
+          ],
+        ],
+      })
+  })
+
   it('records a consumer early-start request only when explicitly checked', async () => {
     render(<ProposalActions {...props} />)
 

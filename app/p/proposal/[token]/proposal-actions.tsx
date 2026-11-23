@@ -1,6 +1,7 @@
 'use client'
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@doscientos/ui'
+import { SignaturePad, type SignatureValue } from '@doscientos/ui/signature-pad'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Markdown } from '@/components/ui/markdown'
 import { Textarea } from '@/components/ui/textarea'
+import { HandwrittenSignatureSchema } from '@/lib/proposals/handwritten-signature'
 
 import { PROPOSAL_ACTION_CLASS } from './_components/primitives'
 import { acceptProposal, rejectProposal, trackSignIntent } from './actions'
@@ -66,6 +68,13 @@ export function ProposalActions({
           name: 'Nom complet *',
           role: 'Càrrec (opcional)',
           rolePlaceholder: 'Ex. Administrador/a, CEO o apoderat/da',
+          drawingLabel: 'Signatura manuscrita (opcional)',
+          drawingDescription:
+            'Signa amb el dit, un llapis o el ratolí. També pots acceptar sense dibuixar.',
+          drawingClear: 'Esborrar signatura',
+          drawingEmpty: 'Signa aquí',
+          drawingSigned: 'Signatura dibuixada',
+          drawingError: 'La signatura és massa complexa. Esborra-la i torna-ho a provar.',
           fiscalIntro:
             'Necessitem les dades fiscals per emetre la factura quan acceptis la proposta.',
           business: 'Raó social *',
@@ -113,6 +122,13 @@ export function ProposalActions({
             name: 'Full name *',
             role: 'Role (optional)',
             rolePlaceholder: 'E.g. Director, CEO, or attorney-in-fact',
+            drawingLabel: 'Handwritten signature (optional)',
+            drawingDescription:
+              'Sign with your finger, a stylus, or a mouse. You can also accept without drawing.',
+            drawingClear: 'Clear signature',
+            drawingEmpty: 'Sign here',
+            drawingSigned: 'Signature drawn',
+            drawingError: 'The signature is too complex. Clear it and try again.',
             fiscalIntro:
               'We need your tax details to issue the invoice when you accept the proposal.',
             business: 'Company name *',
@@ -160,6 +176,13 @@ export function ProposalActions({
             name: 'Nombre completo *',
             role: 'Cargo (opcional)',
             rolePlaceholder: 'Ej. Administrador/a, CEO o apoderado/a',
+            drawingLabel: 'Firma manuscrita (opcional)',
+            drawingDescription:
+              'Firma con el dedo, un lápiz o el ratón. También puedes aceptar sin dibujar.',
+            drawingClear: 'Borrar firma',
+            drawingEmpty: 'Firma aquí',
+            drawingSigned: 'Firma dibujada',
+            drawingError: 'La firma es demasiado compleja. Bórrala y vuelve a intentarlo.',
             fiscalIntro:
               'Necesitamos los datos fiscales para emitir la factura al aceptar la propuesta.',
             business: 'Razón social *',
@@ -200,6 +223,7 @@ export function ProposalActions({
   const [showTerms, setShowTerms] = useState(false)
   const [reason, setReason] = useState('')
   const [fiscal, setFiscal] = useState<FiscalForm>(fiscalPrefill)
+  const [drawing, setDrawing] = useState<SignatureValue | null>(null)
   const [signature, setSignature] = useState<SignatureForm>({
     signer_name: signerPrefill,
     signer_role: '',
@@ -219,6 +243,10 @@ export function ProposalActions({
     }
     if (!signature.accepts_terms) {
       feedback.setError(copy.termsError)
+      return
+    }
+    if (drawing && !HandwrittenSignatureSchema.safeParse(drawing).success) {
+      feedback.setError(copy.drawingError)
       return
     }
     if (
@@ -248,6 +276,7 @@ export function ProposalActions({
         client_capacity: signature.client_capacity,
         consumer_early_start:
           signature.client_capacity === 'consumer' && signature.consumer_early_start,
+        ...(drawing ? { handwritten_signature: drawing } : {}),
       },
       fiscalData,
     )
@@ -373,6 +402,16 @@ export function ProposalActions({
                 </div>
               </>
             ) : null}
+            <SignaturePad
+              value={drawing}
+              onChange={setDrawing}
+              disabled={feedback.pending}
+              label={copy.drawingLabel}
+              description={copy.drawingDescription}
+              clearLabel={copy.drawingClear}
+              emptyLabel={copy.drawingEmpty}
+              signedLabel={copy.drawingSigned}
+            />
             <fieldset className="flex flex-col gap-2" disabled={feedback.pending}>
               <legend className="mb-1 text-sm font-medium">{copy.capacity}</legend>
               <div className="grid gap-2 sm:grid-cols-2">
@@ -461,7 +500,7 @@ export function ProposalActions({
               </Button>
               <Button
                 className={`w-full ${PROPOSAL_ACTION_CLASS}`}
-                onClick={onAccept}
+                onClick={() => void onAccept()}
                 disabled={feedback.pending}
               >
                 {feedback.pending ? copy.processing : copy.signAccept}
@@ -514,7 +553,7 @@ export function ProposalActions({
             <Button
               className="w-full"
               variant="destructive"
-              onClick={onReject}
+              onClick={() => void onReject()}
               disabled={feedback.pending}
             >
               {feedback.pending ? copy.sending : copy.confirmReject}
