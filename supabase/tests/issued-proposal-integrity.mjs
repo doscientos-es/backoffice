@@ -58,6 +58,9 @@ let { rows } = await db.query('select provider_signature, document_revision from
 const firstSignature = rows[0].provider_signature
 assert.equal(firstSignature.name, 'Responsable ficticio')
 assert.equal(rows[0].document_revision, 1)
+const legacyAccept =
+  "select public.accept_proposal_with_evidence('00000000-0000-0000-0000-000000000004',now(),'Cliente','','Acepto','v','{}','hash','token','','')"
+await assert.rejects(db.exec(legacyAccept), /ha cambiado/)
 await db.exec(
   "update team_member_signatures set signature = '{\"version\":2}' where member_id = '00000000-0000-0000-0000-000000000002'",
 )
@@ -81,6 +84,7 @@ await db.exec(
 )
 ;({ rows } = await db.query('select provider_signature from proposals'))
 assert.equal(rows[0].provider_signature.name, 'Pol Ejemplo')
+await assert.rejects(db.exec(legacyAccept), /ha cambiado/)
 const snapshot = JSON.stringify({ provider_signature: rows[0].provider_signature })
 const accept =
   'select public.accept_proposal_with_evidence_versioned($1,$2,now(),$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11)'

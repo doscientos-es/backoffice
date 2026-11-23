@@ -157,8 +157,33 @@ create trigger protect_issued_proposal_items before insert or update or delete o
 create trigger protect_issued_proposal_team before insert or update or delete on public.proposal_team_members
   for each row execute function public.protect_issued_proposal_children();
 
--- Keep the original RPC for old deployments; the new app calls this versioned
--- entry point, which checks under the same row lock as acceptance.
+-- Legacy clients can still accept an untouched, unsigned first version. They
+-- cannot safely accept a reissued or provider-signed version because they do
+-- not send the revision or include the provider signature in their evidence.
+alter function public.accept_proposal_with_evidence(uuid, timestamptz, text, text, text, text, jsonb, text, text, text, text)
+  rename to accept_proposal_with_evidence_unchecked;
+
+create function public.accept_proposal_with_evidence(
+  p_proposal_id uuid, p_accepted_at timestamptz, p_signer_name text, p_signer_role text,
+  p_consent_text text, p_evidence_version text, p_document_snapshot jsonb,
+  p_document_hash text, p_portal_token_hash text, p_ip text, p_user_agent text
+) returns void language plpgsql security invoker set search_path = public as $$
+declare v_proposal public.proposals%rowtype;
+begin
+  if auth.role() <> 'service_role' then raise exception 'Not authorised' using errcode = '42501'; end if;
+  select * into v_proposal from public.proposals where id = p_proposal_id and deleted_at is null for update;
+  if not found or v_proposal.document_revision <> 1 or v_proposal.provider_signature is not null then
+    raise exception 'La propuesta ha cambiado. Actualiza la página antes de firmar';
+  end if;
+  perform public.accept_proposal_with_evidence_unchecked(p_proposal_id, p_accepted_at, p_signer_name,
+    p_signer_role, p_consent_text, p_evidence_version, p_document_snapshot, p_document_hash,
+    p_portal_token_hash, p_ip, p_user_agent);
+end;
+$$;
+revoke all on function public.accept_proposal_with_evidence(uuid, timestamptz, text, text, text, text, jsonb, text, text, text, text) from public, anon, authenticated;
+grant execute on function public.accept_proposal_with_evidence(uuid, timestamptz, text, text, text, text, jsonb, text, text, text, text) to service_role;
+
+-- The new entry point verifies the page version under the acceptance row lock.
 create function public.accept_proposal_with_evidence_versioned(
   p_proposal_id uuid, p_document_revision integer, p_accepted_at timestamptz,
   p_signer_name text, p_signer_role text, p_consent_text text, p_evidence_version text,
@@ -169,14 +194,14 @@ declare v_proposal public.proposals%rowtype;
 begin
   if auth.role() <> 'service_role' then raise exception 'Not authorised' using errcode = '42501'; end if;
   select * into v_proposal from public.proposals where id = p_proposal_id and deleted_at is null for update;
-  if not found or v_proposal.document_revision <> p_document_revision then
+  if not found or v_proposal.document_revision is distinct from p_document_revision then
     raise exception 'La propuesta ha cambiado. Actualiza la página antes de firmar';
   end if;
   if coalesce(p_document_snapshot -> 'provider_signature', 'null'::jsonb)
      is distinct from coalesce(v_proposal.provider_signature, 'null'::jsonb) then
     raise exception 'La firma del proveedor no coincide con la versión emitida';
   end if;
-  perform public.accept_proposal_with_evidence(p_proposal_id, p_accepted_at, p_signer_name,
+  perform public.accept_proposal_with_evidence_unchecked(p_proposal_id, p_accepted_at, p_signer_name,
     p_signer_role, p_consent_text, p_evidence_version, p_document_snapshot, p_document_hash,
     p_portal_token_hash, p_ip, p_user_agent);
 end;
