@@ -1,12 +1,13 @@
 import { Presentation } from 'lucide-react'
 
 import { type PortalLanguage, makeTr } from '../_lib/i18n'
+import { presentationUrl } from '../_lib/presentation'
 
 function PresentationLink({ token, language }: { token: string; language: PortalLanguage }) {
   const tr = makeTr(language)
   return (
     <a
-      href={`/deck/${token}?lang=${language}`}
+      href={presentationUrl(token, language)}
       className="flex items-center gap-3 rounded-2xl p-4 text-zinc-950 hover:bg-[#BDFF7B]/15 dark:text-white"
     >
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#BDFF7B] text-zinc-950">
@@ -32,8 +33,8 @@ function PresentationLink({ token, language }: { token: string; language: Portal
 }
 
 /**
- * Card linking to the visual deck. Only offered in Spanish for now (the deck
- * has no other translations). `className` controls where it is visible.
+ * Card linking to the visual deck, currently shown only in Spanish.
+ * `className` controls where it is visible.
  */
 export function PresentationCard({
   token,

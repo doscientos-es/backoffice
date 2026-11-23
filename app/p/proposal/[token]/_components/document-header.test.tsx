@@ -37,6 +37,18 @@ describe('DocumentHeader', () => {
   )
 
   it.each([
+    ['es', 'Ver presentación'],
+    ['ca', 'Veure presentació'],
+    ['en', 'View presentation'],
+  ] as const)('links to the presentation in %s', (language, label) => {
+    render(<DocumentHeader {...baseProps} language={language} copy={getPortalCopy(language)} />)
+
+    expect(screen.getByRole('link', { name: label }).getAttribute('href')).toBe(
+      `/deck/example-proposal?lang=${language}`,
+    )
+  })
+
+  it.each([
     [0, 'Último día para aceptar'],
     [1, 'Queda 1 día'],
     [7, 'Quedan 7 días'],

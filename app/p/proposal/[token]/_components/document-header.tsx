@@ -1,9 +1,13 @@
-import { CalendarDays, Clock, Download } from 'lucide-react'
+import { CalendarDays, Clock, Download, Presentation } from 'lucide-react'
 
 import { formatPortalDate } from '@/lib/portal/language'
 
 import { makeTr, type PortalCopy, type PortalLanguage } from '../_lib/i18n'
+import { presentationUrl } from '../_lib/presentation'
 import { StatusPill } from './primitives'
+
+const headerActionClass =
+  'inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 shadow-sm ring-1 ring-black/5 hover:bg-white/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950'
 
 export function DocumentHeader({
   token,
@@ -70,13 +74,16 @@ export function DocumentHeader({
             ) : null}
           </p>
         ) : null}
-        <a
-          href={`/p/proposal/${token}/pdf?lang=${language}`}
-          className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-zinc-950 shadow-sm ring-1 ring-black/5 hover:bg-white/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950"
-        >
-          <Download className="size-3.5" />
-          {copy.download}
-        </a>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <a href={`/p/proposal/${token}/pdf?lang=${language}`} className={headerActionClass}>
+            <Download className="size-3.5" aria-hidden />
+            {copy.download}
+          </a>
+          <a href={presentationUrl(token, language)} className={headerActionClass}>
+            <Presentation className="size-3.5" aria-hidden />
+            {tr('Ver presentación', 'Veure presentació', 'View presentation')}
+          </a>
+        </div>
       </div>
     </header>
   )
