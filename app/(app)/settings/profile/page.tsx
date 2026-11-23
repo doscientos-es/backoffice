@@ -39,14 +39,16 @@ export default async function ProfileSettingsPage() {
         </CardContent>
       </Card>
       <Card>
-        <CardContent className="pt-6">
-          {signatureError ? (
-            <p>No se ha podido cargar tu firma. Vuelve a intentarlo más tarde.</p>
-          ) : (
-            <PersonalSignatureForm
-              initial={HandwrittenSignatureSchema.safeParse(signature?.signature).data ?? null}
-            />
-          )}
+        <CardContent>
+          <div className="pt-6">
+            {signatureError ? (
+              <p>No se ha podido cargar tu firma. Vuelve a intentarlo más tarde.</p>
+            ) : (
+              <PersonalSignatureForm
+                initial={HandwrittenSignatureSchema.safeParse(signature?.signature).data ?? null}
+              />
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
