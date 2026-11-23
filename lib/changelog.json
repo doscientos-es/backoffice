@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.193",
+      "date": "2026-11-23",
+      "title": "v0.1.193",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add notes and update acceptance document links"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "bf7a8def757adf17c5babd1b977938c91be97a8e",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add notes and update acceptance document links"
+        }
+      ]
+    },
+    {
       "version": "0.1.192",
       "date": "2026-11-23",
       "title": "v0.1.192",

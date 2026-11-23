@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-23 — v0.1.193
+
+### Nuevas funciones
+
+- Add notes and update acceptance document links
+
 ## 2026-11-23 — v0.1.192
 
 ### Nuevas funciones
