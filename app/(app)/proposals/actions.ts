@@ -990,11 +990,10 @@ export async function markProposalAsAccepted(
 /**
  * Reopens an accepted or rejected proposal so the team can make adjustments
  * (e.g. a discount agreed in a follow-up meeting) and resend it for
- * re-acceptance. Only owners and admins can reopen.
+ * re-acceptance. Access follows the proposal write permission and its RLS scope.
  *
- * Clears the response fields (responded_at, signature_data, accepted_fiscal_data)
- * and reverts the status to `sent`, keeping the original number and portal token
- * intact so the client link remains valid.
+ * The database archives the previous version atomically and clears its response.
+ * The same proposal and public link are retained, but the new version is a draft.
  */
 export async function reopenProposal(
   input: unknown,
@@ -1021,23 +1020,20 @@ export async function reopenProposal(
     return { ok: false, error: 'La propuesta ya está terminada: el cliente firmó el albarán' }
   }
 
-  const { error } = await supabase
+  const { data: reopened, error } = await supabase
     .from('proposals')
-    .update({
-      status: 'sent',
-      responded_at: null,
-      signature_data: null,
-      accepted_fiscal_data: null,
-      acceptance_email_sent_at: null,
-      acceptance_email_recipient: null,
-      acceptance_email_resend_id: null,
-    })
+    .update({ status: 'draft' })
     .eq('id', id)
+    .eq('status', proposal.status)
+    .is('deleted_at', null)
+    .select('id')
+    .maybeSingle()
 
   if (error) {
     log.error({ err: error, id }, 'reopen_proposal_failed')
     return { ok: false, error: error.message }
   }
+  if (!reopened) return { ok: false, error: 'La propuesta ha cambiado. Actualiza la página.' }
 
   log.info({ id, number: proposal.number, by: user.email }, 'proposal_reopened')
 

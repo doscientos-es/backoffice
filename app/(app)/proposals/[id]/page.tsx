@@ -332,6 +332,14 @@ export default async function ProposalDetailPage({
           .eq('proposal_id', id)
           .order('accepted_at', { ascending: false })
       : { data: [] }
+  const { data: revisions } =
+    (user.role === 'owner' || user.role === 'admin') && canSeePrices
+      ? await supabase
+          .from('proposal_revisions')
+          .select('id, revision_number, archived_at')
+          .eq('proposal_id', id)
+          .order('revision_number', { ascending: false })
+      : { data: [] }
   const { data: latestDeliveryNote } = await supabase
     .from('delivery_acceptances')
     .select(
@@ -892,6 +900,37 @@ export default async function ProposalDetailPage({
                   </DetailGrid>
                 </CardContent>
               </Card>
+              {token && revisions && revisions.length > 0 ? (
+                <Card className="min-w-0">
+                  <CardHeader>
+                    <CardTitle>Versiones de la propuesta</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-3 text-sm">
+                      Versión actual: {Number(revisions[0]?.revision_number ?? 0) + 1}
+                    </p>
+                    <ul className="space-y-3 text-sm">
+                      {revisions.map((revision) => (
+                        <li key={revision.id as string} className="flex flex-col gap-1">
+                          <span>
+                            Versión {revision.revision_number as number} ·{' '}
+                            {formatDate(revision.archived_at as string)}
+                          </span>
+                          <a
+                            className="text-primary hover:underline"
+                            href={`/p/proposal/${token}/pdf?revision=${revision.id as string}`}
+                          >
+                            Consultar versión guardada
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      PDF reconstruido con los datos guardados al reabrir, no una copia original.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : null}
               {token && acceptanceHistory && acceptanceHistory.length > 0 ? (
                 <Card className="min-w-0">
                   <CardHeader>

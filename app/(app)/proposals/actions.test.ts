@@ -16,6 +16,8 @@ const { createProposalDraftInvoices, crm, sendProposalAcceptedEmail, state } = v
     },
     inserts: [] as Array<Record<string, unknown>>,
     updates: [] as Array<Record<string, unknown>>,
+    updateNoResult: false,
+    updateFilters: {} as Record<string, unknown>,
     proposal: {
       id: '494d62cb-fd56-4650-b131-9e3a927a20ad',
       number: null as string | null,
@@ -49,14 +51,19 @@ vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: vi.fn(() => ({})) })
 vi.mock('@/lib/supabase/server', () => ({
   createServerClient: vi.fn(async () => ({
     from: (table: string) => {
+      let updating = false
       const builder: Record<string, unknown> = {
         select: () => builder,
-        eq: () => builder,
+        eq: (column: string, value: unknown) => {
+          if (updating) state.updateFilters[column] = value
+          return builder
+        },
         is: () => builder,
         like: () => builder,
         order: () => builder,
         limit: () => builder,
         update: (patch: Record<string, unknown>) => {
+          updating = true
           state.updates.push({ table, ...patch })
           return builder
         },
@@ -65,6 +72,7 @@ vi.mock('@/lib/supabase/server', () => ({
           return builder
         },
         maybeSingle: async () => {
+          if (updating && state.updateNoResult) return { data: null, error: null }
           if (table === 'proposals') return { data: state.proposal, error: null }
           if (table === 'leads') return { data: { status: state.leadStatus }, error: null }
           if (table === 'proposal_prices') return { data: { payment_terms: null }, error: null }
@@ -95,6 +103,7 @@ import {
   markProposalAsAccepted,
   markProposalAsRejected,
   markProposalAsSent,
+  reopenProposal,
   updateProposal,
 } from './actions'
 
@@ -404,6 +413,35 @@ describe('markProposalAsRejected', () => {
       ok: false,
       error: 'Solo se pueden rechazar propuestas enviadas, vistas o expiradas',
     })
+    expect(state.updates).toEqual([])
+  })
+})
+
+describe('reopenProposal', () => {
+  beforeEach(() => {
+    state.proposal.status = 'accepted'
+    state.updates = []
+    state.updateFilters = {}
+    state.updateNoResult = false
+  })
+
+  it('requests a draft and checks the status has not changed', async () => {
+    expect(await reopenProposal({ id: ID })).toEqual({ ok: true })
+    expect(state.updates).toEqual([{ table: 'proposals', status: 'draft' }])
+    expect(state.updateFilters).toMatchObject({ id: ID, status: 'accepted' })
+  })
+
+  it('reports a concurrent transition instead of claiming success', async () => {
+    state.updateNoResult = true
+    expect(await reopenProposal({ id: ID })).toEqual({
+      ok: false,
+      error: 'La propuesta ha cambiado. Actualiza la página.',
+    })
+  })
+
+  it('refuses an unanswered proposal', async () => {
+    state.proposal.status = 'sent'
+    expect(await reopenProposal({ id: ID })).toMatchObject({ ok: false })
     expect(state.updates).toEqual([])
   })
 })

@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
   items: [] as Array<Record<string, unknown>>,
   settings: null as Record<string, unknown> | null,
   acceptance: null as Record<string, unknown> | null,
+  revision: null as Record<string, unknown> | null,
 }))
 const renderProposalPdf = vi.hoisted(() => vi.fn(async () => Buffer.from('pdf-content')))
 
@@ -24,12 +25,25 @@ vi.mock('@/lib/auth', () => ({
 }))
 vi.mock('@/lib/supabase/server', () => ({
   createServerClient: async () => ({
-    from: () => {
+    from: (table: string) => {
+      const filters: Record<string, unknown> = {}
       const chain = {
         select: () => chain,
-        eq: () => chain,
+        eq: (column: string, value: unknown) => {
+          filters[column] = value
+          return chain
+        },
         is: () => chain,
-        maybeSingle: async () => ({ data: state.accessible ? { id: 'proposal-1' } : null }),
+        maybeSingle: async () => ({
+          data: !state.accessible
+            ? null
+            : table === 'proposal_revisions'
+              ? filters.id === state.revision?.id &&
+                filters.proposal_id === state.revision?.proposal_id
+                ? state.revision
+                : null
+              : { id: 'proposal-1' },
+        }),
       }
       return chain
     },
@@ -104,6 +118,7 @@ describe('GET /p/proposal/[token]/pdf', () => {
     state.items = []
     state.settings = { company_name: 'doscientos', company_nif: 'B12345678', iban: 'ES00' }
     state.acceptance = null
+    state.revision = null
     renderProposalPdf.mockClear()
     state.proposal = {
       id: 'proposal-1',
@@ -415,5 +430,109 @@ describe('GET /p/proposal/[token]/pdf', () => {
     state.acceptance.accepted_at = '2026-09-10T12:34:56.000Z'
     expect((await GET(request(), context)).status).toBe(404)
     expect(renderProposalPdf).not.toHaveBeenCalled()
+  })
+
+  it('only lets authorized admins read an archived revision belonging to the proposal', async () => {
+    const { GET } = await import('./route')
+    state.revision = {
+      id: 'revision-1',
+      proposal_id: 'other',
+      snapshot: { proposal: {}, items: [] },
+    }
+    expect((await GET(request('?revision=revision-1'), context)).status).toBe(404)
+    state.isTeam = true
+    state.role = 'member'
+    expect((await GET(request('?revision=revision-1'), context)).status).toBe(404)
+    state.role = 'admin'
+    state.mfa = false
+    expect((await GET(request('?revision=revision-1'), context)).status).toBe(404)
+    state.mfa = true
+    expect((await GET(request('?revision=revision-1'), context)).status).toBe(404)
+    expect((await GET(request('?revision=revision-1&acceptance=a'), context)).status).toBe(404)
+    expect(renderProposalPdf).not.toHaveBeenCalled()
+  })
+
+  it('reconstructs a rejected revision exclusively from its archived data', async () => {
+    const { GET } = await import('./route')
+    state.isTeam = true
+    state.revision = {
+      id: 'revision-1',
+      proposal_id: 'proposal-1',
+      snapshot: {
+        proposal: {
+          status: 'rejected',
+          title: 'Anterior',
+          subtotal: 100,
+          tax_amount: 21,
+          total: 121,
+          payment_terms: 'A 30 días',
+        },
+        items: [
+          {
+            id: 'old-item',
+            description: 'Original',
+            quantity: 1,
+            unit_price: 100,
+            vat_rate: 21,
+            billing_cycle: 'none',
+          },
+        ],
+        recipient: { name: 'Cliente anterior', nif: 'X123', street: 'Calle anterior' },
+        provider: { name: 'Proveedor anterior', nif: 'Y456', iban: 'ES01', city: 'Madrid' },
+      },
+    }
+    expect((await GET(request('?revision=revision-1'), context)).status).toBe(200)
+    expect(renderProposalPdf).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Anterior',
+        total: 121,
+        recipientName: 'Cliente anterior',
+        recipientNif: 'X123',
+        recipientAddress: 'Calle anterior',
+        companyName: 'Proveedor anterior',
+        companyNif: 'Y456',
+        companyAddress: 'Madrid',
+        iban: 'ES01',
+        paymentTerms: 'A 30 días',
+        acceptance: null,
+        items: [expect.objectContaining({ description: 'Original' })],
+      }),
+    )
+    await GET(request(), context)
+    expect(renderProposalPdf).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        title: 'Automatización comercial',
+        recipientName: 'Acme SL',
+      }),
+    )
+  })
+
+  it('uses the acceptance evidence tied to an archived accepted revision', async () => {
+    const { GET } = await import('./route')
+    state.isTeam = true
+    state.revision = {
+      id: 'revision-1',
+      proposal_id: 'proposal-1',
+      snapshot: {
+        proposal: {
+          status: 'accepted',
+          responded_at: '2026-09-10T12:34:56.000Z',
+          title: 'Archivada',
+        },
+        items: [],
+      },
+    }
+    state.acceptance = {
+      accepted_at: '2026-09-10T12:34:56.000Z',
+      signer_name: 'Ejemplo',
+      document_snapshot: { proposal: { title: 'Firmada', items: [] } },
+    }
+    expect((await GET(request('?revision=revision-1'), context)).status).toBe(200)
+    expect(renderProposalPdf).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Firmada',
+        acceptance: expect.objectContaining({ signerName: 'Ejemplo' }),
+      }),
+    )
   })
 })

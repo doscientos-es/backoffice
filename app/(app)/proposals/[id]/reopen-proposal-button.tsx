@@ -58,9 +58,8 @@ export function ReopenProposalButton({ proposalId }: { proposalId: string }) {
           </DialogTitle>
           <DialogDescription className="space-y-2 pt-1">
             <span className="block">
-              Esto revertirá el estado a <strong>Enviada</strong> y conservará el registro histórico
-              de la firma o respuesta del cliente. Podrás modificar precio, condiciones o cualquier
-              campo antes de enviarla de nuevo.
+              Se guardará la versión anterior y se creará una nueva en <strong>Borrador</strong> con
+              los mismos datos. El cliente no podrá verla hasta que la envíes de nuevo.
             </span>
             <span className="block text-amber-700 dark:text-amber-400">
               El cliente tendrá que volver a aceptar la propuesta modificada para que surta efecto.

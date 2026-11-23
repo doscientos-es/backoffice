@@ -1,5 +1,6 @@
 import { after, type NextRequest, NextResponse } from 'next/server'
 
+import { formatAddress } from '@/lib/address'
 import { getCurrentUser, hasMfaAccess } from '@/lib/auth'
 import { externalAppUrl } from '@/lib/email/app-url'
 import { publicEnv } from '@/lib/env'
@@ -33,6 +34,24 @@ import { createServerClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+type ArchivedParty = {
+  name?: string | null
+  nif?: string | null
+  iban?: string | null
+  street?: string | null
+  zip?: string | null
+  city?: string | null
+  province?: string | null
+  country?: string | null
+}
+
+type RevisionSnapshot = {
+  proposal: Record<string, unknown>
+  items: Array<Record<string, unknown>>
+  recipient?: ArchivedParty | null
+  provider?: ArchivedParty | null
+}
+
 /** Downloads the formal proposal PDF with the same access policy as its portal. */
 export async function GET(
   req: NextRequest,
@@ -43,10 +62,13 @@ export async function GET(
   const auth = await getCurrentUser()
   const isTeam = auth.ok
   const acceptanceId = req.nextUrl.searchParams.get('acceptance')
+  const revisionId = req.nextUrl.searchParams.get('revision')
+  const historical = acceptanceId !== null || revisionId !== null
 
-  // Historical signed documents are internal, even when the proposal URL is public.
-  if (acceptanceId !== null) {
+  // Historical documents are internal, even when the proposal URL is public.
+  if (historical) {
     if (
+      (acceptanceId !== null && revisionId !== null) ||
       !auth.ok ||
       !['owner', 'admin'].includes(auth.user.role) ||
       !(await hasMfaAccess(auth.user.id))
@@ -65,7 +87,8 @@ export async function GET(
   if (!proposal || (proposal.status === 'draft' && !isTeam)) {
     return NextResponse.json({ error: 'Propuesta no encontrada' }, { status: 404 })
   }
-  if (acceptanceId !== null) {
+  let revision: RevisionSnapshot | null = null
+  if (historical) {
     const supabase = await createServerClient()
     const { data: accessible } = await supabase
       .from('proposals')
@@ -74,6 +97,18 @@ export async function GET(
       .is('deleted_at', null)
       .maybeSingle()
     if (!accessible) return NextResponse.json({ error: 'Propuesta no encontrada' }, { status: 404 })
+    if (revisionId !== null) {
+      const { data } = await supabase
+        .from('proposal_revisions')
+        .select('snapshot')
+        .eq('id', revisionId)
+        .eq('proposal_id', proposal.id as string)
+        .maybeSingle()
+      revision = (data?.snapshot as RevisionSnapshot | null) ?? null
+      if (!revision?.proposal || !Array.isArray(revision.items)) {
+        return NextResponse.json({ error: 'Versión no encontrada' }, { status: 404 })
+      }
+    }
   }
   const clientLanguage = (
     proposal.clients as { leads?: { language?: string | null } | null } | null
@@ -133,17 +168,21 @@ export async function GET(
         'signer_name, signer_role, accepted_at, document_hash, consent_text, document_snapshot',
       )
       .eq('proposal_id', proposal.id as string)
+  const responseSource = revision?.proposal ?? proposal
   const { data: acceptance, error: acceptanceError } =
     acceptanceId !== null
       ? await acceptanceQuery().eq('id', acceptanceId).maybeSingle()
-      : proposal.status === 'accepted' && proposal.responded_at
+      : responseSource.status === 'accepted' && responseSource.responded_at
         ? await acceptanceQuery()
-            .eq('accepted_at', proposal.responded_at as string)
+            .eq('accepted_at', responseSource.responded_at as string)
             .limit(1)
             .maybeSingle()
         : { data: null, error: null }
   if (acceptanceId !== null && (acceptanceError || !acceptance)) {
     return NextResponse.json({ error: 'Aceptación no encontrada' }, { status: 404 })
+  }
+  if (acceptanceError) {
+    return NextResponse.json({ error: 'No se pudo cargar la aceptación' }, { status: 500 })
   }
 
   const signedSnapshot = acceptance?.document_snapshot as {
@@ -164,7 +203,9 @@ export async function GET(
   if (acceptance && (!signedProposal || !Array.isArray(signedProposal.items))) {
     return NextResponse.json({ error: 'Documento histórico no disponible' }, { status: 404 })
   }
-  const documentSource = signedProposal ?? (proposal as Record<string, unknown>)
+  const documentSource =
+    signedProposal ?? revision?.proposal ?? (proposal as Record<string, unknown>)
+  const preserved = Boolean(signedProposal || revision)
   const legalTerms =
     signedProposal && !('legal_terms' in signedProposal)
       ? ((documentSource.terms as string | null) ?? '')
@@ -172,8 +213,10 @@ export async function GET(
           (documentSource.terms as string | null) ?? null,
           (documentSource.legal_terms as string | null) ?? null,
         )
-  const rawItems = Array.isArray(signedProposal?.items) ? signedProposal.items : (items ?? [])
-  const signedItems = signedProposal
+  const rawItems = Array.isArray(signedProposal?.items)
+    ? signedProposal.items
+    : (revision?.items ?? items ?? [])
+  const signedItems = preserved
     ? rawItems
     : ensureCalendarYearProration(
         rawItems as Array<{
@@ -247,15 +290,13 @@ export async function GET(
     })),
     (proposal.created_at as string | null) ?? null,
   )
-  const pdfSubtotal = signedProposal
+  const pdfSubtotal = preserved
     ? Number(documentSource.subtotal ?? 0)
     : calculatedTotals.oneTime.subtotal
-  const pdfTaxAmount = signedProposal
+  const pdfTaxAmount = preserved
     ? Number(documentSource.tax_amount ?? 0)
     : calculatedTotals.oneTime.taxAmount
-  const pdfTotal = signedProposal
-    ? Number(documentSource.total ?? 0)
-    : calculatedTotals.oneTime.total
+  const pdfTotal = preserved ? Number(documentSource.total ?? 0) : calculatedTotals.oneTime.total
   const pdf = await renderProposalPdf({
     language,
     number: (documentSource.number as string | null) ?? null,
@@ -263,12 +304,19 @@ export async function GET(
     recipientName:
       signedSnapshot?.parties?.client?.name ??
       signedSnapshot?.fiscal_data?.name ??
-      (signedProposal ? 'Cliente' : (client?.name ?? lead?.company ?? lead?.name ?? 'Cliente')),
+      (signedProposal
+        ? 'Cliente'
+        : revision
+          ? (revision.recipient?.name ?? 'Cliente')
+          : (client?.name ?? lead?.company ?? lead?.name ?? 'Cliente')),
     recipientNif:
       signedSnapshot?.parties?.client?.nif ??
       (signedSnapshot?.fiscal_data as { nif?: string } | null)?.nif ??
+      (signedProposal ? null : revision?.recipient?.nif) ??
       null,
-    recipientAddress: signedSnapshot?.parties?.client?.address ?? null,
+    recipientAddress:
+      signedSnapshot?.parties?.client?.address ??
+      (signedProposal || !revision?.recipient ? null : formatAddress(revision.recipient) || null),
     validUntil: (documentSource.valid_until as string | null) ?? null,
     context: (documentSource.context_markdown as string | null) ?? null,
     problems: parseKeyPoints(documentSource.problems),
@@ -279,8 +327,7 @@ export async function GET(
     acceptanceCriteria: (documentSource.acceptance_criteria as string | null) ?? null,
     paymentSchedule: (documentSource.payment_schedule as PaymentSchedule | null) ?? 'half_half',
     paymentTerms:
-      (documentSource.payment_terms as string | null) ??
-      (signedProposal ? null : automaticPaymentTerms),
+      (documentSource.payment_terms as string | null) ?? (preserved ? null : automaticPaymentTerms),
     changeManagementTerms: (documentSource.change_management_terms as string | null) ?? null,
     legalTerms,
     notes: (documentSource.notes as string | null) ?? null,
@@ -296,16 +343,30 @@ export async function GET(
     portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${token}?lang=${language}`,
     companyName:
       signedSnapshot?.parties?.provider?.name ??
-      (signedProposal ? null : ((settings?.company_name as string | null) ?? null)),
+      (signedProposal
+        ? null
+        : revision
+          ? (revision.provider?.name ?? null)
+          : ((settings?.company_name as string | null) ?? null)),
     companyNif:
       signedSnapshot?.parties?.provider?.nif ??
-      (signedProposal ? null : ((settings?.company_nif as string | null) ?? null)),
-    companyAddress: signedSnapshot?.parties?.provider?.address ?? null,
+      (signedProposal
+        ? null
+        : revision
+          ? (revision.provider?.nif ?? null)
+          : ((settings?.company_nif as string | null) ?? null)),
+    companyAddress:
+      signedSnapshot?.parties?.provider?.address ??
+      (signedProposal || !revision?.provider ? null : formatAddress(revision.provider) || null),
     // Older acceptance evidence did not capture the bank account. Never add
     // today's details to a reconstruction of a historical signed document.
-    iban: signedProposal ? null : ((settings?.iban as string | null) ?? null),
+    iban: signedProposal
+      ? null
+      : revision
+        ? (revision.provider?.iban ?? null)
+        : ((settings?.iban as string | null) ?? null),
     acceptance:
-      (proposal.status === 'accepted' || acceptanceId !== null) && acceptance
+      (responseSource.status === 'accepted' || acceptanceId !== null) && acceptance
         ? {
             signerName: acceptance.signer_name as string,
             signerRole: (acceptance.signer_role as string | null) ?? null,
@@ -320,7 +381,7 @@ export async function GET(
               null,
           }
         : null,
-    acceptedWithoutSignature: proposal.status === 'accepted' && !acceptance,
+    acceptedWithoutSignature: responseSource.status === 'accepted' && !acceptance,
   })
 
   return new NextResponse(new Uint8Array(pdf), {
