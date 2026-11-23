@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-23 — v0.1.207
+
+### Nuevas funciones
+
+- Enhance PDF rendering with hyphenation and layout adjustments
+- Add presentation link and URL generation function
+
 ## 2026-11-23 — v0.1.205
 
 ### Nuevas funciones

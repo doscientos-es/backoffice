@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.207",
+      "date": "2026-11-23",
+      "title": "v0.1.207",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Enhance PDF rendering with hyphenation and layout adjustments",
+            "Add presentation link and URL generation function"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "efedce7bb9316b9aad856035ab7f8c6350ba9ba1",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Enhance PDF rendering with hyphenation and layout adjustments"
+        },
+        {
+          "sha": "318929428d3a4eea7043c014f38292b116efe12c",
+          "type": "feat",
+          "scope": "presentation",
+          "breaking": false,
+          "description": "Add presentation link and URL generation function"
+        }
+      ]
+    },
+    {
       "version": "0.1.205",
       "date": "2026-11-23",
       "title": "v0.1.205",
