@@ -1,3 +1,4 @@
+import { availableParallelism } from 'node:os'
 import path from 'node:path'
 
 import { defineConfig } from 'vitest/config'
@@ -5,8 +6,9 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     environment: 'happy-dom',
-    // Isolated VM contexts avoid the startup cost of a separate process per worker.
-    pool: 'vmThreads',
+    // Reuse worker processes while isolating each test file in its own VM context.
+    pool: 'vmForks',
+    maxWorkers: Math.min(4, availableParallelism()),
     globals: true,
     setupFiles: ['./tests/setup.ts'],
     include: [
