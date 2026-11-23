@@ -378,7 +378,7 @@ export default async function PortalProposalPage({
               statusLabel={statusLabel}
             />
             <SectionNav items={navItems} />
-            <div className={`${PROPOSAL_SURFACE_CLASS} shadow-sm ring-1 ring-black/5`}>
+            <div className={PROPOSAL_SURFACE_CLASS}>
               <RecipientBlock
                 label={copy.recipient}
                 name={recipientName}

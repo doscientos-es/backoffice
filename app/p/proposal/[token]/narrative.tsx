@@ -14,9 +14,7 @@ import { PROPOSAL_SURFACE_CLASS, SectionLabel } from './_components/primitives'
 
 export function PortalNarrativeBlock({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <section
-      className={`${PROPOSAL_SURFACE_CLASS} px-6 py-8 shadow-sm ring-1 ring-black/5 sm:px-10 sm:py-10`}
-    >
+    <section className={`${PROPOSAL_SURFACE_CLASS} px-6 py-8 sm:px-10 sm:py-10`}>
       <SectionLabel className="mb-6 border-b border-zinc-100 pb-5">{label}</SectionLabel>
       {children}
     </section>
