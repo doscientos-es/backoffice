@@ -526,7 +526,7 @@ export async function processDueEmailMarketing(options: { stepId?: string } = {}
     .not('step.tracking_campaign_id', 'is', null)
     .eq('step.sequence.status', 'active')
     .is('step.sequence.deleted_at', null)
-    .limit(50)
+    .limit(100)
   if (options.stepId) queueQuery = queueQuery.eq('sequence_step_id', options.stepId)
   const { data: queue, error: queueError } = await queueQuery
   if (queueError) throw new Error(queueError.message)
