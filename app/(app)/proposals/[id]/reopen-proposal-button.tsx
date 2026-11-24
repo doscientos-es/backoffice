@@ -19,7 +19,7 @@ import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { reopenProposal } from '../actions'
 
 /**
- * Lets owners/admins reopen an accepted or rejected proposal so adjustments
+ * Lets authorized users reopen an accepted proposal so adjustments
  * can be made (e.g. a discount agreed in a follow-up meeting) before
  * resending it for re-acceptance.
  */

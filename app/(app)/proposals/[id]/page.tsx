@@ -149,7 +149,7 @@ function ProposalSidebar({
                 leadId={leadId}
                 phone={leadPhone}
                 title="Llamar al cliente"
-                className={`${viewsCardClass} cursor-pointer transition-colors hover:bg-warning/30 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none`}
+                className={`${viewsCardClass} hover:bg-warning/30 focus-visible:ring-ring/50 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:outline-none`}
               >
                 {viewsCardBody}
               </ProposalCallChip>
@@ -158,9 +158,9 @@ function ProposalSidebar({
             )
           ) : null}
           {views.length === 0 ? (
-            <p className="px-6 py-4 text-sm text-muted-foreground">Aún no se ha abierto.</p>
+            <p className="text-muted-foreground px-6 py-4 text-sm">Aún no se ha abierto.</p>
           ) : (
-            <ul className="divide-y divide-border text-sm">
+            <ul className="divide-border divide-y text-sm">
               {views.map((view) => (
                 <li
                   key={view.id}
@@ -181,7 +181,7 @@ function ProposalSidebar({
                         </>
                       )}
                     </Badge>
-                    <span className="truncate text-muted-foreground">
+                    <span className="text-muted-foreground truncate">
                       {view.viewer_type === 'team'
                         ? (view.team_members?.name ?? 'Miembro')
                         : 'Apertura externa'}
@@ -189,7 +189,7 @@ function ProposalSidebar({
                   </div>
                   <time
                     dateTime={view.viewed_at}
-                    className="shrink-0 text-xs text-muted-foreground tabular-nums"
+                    className="text-muted-foreground shrink-0 text-xs tabular-nums"
                   >
                     {new Date(view.viewed_at).toLocaleString('es-ES', {
                       day: '2-digit',
@@ -789,7 +789,7 @@ export default async function ProposalDetailPage({
                     <CardTitle>Señal / Pagos de reserva</CardTitle>
                   </CardHeader>
                   <CardContent className="px-0">
-                    <ul className="divide-y divide-border text-sm">
+                    <ul className="divide-border divide-y text-sm">
                       {depositPayments.map((p) => {
                         const pStatus = p.status as string
                         const icon =
@@ -826,7 +826,7 @@ export default async function ProposalDetailPage({
                                     : 'Pendiente'}
                               </Badge>
                               {p.confirmed_at && (
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-muted-foreground text-xs">
                                   {formatDate(p.confirmed_at as string)}
                                 </span>
                               )}
@@ -834,7 +834,7 @@ export default async function ProposalDetailPage({
                             {p.invoice_id && (
                               <Link
                                 href={`/invoices/${p.invoice_id}`}
-                                className="text-xs text-primary hover:underline"
+                                className="text-primary text-xs hover:underline"
                               >
                                 Ver factura →
                               </Link>
@@ -933,7 +933,7 @@ export default async function ProposalDetailPage({
                         </li>
                       ))}
                     </ul>
-                    <p className="mt-3 text-xs text-muted-foreground">
+                    <p className="text-muted-foreground mt-3 text-xs">
                       PDF reconstruido con los datos guardados al reabrir, no una copia original.
                     </p>
                   </CardContent>
@@ -945,7 +945,7 @@ export default async function ProposalDetailPage({
                     <CardTitle>Aceptaciones electrónicas</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="mb-3 text-xs text-muted-foreground">
+                    <p className="text-muted-foreground mb-3 text-xs">
                       PDFs reconstruidos a partir de la evidencia guardada, no copias originales.
                     </p>
                     <ul className="space-y-3 text-sm">
