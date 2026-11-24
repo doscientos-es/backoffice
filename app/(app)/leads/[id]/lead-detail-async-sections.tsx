@@ -1,7 +1,6 @@
 import { ArrowRight, Clock as Clock3, ExternalLink } from 'lucide-react'
 
 import { createTask } from '@/app/(app)/tasks/actions'
-import { type AttachmentItem, AttachmentSection } from '@/components/ui/attachment-section'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { findClarityPlaybackUrl } from '@/lib/conversion-events/journeys'
@@ -159,33 +158,6 @@ export async function LeadDiagnosticsSection({ leadId }: { leadId: string }) {
         </div>
       </CardContent>
     </Card>
-  )
-}
-
-export async function LeadAttachmentsSection({
-  leadId,
-  canEdit,
-}: {
-  leadId: string
-  canEdit: boolean
-}) {
-  const supabase = await createServerClient()
-  const { data, error } = await supabase
-    .from('attachments')
-    .select('id, name, mime_type, size_bytes, created_at, source, drive_file_id, web_view_link')
-    .eq('lead_id', leadId)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-
-  if (error) throw new Error(error.message)
-
-  return (
-    <AttachmentSection
-      entityType="lead"
-      entityId={leadId}
-      attachments={(data ?? []) as AttachmentItem[]}
-      canEdit={canEdit}
-    />
   )
 }
 

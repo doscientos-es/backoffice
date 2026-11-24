@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopyButton } from '@/components/ui/copy-button'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
 import { SectionBoundary } from '@/components/ui/error-boundary'
+import { LeadClientAttachmentsSection } from '@/components/ui/lead-client-attachments-section'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requireUser } from '@/lib/auth'
@@ -37,12 +38,11 @@ import { LeadCommercial } from './lead-commercial'
 import { LeadCompanyResearch } from './lead-company-research'
 import { LeadDeleteDangerZone } from './lead-delete-danger-zone'
 import {
-  LeadAttachmentsSection,
   LeadConversionJourneySection,
   LeadDiagnosticsSection,
   LeadQuickActionsSection,
 } from './lead-detail-async-sections'
-import { LeadDetailTabs, resolveLeadTab } from './lead-detail-tabs'
+import { LeadDetailTabs, LeadTabPanel } from './lead-detail-tabs'
 import { LeadDiscoveryQuestionsPanel } from './lead-discovery-questions-panel'
 import { LeadEditDialog } from './lead-edit-dialog'
 import { LeadLanguageSelect } from './lead-language-select'
@@ -83,11 +83,14 @@ export default async function LeadDetailPage({
 }) {
   const { id } = await params
   const query = await searchParams
-  const tab = resolveLeadTab(query?.tab)
   const user = await requireUser()
   const canSeeProposalPrices = can(user.role, 'proposals.prices')
+  const canEdit = user.role !== 'viewer'
 
-  const result = await getLeadDetail(id, { includeProposalPrices: canSeeProposalPrices })
+  const [result, members] = await Promise.all([
+    getLeadDetail(id, { includeProposalPrices: canSeeProposalPrices }),
+    canEdit ? listActiveMembers().catch(() => []) : Promise.resolve([]),
+  ])
   if (!result) notFound()
   const {
     lead,
@@ -108,8 +111,6 @@ export default async function LeadDetailPage({
   } = result
 
   const aiEnabled = isAIEnabled()
-  const canEdit = user.role !== 'viewer'
-  const members = canEdit ? await listActiveMembers().catch(() => []) : []
   const ownerSuggestion = canEdit
     ? suggestLeadOwner({
         interactions,
@@ -261,7 +262,6 @@ export default async function LeadDetailPage({
 
       <LeadDetailTabs
         leadId={id}
-        current={tab}
         counts={{
           actividad: interactions?.length ?? 0,
           comercial: proposals.length + projects.length + invoices.length + contacts.length,
@@ -270,384 +270,376 @@ export default async function LeadDetailPage({
 
       <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="order-2 flex min-w-0 flex-col gap-6 lg:order-1">
-          {tab === 'resumen' ? (
-            <>
-              <Card>
-                <CardContent className="pt-5">
-                  <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
-                    <section className="min-w-0">
-                      <h3 className="mb-4 text-sm font-semibold">Contacto</h3>
-                      <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
-                        {alias && <DetailRow label="Alias">{alias}</DetailRow>}
-                        <DetailRow label="Nombre">{lead.name}</DetailRow>
-                        {(lead.status === 'lost' || lead.status === 'not_interested') &&
-                          lead.lost_reason && (
-                            <DetailRow
-                              label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}
-                            >
-                              <span className="font-medium text-destructive">
-                                {lead.lost_reason as string}
-                              </span>
-                            </DetailRow>
-                          )}
-                        {lead.email && (
-                          <DetailRow label="Email">
-                            <div className="flex min-w-0 items-center gap-1.5">
-                              <a
-                                href={`mailto:${lead.email as string}`}
-                                className="min-w-0 break-all text-primary underline-offset-2 hover:underline"
-                              >
-                                {lead.email as string}
-                              </a>
-                              <CopyButton
-                                text={lead.email as string}
-                                successMessage="Email copiado"
-                                label="Copiar email"
-                                className="shrink-0"
-                              />
-                            </div>
-                          </DetailRow>
-                        )}
-                        {lead.phone && (
-                          <DetailRow label="Teléfono">
-                            <PhoneQuickActions
-                              phone={lead.phone as string}
-                              leadId={lead.id as string}
-                              leadName={lead.name as string}
-                              leadAlias={lead.alias as string | null}
-                              leadCompany={lead.company as string | null}
-                              leadEmail={(lead.email as string | null) ?? null}
-                              leadLanguage={(lead.language as string | null) ?? null}
-                              firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
-                              senderName={user.name}
-                              aiEnabled={aiEnabled}
-                            />
-                          </DetailRow>
-                        )}
-                        {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}
-                        <DetailRow label="Responsable">
-                          <MemberLabel member={lead.assignee} />
-                        </DetailRow>
-                      </DetailGrid>
-                      {ownerSuggestion ? (
-                        <LeadOwnerSuggestionCard
-                          leadId={lead.id}
-                          currentOwnerName={lead.assignee?.name ?? null}
-                          suggestion={ownerSuggestion}
-                        />
-                      ) : null}
-                    </section>
-
-                    <section className="min-w-0">
-                      <h3 className="mb-4 text-sm font-semibold">Oportunidad</h3>
-                      <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
-                        <DetailRow label="Estado">
-                          <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
-                        </DetailRow>
-                        {lead.won_product && (
-                          <DetailRow label="Producto vendido">
-                            {leadSaleProductLabel(lead.won_product)}
-                          </DetailRow>
-                        )}
-                        {lead.score != null && (
-                          <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
-                        )}
-                        {lead.estimated_value != null && (
-                          <DetailRow label="Valor estimado">
-                            {formatEUR(Number(lead.estimated_value))}
-                          </DetailRow>
-                        )}
-                        <DetailRow label="Creado">
-                          {formatDate(lead.created_at as string)}
-                        </DetailRow>
-                        {lead.company_size && (
-                          <DetailRow label="Tamaño">{lead.company_size}</DetailRow>
-                        )}
-                        {lead.urgency && <DetailRow label="Urgencia">{lead.urgency}</DetailRow>}
-                        {lead.solution_type && (
-                          <DetailRow label="Solución">{lead.solution_type}</DetailRow>
-                        )}
-                      </DetailGrid>
-                    </section>
-
-                    <section className="min-w-0">
-                      <h3 className="mb-4 text-sm font-semibold">Captación</h3>
-                      <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
-                        {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
-                        {campaignName && <DetailRow label="Campaña Meta">{campaignName}</DetailRow>}
-                        {metaAdId && metaAdName && (
-                          <DetailRow label="Anuncio Meta">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              {adsManagerUrl ? (
-                                <a
-                                  href={adsManagerUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 text-primary hover:underline"
-                                  title={`ID de anuncio: ${metaAdId}`}
-                                >
-                                  {metaAdName}
-                                  <ExternalLink className="size-3.5" />
-                                </a>
-                              ) : (
-                                <span title={`ID de anuncio: ${metaAdId}`}>{metaAdName}</span>
-                              )}
-                              <AdPreviewDialog
-                                adId={metaAdId}
-                                adName={metaAdName}
-                                campaignName={campaignName ?? 'Sin campaña'}
-                                adsManagerUrl={adsManagerUrl}
-                              />
-                            </div>
-                          </DetailRow>
-                        )}
-                        {requiresCyaProspectSoftwareCommission(campaignName) && (
-                          <DetailRow label="Comisión">
-                            <span className="font-medium text-warning">
-                              CYA · 20 % de lo ganado
+          <LeadTabPanel tab="resumen">
+            <Card>
+              <CardContent className="pt-5">
+                <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
+                  <section className="min-w-0">
+                    <h3 className="mb-4 text-sm font-semibold">Contacto</h3>
+                    <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                      {alias && <DetailRow label="Alias">{alias}</DetailRow>}
+                      <DetailRow label="Nombre">{lead.name}</DetailRow>
+                      {(lead.status === 'lost' || lead.status === 'not_interested') &&
+                        lead.lost_reason && (
+                          <DetailRow
+                            label={lead.status === 'lost' ? 'Motivo de pérdida' : 'Motivo'}
+                          >
+                            <span className="font-medium text-destructive">
+                              {lead.lost_reason as string}
                             </span>
                           </DetailRow>
                         )}
-                        {lead.conversion_step && (
-                          <DetailRow label="Conversión">
-                            {CONVERSION_STEP_LABEL[lead.conversion_step as string] ??
-                              lead.conversion_step}
-                          </DetailRow>
-                        )}
-                        {lead.landing_path && (
-                          <DetailRow label="Landing">{lead.landing_path}</DetailRow>
-                        )}
-                        {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
-                        {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
-                          <DetailRow label="Calculadora">
-                            {[lead.calculator_cost, lead.calculator_hours]
-                              .filter(hasValue)
-                              .join(' · ')}
-                          </DetailRow>
-                        )}
-                      </DetailGrid>
-                    </section>
-                  </div>
-
-                  {(lead.landing_subject || firstTouch || lastTouch || lead.notes) && (
-                    <div className="mt-8 grid gap-6 border-t border-border pt-6 sm:grid-cols-2">
-                      {lead.landing_subject || firstTouch || lastTouch ? (
-                        <section className="min-w-0">
-                          <h3 className="mb-2 text-sm font-semibold">Recorrido</h3>
-                          <div className="space-y-2 text-xs leading-5 text-muted-foreground">
-                            {lead.landing_subject ? (
-                              <p>
-                                <span className="font-medium text-foreground">Asunto:</span>{' '}
-                                {lead.landing_subject}
-                              </p>
-                            ) : null}
-                            {firstTouch ? (
-                              <p>
-                                <span className="font-medium text-foreground">First touch:</span>{' '}
-                                {firstTouch}
-                              </p>
-                            ) : null}
-                            {lastTouch ? (
-                              <p>
-                                <span className="font-medium text-foreground">Last touch:</span>{' '}
-                                {lastTouch}
-                              </p>
-                            ) : null}
+                      {lead.email && (
+                        <DetailRow label="Email">
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <a
+                              href={`mailto:${lead.email as string}`}
+                              className="min-w-0 break-all text-primary underline-offset-2 hover:underline"
+                            >
+                              {lead.email as string}
+                            </a>
+                            <CopyButton
+                              text={lead.email as string}
+                              successMessage="Email copiado"
+                              label="Copiar email"
+                              className="shrink-0"
+                            />
                           </div>
-                        </section>
-                      ) : (
-                        <span />
+                        </DetailRow>
                       )}
-                      {lead.notes ? (
-                        <section className="min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <h3 className="text-sm font-semibold">Notas</h3>
-                            <LeadNotesDialog notes={lead.notes as string} />
+                      {lead.phone && (
+                        <DetailRow label="Teléfono">
+                          <PhoneQuickActions
+                            phone={lead.phone as string}
+                            leadId={lead.id as string}
+                            leadName={lead.name as string}
+                            leadAlias={lead.alias as string | null}
+                            leadCompany={lead.company as string | null}
+                            leadEmail={(lead.email as string | null) ?? null}
+                            leadLanguage={(lead.language as string | null) ?? null}
+                            firstContactedAt={(lead.first_contacted_at as string | null) ?? null}
+                            senderName={user.name}
+                            aiEnabled={aiEnabled}
+                          />
+                        </DetailRow>
+                      )}
+                      {lead.company && <DetailRow label="Empresa">{lead.company}</DetailRow>}
+                      <DetailRow label="Responsable">
+                        <MemberLabel member={lead.assignee} />
+                      </DetailRow>
+                    </DetailGrid>
+                    {ownerSuggestion ? (
+                      <LeadOwnerSuggestionCard
+                        leadId={lead.id}
+                        currentOwnerName={lead.assignee?.name ?? null}
+                        suggestion={ownerSuggestion}
+                      />
+                    ) : null}
+                  </section>
+
+                  <section className="min-w-0">
+                    <h3 className="mb-4 text-sm font-semibold">Oportunidad</h3>
+                    <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                      <DetailRow label="Estado">
+                        <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
+                      </DetailRow>
+                      {lead.won_product && (
+                        <DetailRow label="Producto vendido">
+                          {leadSaleProductLabel(lead.won_product)}
+                        </DetailRow>
+                      )}
+                      {lead.score != null && (
+                        <DetailRow label="Score">{`${Number(lead.score)}/100`}</DetailRow>
+                      )}
+                      {lead.estimated_value != null && (
+                        <DetailRow label="Valor estimado">
+                          {formatEUR(Number(lead.estimated_value))}
+                        </DetailRow>
+                      )}
+                      <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
+                      {lead.company_size && (
+                        <DetailRow label="Tamaño">{lead.company_size}</DetailRow>
+                      )}
+                      {lead.urgency && <DetailRow label="Urgencia">{lead.urgency}</DetailRow>}
+                      {lead.solution_type && (
+                        <DetailRow label="Solución">{lead.solution_type}</DetailRow>
+                      )}
+                    </DetailGrid>
+                  </section>
+
+                  <section className="min-w-0">
+                    <h3 className="mb-4 text-sm font-semibold">Captación</h3>
+                    <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                      {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
+                      {campaignName && <DetailRow label="Campaña Meta">{campaignName}</DetailRow>}
+                      {metaAdId && metaAdName && (
+                        <DetailRow label="Anuncio Meta">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {adsManagerUrl ? (
+                              <a
+                                href={adsManagerUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-primary hover:underline"
+                                title={`ID de anuncio: ${metaAdId}`}
+                              >
+                                {metaAdName}
+                                <ExternalLink className="size-3.5" />
+                              </a>
+                            ) : (
+                              <span title={`ID de anuncio: ${metaAdId}`}>{metaAdName}</span>
+                            )}
+                            <AdPreviewDialog
+                              adId={metaAdId}
+                              adName={metaAdName}
+                              campaignName={campaignName ?? 'Sin campaña'}
+                              adsManagerUrl={adsManagerUrl}
+                            />
                           </div>
-                          <p className="mt-2 line-clamp-5 text-sm leading-6 whitespace-pre-wrap">
-                            {lead.notes as string}
-                          </p>
-                        </section>
-                      ) : null}
-                    </div>
-                  )}
+                        </DetailRow>
+                      )}
+                      {requiresCyaProspectSoftwareCommission(campaignName) && (
+                        <DetailRow label="Comisión">
+                          <span className="font-medium text-warning">CYA · 20 % de lo ganado</span>
+                        </DetailRow>
+                      )}
+                      {lead.conversion_step && (
+                        <DetailRow label="Conversión">
+                          {CONVERSION_STEP_LABEL[lead.conversion_step as string] ??
+                            lead.conversion_step}
+                        </DetailRow>
+                      )}
+                      {lead.landing_path && (
+                        <DetailRow label="Landing">{lead.landing_path}</DetailRow>
+                      )}
+                      {lead.landing_ref && <DetailRow label="Ref">{lead.landing_ref}</DetailRow>}
+                      {[lead.calculator_cost, lead.calculator_hours].some(hasValue) && (
+                        <DetailRow label="Calculadora">
+                          {[lead.calculator_cost, lead.calculator_hours]
+                            .filter(hasValue)
+                            .join(' · ')}
+                        </DetailRow>
+                      )}
+                    </DetailGrid>
+                  </section>
+                </div>
+
+                {(lead.landing_subject || firstTouch || lastTouch || lead.notes) && (
+                  <div className="mt-8 grid gap-6 border-t border-border pt-6 sm:grid-cols-2">
+                    {lead.landing_subject || firstTouch || lastTouch ? (
+                      <section className="min-w-0">
+                        <h3 className="mb-2 text-sm font-semibold">Recorrido</h3>
+                        <div className="space-y-2 text-xs leading-5 text-muted-foreground">
+                          {lead.landing_subject ? (
+                            <p>
+                              <span className="font-medium text-foreground">Asunto:</span>{' '}
+                              {lead.landing_subject}
+                            </p>
+                          ) : null}
+                          {firstTouch ? (
+                            <p>
+                              <span className="font-medium text-foreground">First touch:</span>{' '}
+                              {firstTouch}
+                            </p>
+                          ) : null}
+                          {lastTouch ? (
+                            <p>
+                              <span className="font-medium text-foreground">Last touch:</span>{' '}
+                              {lastTouch}
+                            </p>
+                          ) : null}
+                        </div>
+                      </section>
+                    ) : (
+                      <span />
+                    )}
+                    {lead.notes ? (
+                      <section className="min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="text-sm font-semibold">Notas</h3>
+                          <LeadNotesDialog notes={lead.notes as string} />
+                        </div>
+                        <p className="mt-2 line-clamp-5 text-sm leading-6 whitespace-pre-wrap">
+                          {lead.notes as string}
+                        </p>
+                      </section>
+                    ) : null}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <SectionBoundary label="No se pudieron cargar los adjuntos">
+              <LeadClientAttachmentsSection
+                leadId={lead.id}
+                clientId={linkedClientId}
+                entityType="lead"
+                canEdit={canEdit}
+              />
+            </SectionBoundary>
+            <LeadCommercial
+              leadId={lead.id as string}
+              linkedClientId={linkedClientId}
+              proposals={proposals}
+              canSeeProposalPrices={canSeeProposalPrices}
+              projects={projects}
+              invoices={invoices}
+            />
+            <LeadDiscoveryQuestionsPanel
+              leadId={lead.id as string}
+              initialQuestions={discoveryQuestions}
+              aiEnabled={aiEnabled}
+              canEdit={canEdit}
+            />
+            {aiEnabled ? (
+              <LeadPriceSuggestion
+                leadId={lead.id as string}
+                leadLabel={(lead.company as string | null) || (lead.name as string)}
+                canCreateProposal={
+                  canEdit &&
+                  can(user.role, 'proposals.write') &&
+                  canSeeProposalPrices &&
+                  proposals.length === 0
+                }
+                currentValue={lead.estimated_value == null ? null : Number(lead.estimated_value)}
+                canEdit={canEdit}
+              />
+            ) : null}
+
+            {canEdit || nextActions.length > 0 ? (
+              <NextActionsCard
+                canEdit={canEdit}
+                leadId={id}
+                members={members}
+                currentUserId={user.id}
+                actions={nextActions}
+              />
+            ) : null}
+
+            <LeadRecentInteractions
+              leadId={lead.id as string}
+              leadName={displayName}
+              leadEmail={(lead.email as string | null) ?? null}
+              leadPhone={(lead.phone as string | null) ?? null}
+              leadLanguage={(lead.language as string | null) ?? null}
+              senderName={user.name}
+              canEdit={canEdit}
+              aiEnabled={aiEnabled}
+              defaultDurationMinutes={defaultDurationMinutes}
+              interactions={interactions ?? []}
+              totalActivityEvents={countActivityEvents({
+                interactions: interactions ?? [],
+                auditEvents,
+                proposals,
+                invoices,
+                tasks,
+              })}
+            />
+          </LeadTabPanel>
+
+          <LeadTabPanel tab="actividad">
+            <LeadRelatedContacts
+              leadId={lead.id as string}
+              leadName={displayName}
+              leadCompany={(lead.company as string | null) ?? null}
+              interactions={interactions ?? []}
+              contacts={contacts}
+              dismissedSuggestionKeys={dismissedMeetContactSuggestionKeys}
+              teamNames={members.map((member) => member.name)}
+              canEdit={canEdit}
+            />
+            <LeadActivityFeed
+              leadId={lead.id as string}
+              leadEmail={(lead.email as string | null) ?? null}
+              leadLanguage={(lead.language as string | null) ?? null}
+              canEdit={canEdit}
+              aiEnabled={aiEnabled}
+              interactions={interactions ?? []}
+              auditEvents={auditEvents}
+              proposals={proposals}
+              invoices={invoices}
+              tasks={tasks}
+            />
+          </LeadTabPanel>
+
+          <LeadTabPanel tab="comercial">
+            <LeadRelatedContacts
+              leadId={lead.id as string}
+              leadName={displayName}
+              leadCompany={(lead.company as string | null) ?? null}
+              interactions={interactions ?? []}
+              contacts={contacts}
+              dismissedSuggestionKeys={dismissedMeetContactSuggestionKeys}
+              teamNames={members.map((member) => member.name)}
+              canEdit={canEdit}
+            />
+            <LeadCommercial
+              leadId={lead.id as string}
+              linkedClientId={linkedClientId}
+              proposals={proposals}
+              canSeeProposalPrices={canSeeProposalPrices}
+              projects={projects}
+              invoices={invoices}
+            />
+
+            <SectionBoundary label="No se pudo cargar el journey de conversión">
+              <LeadConversionJourneySection leadId={lead.id} eventId={lead.event_id} />
+            </SectionBoundary>
+          </LeadTabPanel>
+
+          <LeadTabPanel tab="inteligencia">
+            <SectionBoundary label="No se pudo cargar la inteligencia de empresa">
+              <Card>
+                <CardContent className="pt-6">
+                  <LeadCompanyResearch
+                    leadId={lead.id as string}
+                    email={(lead.email as string | null) ?? null}
+                    canEdit={canEdit}
+                    aiEnabled={aiEnabled}
+                    available={companyResearchAvailable}
+                    initialResearch={
+                      (lead.company_research as LeadCompanyResearchData | null) ?? null
+                    }
+                    initialResearchedAt={(lead.company_researched_at as string | null) ?? null}
+                  />
                 </CardContent>
               </Card>
-              <LeadCommercial
-                leadId={lead.id as string}
-                linkedClientId={linkedClientId}
-                proposals={proposals}
-                canSeeProposalPrices={canSeeProposalPrices}
-                projects={projects}
-                invoices={invoices}
-              />
-              <LeadDiscoveryQuestionsPanel
-                leadId={lead.id as string}
-                initialQuestions={discoveryQuestions}
-                aiEnabled={aiEnabled}
-                canEdit={canEdit}
-              />
-              {aiEnabled ? (
-                <LeadPriceSuggestion
-                  leadId={lead.id as string}
-                  leadLabel={(lead.company as string | null) || (lead.name as string)}
-                  canCreateProposal={
-                    canEdit &&
-                    can(user.role, 'proposals.write') &&
-                    canSeeProposalPrices &&
-                    proposals.length === 0
-                  }
-                  currentValue={lead.estimated_value == null ? null : Number(lead.estimated_value)}
-                  canEdit={canEdit}
-                />
-              ) : null}
+            </SectionBoundary>
 
-              {canEdit || nextActions.length > 0 ? (
-                <NextActionsCard
-                  canEdit={canEdit}
-                  leadId={id}
-                  members={members}
-                  currentUserId={user.id}
-                  actions={nextActions}
-                />
-              ) : null}
+            <SectionBoundary label="No se pudo cargar el análisis IA">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Análisis IA</CardTitle>
+                  <p className="mt-1 text-sm font-normal text-muted-foreground">
+                    Resumen, señales y siguiente mejor acción.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <LeadAiPanel
+                    leadId={lead.id as string}
+                    aiEnabled={aiEnabled}
+                    members={members}
+                    briefing={briefing}
+                    initialData={{
+                      ai_summary: (lead.ai_summary as string | null) ?? null,
+                      ai_suggested_next_step:
+                        (lead.ai_suggested_next_step as string | null) ?? null,
+                      ai_suggested_next_step_at:
+                        (lead.ai_suggested_next_step_at as string | null) ?? null,
+                      ai_temperature:
+                        (lead.ai_temperature as 'hot' | 'warm' | 'cold' | null) ?? null,
+                      ai_confidence: (lead.ai_confidence as number | null) ?? null,
+                      ai_updated_at: (lead.ai_updated_at as string | null) ?? null,
+                      ai_tags: (lead.ai_tags as string[] | null) ?? null,
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </SectionBoundary>
 
-              <LeadRecentInteractions
-                leadId={lead.id as string}
-                leadName={displayName}
-                leadEmail={(lead.email as string | null) ?? null}
-                leadPhone={(lead.phone as string | null) ?? null}
-                leadLanguage={(lead.language as string | null) ?? null}
-                senderName={user.name}
-                canEdit={canEdit}
-                aiEnabled={aiEnabled}
-                defaultDurationMinutes={defaultDurationMinutes}
-                interactions={interactions ?? []}
-                totalActivityEvents={countActivityEvents({
-                  interactions: interactions ?? [],
-                  auditEvents,
-                  proposals,
-                  invoices,
-                  tasks,
-                })}
-              />
-            </>
-          ) : null}
-
-          {tab === 'actividad' ? (
-            <>
-              <LeadRelatedContacts
-                leadId={lead.id as string}
-                leadName={displayName}
-                leadCompany={(lead.company as string | null) ?? null}
-                interactions={interactions ?? []}
-                contacts={contacts}
-                dismissedSuggestionKeys={dismissedMeetContactSuggestionKeys}
-                teamNames={members.map((member) => member.name)}
-                canEdit={canEdit}
-              />
-              <LeadActivityFeed
-                leadId={lead.id as string}
-                leadEmail={(lead.email as string | null) ?? null}
-                leadLanguage={(lead.language as string | null) ?? null}
-                canEdit={canEdit}
-                aiEnabled={aiEnabled}
-                interactions={interactions ?? []}
-                auditEvents={auditEvents}
-                proposals={proposals}
-                invoices={invoices}
-                tasks={tasks}
-              />
-
-              <SectionBoundary label="No se pudieron cargar los adjuntos">
-                <LeadAttachmentsSection leadId={lead.id} canEdit={canEdit} />
-              </SectionBoundary>
-            </>
-          ) : null}
-
-          {tab === 'comercial' ? (
-            <>
-              <LeadRelatedContacts
-                leadId={lead.id as string}
-                leadName={displayName}
-                leadCompany={(lead.company as string | null) ?? null}
-                interactions={interactions ?? []}
-                contacts={contacts}
-                dismissedSuggestionKeys={dismissedMeetContactSuggestionKeys}
-                teamNames={members.map((member) => member.name)}
-                canEdit={canEdit}
-              />
-              <LeadCommercial
-                leadId={lead.id as string}
-                linkedClientId={linkedClientId}
-                proposals={proposals}
-                canSeeProposalPrices={canSeeProposalPrices}
-                projects={projects}
-                invoices={invoices}
-              />
-
-              <SectionBoundary label="No se pudo cargar el journey de conversión">
-                <LeadConversionJourneySection leadId={lead.id} eventId={lead.event_id} />
-              </SectionBoundary>
-            </>
-          ) : null}
-
-          {tab === 'inteligencia' ? (
-            <>
-              <SectionBoundary label="No se pudo cargar la inteligencia de empresa">
-                <Card>
-                  <CardContent className="pt-6">
-                    <LeadCompanyResearch
-                      leadId={lead.id as string}
-                      email={(lead.email as string | null) ?? null}
-                      canEdit={canEdit}
-                      aiEnabled={aiEnabled}
-                      available={companyResearchAvailable}
-                      initialResearch={
-                        (lead.company_research as LeadCompanyResearchData | null) ?? null
-                      }
-                      initialResearchedAt={(lead.company_researched_at as string | null) ?? null}
-                    />
-                  </CardContent>
-                </Card>
-              </SectionBoundary>
-
-              <SectionBoundary label="No se pudo cargar el análisis IA">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Análisis IA</CardTitle>
-                    <p className="mt-1 text-sm font-normal text-muted-foreground">
-                      Resumen, señales y siguiente mejor acción.
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <LeadAiPanel
-                      leadId={lead.id as string}
-                      aiEnabled={aiEnabled}
-                      members={members}
-                      briefing={briefing}
-                      initialData={{
-                        ai_summary: (lead.ai_summary as string | null) ?? null,
-                        ai_suggested_next_step:
-                          (lead.ai_suggested_next_step as string | null) ?? null,
-                        ai_suggested_next_step_at:
-                          (lead.ai_suggested_next_step_at as string | null) ?? null,
-                        ai_temperature:
-                          (lead.ai_temperature as 'hot' | 'warm' | 'cold' | null) ?? null,
-                        ai_confidence: (lead.ai_confidence as number | null) ?? null,
-                        ai_updated_at: (lead.ai_updated_at as string | null) ?? null,
-                        ai_tags: (lead.ai_tags as string[] | null) ?? null,
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              </SectionBoundary>
-
-              <SectionBoundary label="No se pudieron cargar los diagnósticos personalizados">
-                <LeadDiagnosticsSection leadId={lead.id} />
-              </SectionBoundary>
-            </>
-          ) : null}
+            <SectionBoundary label="No se pudieron cargar los diagnósticos personalizados">
+              <LeadDiagnosticsSection leadId={lead.id} />
+            </SectionBoundary>
+          </LeadTabPanel>
         </div>
 
         <aside className="order-1 min-w-0 lg:order-2">

@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopyButton } from '@/components/ui/copy-button'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
+import { SectionBoundary } from '@/components/ui/error-boundary'
+import { LeadClientAttachmentsSection } from '@/components/ui/lead-client-attachments-section'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { formatAddress } from '@/lib/address'
 import { requireUser } from '@/lib/auth'
@@ -206,6 +208,15 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           ) : null}
         </CardContent>
       </Card>
+
+      <SectionBoundary label="No se pudieron cargar los adjuntos">
+        <LeadClientAttachmentsSection
+          leadId={originLead?.id ?? null}
+          clientId={client.id}
+          entityType="client"
+          canEdit={canEdit}
+        />
+      </SectionBoundary>
 
       <Card>
         <CardHeader>

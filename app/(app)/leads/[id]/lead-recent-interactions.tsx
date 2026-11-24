@@ -1,5 +1,4 @@
 import { ArrowRight } from 'lucide-react'
-import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +10,7 @@ import {
 import type { LeadDetailInteraction } from '@/lib/leads/types'
 
 import { QCallDialog, QEmailDialog, QNoteDialog } from '../lead-quick-action-dialogs'
+import { LeadTabLink } from './lead-detail-tabs'
 import { LeadInteractionTimeline, type TimelineItem } from './lead-interaction-timeline'
 
 const LABEL: Record<string, string> = {
@@ -88,10 +88,10 @@ export function LeadRecentInteractions({
           </div>
           {showHistoryLink ? (
             <Button asChild variant="ghost" size="sm" className="shrink-0 text-muted-foreground">
-              <Link href={`/leads/${leadId}?tab=actividad`}>
+              <LeadTabLink leadId={leadId} tab="actividad">
                 Ver todo
                 <ArrowRight className="size-3.5" />
-              </Link>
+              </LeadTabLink>
             </Button>
           ) : null}
         </div>
