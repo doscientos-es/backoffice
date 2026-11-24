@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.216",
+      "date": "2026-11-24",
+      "title": "v0.1.216",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Implement triggers to protect proposal integrity and versioning"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "fcfc5ea81411323bb7f1bb2e24cab7639edd0340",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Implement triggers to protect proposal integrity and versioning"
+        }
+      ]
+    },
+    {
       "version": "0.1.213",
       "date": "2026-11-24",
       "title": "v0.1.213",

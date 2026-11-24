@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-24 — v0.1.216
+
+### Nuevas funciones
+
+- Implement triggers to protect proposal integrity and versioning
+
 ## 2026-11-24 — v0.1.213
 
 ### Nuevas funciones
