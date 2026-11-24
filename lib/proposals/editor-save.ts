@@ -18,7 +18,7 @@ type UpdateResult = { ok: true; version: number } | { ok: false; error: string; 
  * Accepts a partial payload; when `items` is present the line items are
  * replaced atomically (delete + insert) and totals recomputed server-side.
  *
- * Only drafts can be edited; issued proposals must first be reopened.
+ * Unanswered proposals can be edited; accepted proposals must first be reopened.
  */
 export async function updateProposalRecord(input: unknown): Promise<UpdateResult> {
   await requirePermission('proposals.write')
@@ -49,7 +49,13 @@ export async function updateProposalRecord(input: unknown): Promise<UpdateResult
     return { ok: false, error: 'No se pudo cargar la información económica de la propuesta' }
   }
   if (!isProposalEditable(current.status)) {
-    return { ok: false, error: 'Reabre la propuesta para crear una nueva versión editable' }
+    return {
+      ok: false,
+      error:
+        current.status === 'accepted'
+          ? 'Reabre la propuesta para crear una nueva versión editable'
+          : 'La propuesta rechazada no se puede editar',
+    }
   }
 
   const persistedItems = items
@@ -183,7 +189,13 @@ async function replaceProposalTeam(
 
   if (proposalError || !proposal) return { ok: false, error: 'Propuesta no encontrada' }
   if (!isProposalEditable(proposal.status)) {
-    return { ok: false, error: 'Reabre la propuesta para crear una nueva versión editable' }
+    return {
+      ok: false,
+      error:
+        proposal.status === 'accepted'
+          ? 'Reabre la propuesta para crear una nueva versión editable'
+          : 'La propuesta rechazada no se puede editar',
+    }
   }
 
   if (member_ids.length > 0) {

@@ -465,15 +465,15 @@ describe('reopenProposal', () => {
     })
   })
 
-  it('reopens a sent proposal as a new draft', async () => {
-    state.proposal.status = 'sent'
-    expect(await reopenProposal({ id: ID })).toEqual({ ok: true })
-    expect(state.updateFilters).toMatchObject({ id: ID, status: 'sent' })
-  })
-
-  it('refuses to reopen a draft', async () => {
-    state.proposal.status = 'draft'
-    expect(await reopenProposal({ id: ID })).toMatchObject({ ok: false })
-    expect(state.updates).toEqual([])
-  })
+  it.each(['draft', 'sent', 'viewed', 'expired', 'rejected'])(
+    'refuses to reopen a proposal with status %s',
+    async (status) => {
+      state.proposal.status = status
+      expect(await reopenProposal({ id: ID })).toEqual({
+        ok: false,
+        error: 'Solo se pueden reabrir propuestas aceptadas',
+      })
+      expect(state.updates).toEqual([])
+    },
+  )
 })
