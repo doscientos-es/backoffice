@@ -173,6 +173,40 @@ describe('updateProposal', () => {
     state.leadStatus = 'in_conversation'
   })
 
+  it.each(['sent', 'viewed', 'expired'])(
+    'saves an unanswered %s proposal without changing its status',
+    async (status) => {
+      state.proposal.status = status
+      expect(
+        await updateProposal({
+          id: ID,
+          expected_version: 1,
+          title: 'Revisada',
+          items: [
+            {
+              description: 'Servicio',
+              quantity: 1,
+              unit_price: 100,
+              vat_rate: 21,
+              billing_cycle: 'none',
+            },
+          ],
+        }),
+      ).toEqual({ ok: true, version: 2 })
+      expect(state.rpcArgs).toMatchObject({ p_patch: { title: 'Revisada' } })
+      expect(state.updates).toEqual([])
+    },
+  )
+
+  it.each(['accepted', 'rejected'])('does not edit a %s proposal', async (status) => {
+    state.proposal.status = status
+    expect(await updateProposal({ id: ID, expected_version: 1, title: 'Revisada' })).toMatchObject({
+      ok: false,
+    })
+    expect(state.rpcArgs).toBeNull()
+    expect(state.updates).toEqual([])
+  })
+
   it('does not pass derived totals to the item-replacement RPC', async () => {
     const result = await updateProposal({
       id: ID,

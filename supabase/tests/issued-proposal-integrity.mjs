@@ -127,5 +127,82 @@ assert.equal(
     .rows[0].status,
   'accepted',
 )
+
+// Apply the pending-edit migration to an isolated fixture with the version trigger.
+await db.exec(`
+  alter table public.proposals add column client_capacity text, add column version bigint default 1;
+  create function public.fn_bump_record_version() returns trigger language plpgsql as $$
+  begin new.version := old.version + 1; return new; end $$;
+  create function public.fn_touch_updated_at() returns trigger language plpgsql as $$
+  begin new.updated_at := now(); return new; end $$;
+  alter table public.proposals add column updated_at timestamptz default now();
+  create trigger trg_bump_proposals_version before update on public.proposals
+    for each row execute function public.fn_bump_record_version();
+  create trigger trg_touch_proposals before update on public.proposals
+    for each row execute function public.fn_touch_updated_at();
+`)
+await db.exec(
+  await readFile(
+    new URL('../migrations/20261124190000_edit_pending_proposals.sql', import.meta.url),
+    'utf8',
+  ),
+)
+await db.exec(`
+  create trigger protect_issued_proposal_capacity before update on public.proposals
+    for each row execute function public.protect_issued_proposal_capacity();
+  insert into proposals (id, status, title, client_capacity) values
+    ('00000000-0000-0000-0000-000000000006', 'sent', 'Pendiente', 'business');
+`)
+const pendingId = '00000000-0000-0000-0000-000000000006'
+const current = async () =>
+  (
+    await db.query('select status, document_revision, version from proposals where id = $1', [
+      pendingId,
+    ])
+  ).rows[0]
+await db.exec(`update proposals set title = 'Modificada', client_capacity = 'consumer'
+  where id = '${pendingId}'`)
+assert.deepEqual(await current(), { status: 'sent', document_revision: 2, version: 2 })
+await assert.rejects(
+  db.query(accept, [pendingId, 1, ...args.slice(2, 6), '{}', ...args.slice(7)]),
+  /ha cambiado/,
+)
+await assert.rejects(
+  db.exec(`update proposals set document_revision = 1 where id = '${pendingId}'`),
+  /versión/,
+)
+
+await db.exec(`insert into proposal_items values ('${pendingId}', 0, 'Partida nueva')`)
+assert.deepEqual(await current(), { status: 'sent', document_revision: 3, version: 2 })
+await db.exec(
+  `insert into proposal_team_members values ('${pendingId}', 0, '00000000-0000-0000-0000-000000000001')`,
+)
+assert.deepEqual(await current(), { status: 'sent', document_revision: 4, version: 2 })
+await db.exec(`update proposals set status = 'viewed' where id = '${pendingId}';
+  update proposals set payment_plan = '[]' where id = '${pendingId}';
+  update proposals set status = 'expired' where id = '${pendingId}';
+  update proposal_items set description = 'Editada' where proposal_id = '${pendingId}'`)
+assert.deepEqual(await current(), { status: 'expired', document_revision: 6, version: 5 })
+
+await db.exec(`update proposals set status = 'sent' where id = '${pendingId}'`)
+await db.query(accept, [pendingId, 6, ...args.slice(2, 6), '{}', ...args.slice(7)])
+await assert.rejects(
+  db.exec(`update proposals set title = 'Bloqueada' where id = '${pendingId}'`),
+  /respondida/,
+)
+await assert.rejects(
+  db.exec(`delete from proposal_items where proposal_id = '${pendingId}'`),
+  /respondida/,
+)
+await db.exec(`update proposals set status = 'draft' where id = '${pendingId}'`)
+assert.equal((await current()).document_revision, 7)
+assert.equal(
+  (
+    await db.query('select revision_number from proposal_revisions where proposal_id = $1', [
+      pendingId,
+    ])
+  ).rows[0].revision_number,
+  6,
+)
 await db.close()
 console.log('Issued proposal integrity SQL checks passed')
