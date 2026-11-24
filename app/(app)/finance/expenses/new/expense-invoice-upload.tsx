@@ -32,7 +32,6 @@ interface Props {
   onExtracted: (suggestion: ExpenseInvoiceSuggestion, meta: InvoiceExtractionMeta) => void
   /** Lets the parent block submit while an upload/extraction is in flight. */
   onPendingChange: (pending: boolean) => void
-  onReviewChange: (reviewed: boolean) => void
 }
 
 type Phase = 'idle' | 'uploading' | 'extracting' | 'done'
@@ -64,12 +63,7 @@ async function readJson<T>(response: Response): Promise<T> {
  * attachment (linked to the expense on create) and asks the server to extract
  * its data so the form can be pre-filled.
  */
-export function ExpenseInvoiceUpload({
-  onAttached,
-  onExtracted,
-  onPendingChange,
-  onReviewChange,
-}: Props) {
+export function ExpenseInvoiceUpload({ onAttached, onExtracted, onPendingChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<Phase>('idle')
   const [attachmentId, setAttachmentId] = useState<string | null>(null)
@@ -125,7 +119,6 @@ export function ExpenseInvoiceUpload({
         }
         setMeta(extractionMeta)
         setSuggestion(extractJson.suggestion)
-        onReviewChange(false)
         setScanOpen(true)
       } else {
         setScanOpen(false)
@@ -153,7 +146,6 @@ export function ExpenseInvoiceUpload({
     setMeta(null)
     setExtractFailed(false)
     setSuggestion(null)
-    onReviewChange(false)
     setAnalysisReview(null)
     setPhase('uploading')
     onPendingChange(true)
@@ -191,7 +183,6 @@ export function ExpenseInvoiceUpload({
     setExtractFailed(false)
     setError(null)
     setSuggestion(null)
-    onReviewChange(false)
     setAnalysisReview(null)
     setScanOpen(false)
     setPhase('idle')
@@ -258,20 +249,6 @@ export function ExpenseInvoiceUpload({
               ? 'Datos aplicados con IA. Revísalos antes de crear el gasto.'
               : 'Datos aplicados con reglas locales. Revísalos antes de crear el gasto.'}
           </p>
-        ) : null}
-        {suggestion || extractFailed ? (
-          <label className="flex cursor-pointer items-start gap-2 rounded-md border border-border bg-background p-3 text-sm">
-            <input
-              type="checkbox"
-              className="mt-0.5 size-4 accent-primary"
-              onChange={(event) => onReviewChange(event.target.checked)}
-            />
-            <span>
-              {suggestion
-                ? 'He revisado los datos rellenados y el formulario completo antes de crear el gasto.'
-                : 'He revisado el formulario completo y la factura adjunta antes de crear el gasto.'}
-            </span>
-          </label>
         ) : null}
         {meta?.warning ? (
           <p className="text-sm text-amber-700 dark:text-amber-300">{meta.warning}</p>

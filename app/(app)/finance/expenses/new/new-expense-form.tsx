@@ -56,7 +56,6 @@ export function NewExpenseForm({ projects, teamMembers, defaults, vendorSuggesti
   const formRef = useRef<HTMLFormElement>(null)
   const [invoice, setInvoice] = useState<{ id: string; name: string } | null>(null)
   const [invoicePending, setInvoicePending] = useState(false)
-  const [invoiceReviewed, setInvoiceReviewed] = useState(false)
   const [fieldsKey, setFieldsKey] = useState(0)
   const [fieldDefaults, setFieldDefaults] = useState<ExpenseFormDefaults | undefined>(defaults)
 
@@ -98,7 +97,6 @@ export function NewExpenseForm({ projects, teamMembers, defaults, vendorSuggesti
         onAttached={setInvoice}
         onExtracted={(suggestion) => applySuggestion(suggestion)}
         onPendingChange={setInvoicePending}
-        onReviewChange={setInvoiceReviewed}
       />
       {/* Linked to the expense by createExpense once the row exists. */}
       <input type="hidden" name="invoice_attachment_id" value={invoice?.id ?? ''} />
@@ -116,11 +114,7 @@ export function NewExpenseForm({ projects, teamMembers, defaults, vendorSuggesti
         </p>
       )}
       <div className="flex justify-end border-t border-border pt-4">
-        <Button
-          type="submit"
-          size="sm"
-          disabled={pending || invoicePending || (!!invoice && !invoiceReviewed)}
-        >
+        <Button type="submit" size="sm" disabled={pending || invoicePending}>
           {pending ? 'Creando…' : 'Crear gasto'}
         </Button>
       </div>
