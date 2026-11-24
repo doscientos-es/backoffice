@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.209",
+      "date": "2026-11-24",
+      "title": "v0.1.209",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Recognize Abaco upgrade invoices"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "e6ff106ff3af1e2cb07a7c8fdf5822e7903ce6ce",
+          "type": "feat",
+          "scope": "billing",
+          "breaking": false,
+          "description": "Recognize Abaco upgrade invoices"
+        }
+      ]
+    },
+    {
       "version": "0.1.208",
       "date": "2026-11-23",
       "title": "v0.1.208",

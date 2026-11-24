@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-24 — v0.1.209
+
+### Nuevas funciones
+
+- Recognize Abaco upgrade invoices
+
 ## 2026-11-23 — v0.1.208
 
 ### Nuevas funciones
