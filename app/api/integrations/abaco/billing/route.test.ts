@@ -90,6 +90,23 @@ describe('Ábaco subscription integration', () => {
     expect(fulfill).toHaveBeenCalledWith(standard)
   })
 
+  it.each(['ai_upgrade', 'plan_upgrade', 'workers_upgrade', 'procurement_upgrade', 'mcp_upgrade'])(
+    'preserves the upgrade type for the invoice: %s',
+    async (chargeType) => {
+      fulfill.mockResolvedValue({ status: 'fiscal_pending' })
+      const upgrade = { ...payment, chargeType }
+      expect((await post({ action: 'issue', payment: upgrade })).status).toBe(200)
+      expect(fulfill).toHaveBeenCalledWith(upgrade)
+    },
+  )
+
+  it('rejects unrecognized invoice types', async () => {
+    expect(
+      (await post({ action: 'issue', payment: { ...payment, chargeType: 'unknown' } })).status,
+    ).toBe(422)
+    expect(fulfill).not.toHaveBeenCalled()
+  })
+
   it.each([
     { netCents: 983, totalCents: 1189, discountCents: 21 },
     { netCents: 0, totalCents: 0, discountCents: 1210 },

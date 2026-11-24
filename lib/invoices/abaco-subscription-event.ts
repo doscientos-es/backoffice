@@ -24,6 +24,9 @@ const payment = z
     totalCents: z.number().int().nonnegative().max(121_000_000),
     vatPercent: z.literal(21),
     recipient,
+    chargeType: z
+      .enum(['ai_upgrade', 'plan_upgrade', 'workers_upgrade', 'procurement_upgrade', 'mcp_upgrade'])
+      .optional(),
     referralDiscount: z
       .object({
         originalNetCents: z.number().int().positive().max(100_000_000),

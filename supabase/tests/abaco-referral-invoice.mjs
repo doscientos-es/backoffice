@@ -28,6 +28,12 @@ await db.exec(
     'utf8',
   ),
 )
+await db.exec(
+  await readFile(
+    new URL('../migrations/20261124073605_abaco_upgrade_invoice_concepts.sql', import.meta.url),
+    'utf8',
+  ),
+)
 const event = {
   paymentId: '00000000-0000-4000-8000-000000000002',
   tenantId: '00000000-0000-4000-8000-000000000003',
@@ -80,5 +86,30 @@ assert.equal(
   (await db.query('select count(*)::int as count from public.invoice_payments')).rows[0].count,
   1,
 )
+const upgradeTypes = [
+  ['ai_upgrade', 'Ampliación de IA Ábaco'],
+  ['plan_upgrade', 'Ampliación de plan Ábaco'],
+  ['workers_upgrade', 'Ampliación de módulo Equipo Ábaco'],
+  ['procurement_upgrade', 'Ampliación de módulo Compras Ábaco'],
+  ['mcp_upgrade', 'Ampliación de módulo MCP Ábaco'],
+]
+for (const [index, [chargeType, concept]] of upgradeTypes.entries()) {
+  const upgrade = {
+    ...event,
+    paymentId: `00000000-0000-4000-8000-${String(index + 10).padStart(12, '0')}`,
+    netCents: 100,
+    totalCents: 121,
+    referralDiscount: undefined,
+    chargeType,
+  }
+  const upgradeId = (await issue(upgrade)).rows[0].id
+  assert.equal((await issue(upgrade)).rows[0].id, upgradeId)
+  const item = await db.query(
+    'select description from public.invoice_items where invoice_id = $1',
+    [upgradeId],
+  )
+  assert.ok(item.rows[0].description.startsWith(concept))
+}
+await assert.rejects(issue({ ...event, chargeType: 'unknown' }), /Tipo de ampliación no válido/)
 await db.close()
 console.log('Ábaco referral invoice SQL checks passed')
