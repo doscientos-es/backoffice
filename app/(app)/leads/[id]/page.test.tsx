@@ -2,9 +2,11 @@ import { Children, isValidElement, type ReactElement, type ReactNode } from 'rea
 import { describe, expect, it, vi } from 'vitest'
 
 import { DetailRow } from '@/components/layout/detail-grid'
+import { LeadClientAttachmentsSection } from '@/components/ui/lead-client-attachments-section'
 import { StatusBadge } from '@/components/ui/status-badge'
 
 import { LeadDeleteDangerZone } from './lead-delete-danger-zone'
+import { LeadTabPanel } from './lead-detail-tabs'
 
 const { getLeadDetail, requireUser } = vi.hoisted(() => ({
   getLeadDetail: vi.fn(),
@@ -85,6 +87,19 @@ describe('LeadDetailPage', () => {
       expect(status.props.children.props.value).toBe('new')
     }
     expect(elements(page).some((element) => element.type === LeadDeleteDangerZone)).toBe(false)
+    const summary = elements(page).find(
+      (element) =>
+        element.type === LeadTabPanel && (element.props as { tab?: string }).tab === 'resumen',
+    )
+    const attachments = elements(summary).find(
+      (element) => element.type === LeadClientAttachmentsSection,
+    )
+    expect(attachments?.props).toMatchObject({
+      leadId: 'lead-1',
+      clientId: null,
+      entityType: 'lead',
+      canEdit: false,
+    })
   })
 
   it.each(['owner', 'admin'])('shows the delete danger zone to %s users', async (role) => {
