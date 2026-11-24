@@ -220,9 +220,9 @@ describe('NewExpenseForm invoice submission', () => {
       expect(screen.queryByRole('checkbox')).toBeNull()
       fireEvent.click(submit)
       expect(submitMock).toHaveBeenCalledOnce()
-      expect((submitMock.mock.calls[0][0] as FormData).get('invoice_attachment_id')).toBe(
-        'attachment-1',
-      )
+      expect(
+        (submitMock.mock.calls[0]?.[0] as FormData | undefined)?.get('invoice_attachment_id'),
+      ).toBe('attachment-1')
     },
   )
 })
