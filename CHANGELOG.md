@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-24 — v0.1.213
+
+### Nuevas funciones
+
+- Integrate invoice extraction and submission handling
+
 ## 2026-11-24 — v0.1.212
 
 ### Correcciones

@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.213",
+      "date": "2026-11-24",
+      "title": "v0.1.213",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Integrate invoice extraction and submission handling"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "c3698dcb112f1eb1ab50dbad06cb9ba84e4ce52b",
+          "type": "feat",
+          "scope": "expense",
+          "breaking": false,
+          "description": "Integrate invoice extraction and submission handling"
+        }
+      ]
+    },
+    {
       "version": "0.1.212",
       "date": "2026-11-24",
       "title": "v0.1.212",
