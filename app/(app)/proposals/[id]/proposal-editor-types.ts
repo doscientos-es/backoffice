@@ -3,6 +3,7 @@ import type { DiscountType, LineItem as EditableItem } from '@/lib/finance'
 import type { EditableKeyPoint } from '@/lib/proposals/key-points'
 import type { MaintenanceOffer } from '@/lib/proposals/maintenance'
 import type { PaymentPlanItem, PaymentSchedule, ScopeModule } from '@/lib/proposals/scope'
+import type { TimelineItem } from '@/lib/proposals/timeline'
 
 type ProposalTeamMember = { id: string; name: string; job_title: string | null }
 
@@ -18,6 +19,7 @@ export type ProposalEditorProps = {
   initialSolutions: EditableKeyPoint[]
   initialTerms: string | null
   initialScopeModules: ScopeModule[]
+  initialTimeline?: TimelineItem[]
   initialDevelopmentApproach?: string | null
   initialDeliverables: string | null
   initialAcceptanceCriteria: string | null

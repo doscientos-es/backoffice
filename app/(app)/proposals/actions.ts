@@ -247,7 +247,7 @@ export async function duplicateProposal(
   const { data: source, error: readError } = await supabase
     .from('proposals')
     .select(
-      'client_id, lead_id, title, valid_until, notes, demo_url, context_markdown, problems, solutions, terms, legal_terms, scope_modules, development_approach, deliverables, acceptance_criteria, payment_schedule, change_management_terms, currency',
+      'client_id, lead_id, title, valid_until, notes, demo_url, context_markdown, problems, solutions, terms, legal_terms, scope_modules, timeline, development_approach, deliverables, acceptance_criteria, payment_schedule, change_management_terms, currency',
     )
     .eq('id', parsed.data.id)
     .is('deleted_at', null)
@@ -293,6 +293,7 @@ export async function duplicateProposal(
       terms: source.terms,
       legal_terms: source.legal_terms ?? DEFAULT_PROPOSAL_LEGAL_TERMS,
       scope_modules: source.scope_modules,
+      timeline: source.timeline,
       development_approach: source.development_approach,
       deliverables: source.deliverables,
       acceptance_criteria: source.acceptance_criteria,

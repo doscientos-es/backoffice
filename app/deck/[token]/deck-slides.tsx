@@ -2,6 +2,7 @@ import { ArrowRight, Download } from 'lucide-react'
 import { createContext, type ReactNode, useContext } from 'react'
 
 import { LogoMark } from '@/components/branding'
+import { TimelineChart } from '@/components/proposals/timeline-chart'
 import { Markdown } from '@/components/ui/markdown'
 import { type BillingCycle, computeProposalTotals, type ProposalTotals } from '@/lib/finance'
 import { formatPortalDate, formatPortalEUR, type PortalLanguage } from '@/lib/portal/language'
@@ -12,6 +13,7 @@ import {
   publicScopeDuration,
 } from '@/lib/proposals/public-copy'
 import type { ScopeModule } from '@/lib/proposals/scope'
+import { timelineLayout } from '@/lib/proposals/timeline'
 
 import type { DeckProposal, DeckProposalItem, DeckTeamMember } from './page'
 
@@ -831,6 +833,31 @@ export function buildSlides(
       element: wm(<ScopeModuleSlide module={module} index={index} />),
     })
   })
+  const timeline = timelineLayout(proposal.timeline ?? []).map(({ item }) => item)
+  for (let offset = 0; offset < timeline.length; offset += 4) {
+    slides.push({
+      key: `timeline-${offset}`,
+      label: tr('Plazos', 'Terminis', 'Timeline'),
+      accent: 'zinc',
+      element: wm(
+        <SectionSlide
+          label={tr('El camino', 'El camí', 'The journey')}
+          title={tr('Plazos del proyecto', 'Terminis del projecte', 'Project timeline')}
+          accent="zinc"
+        >
+          <div className="w-full max-w-3xl overflow-y-auto" style={{ maxHeight: '55vh' }}>
+            <TimelineChart
+              items={timeline.slice(offset, offset + 4)}
+              allItems={timeline}
+              proposalId={proposal.id}
+              proposalTitle={proposal.title}
+              language={language}
+            />
+          </div>
+        </SectionSlide>,
+      ),
+    })
+  }
   if (proposal.deliverables?.trim() || proposal.acceptance_criteria?.trim()) {
     slides.push({
       key: 'delivery',

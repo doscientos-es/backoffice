@@ -135,6 +135,30 @@ describe('ProposalEditor', () => {
     )
   })
 
+  it('validates and saves timeline milestones with the proposal draft', async () => {
+    render(<ProposalEditor {...props} />)
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 2: Alcance/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Añadir hito/ }))
+    fireEvent.change(screen.getByLabelText('Qué haremos'), { target: { value: 'Diseño' } })
+    fireEvent.change(screen.getByLabelText('Inicio'), { target: { value: '2026-12-01' } })
+    fireEvent.change(screen.getByLabelText('Fin (incluido)'), { target: { value: '2026-12-07' } })
+    fireEvent.click(screen.getByRole('tab', { name: /Paso 4: Revisión/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar y ver propuesta' }))
+    await waitFor(() =>
+      expect(saveProposal).toHaveBeenCalledWith(
+        expect.objectContaining({
+          timeline: [
+            expect.objectContaining({
+              title: 'Diseño',
+              start_date: '2026-12-01',
+              end_date: '2026-12-07',
+            }),
+          ],
+        }),
+      ),
+    )
+  })
+
   it.each(['Revisaremos los avances cada semana.', '', ' \n '])(
     'saves edits or clears the development approach: %s',
     async (value) => {

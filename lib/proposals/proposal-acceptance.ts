@@ -121,6 +121,9 @@ export function proposalAcceptanceSnapshot(
       problems: proposal.problems ?? null,
       solutions: proposal.solutions ?? null,
       scope_modules: proposal.scope_modules ?? null,
+      ...(Array.isArray(proposal.timeline) && proposal.timeline.length > 0
+        ? { timeline: proposal.timeline }
+        : {}),
       deliverables: proposal.deliverables ?? null,
       acceptance_criteria: proposal.acceptance_criteria ?? null,
       // Preserve legacy document hashes when this optional section is absent.

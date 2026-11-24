@@ -20,6 +20,7 @@ const FIELD_LABELS: Record<string, string> = {
   payment_schedule: 'Forma de pago',
   payment_terms: 'Condiciones de pago',
   scope_modules: 'Módulos de alcance',
+  timeline: 'Plazos del proyecto',
   terms: 'Condiciones adicionales',
   title: 'Título',
   valid_until: 'Fecha de validez',
@@ -55,6 +56,8 @@ function issueLabel(path: ValidationIssue['path']): string {
     }
     return FIELD_LABELS.scope_modules ?? 'Módulos de alcance'
   }
+
+  if (section === 'timeline' && typeof index === 'number') return `Hito ${index + 1}`
 
   if (section === 'problems' || section === 'solutions') {
     const label = section === 'problems' ? 'Problema' : 'Solución'

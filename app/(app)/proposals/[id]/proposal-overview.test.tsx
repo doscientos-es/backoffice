@@ -57,6 +57,19 @@ describe('ProposalOverview', () => {
         subtotal={3000}
         taxAmount={630}
         total={3630}
+        timelineData={{
+          proposalId: 'proposal',
+          proposalTitle: 'Proyecto',
+          items: [
+            {
+              id: '10000000-0000-4000-8000-000000000001',
+              title: 'Hito de diseño',
+              description: '',
+              start_date: '2026-12-01',
+              end_date: '2026-12-07',
+            },
+          ],
+        }}
         validUntil={null}
         paymentPlan={[]}
         paymentTerms={null}
@@ -77,6 +90,8 @@ describe('ProposalOverview', () => {
     )
 
     expect(screen.getByText('Inversión inicial · antes de IVA')).toBeDefined()
+    expect(screen.getByText('Plazos del proyecto')).toBeDefined()
+    expect(screen.getByText('Hito de diseño')).toBeDefined()
     expect(screen.getByText('IVA aplicable')).toBeDefined()
     expect(screen.getByText('Total previsto con IVA')).toBeDefined()
     expect(

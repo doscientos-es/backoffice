@@ -1,15 +1,17 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 import { getCurrentUser } from '@/lib/auth'
 import type { BillingCycle } from '@/lib/finance'
 import { scopedLogger } from '@/lib/logger'
+import { isPortalUnlocked } from '@/lib/portal/access'
 import { resolvePortalLanguage } from '@/lib/portal/language'
 import { type KeyPoint, parseKeyPoints } from '@/lib/proposals/key-points'
 import { proposalTr } from '@/lib/proposals/public-copy'
 import { insertPageViewEvent, recordClientProposalView } from '@/lib/proposals/record-client-view'
 import { type PaymentSchedule, parseScopeModules, type ScopeModule } from '@/lib/proposals/scope'
+import { parseTimeline, type TimelineItem } from '@/lib/proposals/timeline'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 import { DeckViewer } from './deck-viewer-client'
@@ -46,6 +48,7 @@ export type DeckProposal = {
   solutions: KeyPoint[]
   terms: string | null
   scope_modules: ScopeModule[]
+  timeline?: TimelineItem[]
   development_approach?: string | null
   deliverables: string | null
   acceptance_criteria: string | null
@@ -78,7 +81,9 @@ export async function generateMetadata({
   const admin = createAdminClient()
   const { data } = await admin
     .from('proposals')
-    .select('number, title, status, clients(name, leads(language)), leads(language)')
+    .select(
+      'number, title, status, is_client_visible, portal_password_hash, clients(name, leads(language)), leads(language)',
+    )
     .eq('portal_token', token)
     .is('deleted_at', null)
     .maybeSingle()
@@ -89,7 +94,14 @@ export async function generateMetadata({
     lang,
   )
   const tr = proposalTr(language)
-  if (!data || data.status === 'draft') {
+  const auth = await getCurrentUser()
+  const canRead =
+    data &&
+    (auth.ok ||
+      (data.status !== 'draft' &&
+        data.is_client_visible !== false &&
+        (await isPortalUnlocked(token, data.portal_password_hash as string | null))))
+  if (!data || !canRead) {
     return {
       title: `${tr('Propuesta', 'Proposta', 'Proposal')} · doscientos`,
       robots: { index: false, follow: false },
@@ -133,6 +145,15 @@ export default async function DeckPage({
 
   // Drafts are only accessible to authenticated team members.
   if (!proposal || (proposal.status === 'draft' && !isTeam)) notFound()
+
+  if (!isTeam) {
+    if (proposal.is_client_visible === false) notFound()
+    if (
+      !(await isPortalUnlocked(token, (proposal.portal_password_hash as string | null) ?? null))
+    ) {
+      redirect(`/p/proposal/${token}${lang ? `?lang=${encodeURIComponent(lang)}` : ''}`)
+    }
+  }
 
   const isDraft = proposal.status === 'draft'
   const language = resolvePortalLanguage(
@@ -225,6 +246,7 @@ export default async function DeckPage({
     solutions: parseKeyPoints(proposal.solutions),
     terms: (proposal.terms as string | null) ?? null,
     scope_modules: parseScopeModules(proposal.scope_modules),
+    timeline: parseTimeline(proposal.timeline),
     development_approach: (proposal.development_approach as string | null) ?? null,
     deliverables: (proposal.deliverables as string | null) ?? null,
     acceptance_criteria: (proposal.acceptance_criteria as string | null) ?? null,

@@ -2,6 +2,7 @@ import { Download, ExternalLink, Eye } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
+import { TimelineChart } from '@/components/proposals/timeline-chart'
 import type { AttachmentItem } from '@/components/ui/attachment-section'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,7 @@ import type { EditablePair } from '@/lib/proposals/key-points'
 import { type MaintenanceOffer, recommendedMaintenancePlanId } from '@/lib/proposals/maintenance'
 import { recurringAmount } from '@/lib/proposals/recurring'
 import type { PaymentPlanItem, ScopeModule } from '@/lib/proposals/scope'
+import type { TimelineItem } from '@/lib/proposals/timeline'
 import { formatDate, formatEUR } from '@/lib/utils'
 
 type Item = {
@@ -48,6 +50,7 @@ type Props = {
   paymentTerms: string | null
   items: Item[]
   scopeModules: ScopeModule[]
+  timelineData?: { items: TimelineItem[]; proposalId: string; proposalTitle: string }
   developmentApproach?: string | null
   contextMarkdown: string | null
   problemSolutionPairs: EditablePair[]
@@ -79,6 +82,7 @@ export function ProposalOverview({
   paymentTerms,
   items,
   scopeModules,
+  timelineData,
   developmentApproach,
   contextMarkdown,
   problemSolutionPairs,
@@ -265,6 +269,17 @@ export function ProposalOverview({
               {deliverables ? <Markdown source={deliverables} /> : null}
               {acceptanceCriteria ? <Markdown source={acceptanceCriteria} /> : null}
               {notes ? <Markdown source={notes} /> : null}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {timelineData?.items.length ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Plazos del proyecto</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TimelineChart {...timelineData} language="es" />
             </CardContent>
           </Card>
         ) : null}

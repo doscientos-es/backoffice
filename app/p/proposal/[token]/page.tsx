@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { PortalPasswordGate } from '@/components/portal/password-gate'
+import { TimelineChart } from '@/components/proposals/timeline-chart'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Markdown } from '@/components/ui/markdown'
 import { formatAddress } from '@/lib/address'
@@ -23,6 +24,7 @@ import {
   parseScopeModules,
   paymentInitialPercentage,
 } from '@/lib/proposals/scope'
+import { parseTimeline } from '@/lib/proposals/timeline'
 import type { ProposalStatus } from '@/lib/status'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -240,6 +242,7 @@ export default async function PortalProposalPage({
   const legalTerms = (proposal.legal_terms as string | null) ?? null
   const contractualAnnex = effectiveProposalTerms(terms, legalTerms)
   const scopeModules = parseScopeModules(proposal.scope_modules)
+  const timeline = parseTimeline(proposal.timeline)
   const developmentApproach = ((proposal.development_approach as string | null) ?? '').trim()
   const deliverables = ((proposal.deliverables as string | null) ?? '').trim()
   const acceptanceCriteria = ((proposal.acceptance_criteria as string | null) ?? '').trim()
@@ -288,6 +291,7 @@ export default async function PortalProposalPage({
   const navItems: NavItem[] = [
     hasNarrative && { id: 'contexto', label: tr('Contexto', 'Context', 'Context') },
     hasScope && { id: 'alcance', label: tr('Alcance', 'Abast', 'Scope') },
+    timeline.length > 0 && { id: 'plazos', label: tr('Plazos', 'Terminis', 'Timeline') },
     Boolean(developmentApproach) && {
       id: 'desarrollo',
       label: tr('Cómo trabajaremos', 'Com treballarem', 'How we work'),
@@ -431,6 +435,22 @@ export default async function PortalProposalPage({
                 tr={tr}
               />
             </div>
+            {timeline.length > 0 ? (
+              <section id="plazos" className={`${PROPOSAL_SURFACE_CLASS} scroll-mt-16 p-6 sm:p-8`}>
+                <p className="text-xs font-semibold tracking-widest text-[#2A4227] uppercase">
+                  {tr('El camino', 'El camí', 'The journey')}
+                </p>
+                <h2 className="mt-2 mb-5 text-2xl font-bold text-zinc-900">
+                  {tr('Plazos del proyecto', 'Terminis del projecte', 'Project timeline')}
+                </h2>
+                <TimelineChart
+                  items={timeline}
+                  proposalId={proposal.id as string}
+                  proposalTitle={proposal.title as string}
+                  language={portalLanguage}
+                />
+              </section>
+            ) : null}
             <DevelopmentApproachSection source={developmentApproach} tr={tr} />
             <TeamSection team={team} tr={tr} />
             <div

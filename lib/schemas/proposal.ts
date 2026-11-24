@@ -5,6 +5,7 @@ import { HandwrittenSignatureSchema } from '@/lib/proposals/handwritten-signatur
 import { KEY_POINTS_LIMITS } from '@/lib/proposals/key-points'
 import { maintenanceOfferInput } from '@/lib/proposals/maintenance'
 import { paymentPlanInput, paymentScheduleInput, scopeModulesInput } from '@/lib/proposals/scope'
+import { timelineInput } from '@/lib/proposals/timeline'
 
 import {
   emptyToUndef,
@@ -119,6 +120,7 @@ export const UpdateProposalInput = z.object({
   solutions: keyPointListField,
   terms: proposalMarkdownField(20_000),
   scope_modules: scopeModulesInput.nullable().optional(),
+  timeline: timelineInput.optional(),
   development_approach: z
     .string()
     .trim()

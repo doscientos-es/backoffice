@@ -25,6 +25,7 @@ export type InitialProposalDraft = Pick<
   | 'initialSolutions'
   | 'initialTerms'
   | 'initialScopeModules'
+  | 'initialTimeline'
   | 'initialDevelopmentApproach'
   | 'initialDeliverables'
   | 'initialAcceptanceCriteria'
@@ -53,6 +54,7 @@ export function createProposalDraft({
   initialSolutions,
   initialTerms,
   initialScopeModules,
+  initialTimeline,
   initialDevelopmentApproach,
   initialDeliverables,
   initialAcceptanceCriteria,
@@ -90,6 +92,7 @@ export function createProposalDraft({
     pairs: zipKeyPoints(initialProblems, initialSolutions),
     terms: initialTerms ?? '',
     scopeModules: initialScopeModules,
+    timeline: initialTimeline ?? [],
     developmentApproach: initialDevelopmentApproach ?? '',
     deliverables: initialDeliverables ?? '',
     acceptanceCriteria: initialAcceptanceCriteria ?? '',
@@ -134,6 +137,7 @@ export type ProposalDraft = {
   pairs: ReturnType<typeof zipKeyPoints>
   terms: string
   scopeModules: ProposalEditorProps['initialScopeModules']
+  timeline: NonNullable<ProposalEditorProps['initialTimeline']>
   developmentApproach: string
   deliverables: string
   acceptanceCriteria: string
@@ -162,6 +166,7 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
     pairs,
     terms,
     scopeModules,
+    timeline,
     developmentApproach,
     deliverables,
     acceptanceCriteria,
@@ -191,6 +196,7 @@ export function proposalDraftPayload(id: string, expectedVersion: number, draft:
     solutions: serializeKeyPoints(solutions),
     terms: terms || null,
     scope_modules: scopeModules.length > 0 ? scopeModules : null,
+    timeline,
     development_approach: developmentApproach.trim() || null,
     deliverables: deliverables || null,
     acceptance_criteria: acceptanceCriteria || null,

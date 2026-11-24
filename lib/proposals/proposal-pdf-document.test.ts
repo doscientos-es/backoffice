@@ -141,6 +141,15 @@ describe('proposal PDF helpers', () => {
             duration_weeks: 2,
           },
         ],
+        timeline: [
+          {
+            id: '10000000-0000-4000-8000-000000000001',
+            title: 'Timeline milestone',
+            description: 'Timeline detail',
+            start_date: '2026-12-01',
+            end_date: '2026-12-07',
+          },
+        ],
         deliverables: 'Custom deliverable',
         acceptanceCriteria: 'Custom criteria',
         paymentSchedule: 'half_half',
@@ -207,6 +216,8 @@ describe('proposal PDF helpers', () => {
         'Original contractual text',
         'Original consent text',
         'Custom inclusion',
+        'Timeline milestone',
+        'Timeline detail',
       ]) {
         expect(text).toContain(expected.replace(/\s+/g, '').toLocaleUpperCase())
       }

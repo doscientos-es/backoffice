@@ -35,6 +35,23 @@ const proposal: DeckProposal = {
 describe('buildSlides', () => {
   afterEach(cleanup)
 
+  it('splits timelines across slides and offers the complete calendar', () => {
+    const timeline = Array.from({ length: 5 }, (_, index) => ({
+      id: `item-${index}`,
+      title: `Hito ${index + 1}`,
+      description: '',
+      start_date: `2026-12-0${5 - index}`,
+      end_date: `2026-12-0${5 - index}`,
+    }))
+    const slides = buildSlides({ ...proposal, timeline }, [], 'portal-token')
+    expect(slides.map((slide) => slide.key)).toContain('timeline-4')
+    render(slides.find((slide) => slide.key === 'timeline-0')?.element)
+    expect(screen.getByText('Hito 5')).toBeDefined()
+    const href =
+      screen.getByRole('link', { name: /Añadir a mi calendario/ }).getAttribute('href') ?? ''
+    expect(decodeURIComponent(href).match(/BEGIN:VEVENT/g)).toHaveLength(5)
+  })
+
   it('omits the delivery slide when deliverables and criteria only contain whitespace', () => {
     const slides = buildSlides(proposal, [], 'portal-token')
 

@@ -31,6 +31,7 @@ import {
 } from '@/lib/proposals/proposal-pdf-document'
 import { ensureCalendarYearProration, recurringPaymentTerms } from '@/lib/proposals/recurring'
 import { type PaymentSchedule, parseScopeModules } from '@/lib/proposals/scope'
+import { parseTimeline } from '@/lib/proposals/timeline'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createServerClient } from '@/lib/supabase/server'
 
@@ -330,6 +331,8 @@ export async function GET(
     problems: parseKeyPoints(documentSource.problems),
     solutions: parseKeyPoints(documentSource.solutions),
     scopeModules: parseScopeModules(documentSource.scope_modules),
+    timeline: parseTimeline(documentSource.timeline),
+    historical,
     developmentApproach: (documentSource.development_approach as string | null) ?? null,
     deliverables: (documentSource.deliverables as string | null) ?? null,
     acceptanceCriteria: (documentSource.acceptance_criteria as string | null) ?? null,

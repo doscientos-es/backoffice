@@ -6,6 +6,7 @@ import { MaintenanceOfferEditor } from '@/components/proposals/maintenance-offer
 import { PaymentPlanEditor } from '@/components/proposals/payment-plan-editor'
 import { ProblemSolutionEditor } from '@/components/proposals/problem-solution-editor'
 import { ScopeModulesEditor } from '@/components/proposals/scope-modules-editor'
+import { TimelineEditor } from '@/components/proposals/timeline-editor'
 import { AiNotice } from '@/components/ui/ai-notice'
 import { AttachmentSection } from '@/components/ui/attachment-section'
 import { Button } from '@/components/ui/button'
@@ -301,6 +302,7 @@ export function ProposalScopeSection({
           </div>
         </details>
       </section>
+      <TimelineEditor items={draft.timeline} onChange={setField('timeline')} locked={locked} />
       <section className="rounded-xl border border-border bg-card p-5">
         <FormRow
           label="Cómo trabajaremos durante el desarrollo"

@@ -29,6 +29,7 @@ import {
   paymentInitialPercentage,
   type ScopeModule,
 } from '@/lib/proposals/scope'
+import { formatTimelineDate, timelineLayout, type TimelineItem } from '@/lib/proposals/timeline'
 
 const BRAND = '#2A4227'
 const INK = '#183017'
@@ -265,6 +266,8 @@ export type ProposalPdfData = {
   problems: KeyPoint[]
   solutions: KeyPoint[]
   scopeModules: ScopeModule[]
+  timeline?: TimelineItem[]
+  historical?: boolean
   developmentApproach?: string | null
   deliverables: string | null
   acceptanceCriteria: string | null
@@ -715,6 +718,50 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
                 </Text>
                 <Text style={styles.body}>{printableMarkdown(acceptanceCriteria)}</Text>
               </>
+            ) : null}
+          </View>
+        ) : null}
+
+        {data.timeline?.length ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>{tr('El camino', 'El camí', 'The journey')}</Text>
+            <Text style={styles.sectionTitle}>
+              {tr('Plazos del proyecto', 'Terminis del projecte', 'Project timeline')}
+            </Text>
+            {timelineLayout(data.timeline).map(({ item, left, width }) => (
+              <View key={item.id} style={{ marginBottom: 12 }} wrap={false}>
+                <Text style={styles.pointTitle}>{item.title}</Text>
+                <Text style={styles.pointText}>
+                  {formatTimelineDate(item.start_date, language)}
+                  {item.start_date !== item.end_date
+                    ? ` – ${formatTimelineDate(item.end_date, language)}`
+                    : ''}
+                </Text>
+                {item.description ? <Text style={styles.pointText}>{item.description}</Text> : null}
+                <View style={{ height: 7, backgroundColor: MIST, marginTop: 5, borderRadius: 4 }}>
+                  <View
+                    style={{
+                      height: 7,
+                      backgroundColor: BRAND,
+                      borderRadius: 4,
+                      marginLeft: `${left}%`,
+                      width: `${width}%`,
+                    }}
+                  />
+                </View>
+              </View>
+            ))}
+            {!data.historical ? (
+              <Link
+                src={`${data.portalUrl}#plazos`}
+                style={{ color: BRAND, fontSize: 10, marginTop: 4 }}
+              >
+                {tr(
+                  'Añadir al calendario desde la propuesta online →',
+                  'Afegir al calendari des de la proposta en línia →',
+                  'Add to calendar from the online proposal →',
+                )}
+              </Link>
             ) : null}
           </View>
         ) : null}
