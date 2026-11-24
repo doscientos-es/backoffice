@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-24 — v0.1.211
+
+### Nuevas funciones
+
+- Add timeline feature with editor and calendar export
+
 ## 2026-11-24 — v0.1.210
 
 ### Nuevas funciones

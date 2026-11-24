@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.211",
+      "date": "2026-11-24",
+      "title": "v0.1.211",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add timeline feature with editor and calendar export"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "8703241456404c5b7fd80c99d3603d7c2692b1f6",
+          "type": "feat",
+          "scope": "timeline",
+          "breaking": false,
+          "description": "Add timeline feature with editor and calendar export"
+        }
+      ]
+    },
+    {
       "version": "0.1.210",
       "date": "2026-11-24",
       "title": "v0.1.210",
