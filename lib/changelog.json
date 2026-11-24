@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.210",
+      "date": "2026-11-24",
+      "title": "v0.1.210",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add lead client attachments section to lead detail page",
+            "Add support for upgrade types and validation in invoices"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "d8386ac1a766c2f73aa835951129a0cb94f81e05",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add lead client attachments section to lead detail page"
+        },
+        {
+          "sha": "6417ab1bf6eecf0d114249cda086a204ee0e0962",
+          "type": "feat",
+          "scope": "invoice",
+          "breaking": false,
+          "description": "Add support for upgrade types and validation in invoices"
+        }
+      ]
+    },
+    {
       "version": "0.1.209",
       "date": "2026-11-24",
       "title": "v0.1.209",

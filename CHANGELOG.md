@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-24 — v0.1.210
+
+### Nuevas funciones
+
+- Add lead client attachments section to lead detail page
+- Add support for upgrade types and validation in invoices
+
 ## 2026-11-24 — v0.1.209
 
 ### Nuevas funciones
