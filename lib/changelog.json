@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.212",
+      "date": "2026-11-24",
+      "title": "v0.1.212",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Process 100 recipients per run"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "c31cf86522826b408d74cbbe0cca41602cc3cc26",
+          "type": "fix",
+          "scope": "marketing",
+          "breaking": false,
+          "description": "Process 100 recipients per run"
+        }
+      ]
+    },
+    {
       "version": "0.1.211",
       "date": "2026-11-24",
       "title": "v0.1.211",

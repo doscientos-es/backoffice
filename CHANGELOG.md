@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-24 — v0.1.212
+
+### Correcciones
+
+- Process 100 recipients per run
+
 ## 2026-11-24 — v0.1.211
 
 ### Nuevas funciones
