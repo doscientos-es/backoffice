@@ -14,6 +14,27 @@ afterEach(() => {
 })
 
 describe('ShareLinks', () => {
+  it('shares a link directly to the decision summary', async () => {
+    const share = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'share', { configurable: true, value: share })
+    render(
+      <ShareLinks
+        token="example-token"
+        proposalTitle="Proyecto"
+        portalViewedAt={null}
+        deckViewedAt={null}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Compartir enlace de resumen' }))
+    await waitFor(() =>
+      expect(share).toHaveBeenCalledWith({
+        title: 'Proyecto',
+        text: 'Te comparto resumen: Proyecto',
+        url: `${window.location.origin}/p/proposal/example-token?view=summary`,
+      }),
+    )
+  })
+
   it('shares the public proposal URL with its title using the native share sheet', async () => {
     const share = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, 'share', { configurable: true, value: share })

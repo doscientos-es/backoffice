@@ -48,6 +48,13 @@ describe('DocumentHeader', () => {
     )
   })
 
+  it('links to the summary in the selected language', () => {
+    render(<DocumentHeader {...baseProps} language="ca" copy={getPortalCopy('ca')} />)
+    expect(screen.getByRole('link', { name: 'Resum per compartir' }).getAttribute('href')).toBe(
+      '/p/proposal/example-proposal?view=summary&lang=ca',
+    )
+  })
+
   it.each([
     [0, 'Último día para aceptar'],
     [1, 'Queda 1 día'],
