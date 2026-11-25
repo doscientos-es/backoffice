@@ -20,8 +20,8 @@ import {
   Ellipsis,
   ExternalLink,
   Eye,
+  FileText,
   LoaderCircle as Loader2,
-  Paperclip,
   Trash2,
   Upload as UploadCloud,
 } from 'lucide-react'
@@ -107,7 +107,7 @@ export function AttachmentSection({
   const router = useRouter()
   const cameraRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
-  // Tracks nested dragenter/dragleave so the overlay doesn't flicker over children.
+  // Tracks nested dragenter/dragleave so the drop highlight doesn't flicker over children.
   const dragDepth = useRef(0)
   const [uploading, setUploading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -199,6 +199,8 @@ export function AttachmentSection({
   async function uploadFiles(files: File[]) {
     if (files.length === 0 || uploading || deletingAll) return
 
+    dragDepth.current = 0
+    setDragActive(false)
     setErrors([])
     setUploading(true)
     setProgress({ done: 0, total: files.length })
@@ -217,6 +219,7 @@ export function AttachmentSection({
     setProgress(null)
     // reset input so the same file can be re-selected after an error
     if (fileRef.current) fileRef.current.value = ''
+    if (cameraRef.current) cameraRef.current.value = ''
     router.refresh()
   }
 
@@ -232,12 +235,12 @@ export function AttachmentSection({
   }
 
   function handleDragOver(e: React.DragEvent) {
-    if (!canEdit || uploading || deletingAll) return
+    if (!canEdit) return
     e.preventDefault()
   }
 
   function handleDragLeave(e: React.DragEvent) {
-    if (!canEdit || uploading || deletingAll) return
+    if (!canEdit) return
     e.preventDefault()
     dragDepth.current -= 1
     if (dragDepth.current <= 0) {
@@ -247,10 +250,11 @@ export function AttachmentSection({
   }
 
   function handleDrop(e: React.DragEvent) {
-    if (!canEdit || uploading || deletingAll) return
+    if (!canEdit) return
     e.preventDefault()
     dragDepth.current = 0
     setDragActive(false)
+    if (uploading || deletingAll) return
     void uploadFiles(e.dataTransfer?.files ? Array.from(e.dataTransfer.files) : [])
   }
 
@@ -355,14 +359,13 @@ export function AttachmentSection({
       onDragLeave={canEdit ? handleDragLeave : undefined}
       onDrop={canEdit ? handleDrop : undefined}
     >
-      {canEdit && dragActive && (
-        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-[inherit] border-2 border-dashed border-primary bg-background/85 backdrop-blur-sm">
-          <UploadCloud className="size-6 text-primary" />
-          <p className="text-sm font-medium">Suelta los archivos para adjuntarlos</p>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <CardTitle className="min-w-0 truncate">{title}</CardTitle>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground tabular-nums">
+            {visibleAttachments.length}
+          </span>
         </div>
-      )}
-      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-        <CardTitle className="min-w-0 truncate">{title}</CardTitle>
         {canEdit && (
           <>
             <input
@@ -370,7 +373,7 @@ export function AttachmentSection({
               type="file"
               accept={ACCEPTED}
               multiple
-              className="sr-only"
+              className="hidden"
               onChange={handleFileChange}
               disabled={uploading || deletingAll}
             />
@@ -379,54 +382,30 @@ export function AttachmentSection({
               type="file"
               accept="image/*"
               capture="environment"
-              className="sr-only"
+              className="hidden"
               onChange={handleFileChange}
               disabled={uploading || deletingAll}
             />
-            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <div className="flex shrink-0 items-center gap-1">
               <IconButton
                 type="button"
-                variant="outline"
+                variant="ghost"
+                size="icon-sm"
                 label="Hacer foto"
-                className="sm:h-7 sm:w-auto sm:px-2.5"
                 disabled={uploading || deletingAll}
                 onClick={() => cameraRef.current?.click()}
               >
                 <Camera className="size-3.5" />
-                <span className="sr-only sm:not-sr-only">Hacer foto</span>
               </IconButton>
               <IconButton
                 type="button"
-                variant="outline"
-                label={uploading ? 'Subiendo archivos' : 'Añadir archivos'}
-                className="sm:h-7 sm:w-auto sm:px-2.5"
-                disabled={uploading || deletingAll}
-                onClick={() => fileRef.current?.click()}
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="size-3.5 animate-spin" />
-                    <span className="sr-only sm:not-sr-only">
-                      {progress ? `Subiendo ${progress.done}/${progress.total}…` : 'Subiendo…'}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Paperclip className="size-3.5" />
-                    <span className="sr-only sm:not-sr-only">Añadir archivos</span>
-                  </>
-                )}
-              </IconButton>
-              <IconButton
-                type="button"
-                variant="outline"
+                variant="ghost"
+                size="icon-sm"
                 label="Vincular desde Google Drive"
-                className="sm:h-7 sm:w-auto sm:px-2.5"
                 disabled={deletingAll}
                 onClick={openDriveDialog}
               >
                 <GoogleDriveIcon />
-                <span className="sr-only sm:not-sr-only">Vincular desde Google Drive</span>
               </IconButton>
               {visibleAttachments.length > 0 && (
                 <DropdownMenuTrigger>
@@ -463,14 +442,53 @@ export function AttachmentSection({
           </>
         )}
       </CardHeader>
-      <CardContent className="px-0">
+      <CardContent className="space-y-3 px-4 sm:px-6">
+        {canEdit && (
+          <button
+            type="button"
+            aria-label="Añadir archivos"
+            disabled={uploading || deletingAll}
+            onClick={() => fileRef.current?.click()}
+            className={cn(
+              'flex w-full items-center gap-3 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-3 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-wait disabled:opacity-60',
+              dragActive && 'border-primary bg-primary/5',
+            )}
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-background text-primary">
+              {uploading ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <UploadCloud className="size-4" aria-hidden />
+              )}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-medium">
+                {uploading
+                  ? `Subiendo ${progress?.done ?? 0}/${progress?.total ?? 0}…`
+                  : dragActive
+                    ? 'Suelta los archivos para adjuntarlos'
+                    : 'Arrastra archivos aquí'}
+              </span>
+              {!uploading && (
+                <span className="block text-xs text-muted-foreground">
+                  o pulsa para seleccionar uno o varios
+                </span>
+              )}
+            </span>
+          </button>
+        )}
+        {uploading && (
+          <p role="status" className="sr-only">
+            Subiendo {progress?.done ?? 0} de {progress?.total ?? 0} archivos
+          </p>
+        )}
         {(deletingAll || deletingId) && (
-          <p role="status" className="px-6 pb-3 text-sm text-muted-foreground">
+          <p role="status" className="text-sm text-muted-foreground">
             {deletingAll ? 'Eliminando adjuntos…' : 'Eliminando adjunto…'}
           </p>
         )}
         {storedAttachments.length > 0 && (
-          <div className="px-6 pb-3">
+          <div>
             <Button
               type="button"
               variant="outline"
@@ -493,7 +511,7 @@ export function AttachmentSection({
           </div>
         )}
         {errors.length > 0 && (
-          <ul className="space-y-0.5 px-6 pb-2">
+          <ul className="space-y-0.5">
             {errors.map((msg) => (
               <li key={msg} className="text-sm font-medium text-destructive">
                 {msg}
@@ -502,20 +520,28 @@ export function AttachmentSection({
           </ul>
         )}
         {visibleAttachments.length === 0 ? (
-          <p className="px-6 py-2 text-sm text-muted-foreground">
-            {canEdit
-              ? 'Sin adjuntos. Arrastra archivos aquí o usa «Añadir archivos».'
-              : 'Sin adjuntos.'}
-          </p>
+          <p className="text-sm text-muted-foreground">Sin adjuntos.</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),1fr))] gap-2">
             {visibleAttachments.map((a) => (
-              <li key={a.id} className="flex items-center gap-3 px-6 py-2.5">
+              <li
+                key={a.id}
+                className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted/20 px-2.5 py-2"
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground">
+                  {a.source === 'drive' ? (
+                    <GoogleDriveIcon />
+                  ) : (
+                    <FileText className="size-4" aria-hidden />
+                  )}
+                </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{a.name}</p>
-                  {a.size_bytes ? (
-                    <p className="text-xs text-muted-foreground">{formatSize(a.size_bytes)}</p>
-                  ) : null}
+                  <p className="truncate text-sm font-medium" title={a.name}>
+                    {a.name}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {a.source === 'drive' ? 'Google Drive' : formatSize(a.size_bytes) || 'Archivo'}
+                  </p>
                 </div>
                 {a.source === 'drive' ? (
                   a.web_view_link && (

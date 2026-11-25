@@ -60,6 +60,14 @@ describe('empty state with canEdit', () => {
     expect(screen.getByText(/arrastra archivos/i)).toBeDefined()
   })
 
+  it('opens the file picker from the dropzone', () => {
+    render(<AttachmentSection {...BASE_PROPS} />)
+    const input = document.querySelector('input[multiple]') as HTMLInputElement
+    const click = vi.spyOn(input, 'click').mockImplementation(() => {})
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir archivos' }))
+    expect(click).toHaveBeenCalledOnce()
+  })
+
   it('offers the device camera for mobile attachments', () => {
     render(<AttachmentSection {...BASE_PROPS} />)
 
@@ -457,7 +465,7 @@ describe('button upload', () => {
 
 // ── drag-and-drop ─────────────────────────────────────────────────────────────
 describe('drag-and-drop', () => {
-  it('shows overlay on dragenter and hides on dragleave', () => {
+  it('highlights the dropzone on dragenter and resets it on dragleave', () => {
     render(<AttachmentSection {...BASE_PROPS} />)
     const card =
       document.querySelector('[data-slot=card]') ?? screen.getByText('Adjuntos').closest('[class]')!
@@ -469,19 +477,41 @@ describe('drag-and-drop', () => {
     expect(screen.queryByText(/suelta los archivos/i)).toBeNull()
   })
 
-  it('uploads dropped files', async () => {
+  it('uploads files dropped on the visible dropzone', async () => {
     ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: async () => ({ id: 'dropped-id' }),
     })
 
     render(<AttachmentSection {...BASE_PROPS} />)
-    const card =
-      document.querySelector('[data-slot=card]') ?? screen.getByText('Adjuntos').closest('[class]')!
-
     const file = makeFile('dropped.pdf')
-    fireEvent.drop(card, { dataTransfer: { files: [file] } })
+    fireEvent.drop(screen.getByRole('button', { name: 'Añadir archivos' }), {
+      dataTransfer: { files: [file] },
+    })
 
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
+    expect(fetch).toHaveBeenCalledOnce()
+    const request = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as { body: FormData }
+    expect(request.body.get('file')).toBe(file)
+    expect(request.body.get('entityId')).toBe('lead-1')
+  })
+
+  it('disables the dropzone during upload and ignores additional drops', async () => {
+    let finishUpload!: (response: { ok: boolean; json: () => Promise<{ id: string }> }) => void
+    ;(fetch as ReturnType<typeof vi.fn>).mockReturnValue(
+      new Promise((resolve) => {
+        finishUpload = resolve
+      }),
+    )
+    render(<AttachmentSection {...BASE_PROPS} />)
+    const zone = screen.getByRole('button', { name: 'Añadir archivos' })
+    const card = document.querySelector('[data-slot=card]')!
+    fireEvent.drop(zone, { dataTransfer: { files: [makeFile('first.pdf')] } })
+    expect((zone as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText('Subiendo 0/1…')).toBeDefined()
+    fireEvent.drop(card, { dataTransfer: { files: [makeFile('second.pdf')] } })
+    expect(fetch).toHaveBeenCalledOnce()
+    finishUpload({ ok: true, json: async () => ({ id: 'new-id' }) })
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
   })
 
