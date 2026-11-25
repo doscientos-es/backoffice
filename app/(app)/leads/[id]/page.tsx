@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopyButton } from '@/components/ui/copy-button'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
+import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { SectionBoundary } from '@/components/ui/error-boundary'
 import { LeadClientAttachmentsSection } from '@/components/ui/lead-client-attachments-section'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requireUser } from '@/lib/auth'
+import { getClientBillingDetail } from '@/lib/clients/queries'
 import { CONVERSION_STEP_LABEL } from '@/lib/conversion-events/labels'
 import { isAIEnabled, serverEnv } from '@/lib/env'
 import { formatLeadBriefingForAI } from '@/lib/leads/ai-context'
@@ -34,6 +36,7 @@ import { AdPreviewDialog } from '../../marketing/ad-preview-dialog'
 import { LeadActivityFeed, countActivityEvents } from './lead-activity-feed'
 import { LeadAiPanel } from './lead-ai-panel'
 import { LeadAssistant } from './lead-assistant'
+import { LeadBillingPanel } from './lead-billing-panel'
 import { LeadCommercial } from './lead-commercial'
 import { LeadCompanyResearch } from './lead-company-research'
 import { LeadDeleteDangerZone } from './lead-delete-danger-zone'
@@ -109,6 +112,7 @@ export default async function LeadDetailPage({
     attachments,
     discoveryQuestions,
   } = result
+  const billingClient = linkedClientId ? await getClientBillingDetail(linkedClientId) : null
 
   const aiEnabled = isAIEnabled()
   const ownerSuggestion = canEdit
@@ -173,6 +177,9 @@ export default async function LeadDetailPage({
       <PageHeader
         title={displayName}
         description={(lead.company as string | null) ?? undefined}
+        icon={
+          <EntityAvatar name={displayName} logoUrl={billingClient?.logo_url ?? null} size="lg" />
+        }
         breadcrumbs={[
           { label: 'Leads', href: '/leads' },
           { label: displayName },
@@ -584,6 +591,15 @@ export default async function LeadDetailPage({
             <SectionBoundary label="No se pudo cargar el journey de conversión">
               <LeadConversionJourneySection leadId={lead.id} eventId={lead.event_id} />
             </SectionBoundary>
+          </LeadTabPanel>
+
+          <LeadTabPanel tab="facturacion">
+            <LeadBillingPanel
+              leadId={lead.id}
+              linkedClientId={linkedClientId}
+              client={billingClient}
+              canEdit={canEdit}
+            />
           </LeadTabPanel>
 
           <LeadTabPanel tab="inteligencia">

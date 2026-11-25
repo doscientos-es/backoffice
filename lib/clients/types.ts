@@ -95,7 +95,7 @@ type ClientWebItem = {
 
 // ─── Full client record ────────────────────────────────────────────────────────
 
-type ClientDetail = {
+export type ClientDetail = {
   id: string
   /** Internal optimistic-concurrency token. */
   version: number

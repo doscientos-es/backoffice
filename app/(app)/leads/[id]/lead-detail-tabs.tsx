@@ -1,12 +1,12 @@
 'use client'
 
-import { BriefcaseBusiness, FileClock, House, Lightbulb } from 'lucide-react'
+import { BriefcaseBusiness, FileClock, House, Lightbulb, ReceiptText } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import type { MouseEvent, ReactNode } from 'react'
 
 import { TabCount, TabList, TabTrigger } from '@/components/ui/tabs'
 
-const LEAD_TABS = ['resumen', 'actividad', 'comercial', 'inteligencia'] as const
+const LEAD_TABS = ['resumen', 'actividad', 'comercial', 'facturacion', 'inteligencia'] as const
 
 export type LeadTab = (typeof LEAD_TABS)[number]
 
@@ -14,6 +14,7 @@ const LABEL: Record<LeadTab, { title: string; icon: typeof House }> = {
   resumen: { title: 'Resumen', icon: House },
   actividad: { title: 'Actividad', icon: FileClock },
   comercial: { title: 'Comercial', icon: BriefcaseBusiness },
+  facturacion: { title: 'Facturación', icon: ReceiptText },
   inteligencia: { title: 'Inteligencia', icon: Lightbulb },
 }
 
@@ -79,7 +80,7 @@ export function LeadDetailTabs({
   return (
     <TabList
       aria-label="Secciones del lead"
-      className="grid w-full grid-cols-4 gap-1 p-1 sm:flex sm:w-auto sm:gap-0.5"
+      className="grid w-full grid-cols-3 gap-1 p-1 sm:flex sm:w-auto sm:gap-0.5"
     >
       {LEAD_TABS.map((tab) => {
         const count = counts?.[tab]

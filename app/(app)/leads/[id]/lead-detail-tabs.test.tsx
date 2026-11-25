@@ -20,6 +20,9 @@ function Detail() {
       <LeadTabPanel tab="comercial">
         <p>Contenido comercial</p>
       </LeadTabPanel>
+      <LeadTabPanel tab="facturacion">
+        <p>Contenido facturación</p>
+      </LeadTabPanel>
       <LeadTabLink leadId="lead-1" tab="actividad">
         Ver todo
       </LeadTabLink>
@@ -51,6 +54,11 @@ describe('lead detail tabs', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Comercial' }))
     rerender(<Detail />)
     expect(screen.getByText('Contenido comercial')).toBeDefined()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Facturación' }))
+    rerender(<Detail />)
+    expect(screen.getByText('Contenido facturación')).toBeDefined()
+    expect(window.location.search).toBe('?tab=facturacion')
   })
 
   it('opens direct links and falls back to summary for an unknown tab', () => {

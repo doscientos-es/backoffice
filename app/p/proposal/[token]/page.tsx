@@ -50,6 +50,7 @@ import { NotesSection, SpecsSection, TermsSection } from './_components/terms-se
 import { ProposalWhatsAppWidget } from './_components/whatsapp-widget'
 import { getPortalCopy, getStatusLabel, makeTr } from './_lib/i18n'
 import { loadProposalData } from './_lib/load-proposal-data'
+import { resolveRecipientLogo } from './_lib/recipient-logo'
 import { daysUntilExpiry } from './_lib/summary'
 import { trackProposalView } from './_lib/track-view'
 import type { ProposalItem, ProposalSpec } from './_lib/types'
@@ -179,6 +180,11 @@ export default async function PortalProposalPage({
       } | null
     }
   ).leads
+  const recipientLogo = await resolveRecipientLogo(
+    admin,
+    client?.logo_url ?? null,
+    client ? null : ((proposal.lead_id as string | null) ?? null),
+  )
   const storedStatus = proposal.status as ProposalStatus
   const responded = storedStatus === 'accepted' || storedStatus === 'rejected'
   const validUntil = (proposal.valid_until as string | null) ?? null
@@ -404,11 +410,7 @@ export default async function PortalProposalPage({
             />
             <SectionNav items={navItems} />
             <div className={PROPOSAL_SURFACE_CLASS}>
-              <RecipientBlock
-                label={copy.recipient}
-                name={recipientName}
-                logoUrl={client?.logo_url ?? null}
-              />
+              <RecipientBlock label={copy.recipient} name={recipientName} logoUrl={recipientLogo} />
               {!responded && !expired ? (
                 <div className="mx-6 border-t border-zinc-100 sm:mx-8">
                   <DecisionSummary

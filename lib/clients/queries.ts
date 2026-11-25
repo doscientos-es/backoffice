@@ -6,6 +6,7 @@ import {
   CLIENT_LIST_PAGE_SIZE,
   CLIENT_PROJECTS_LIMIT,
   CLIENT_RELATED_LIMIT,
+  type ClientDetail,
   type ClientDetailResult,
   type ClientListParams,
   type ClientListResult,
@@ -15,6 +16,43 @@ const log = scopedLogger('clients.queries')
 
 function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, (m) => `\\${m}`)
+}
+
+function mapClientDetail(client: Record<string, unknown>): ClientDetail {
+  return {
+    id: client.id as string,
+    version: Number(client.version),
+    name: client.name as string,
+    label: (client.label as string | null) ?? null,
+    nif: (client.nif as string | null) ?? null,
+    email: (client.email as string | null) ?? null,
+    phone: (client.phone as string | null) ?? null,
+    contact_person: (client.contact_person as string | null) ?? null,
+    billing_address_street: (client.billing_address_street as string | null) ?? null,
+    billing_address_zip: (client.billing_address_zip as string | null) ?? null,
+    billing_address_city: (client.billing_address_city as string | null) ?? null,
+    billing_address_province: (client.billing_address_province as string | null) ?? null,
+    billing_address_country: (client.billing_address_country as string | null) ?? null,
+    notes: (client.notes as string | null) ?? null,
+    logo_url: (client.logo_url as string | null) ?? null,
+    fiscal_verification_status:
+      client.fiscal_verification_status as import('./types').FiscalVerificationStatus,
+    fiscal_verified_at: (client.fiscal_verified_at as string | null) ?? null,
+    created_at: (client.created_at as string | null) ?? null,
+    updated_at: (client.updated_at as string | null) ?? null,
+  }
+}
+
+export async function getClientBillingDetail(id: string): Promise<ClientDetail | null> {
+  const supabase = await createServerClient()
+  const { data, error } = await notDeleted(
+    supabase.from('clients').select('*').eq('id', id),
+  ).maybeSingle()
+  if (error) {
+    log.error({ clientId: id, err: error.message }, 'get_client_billing_detail_failed')
+    return null
+  }
+  return data ? mapClientDetail(data) : null
 }
 
 export async function listClients(params: ClientListParams): Promise<ClientListResult> {
@@ -139,28 +177,7 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
   }
 
   return {
-    client: {
-      id: client.id as string,
-      version: Number(client.version),
-      name: client.name as string,
-      label: (client.label as string | null) ?? null,
-      nif: (client.nif as string | null) ?? null,
-      email: (client.email as string | null) ?? null,
-      phone: (client.phone as string | null) ?? null,
-      contact_person: (client.contact_person as string | null) ?? null,
-      billing_address_street: (client.billing_address_street as string | null) ?? null,
-      billing_address_zip: (client.billing_address_zip as string | null) ?? null,
-      billing_address_city: (client.billing_address_city as string | null) ?? null,
-      billing_address_province: (client.billing_address_province as string | null) ?? null,
-      billing_address_country: (client.billing_address_country as string | null) ?? null,
-      notes: (client.notes as string | null) ?? null,
-      logo_url: (client.logo_url as string | null) ?? null,
-      fiscal_verification_status:
-        client.fiscal_verification_status as import('./types').FiscalVerificationStatus,
-      fiscal_verified_at: (client.fiscal_verified_at as string | null) ?? null,
-      created_at: (client.created_at as string | null) ?? null,
-      updated_at: (client.updated_at as string | null) ?? null,
-    },
+    client: mapClientDetail(client),
     originLead: (() => {
       const lead = (
         client as unknown as {

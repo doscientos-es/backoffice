@@ -42,10 +42,12 @@ type Client = {
 export function ClientEditDialog({
   client,
   trigger,
+  billingMode = false,
 }: {
   client: Client
   /** Custom trigger element. Defaults to the standard "Editar" button. */
   trigger?: ReactNode
+  billingMode?: boolean
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -105,8 +107,14 @@ export function ClientEditDialog({
       </DialogTrigger>
       <DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Editar cliente</DialogTitle>
-          <DialogDescription>Actualiza los datos del cliente.</DialogDescription>
+          <DialogTitle>
+            {billingMode ? 'Editar datos de facturación' : 'Editar cliente'}
+          </DialogTitle>
+          <DialogDescription>
+            {billingMode
+              ? 'Actualiza los datos fiscales y el logo.'
+              : 'Actualiza los datos del cliente.'}
+          </DialogDescription>
         </DialogHeader>
         <form
           key={client.version}
@@ -117,6 +125,7 @@ export function ClientEditDialog({
           <div className="no-scrollbar flex min-h-0 flex-1 scroll-fade flex-col gap-5 overflow-y-auto pr-1">
             <ClientFormFields
               idPrefix={`edit-${client.id}`}
+              initiallyExpanded={billingMode}
               defaults={{
                 name: client.name,
                 label: client.label,

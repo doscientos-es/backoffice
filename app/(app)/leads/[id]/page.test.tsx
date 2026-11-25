@@ -5,15 +5,18 @@ import { DetailRow } from '@/components/layout/detail-grid'
 import { LeadClientAttachmentsSection } from '@/components/ui/lead-client-attachments-section'
 import { StatusBadge } from '@/components/ui/status-badge'
 
+import { LeadBillingPanel } from './lead-billing-panel'
 import { LeadDeleteDangerZone } from './lead-delete-danger-zone'
 import { LeadTabPanel } from './lead-detail-tabs'
 
-const { getLeadDetail, requireUser } = vi.hoisted(() => ({
+const { getClientBillingDetail, getLeadDetail, requireUser } = vi.hoisted(() => ({
+  getClientBillingDetail: vi.fn(),
   getLeadDetail: vi.fn(),
   requireUser: vi.fn(),
 }))
 
 vi.mock('@/lib/auth', () => ({ requireUser }))
+vi.mock('@/lib/clients/queries', () => ({ getClientBillingDetail }))
 vi.mock('@/lib/leads/queries', () => ({ getLeadDetail }))
 vi.mock('@/lib/leads/ai-context', () => ({ formatLeadBriefingForAI: () => '' }))
 vi.mock('@/lib/env', async (importOriginal) => ({
@@ -49,6 +52,32 @@ function rowsInSection(node: ReactNode, heading: string) {
 }
 
 describe('LeadDetailPage', () => {
+  it('connects the billing tab to the existing linked client', async () => {
+    requireUser.mockResolvedValue({ id: 'member-1', role: 'viewer' })
+    getLeadDetail.mockResolvedValue({
+      lead: { id: 'lead-1', name: 'María', status: 'new', created_at: '2026-09-22' },
+      interactions: [],
+      auditEvents: [],
+      linkedClientId: 'client-1',
+      linkedClientName: 'Ejemplo',
+      proposals: [],
+      projects: [],
+      invoices: [],
+      contacts: [],
+      tasks: [],
+      reminders: [],
+      attachments: [],
+      discoveryQuestions: [],
+    })
+    const client = { id: 'client-1', name: 'Ejemplo', logo_url: 'https://example.com/logo.png' }
+    getClientBillingDetail.mockResolvedValue(client)
+
+    const page = await LeadDetailPage({ params: Promise.resolve({ id: 'lead-1' }) })
+    const panel = elements(page).find((element) => element.type === LeadBillingPanel)
+    expect(getClientBillingDetail).toHaveBeenCalledWith('client-1')
+    expect(panel?.props).toMatchObject({ leadId: 'lead-1', client, canEdit: false })
+  })
+
   it('shows the full name in Contacto and the status only in Oportunidad', async () => {
     requireUser.mockResolvedValue({ id: 'member-1', name: 'Ana', role: 'viewer' })
     getLeadDetail.mockResolvedValue({

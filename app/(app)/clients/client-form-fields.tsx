@@ -42,10 +42,12 @@ export function ClientFormFields({
   defaults,
   idPrefix = 'client',
   autoFocusName = false,
+  initiallyExpanded = false,
 }: {
   defaults?: ClientFormDefaults
   idPrefix?: string
   autoFocusName?: boolean
+  initiallyExpanded?: boolean
 }) {
   const d = defaults ?? {}
   const hasAdditionalDetails = Boolean(
@@ -58,7 +60,7 @@ export function ClientFormFields({
     d.notes ||
     d.logo_url,
   )
-  const [showDetails, setShowDetails] = useState(hasAdditionalDetails)
+  const [showDetails, setShowDetails] = useState(initiallyExpanded || hasAdditionalDetails)
 
   // Controlled state for fields that can be autofilled from the Registro Mercantil
   const [name, setName] = useState(d.name ?? '')
