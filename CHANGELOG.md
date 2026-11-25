@@ -2,6 +2,17 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.230
+
+### Nuevas funciones
+
+- Redirect users based on permissions and update labels
+- Add new migration for project resolution by lead
+- Enhance subscription creation and detail pages
+- Enhance lead detail queries to include related tasks and attachments
+- Add lead support in invoices and proposals management
+- Improve lead detail queries and enhance database structure
+
 ## 2026-11-25 — v0.1.229
 
 ### Nuevas funciones

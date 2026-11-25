@@ -1,6 +1,68 @@
 {
   "releases": [
     {
+      "version": "0.1.230",
+      "date": "2026-11-25",
+      "title": "v0.1.230",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Redirect users based on permissions and update labels",
+            "Add new migration for project resolution by lead",
+            "Enhance subscription creation and detail pages",
+            "Enhance lead detail queries to include related tasks and attachments",
+            "Add lead support in invoices and proposals management",
+            "Improve lead detail queries and enhance database structure"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "cb58055d93440335ec3bdbe404c498277ab28986",
+          "type": "feat",
+          "scope": "clients",
+          "breaking": false,
+          "description": "Redirect users based on permissions and update labels"
+        },
+        {
+          "sha": "4768f7282f6de78070184912ae05b43acceae89d",
+          "type": "feat",
+          "scope": "migrations",
+          "breaking": false,
+          "description": "Add new migration for project resolution by lead"
+        },
+        {
+          "sha": "8e29ff44bce442cf51532ca3fcc73515b6707935",
+          "type": "feat",
+          "scope": "subscriptions",
+          "breaking": false,
+          "description": "Enhance subscription creation and detail pages"
+        },
+        {
+          "sha": "ebc07bdf51965b68fae2419cb0eb70a89e717ed7",
+          "type": "feat",
+          "scope": "lead",
+          "breaking": false,
+          "description": "Enhance lead detail queries to include related tasks and attachments"
+        },
+        {
+          "sha": "8acab82d72aa663cd91c29d595c1540c74c8023d",
+          "type": "feat",
+          "scope": "invoices",
+          "breaking": false,
+          "description": "Add lead support in invoices and proposals management"
+        },
+        {
+          "sha": "0a4aa17c8f3c990bbb01c3d44b78f17ad2882476",
+          "type": "feat",
+          "scope": "lead",
+          "breaking": false,
+          "description": "Improve lead detail queries and enhance database structure"
+        }
+      ]
+    },
+    {
       "version": "0.1.229",
       "date": "2026-11-25",
       "title": "v0.1.229",
