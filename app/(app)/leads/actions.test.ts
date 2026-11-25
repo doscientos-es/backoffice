@@ -21,6 +21,7 @@ const { db, authUser, googleCalendar, sendEmail } = vi.hoisted(() => ({
     insertedRows: [] as Record<string, unknown>[],
     updatedRows: [] as Record<string, unknown>[],
     queryError: null as string | null,
+    failedInsertTable: null as string | null,
     marketingStatuses: [] as Array<string | null>,
     leadStatus: 'new' as string,
     wonProduct: null as string | null,
@@ -76,8 +77,11 @@ vi.mock('@/lib/supabase/server', () => ({
       // Resolved value for terminal awaits (.single, .maybeSingle, or direct await)
       let selectedColumns = ''
       let updatedRow: Record<string, unknown> | null = null
+      let isInsert = false
       const resolve = () => {
         if (db.queryError) return { data: null, error: { message: db.queryError } }
+        if (isInsert && db.failedInsertTable === table)
+          return { data: null, error: { message: 'insert failed' } }
         if (table === 'lead_interactions' && selectedColumns === 'payload') {
           return { data: db.recentCallPayloads, error: null }
         }
@@ -113,6 +117,7 @@ vi.mock('@/lib/supabase/server', () => ({
       // Builder: all chainable methods return itself; terminal methods are async.
       const builder: Record<string, unknown> = {
         insert(row: Record<string, unknown>) {
+          isInsert = true
           db.insertedRows.push({ table, ...row })
           if (table === 'lead_interactions' && row.type === 'call') {
             db.recentCallPayloads.unshift({ payload: row.payload as { outcome?: string | null } })
@@ -264,6 +269,7 @@ beforeEach(() => {
   db.insertedRows = []
   db.updatedRows = []
   db.queryError = null
+  db.failedInsertTable = null
   db.leadStatus = 'new'
   db.wonProduct = null
   db.leadDetails = { name: 'Ana García', alias: 'Nube', company: 'Acme S.L.' }
@@ -283,6 +289,7 @@ beforeEach(() => {
   authUser.emailAlias = 'pol'
   sendEmail.mockReset()
   sendEmail.mockResolvedValue({ id: 'resend-email-1', mocked: false })
+  googleCalendar.insertEvent.mockReset()
   googleCalendar.insertEvent.mockResolvedValue({
     id: 'calendar-event-1',
     htmlLink: 'https://calendar.google.com/event-1',
@@ -713,6 +720,28 @@ describe('logLeadWhatsApp', () => {
 })
 
 describe('scheduleLeadMeeting', () => {
+  it.each([
+    ['tasks', true, false],
+    ['lead_interactions', false, true],
+  ])(
+    'reports a partial recording failure for %s without recreating the calendar event',
+    async (table, interactionRecorded, internalReminderCreated) => {
+      db.failedInsertTable = table
+      const result = await scheduleLeadMeeting({
+        leadId: '00000000-0000-0000-0000-000000000001',
+        title: 'Reunión',
+        start: '2099-08-10T10:00:00.000Z',
+        end: '2099-08-10T11:00:00.000Z',
+        withMeet: true,
+      })
+      expect(result).toMatchObject({ ok: true, interactionRecorded, internalReminderCreated })
+      expect(googleCalendar.insertEvent).toHaveBeenCalledTimes(1)
+      expect(db.insertedRows).toContainEqual(
+        expect.objectContaining({ table: 'tasks', action_type: 'meeting' }),
+      )
+    },
+  )
+
   it('uses the company name instead of the lead alias in shared meeting content', async () => {
     const result = await scheduleLeadMeeting({
       leadId: '00000000-0000-0000-0000-000000000001',

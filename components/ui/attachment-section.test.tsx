@@ -10,9 +10,7 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
+  default: (props: React.ComponentPropsWithoutRef<'a'>) => <a {...props} />,
 }))
 
 const mockConfirm = vi.fn(() => true)
@@ -71,24 +69,81 @@ describe('empty state with canEdit', () => {
 
 // ── attachment list ───────────────────────────────────────────────────────────
 describe('attachment list', () => {
-  const items = [
-    {
-      id: 'a1',
-      name: 'report.pdf',
-      mime_type: 'application/pdf',
-      size_bytes: 2048,
-      created_at: '2024-01-01',
-    },
-  ]
+  const item = {
+    id: 'a1',
+    name: 'report.pdf',
+    mime_type: 'application/pdf',
+    size_bytes: 2048,
+    created_at: '2024-01-01',
+  }
+  const items = [item]
 
   it('renders attachment names with download links', () => {
     render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
     expect(screen.getByText('report.pdf')).toBeDefined()
-    expect(screen.getByRole('link', { name: /ver pdf/i }).getAttribute('href')).toBe(
+    expect(screen.getByRole('link', { name: /ver report.pdf/i }).getAttribute('href')).toBe(
       '/api/documents/a1/view',
     )
-    const link = screen.getByRole('link', { name: /descargar/i })
+    const link = screen.getByRole('link', { name: /descargar report.pdf/i })
     expect(link.getAttribute('href')).toBe('/api/documents/a1/download')
+    expect(link.getAttribute('target')).toBeNull()
+  })
+
+  it('offers a separate preview for images and no preview for unsupported files', () => {
+    render(
+      <AttachmentSection
+        {...BASE_PROPS}
+        attachments={[
+          { ...item, id: 'image', name: 'foto.jpg', mime_type: 'image/jpeg' },
+          { ...item, id: 'sheet', name: 'datos.xlsx', mime_type: 'application/vnd.ms-excel' },
+        ]}
+      />,
+    )
+    const preview = screen.getByRole('link', { name: /ver foto.jpg/i })
+    expect(preview.getAttribute('href')).toBe('/api/documents/image/view')
+    expect(preview.getAttribute('target')).toBe('_blank')
+    expect(screen.queryByRole('link', { name: /ver datos.xlsx/i })).toBeNull()
+  })
+
+  it('downloads a ZIP containing stored attachments for read-only users and explains Drive exclusions', async () => {
+    const drive = {
+      ...item,
+      id: 'drive',
+      source: 'drive' as const,
+      web_view_link: 'https://drive.google.com/file/d/example/view',
+    }
+    const createObjectURL = vi.fn(() => 'blob:zip')
+    const revokeObjectURL = vi.fn()
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL }))
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      blob: async () => new Blob(['zip']),
+    })
+
+    render(<AttachmentSection {...BASE_PROPS} canEdit={false} attachments={[item, drive]} />)
+    fireEvent.click(screen.getByRole('button', { name: /descargar todos los adjuntos/i }))
+    await waitFor(() => expect(click).toHaveBeenCalledOnce())
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/attachments/download-all',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ ids: ['a1'] }),
+      }),
+    )
+    expect(screen.getByText(/enlaces de google drive no se incluyen/i)).toBeDefined()
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:zip')
+    click.mockRestore()
+  })
+
+  it('reports failures when preparing the ZIP', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: 'Descarga no disponible' }),
+    })
+    render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
+    fireEvent.click(screen.getByRole('button', { name: /descargar todos los adjuntos/i }))
+    await waitFor(() => expect(screen.getByText('Descarga no disponible')).toBeDefined())
   })
 
   it('confirms and removes an attachment, then refreshes the detail page', async () => {

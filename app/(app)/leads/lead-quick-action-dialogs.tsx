@@ -15,6 +15,7 @@ import {
 import { Mail, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { type SubmitEvent, useEffect, useId, useState } from 'react'
+import { sileo } from 'sileo'
 
 import { GoogleMeetIcon } from '@/components/icons/google-meet-icon'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
@@ -32,6 +33,7 @@ import {
   MEETING_DURATIONS,
   type MeetingDuration,
 } from '@/lib/calendar/date-presets'
+import { meetingRecordingWarning } from '@/lib/leads/meeting-warning'
 import { addMinutesToDatetimeLocal, datetimeLocalToIso } from '@/lib/utils/date-time'
 
 import { EmailComposer } from './[id]/email-composer'
@@ -108,6 +110,8 @@ export function QMeetDialog({
       return feedback.setError(res.error)
     }
     setConfirmOpen(false)
+    const warning = meetingRecordingWarning(res)
+    if (warning) sileo.error({ title: 'Reunión creada con incidencias', description: warning })
     feedback.setSuccess('Reunión creada')
     router.refresh()
     setTimeout(() => setOpen(false), 600)
@@ -322,6 +326,8 @@ export function QMeetNowDialog({
       return feedback.setError(res.error)
     }
     setConfirmOpen(false)
+    const warning = meetingRecordingWarning(res)
+    if (warning) sileo.error({ title: 'Reunión creada con incidencias', description: warning })
     feedback.setSuccess(
       meetWindow && res.meetUrl
         ? '¡Meet creado!'

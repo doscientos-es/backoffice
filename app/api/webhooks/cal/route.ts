@@ -6,6 +6,7 @@ import {
   mapCalToLeadIntake,
   verifyCalSignature,
 } from '@/lib/integrations/cal'
+import { findCalBookingLead, syncCalBookingReminder } from '@/lib/integrations/cal-reminders'
 import { recordConversionEvent } from '@/lib/integrations/conversion-events'
 import { ingestLead } from '@/lib/integrations/lead-intake'
 import { pushMetaQualifiedLeadStage } from '@/lib/integrations/meta-capi'
@@ -42,6 +43,15 @@ export async function POST(request: NextRequest) {
 
   const { triggerEvent } = payload
   const intake = mapCalToLeadIntake(payload)
+  const supabase = createAdminClient()
+  try {
+    if (!intake.mergeIntoLeadId) {
+      intake.mergeIntoLeadId = await findCalBookingLead(supabase, payload)
+    }
+  } catch (error) {
+    log.error({ err: error }, 'cal_booking_lookup_failed')
+    return NextResponse.json({ ok: false, error: 'booking lookup failed' }, { status: 500 })
+  }
   const result = await ingestLead(intake)
 
   if (!result.ok) {
@@ -49,8 +59,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: result.error, partial: true })
   }
 
-  const supabase = createAdminClient()
   const leadId = result.leadId
+
+  try {
+    await syncCalBookingReminder(supabase, leadId, payload)
+  } catch (error) {
+    log.error({ err: error, leadId }, 'cal_booking_reminder_failed')
+    return NextResponse.json({ ok: false, error: 'booking reminder failed' }, { status: 500 })
+  }
 
   // Update lead status if it's a booking event
   if (triggerEvent === 'BOOKING_CREATED' || triggerEvent === 'BOOKING_RESCHEDULED') {

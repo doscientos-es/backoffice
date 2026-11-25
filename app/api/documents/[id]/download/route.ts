@@ -41,6 +41,7 @@ export async function GET(
     'documents',
     doc.storage_path as string,
     SIGNED_URL_TTL,
+    { download: doc.name as string },
   )
 
   if (signError || !url) {

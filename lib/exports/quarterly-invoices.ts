@@ -104,7 +104,7 @@ function archiveName(name: string): Buffer {
 }
 
 /** Creates a standards-compliant ZIP using only Node built-ins. */
-function createZip(entries: ReadonlyArray<ZipEntry>): Buffer {
+export function createZip(entries: ReadonlyArray<ZipEntry>): Buffer {
   if (entries.length > MAX_UINT16) throw new Error('La exportación contiene demasiados archivos')
 
   const localRecords: Buffer[] = []

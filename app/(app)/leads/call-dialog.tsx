@@ -27,6 +27,7 @@ import { SubmitButton } from '@/components/ui/submit-button'
 import { Textarea } from '@/components/ui/textarea'
 import { DEFAULT_MEETING_DURATION, type MeetingDuration } from '@/lib/calendar/date-presets'
 import { publicEnv } from '@/lib/env'
+import { meetingRecordingWarning } from '@/lib/leads/meeting-warning'
 import { buildLeadWhatsAppMessage } from '@/lib/leads/whatsapp'
 import { buildBookingUrl } from '@/lib/recovery/utils'
 import { defaultFollowUpDateTime } from '@/lib/reminders/date-presets'
@@ -402,6 +403,11 @@ export function QCallDialog({
                 remindAt: datetimeLocalToIso(nextCallAt),
               })
         if (!scheduled.ok) scheduleError = scheduled.error || 'Error inesperado'
+        else if ('interactionRecorded' in scheduled) {
+          const warning = meetingRecordingWarning(scheduled)
+          if (warning)
+            sileo.error({ title: 'Reunión creada con incidencias', description: warning })
+        }
       } catch (error) {
         scheduleError = error instanceof Error ? error.message : 'Error inesperado'
       }

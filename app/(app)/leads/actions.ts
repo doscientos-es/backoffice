@@ -2044,6 +2044,8 @@ export const scheduleLeadMeeting = defineAction<
     meetUrl: string | null
     title: string
     description: string | null
+    interactionRecorded: boolean
+    internalReminderCreated: boolean
   }
 >({
   name: 'leads.scheduleMeeting',
@@ -2102,7 +2104,7 @@ export const scheduleLeadMeeting = defineAction<
         attendees: attendeeEmails,
       },
     })
-    if (error) throw new Error(error.message)
+    if (error) log.warn({ err: error, leadId: data.leadId }, 'schedule_meeting_interaction_failed')
 
     // A booked Meet must also become a durable next action; the calendar event
     // alone is not queried by the lead board or its commercial agenda.
@@ -2131,6 +2133,8 @@ export const scheduleLeadMeeting = defineAction<
       meetUrl: event.meetUrl,
       title,
       description: description ?? null,
+      interactionRecorded: !error,
+      internalReminderCreated: !reminderError,
     }
   },
 })

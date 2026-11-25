@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormRow } from '@/components/ui/form-row'
 import { Input } from '@/components/ui/input'
+import { canPreviewAttachment } from '@/lib/attachments/preview'
 import { cn } from '@/lib/utils'
 
 export type AttachmentItem = {
@@ -111,6 +112,38 @@ export function AttachmentSection({
   const [driveUrl, setDriveUrl] = useState('')
   const [driveLinking, setDriveLinking] = useState(false)
   const [driveError, setDriveError] = useState<string | null>(null)
+  const [downloadingAll, setDownloadingAll] = useState(false)
+  const storedAttachments = attachments.filter((attachment) => attachment.source !== 'drive')
+  const hasDriveAttachments = attachments.some((attachment) => attachment.source === 'drive')
+
+  async function downloadAll() {
+    if (downloadingAll || storedAttachments.length === 0) return
+    setErrors([])
+    setDownloadingAll(true)
+    try {
+      const response = await fetch('/api/attachments/download-all', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ids: storedAttachments.map((attachment) => attachment.id) }),
+      })
+      if (!response.ok) {
+        const result = (await response.json()) as { error?: string }
+        throw new Error(result.error ?? 'No se pudieron descargar los adjuntos')
+      }
+      const url = URL.createObjectURL(await response.blob())
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'adjuntos.zip'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      setErrors([error instanceof Error ? error.message : 'No se pudieron descargar los adjuntos'])
+    } finally {
+      setDownloadingAll(false)
+    }
+  }
 
   /** Uploads a single file; resolves to an error message or null on success. */
   async function uploadFile(file: File): Promise<string | null> {
@@ -334,6 +367,29 @@ export function AttachmentSection({
         )}
       </CardHeader>
       <CardContent className="px-0">
+        {storedAttachments.length > 0 && (
+          <div className="px-6 pb-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={downloadingAll}
+              onClick={() => void downloadAll()}
+            >
+              {downloadingAll ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Download className="size-3.5" />
+              )}
+              {downloadingAll ? 'Preparando descarga…' : 'Descargar todos los adjuntos'}
+            </Button>
+            {hasDriveAttachments && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Los enlaces de Google Drive no se incluyen; ábrelos desde Drive.
+              </p>
+            )}
+          </div>
+        )}
         {errors.length > 0 && (
           <ul className="space-y-0.5 px-6 pb-2">
             {errors.map((msg) => (
@@ -359,43 +415,40 @@ export function AttachmentSection({
                     <p className="text-xs text-muted-foreground">{formatSize(a.size_bytes)}</p>
                   ) : null}
                 </div>
-                {a.source === 'drive' && a.web_view_link ? (
-                  <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
-                    <Link
-                      href={a.web_view_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Abrir en Drive"
-                    >
-                      <ExternalLink className="size-3.5" />
-                      <span className="sr-only">Abrir en Drive</span>
-                    </Link>
-                  </Button>
+                {a.source === 'drive' ? (
+                  a.web_view_link && (
+                    <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
+                      <Link
+                        href={a.web_view_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Abrir en Drive"
+                      >
+                        <ExternalLink className="size-3.5" />
+                        <span className="sr-only">Abrir en Drive</span>
+                      </Link>
+                    </Button>
+                  )
                 ) : (
                   <>
-                    {a.mime_type === 'application/pdf' ? (
+                    {canPreviewAttachment(a.mime_type) ? (
                       <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
                         <Link
                           href={`/api/documents/${a.id}/view`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          title="Ver PDF"
+                          title={`Ver ${a.name}`}
                         >
                           <Eye className="size-3.5" />
-                          <span className="sr-only">Ver PDF</span>
+                          <span className="sr-only">Ver {a.name}</span>
                         </Link>
                       </Button>
                     ) : null}
                     <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
-                      <Link
-                        href={`/api/documents/${a.id}/download`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Descargar"
-                      >
+                      <a href={`/api/documents/${a.id}/download`} title={`Descargar ${a.name}`}>
                         <Download className="size-3.5" />
-                        <span className="sr-only">Descargar</span>
-                      </Link>
+                        <span className="sr-only">Descargar {a.name}</span>
+                      </a>
                     </Button>
                   </>
                 )}

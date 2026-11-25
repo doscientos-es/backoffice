@@ -7,6 +7,8 @@ export type CalWebhookPayload = {
   createdAt: string
   payload: {
     uid: string
+    rescheduleUid?: string
+    rescheduledFromUid?: string
     bookingId: number
     title: string
     startTime: string

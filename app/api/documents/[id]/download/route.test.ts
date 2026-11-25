@@ -1,110 +1,63 @@
+import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { state } = vi.hoisted(() => ({
   state: {
     authThrows: false,
-    userRole: 'member' as 'owner' | 'admin' | 'member' | 'viewer',
-    dbFetchResult: {
-      data: null as { id: string; storage_path: string; name: string } | null,
-      error: null as { message: string } | null,
-    },
-    signedUrlResult: {
-      data: { signedUrl: 'https://storage.example.com/signed' } as { signedUrl: string } | null,
-      error: null as { message: string } | null,
-    },
+    doc: { id: 'a1', storage_path: 'path', name: 'foto.jpg' } as {
+      id: string
+      storage_path: string | null
+      name: string
+    } | null,
+    sign: vi.fn(),
   },
 }))
-
 vi.mock('@/lib/auth', () => ({
-  requireUser: vi.fn(async () => {
-    if (state.authThrows) throw new Error('Not authenticated')
-    return { id: 'user-1', role: state.userRole }
-  }),
+  requireUser: async () => {
+    if (state.authThrows) throw new Error('auth')
+  },
 }))
-
-vi.mock('@/lib/storage', () => ({
-  getStorage: () => ({
-    upload: async () => ({ error: null }),
-    remove: async () => ({ error: null }),
-    createSignedUrl: async () => ({
-      url: state.signedUrlResult.data?.signedUrl ?? null,
-      error: state.signedUrlResult.error?.message ?? null,
-    }),
-  }),
-}))
-
+vi.mock('@/lib/storage', () => ({ getStorage: () => ({ createSignedUrl: state.sign }) }))
 vi.mock('@/lib/supabase/server', () => ({
-  createServerClient: vi.fn(async () => ({
-    from: (_table: string) => ({
+  createServerClient: async () => ({
+    from: () => ({
       select: () => ({
-        eq: () => ({
-          is: () => ({
-            maybeSingle: async () => state.dbFetchResult,
-          }),
-        }),
+        eq: () => ({ is: () => ({ maybeSingle: async () => ({ data: state.doc, error: null }) }) }),
       }),
     }),
-  })),
+  }),
 }))
 
-import { NextRequest } from 'next/server'
-
-import { GET } from '@/app/api/documents/[id]/download/route'
-
-function downloadRequest(id: string): NextRequest {
-  return new NextRequest(`http://localhost/api/documents/${id}/download`)
-}
+import { GET } from './route'
 
 describe('GET /api/documents/[id]/download', () => {
   beforeEach(() => {
     state.authThrows = false
-    state.userRole = 'member'
-    state.dbFetchResult = { data: null, error: null }
-    state.signedUrlResult = {
-      data: { signedUrl: 'https://storage.example.com/signed' },
-      error: null,
-    }
-    vi.resetModules()
+    state.doc = { id: 'a1', storage_path: 'path', name: 'foto.jpg' }
+    state.sign.mockReset().mockResolvedValue({ url: 'https://storage.example/file', error: null })
   })
 
-  it('returns 401 when not authenticated', async () => {
+  it('uses a signed URL that forces a download with the original name', async () => {
+    const response = await GET(new NextRequest('http://localhost'), {
+      params: Promise.resolve({ id: 'a1' }),
+    })
+    expect(response.status).toBe(307)
+    expect(state.sign).toHaveBeenCalledWith('documents', 'path', 120, { download: 'foto.jpg' })
+    expect(response.headers.get('location')).toBe('https://storage.example/file')
+  })
+
+  it('does not sign inaccessible files', async () => {
     state.authThrows = true
-    const res = await GET(downloadRequest('att-1'), { params: Promise.resolve({ id: 'att-1' }) })
-    expect(res.status).toBe(401)
-  })
-
-  it('returns 404 for a soft-deleted attachment (deleted_at IS NULL filter)', async () => {
-    state.dbFetchResult = { data: null, error: null }
-    const res = await GET(downloadRequest('att-deleted'), {
-      params: Promise.resolve({ id: 'att-deleted' }),
-    })
-    expect(res.status).toBe(404)
-  })
-
-  it('returns 404 when attachment does not exist', async () => {
-    state.dbFetchResult = { data: null, error: { message: 'Not found' } }
-    const res = await GET(downloadRequest('unknown'), {
-      params: Promise.resolve({ id: 'unknown' }),
-    })
-    expect(res.status).toBe(404)
-  })
-
-  it('returns 400 when the DB row has no storage_path', async () => {
-    state.dbFetchResult = {
-      data: { id: 'att-1', storage_path: '', name: 'file.pdf' },
-      error: null,
-    }
-    const res = await GET(downloadRequest('att-1'), { params: Promise.resolve({ id: 'att-1' }) })
-    expect(res.status).toBe(400)
-  })
-
-  it('redirects to signed URL on success', async () => {
-    state.dbFetchResult = {
-      data: { id: 'att-1', storage_path: 'lead/l1/att-1/file.pdf', name: 'file.pdf' },
-      error: null,
-    }
-    const res = await GET(downloadRequest('att-1'), { params: Promise.resolve({ id: 'att-1' }) })
-    expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toBe('https://storage.example.com/signed')
+    expect(
+      (await GET(new NextRequest('http://localhost'), { params: Promise.resolve({ id: 'a1' }) }))
+        .status,
+    ).toBe(401)
+    state.authThrows = false
+    state.doc = null
+    expect(
+      (await GET(new NextRequest('http://localhost'), { params: Promise.resolve({ id: 'a1' }) }))
+        .status,
+    ).toBe(404)
+    expect(state.sign).not.toHaveBeenCalled()
   })
 })

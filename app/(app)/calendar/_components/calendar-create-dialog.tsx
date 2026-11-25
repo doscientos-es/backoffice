@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@doscientos/ui'
 import { Bell, CheckSquare, Presentation, Video } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
+import { sileo } from 'sileo'
 
 import { scheduleLeadMeeting } from '@/app/(app)/leads/actions'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ import {
   type MeetingDuration,
 } from '@/lib/calendar/date-presets'
 import type { CalendarEvent } from '@/lib/calendar/types'
+import { meetingRecordingWarning } from '@/lib/leads/meeting-warning'
 import { cn } from '@/lib/utils'
 import { todayIsoLocal } from '@/lib/utils/date'
 import { addMinutesToDatetimeLocal, datetimeLocalToIso } from '@/lib/utils/date-time'
@@ -168,6 +170,10 @@ export function CalendarCreateDialog({
             setError(res.error)
             return
           }
+
+          const warning = meetingRecordingWarning(res)
+          if (warning)
+            sileo.error({ title: 'Reunión creada con incidencias', description: warning })
 
           onCreated({
             id: `google_meeting:${res.eventId}`,

@@ -1,13 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
+import { canPreviewAttachment } from '@/lib/attachments/preview'
 import { requireUser } from '@/lib/auth'
 import { getStorage } from '@/lib/storage'
 import { createServerClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
-
-/** MIME types the browser can preview inline; anything else falls back to download. */
-const VIEWABLE_MIME_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'text/plain'])
 
 /**
  * GET serves the stored file inline (no forced download), so the browser can
@@ -40,7 +38,7 @@ export async function GET(
     return NextResponse.json({ error: 'Este documento no tiene archivo adjunto' }, { status: 400 })
   }
 
-  if (!VIEWABLE_MIME_TYPES.has(doc.mime_type ?? '')) {
+  if (!canPreviewAttachment(doc.mime_type)) {
     return NextResponse.redirect(new URL(`/api/documents/${id}/download`, req.url))
   }
 

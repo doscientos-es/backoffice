@@ -96,6 +96,23 @@ describe('seguimiento al registrar una llamada', () => {
     )
   })
 
+  it('avisa cuando Calendar creó la reunión pero no se pudo guardar el aviso', async () => {
+    mocks.scheduleLeadMeeting.mockResolvedValue({
+      ok: true,
+      interactionRecorded: true,
+      internalReminderCreated: false,
+    })
+    openCallDialog()
+    fireEvent.click(screen.getByRole('radio', { name: 'Videollamada Google Meet' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Registrar$/ }))
+    await waitFor(() =>
+      expect(mocks.error).toHaveBeenCalledWith(
+        expect.objectContaining({ description: expect.stringContaining('No vuelvas a crearla') }),
+      ),
+    )
+    expect(mocks.scheduleLeadMeeting).toHaveBeenCalledOnce()
+  })
+
   it('no registra la llamada si el seguimiento tiene una fecha pasada', async () => {
     openCallDialog()
     fireEvent.change(screen.getByLabelText('Fecha y hora del próximo seguimiento'), {
