@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.223
+
+### Nuevas funciones
+
+- Add acceptance condition and improve proposal PDF generation
+
 ## 2026-11-25 — v0.1.221
 
 ### Nuevas funciones

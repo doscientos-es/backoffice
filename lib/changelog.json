@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.223",
+      "date": "2026-11-25",
+      "title": "v0.1.223",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add acceptance condition and improve proposal PDF generation"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "a095a1f094b71b402b37f29a0c6b053b0d24c8af",
+          "type": "feat",
+          "scope": "pdf",
+          "breaking": false,
+          "description": "Add acceptance condition and improve proposal PDF generation"
+        }
+      ]
+    },
+    {
       "version": "0.1.221",
       "date": "2026-11-25",
       "title": "v0.1.221",
