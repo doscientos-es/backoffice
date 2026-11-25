@@ -45,15 +45,15 @@ export function DocumentHeader({
   const urgent = daysLeft !== null && daysLeft <= 2
   return (
     <header className="px-2 pt-8 pb-4 text-center text-zinc-950 sm:px-8 sm:pt-12 sm:pb-6">
-      <div className="flex flex-wrap items-center justify-center gap-3">
+      <h1 className="mx-auto max-w-3xl text-3xl leading-[1.1] font-semibold tracking-tight break-words sm:text-5xl">
+        {title}
+      </h1>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         <p className="text-xs font-semibold tracking-wide text-zinc-700 sm:text-sm">
           {copy.proposal} · {proposalNumber}
         </p>
         <StatusPill status={status} label={statusLabel} />
       </div>
-      <h1 className="mx-auto mt-6 max-w-3xl text-3xl leading-[1.1] font-semibold tracking-tight break-words sm:text-5xl">
-        {title}
-      </h1>
       <div className="mt-6 flex flex-col items-center justify-center gap-5">
         {validUntil ? (
           <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-sm text-zinc-700">

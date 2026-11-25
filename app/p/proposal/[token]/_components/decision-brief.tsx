@@ -45,12 +45,12 @@ export function DecisionBrief({
   const proposalUrl = `/p/proposal/${encodeURIComponent(token)}?lang=${language}`
   const summaryUrl = `/p/proposal/${encodeURIComponent(token)}?view=summary&lang=${language}`
   const scope = scopeModules.length
-    ? scopeModules.map((module) => module.title)
+    ? scopeModules.map((module) => ({ id: module.id, title: module.title }))
     : solutions.length
-      ? solutions.map((solution) => solution.title)
+      ? solutions.map((solution) => ({ id: solution.id, title: solution.title }))
       : items
           .filter((item) => !item.billing_cycle || item.billing_cycle === 'none')
-          .map((item) => item.description)
+          .map((item) => ({ id: item.id, title: item.description }))
   const recurring = (['monthly', 'quarterly', 'yearly'] as const).filter((cycle) =>
     items.some((item) => item.billing_cycle === cycle),
   )
@@ -59,10 +59,10 @@ export function DecisionBrief({
     <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
       <article className="overflow-hidden rounded-2xl border border-zinc-200 bg-white text-zinc-950 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 dark:text-white">
         <header className="border-b border-zinc-200 px-6 py-8 sm:px-10 dark:border-zinc-800">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <h1 className="text-3xl font-semibold tracking-tight break-words">{title}</h1>
+          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
             {tr('Resumen de propuesta', 'Resum de proposta', 'Proposal summary')} · {number}
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight break-words">{title}</h1>
           <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
             {tr('Para', 'Per a', 'Prepared for')} {recipient} · {statusLabel}
           </p>
@@ -89,10 +89,10 @@ export function DecisionBrief({
                 {tr('Qué incluye', 'Què inclou', 'What is included')}
               </h2>
               <ul className="mt-3 grid gap-2 text-sm text-zinc-700 sm:grid-cols-2 dark:text-zinc-300">
-                {scope.map((item, index) => (
-                  <li key={`${index}-${item}`} className="flex gap-2">
+                {scope.map((item) => (
+                  <li key={item.id} className="flex gap-2">
                     <span aria-hidden>•</span>
-                    <span>{item}</span>
+                    <span>{item.title}</span>
                   </li>
                 ))}
               </ul>

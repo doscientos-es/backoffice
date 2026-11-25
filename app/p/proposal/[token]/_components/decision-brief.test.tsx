@@ -69,15 +69,16 @@ const props = {
 describe('DecisionBrief', () => {
   it('separates discounted initial investment, recurring charges and optional plans', () => {
     render(<DecisionBrief {...props} />)
+    const money = (amount: number) => formatPortalEUR(amount, 'es').replace(/\s/g, ' ')
     expect(screen.getByText('Plataforma')).toBeDefined()
     expect(screen.getByText('Inversión').nextElementSibling?.textContent).toContain(
       formatPortalEUR(720, 'es'),
     )
-    expect(screen.getByText(`${formatPortalEUR(871.2, 'es')} con IVA`)).toBeDefined()
-    expect(screen.getByText(`Mensual: ${formatPortalEUR(80, 'es')} sin IVA`)).toBeDefined()
-    expect(screen.getByText(`Anual: ${formatPortalEUR(600, 'es')} sin IVA`)).toBeDefined()
+    expect(screen.getByText(`${money(871.2)} con IVA`)).toBeDefined()
+    expect(screen.getByText(`Mensual: ${money(80)} sin IVA`)).toBeDefined()
+    expect(screen.getByText(`Anual: ${money(600)} sin IVA`)).toBeDefined()
     expect(screen.getByText('No incluidas en la inversión inicial.')).toBeDefined()
-    expect(screen.getByText(`Esencial: ${formatPortalEUR(80, 'es')} / mes sin IVA`)).toBeDefined()
+    expect(screen.getByText(`Esencial: ${money(80)} / mes sin IVA`)).toBeDefined()
     expect(screen.getByRole('link', { name: 'Ver propuesta completa' }).getAttribute('href')).toBe(
       '/p/proposal/example-token?lang=es',
     )
