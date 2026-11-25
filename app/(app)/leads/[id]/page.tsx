@@ -188,7 +188,7 @@ export default async function LeadDetailPage({
             email={lead.email}
             company={lead.company}
             researchedDomain={lead.company_research?.domain}
-            logoUrl={billingClient?.logo_url}
+            logoUrl={lead.logo_url}
             size="lg"
           />
         }
@@ -235,6 +235,7 @@ export default async function LeadDetailPage({
                     id: lead.id as string,
                     name: lead.name as string,
                     alias: (lead.alias as string | null) ?? null,
+                    logo_url: lead.logo_url ?? null,
                     company: (lead.company as string | null) ?? null,
                     email: (lead.email as string | null) ?? null,
                     phone: (lead.phone as string | null) ?? null,

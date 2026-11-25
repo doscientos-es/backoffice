@@ -36,7 +36,7 @@ export function LeadMobileCard({
           name={name}
           email={lead.email}
           company={lead.company}
-          logoUrl={lead.client?.logo_url}
+          logoUrl={lead.logo_url}
           className="rounded-full"
         />
         <span className="min-w-0 flex-1">

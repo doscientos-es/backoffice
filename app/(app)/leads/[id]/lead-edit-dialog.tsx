@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { sileo } from 'sileo'
 
 import { Button } from '@/components/ui/button'
+import { ClientLogoUpload } from '@/components/ui/client-logo-upload'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { VersionConflictDialog } from '@/components/ui/version-conflict-dialog'
 import { useFormDirty } from '@/lib/hooks/use-form-dirty'
@@ -26,6 +27,7 @@ type Lead = {
   id: string
   name: string
   alias: string | null
+  logo_url: string | null
   company: string | null
   email: string | null
   phone: string | null
@@ -55,6 +57,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
       expected_version: lead.version,
       name: fd.get('name')?.toString() ?? '',
       alias: fd.get('alias')?.toString() ?? '',
+      logo_url: fd.get('logo_url')?.toString() ?? '',
       email: fd.get('email')?.toString() ?? '',
       phone: fd.get('phone')?.toString() ?? '',
       company: fd.get('company')?.toString() ?? '',
@@ -119,6 +122,7 @@ export function LeadEditDialog({ lead, members = [] }: { lead: Lead; members?: M
                 assigned_to: lead.assigned_to,
               }}
             />
+            <ClientLogoUpload defaultLogoUrl={lead.logo_url} label="Logo del lead" />
           </div>
           <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border pt-3">
             <SubmitButton isDisabled={!isDirty}>Guardar cambios</SubmitButton>

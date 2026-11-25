@@ -611,10 +611,10 @@ function Card({
           </button>
         ) : null}
         <LeadAvatar
-          name={lead.client?.name ?? leadDisplayName(lead)}
+          name={leadDisplayName(lead)}
           email={lead.email}
           company={lead.company}
-          logoUrl={lead.client?.logo_url}
+          logoUrl={lead.logo_url}
           className="size-6 rounded-full"
         />
         <div className="min-w-0 flex-1">

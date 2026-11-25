@@ -43,11 +43,13 @@ export function ClientFormFields({
   idPrefix = 'client',
   autoFocusName = false,
   initiallyExpanded = false,
+  includeLogo = true,
 }: {
   defaults?: ClientFormDefaults
   idPrefix?: string
   autoFocusName?: boolean
   initiallyExpanded?: boolean
+  includeLogo?: boolean
 }) {
   const d = defaults ?? {}
   const hasAdditionalDetails = Boolean(
@@ -265,7 +267,7 @@ export function ClientFormFields({
               placeholder="Condiciones de pago, observaciones…"
             />
           </FormRow>
-          <ClientLogoUpload defaultLogoUrl={d.logo_url} />
+          {includeLogo ? <ClientLogoUpload defaultLogoUrl={d.logo_url} /> : null}
         </div>
       </div>
     </>

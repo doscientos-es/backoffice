@@ -74,7 +74,7 @@ export function ClientEditDialog({
       billing_address_country: fd.get('billing_address_country')?.toString() ?? 'ES',
       contact_person: fd.get('contact_person')?.toString() ?? '',
       notes: fd.get('notes')?.toString() ?? '',
-      logo_url: fd.get('logo_url')?.toString() ?? '',
+      logo_url: billingMode ? (client.logo_url ?? '') : (fd.get('logo_url')?.toString() ?? ''),
     })
     if (!res.ok) {
       if (res.code === 'conflict') setConflictOpen(true)
@@ -111,9 +111,7 @@ export function ClientEditDialog({
             {billingMode ? 'Editar datos de facturación' : 'Editar cliente'}
           </DialogTitle>
           <DialogDescription>
-            {billingMode
-              ? 'Actualiza los datos fiscales y el logo.'
-              : 'Actualiza los datos del cliente.'}
+            {billingMode ? 'Actualiza los datos fiscales.' : 'Actualiza los datos del cliente.'}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -126,6 +124,7 @@ export function ClientEditDialog({
             <ClientFormFields
               idPrefix={`edit-${client.id}`}
               initiallyExpanded={billingMode}
+              includeLogo={!billingMode}
               defaults={{
                 name: client.name,
                 label: client.label,

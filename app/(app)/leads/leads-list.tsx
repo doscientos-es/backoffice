@@ -66,7 +66,7 @@ export function LeadsList({
               name={leadDisplayName(l)}
               email={l.email}
               company={l.company}
-              logoUrl={l.client?.logo_url}
+              logoUrl={l.logo_url}
               className="rounded-full"
             />
             <span className="max-w-40 truncate font-medium underline-offset-2 transition-colors group-hover/leadname:text-primary group-hover/leadname:underline">

@@ -22,12 +22,6 @@ export type LeadMemberRef = {
   github_handle: string | null
 }
 
-/** Minimal client reference used to show a converted lead's logo. */
-export type LeadClientRef = {
-  name: string
-  logo_url: string | null
-}
-
 export type LeadInteraction = {
   id: string
   type: string
@@ -45,6 +39,7 @@ export type LeadListItem = {
   /** Optional short display name. Falls back to `name` when null. */
   alias: string | null
   company: string | null
+  logo_url: string | null
   email: string | null
   phone: string | null
   source: string | null
@@ -82,7 +77,6 @@ export type LeadListItem = {
   ai_updated_at: string | null
   lost_reason: string | null
   lost_at: string | null
-  client: LeadClientRef | null
   assignee: LeadMemberRef | null
   recent_interactions: LeadInteraction[]
   /** Soonest pending reminder; drives the "próxima acción" chip on the board. */
@@ -152,6 +146,7 @@ type LeadDetail = {
   name: string
   /** Optional short display name. Falls back to `name` when null. */
   alias: string | null
+  logo_url: string | null
   email: string | null
   phone: string | null
   company: string | null

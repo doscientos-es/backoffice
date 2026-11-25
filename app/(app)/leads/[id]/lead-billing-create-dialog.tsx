@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@doscientos/ui'
+import { Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -47,24 +48,28 @@ export function LeadBillingCreateDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          Añadir datos de facturación
+          <Pencil className="size-4" aria-hidden />
+          Editar
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Datos de facturación</DialogTitle>
-          <DialogDescription>
-            Completa los datos fiscales y el logo cuando los tengas.
-          </DialogDescription>
+          <DialogTitle>Editar datos de facturación</DialogTitle>
+          <DialogDescription>Actualiza los datos fiscales.</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="flex max-h-[75svh] flex-col sm:max-h-[70vh]">
           <div className="no-scrollbar flex min-h-0 flex-1 scroll-fade flex-col gap-5 overflow-y-auto pr-1">
-            <ClientFormFields idPrefix="lead-billing" defaults={defaults} initiallyExpanded />
+            <ClientFormFields
+              idPrefix="lead-billing"
+              defaults={defaults}
+              initiallyExpanded
+              includeLogo={false}
+            />
           </div>
           <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-end">
             <FormFeedback state={feedback.state} pendingLabel="Guardando…" />
             <SubmitButton loading={feedback.pending} pendingLabel="Guardando…">
-              Guardar
+              Guardar cambios
             </SubmitButton>
           </div>
         </form>

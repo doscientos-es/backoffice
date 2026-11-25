@@ -58,7 +58,7 @@ describe('responsive lead list', () => {
   })
 
   it('shows corporate icons in both desktop and mobile views without a billing record', () => {
-    renderList(leadFixture({ email: 'contact@example.test', client: null }))
+    renderList(leadFixture({ email: 'contact@example.test' }))
     const icons = screen.getAllByRole('img', { name: 'Contacto de ejemplo' })
     expect(icons).toHaveLength(2)
     for (const icon of icons) {

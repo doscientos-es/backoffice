@@ -45,6 +45,21 @@ export const UpdateLeadInput = CreateLeadInput.extend({
   id: z.string().uuid(),
   expected_version: z.coerce.number().int().positive(),
   estimated_value: z.number().min(0).max(99_999_999.99).nullable().optional(),
+  logo_url: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((value) => {
+      if (!value) return true
+      try {
+        return ['http:', 'https:'].includes(new URL(value).protocol)
+      } catch {
+        return false
+      }
+    }, 'URL del logo no válida')
+    .nullable()
+    .optional()
+    .transform((value) => (value === '' ? null : value)),
 })
 
 /** Imports emails that already exist in the configured Gmail mailboxes. */

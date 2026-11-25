@@ -39,7 +39,7 @@ export function LeadBillingPanel({
       </Card>
     )
   }
-  if (!client) {
+  if (!client && linkedClientId) {
     return (
       <Card>
         <CardHeader>
@@ -47,47 +47,50 @@ export function LeadBillingPanel({
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            {linkedClientId
-              ? 'No se han podido cargar los datos de facturación vinculados.'
-              : 'Este lead todavía no tiene datos de facturación vinculados.'}
+            No se han podido cargar los datos de facturación vinculados.
           </p>
-          {!linkedClientId && canEdit ? (
-            <LeadBillingCreateDialog leadId={leadId} defaults={defaults} />
-          ) : null}
         </CardContent>
       </Card>
     )
   }
 
   const address = formatAddress({
-    street: client.billing_address_street,
-    zip: client.billing_address_zip,
-    city: client.billing_address_city,
-    province: client.billing_address_province,
-    country: client.billing_address_country,
+    street: client?.billing_address_street,
+    zip: client?.billing_address_zip,
+    city: client?.billing_address_city,
+    province: client?.billing_address_province,
+    country: client?.billing_address_country,
   })
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-3">
         <CardTitle>Datos de facturación</CardTitle>
-        {canEdit ? <ClientEditDialog client={client} billingMode /> : null}
+        {canEdit ? (
+          client ? (
+            <ClientEditDialog client={client} billingMode />
+          ) : (
+            <LeadBillingCreateDialog leadId={leadId} defaults={defaults} />
+          )
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-5">
         <DetailGrid>
-          <DetailRow label="Razón social">{client.name}</DetailRow>
-          <DetailRow label="NIF / CIF">{client.nif || '—'}</DetailRow>
-          <DetailRow label="Email">{client.email || '—'}</DetailRow>
-          <DetailRow label="Teléfono">{client.phone || '—'}</DetailRow>
-          <DetailRow label="Contacto">{client.contact_person || '—'}</DetailRow>
+          <DetailRow label="Razón social">{client?.name || '—'}</DetailRow>
+          <DetailRow label="NIF / CIF">{client?.nif || '—'}</DetailRow>
+          <DetailRow label="Email">{client?.email || '—'}</DetailRow>
+          <DetailRow label="Teléfono">{client?.phone || '—'}</DetailRow>
+          <DetailRow label="Contacto">{client?.contact_person || '—'}</DetailRow>
           <DetailRow label="Dirección">{address || '—'}</DetailRow>
         </DetailGrid>
-        <FiscalVerificationCard
-          clientId={client.id}
-          initialStatus={client.fiscal_verification_status}
-          initialVerifiedAt={client.fiscal_verified_at}
-          canValidate={canEdit}
-        />
+        {client ? (
+          <FiscalVerificationCard
+            clientId={client.id}
+            initialStatus={client.fiscal_verification_status}
+            initialVerifiedAt={client.fiscal_verified_at}
+            canValidate={canEdit}
+          />
+        ) : null}
       </CardContent>
     </Card>
   )

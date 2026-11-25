@@ -12,7 +12,6 @@ import {
   LEAD_BOARD_LIMIT,
   LEAD_LIST_PAGE_SIZE,
   LEAD_RELATED_LIMIT,
-  type LeadClientRef,
   type LeadConvertResult,
   type LeadDetailInteraction,
   type LeadDiscoveryQuestion,
@@ -30,9 +29,6 @@ import {
 /** Embed of the lead owner. Disambiguated via the `assigned_to` FK column. */
 const ASSIGNEE_EMBED = 'assignee:assigned_to(id, name, avatar_url, github_handle)'
 
-/** Embed of the linked client, used for the client logo on lead cards. */
-const CLIENT_EMBED = 'client:clients!lead_id(name, logo_url)'
-
 /** Embed of an interaction's author, via the `performed_by` FK column. */
 const PERFORMER_EMBED = 'performer:performed_by(id, name, avatar_url, github_handle)'
 
@@ -49,9 +45,9 @@ const MOM_TEST_COLUMNS =
 
 const COMPANY_RESEARCH_COLUMNS = 'company_research, company_researched_at'
 
-const LIST_COLUMNS = `id, version, name, alias, company, email, phone, source, language, notes, status, won_product, created_at, updated_at, estimated_value, score, temperature, engagement_score, last_engaged_at, ${LIST_QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${CLIENT_EMBED}, ${ASSIGNEE_EMBED}`
+const LIST_COLUMNS = `id, version, name, alias, company, logo_url, email, phone, source, language, notes, status, won_product, created_at, updated_at, estimated_value, score, temperature, engagement_score, last_engaged_at, ${LIST_QUALIFICATION_COLUMNS}, ai_summary, ai_updated_at, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
 
-const DETAIL_COLUMNS = `id, version, name, alias, email, phone, company, source, language, status, won_product, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
+const DETAIL_COLUMNS = `id, version, name, alias, logo_url, email, phone, company, source, language, status, won_product, notes, estimated_value, score, ${QUALIFICATION_COLUMNS}, ${MOM_TEST_COLUMNS}, created_at, updated_at, ai_summary, ai_suggested_next_step, ai_suggested_next_step_at, ai_temperature, ai_confidence, ai_updated_at, ai_tags, lost_reason, lost_at, assigned_to, ${ASSIGNEE_EMBED}`
 
 const log = scopedLogger('leads.queries')
 
@@ -86,18 +82,6 @@ function mapMemberRef(value: unknown): LeadMemberRef | null {
     name: (m.name as string | null) ?? '',
     avatar_url: (m.avatar_url as string | null) ?? null,
     github_handle: (m.github_handle as string | null) ?? null,
-  }
-}
-
-/** Normalises the to-many client embed into the single linked client reference. */
-function mapClientRef(value: unknown): LeadClientRef | null {
-  const row = Array.isArray(value) ? value[0] : value
-  if (!row || typeof row !== 'object') return null
-  const client = row as Record<string, unknown>
-  if (typeof client.name !== 'string') return null
-  return {
-    name: client.name,
-    logo_url: (client.logo_url as string | null) ?? null,
   }
 }
 
@@ -209,6 +193,7 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     name: l.name as string,
     alias: (l.alias as string | null) ?? null,
     company: (l.company as string | null) ?? null,
+    logo_url: (l.logo_url as string | null) ?? null,
     email: (l.email as string | null) ?? null,
     phone: (l.phone as string | null) ?? null,
     source: (l.source as string | null) ?? null,
@@ -240,7 +225,6 @@ export async function listLeads(params: LeadListParams): Promise<LeadListResult>
     ai_updated_at: (l.ai_updated_at as string | null) ?? null,
     lost_reason: (l.lost_reason as string | null) ?? null,
     lost_at: (l.lost_at as string | null) ?? null,
-    client: mapClientRef(l.client),
     assignee: mapMemberRef(l.assignee),
     recent_interactions: interactionsByLead.get(l.id as string) ?? [],
     next_action: remindersByLead.nextActions.get(l.id as string) ?? null,

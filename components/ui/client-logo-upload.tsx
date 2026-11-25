@@ -38,10 +38,12 @@ async function resizeAndCompress(file: File): Promise<Blob> {
 export function ClientLogoUpload({
   defaultLogoUrl,
   clientId,
+  label = 'Logo del cliente',
 }: {
   defaultLogoUrl?: string | null
   /** When editing an existing client, pass the id to use as stable filename. */
   clientId?: string
+  label?: string
 }) {
   const [preview, setPreview] = useState<string | null>(defaultLogoUrl ?? null)
   const [uploading, setUploading] = useState(false)
@@ -179,7 +181,7 @@ export function ClientLogoUpload({
 
         <div className="flex flex-col gap-1.5 pt-1">
           <p className="text-sm font-medium text-foreground">
-            Logo del cliente <span className="font-normal text-muted-foreground">(opcional)</span>
+            {label} <span className="font-normal text-muted-foreground">(opcional)</span>
           </p>
           <p className="text-xs text-muted-foreground">
             Haz clic, arrastra una imagen, pega una URL o busca por dominio.
