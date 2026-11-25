@@ -65,6 +65,7 @@ export default async function ProposalsPage({
   const user = await requirePagePermission('proposals.read')
   const canSeePrices = can(user.role, 'proposals.prices')
   const canWriteProposals = can(user.role, 'proposals.write')
+  const canReadLeads = can(user.role, 'leads.read')
   const sp = await searchParams
   const q = parseStringParam(sp, 'q')
   const status = parseStringParam(sp, 'status')
@@ -88,26 +89,15 @@ export default async function ProposalsPage({
 
   const supabase = await createServerClient()
 
-  const clientsQuery = supabase
-    .from('clients')
+  const recipientsQuery = supabase
+    .from(canReadLeads ? 'leads' : 'clients')
     .select('id, name')
     .is('deleted_at', null)
     .order('name')
-  // Only the selected lead's client is needed to build the proposals query.
-  const leadClientQuery = (() => {
-    if (!leadId || !UUID_PATTERN.test(leadId)) return Promise.resolve({ data: null })
-    return supabase
-      .from('clients')
-      .select('id')
-      .eq('lead_id', leadId)
-      .is('deleted_at', null)
-      .maybeSingle()
-  })()
-
   let query = supabase
     .from('proposal_list')
     .select(
-      'id, number, title, status, delivered_at, valid_until, sent_at, viewed_at, client_id, clients(name, logo_url, lead_id, leads(phone)), lead_id, leads(name, phone), project_id, projects(name)',
+      'id, number, title, status, delivered_at, valid_until, sent_at, viewed_at, client_id, clients(name, logo_url), lead_id, leads(name, phone), project_id, projects(name)',
       { count: 'exact' },
     )
     .is('deleted_at', null)
@@ -120,6 +110,7 @@ export default async function ProposalsPage({
   }
   if (status) query = query.eq('status', status)
   if (clientId) query = query.eq('client_id', clientId)
+  if (leadId && UUID_PATTERN.test(leadId)) query = query.eq('lead_id', leadId)
   if (expiry === 'expired') {
     query = query.lt('valid_until', new Date().toISOString().slice(0, 10))
   } else if (expiry === 'expiring_7') {
@@ -143,16 +134,9 @@ export default async function ProposalsPage({
   }
 
   const ascending = sort !== 'created_at' ? dir !== 'desc' : false
-  const proposalsPromise = (async () => {
-    const { data: leadClient } = await leadClientQuery
-    let listQuery = query
-    if (leadId && UUID_PATTERN.test(leadId)) {
-      listQuery = leadClient
-        ? listQuery.or(`lead_id.eq.${leadId},client_id.eq.${leadClient.id}`)
-        : listQuery.eq('lead_id', leadId)
-    }
-    return listQuery.order(sort, { ascending, nullsFirst: false }).range(from, to)
-  })()
+  const proposalsPromise = Promise.resolve(
+    query.order(sort, { ascending, nullsFirst: false }).range(from, to),
+  )
   const detailsPromise = (async () => {
     const { data } = await proposalsPromise
     const proposalIds = (data ?? []).map((proposal) => proposal.id as string)
@@ -171,9 +155,9 @@ export default async function ProposalsPage({
     }
     return { pricesByProposal, viewStats }
   })()
-  const [{ data: clients }, { data, error, count }, { pricesByProposal, viewStats }] =
-    await Promise.all([clientsQuery, proposalsPromise, detailsPromise])
-  const CLIENT_FILTER_OPTIONS = (clients ?? []).map((c) => ({
+  const [{ data: recipients }, { data, error, count }, { pricesByProposal, viewStats }] =
+    await Promise.all([recipientsQuery, proposalsPromise, detailsPromise])
+  const recipientOptions = (recipients ?? []).map((c) => ({
     value: c.id,
     label: c.name,
   }))
@@ -223,7 +207,11 @@ export default async function ProposalsPage({
           options: ARCHIVE_FILTER_OPTIONS,
         },
         { key: 'status', label: 'Estado', options: STATUS_FILTER_OPTIONS },
-        { key: 'client', label: 'Cliente', options: CLIENT_FILTER_OPTIONS },
+        {
+          key: canReadLeads ? 'lead' : 'client',
+          label: canReadLeads ? 'Lead' : 'Cliente',
+          options: recipientOptions,
+        },
         { key: 'expiry', label: 'Vencimiento', options: EXPIRY_FILTER_OPTIONS },
         {
           key: 'followup',
@@ -268,20 +256,18 @@ export default async function ProposalsPage({
           const clientRow = p.clients as unknown as {
             name: string
             logo_url: string | null
-            lead_id: string | null
-            leads: { phone: string | null } | null
           } | null
           const leadRow = p.leads as unknown as { name: string; phone: string | null } | null
-          // Who to call: the proposal's lead, or the lead the client came from.
-          const callLeadId = (p.lead_id as string | null) ?? clientRow?.lead_id ?? null
-          const callPhone = leadRow?.phone ?? clientRow?.leads?.phone ?? null
-          const clientName = clientRow?.name ?? leadRow?.name ?? '—'
+          const callLeadId = p.lead_id as string | null
+          const callPhone = leadRow?.phone ?? null
+          const clientName = leadRow?.name ?? clientRow?.name ?? '—'
           const projectName = (p.projects as unknown as { name: string } | null)?.name ?? '—'
-          const recipientHref = p.client_id
-            ? `/clients/${p.client_id}`
-            : p.lead_id
-              ? `/leads/${p.lead_id}`
-              : null
+          const recipientHref =
+            canReadLeads && callLeadId
+              ? `/leads/${callLeadId}`
+              : p.client_id
+                ? `/clients/${p.client_id}`
+                : null
           const clientCell = (
             <span key="client" className="flex items-center gap-2">
               {clientRow ? (

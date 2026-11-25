@@ -5,7 +5,6 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   listPage: vi.fn(),
   role: 'sales',
-  leadClient: vi.fn(),
 }))
 vi.mock('@/lib/auth', () => ({ requirePagePermission: async () => ({ role: mocks.role }) }))
 vi.mock('@/lib/supabase/server', () => ({ createServerClient: async () => ({ from: mocks.from }) }))
@@ -23,7 +22,6 @@ const results = new Map<string, unknown>()
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.role = 'sales'
-  mocks.leadClient.mockResolvedValue({ data: null })
   builders.clear()
   results.clear()
   mocks.from.mockImplementation((table: string) => {
@@ -42,7 +40,6 @@ beforeEach(() => {
       'limit',
     ])
       builder[method] = vi.fn(() => builder)
-    builder.maybeSingle = mocks.leadClient
     // oxlint-disable-next-line unicorn/no-thenable -- Match the awaitable Supabase query-builder contract.
     builder.then = vi.fn((resolve: (result: unknown) => unknown, reject) =>
       Promise.resolve(results.get(table) ?? { data: [], error: null, count: 0 }).then(
@@ -115,10 +112,10 @@ describe('ProposalsPage follow-up filters', () => {
     })
   })
 
-  it('runs proposals while client filter options are still loading', async () => {
+  it('runs proposals while lead filter options are still loading', async () => {
     let finish!: (value: unknown) => void
     results.set(
-      'clients',
+      'leads',
       new Promise((resolve) => {
         finish = resolve
       }),
@@ -127,23 +124,23 @@ describe('ProposalsPage follow-up filters', () => {
     try {
       await vi.waitFor(() => expect(builders.get('proposal_list')?.then).toHaveBeenCalled())
     } finally {
-      finish({ data: [{ id: 'client-1', name: 'Test client' }] })
+      finish({ data: [{ id: 'lead-1', name: 'Test lead' }] })
     }
     const result = await page
     expect(result.props.filters).toContainEqual(
       expect.objectContaining({
-        key: 'client',
-        options: [{ value: 'client-1', label: 'Test client' }],
+        key: 'lead',
+        options: [{ value: 'lead-1', label: 'Test lead' }],
       }),
     )
   })
 
-  it('loads proposal prices and view statistics concurrently without waiting for clients', async () => {
+  it('loads proposal prices and view statistics concurrently without waiting for leads', async () => {
     results.set('proposal_list', { data: [{ id: 'proposal-1', title: 'Test', status: 'draft' }] })
     let finishClients!: (value: unknown) => void
     let finishPrices!: (value: unknown) => void
     results.set(
-      'clients',
+      'leads',
       new Promise((resolve) => {
         finishClients = resolve
       }),
@@ -167,22 +164,11 @@ describe('ProposalsPage follow-up filters', () => {
     await expect(page).resolves.toBeDefined()
   })
 
-  it('still waits for the selected lead client before building the proposal filter', async () => {
+  it('filters proposals by the lead without looking up any billing records', async () => {
     const lead = '00000000-0000-4000-8000-000000000001'
-    let finish!: (value: { data: { id: string } }) => void
-    mocks.leadClient.mockReturnValueOnce(
-      new Promise((resolve) => {
-        finish = resolve
-      }),
-    )
-    const page = ProposalsPage({ searchParams: Promise.resolve({ lead }) })
-    await vi.waitFor(() => expect(mocks.leadClient).toHaveBeenCalled())
-    expect(builders.get('proposal_list')?.then).not.toHaveBeenCalled()
-    finish({ data: { id: 'client-1' } })
-    await page
-    expect(builders.get('proposal_list')?.or).toHaveBeenCalledWith(
-      `lead_id.eq.${lead},client_id.eq.client-1`,
-    )
+    await ProposalsPage({ searchParams: Promise.resolve({ lead }) })
+    expect(builders.get('proposal_list')?.eq).toHaveBeenCalledWith('lead_id', lead)
+    expect(mocks.from).not.toHaveBeenCalledWith('clients')
   })
 
   it.each(['sales', 'delivery'])('preserves price visibility for %s', async (role) => {

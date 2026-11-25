@@ -23,6 +23,7 @@ export function parseInvoiceBillingSource(
 type InvoiceListItem = {
   id: string
   client_id: string
+  lead_id: string
   billing_source: InvoiceBillingSource
   full_number: string | null
   idfact: string | null

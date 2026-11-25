@@ -20,6 +20,7 @@ import {
   INVOICE_SORT_COLUMNS,
   parseInvoiceBillingSource,
 } from '@/lib/invoices/types'
+import { can } from '@/lib/permissions'
 import { INVOICE_STATUS, VERIFACTU_STATUS } from '@/lib/status'
 import { formatDate, formatEUR } from '@/lib/utils'
 import { parsePage, parseSortParam, parseStringParam } from '@/lib/utils/search-params'
@@ -61,7 +62,8 @@ export default async function InvoicesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  await requireUser()
+  const user = await requireUser()
+  const canReadLeads = can(user.role, 'leads.read')
   const sp = await searchParams
   const q = parseStringParam(sp, 'q')
   const status = parseStringParam(sp, 'status')
@@ -231,7 +233,7 @@ export default async function InvoicesPage({
             content: i.client_name ? (
               <Link
                 key="client"
-                href={`/clients/${i.client_id}`}
+                href={canReadLeads && i.lead_id ? `/leads/${i.lead_id}` : `/clients/${i.client_id}`}
                 className="block max-w-48 text-foreground transition-colors hover:text-primary hover:underline"
                 title={`Abrir ficha de ${i.client_name}`}
               >

@@ -26,6 +26,7 @@ import { requireUser } from '@/lib/auth'
 import { buildVatBreakdown } from '@/lib/finance'
 import type { InvoicePaymentFollowUp } from '@/lib/invoices/payment-follow-ups'
 import { findInvoiceDeliveries } from '@/lib/invoices/queries'
+import { can } from '@/lib/permissions'
 import { PAYMENT_METHOD_LABELS, type PaymentMethodType } from '@/lib/schemas/invoice'
 import { createServerClient } from '@/lib/supabase/server'
 import { cn, formatDate, formatEUR } from '@/lib/utils'
@@ -179,6 +180,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       } | null
     }
   ).clients
+  const recipientName = (invoice.client_name as string | null) ?? client?.name
+  const recipientHref =
+    invoice.lead_id && can(user.role, 'leads.read')
+      ? `/leads/${invoice.lead_id}`
+      : client
+        ? `/clients/${client.id}`
+        : undefined
   const normalizedClientNif = client?.nif
     ?.trim()
     .toUpperCase()
@@ -302,7 +310,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
       <PageHeader
         title={`Factura ${(invoice.full_number as string | null) ?? 'Borrador'}`}
-        description={client?.name}
+        description={recipientName}
         meta={
           <InvoiceStatus
             status={invoice.status as string}
@@ -313,7 +321,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         }
         breadcrumbs={[
           { label: 'Facturas', href: '/invoices' },
-          ...(client ? [{ label: client.name, href: `/clients/${client.id}` }] : []),
+          ...(recipientName && recipientHref
+            ? [{ label: recipientName, href: recipientHref }]
+            : []),
           ...(project ? [{ label: project.name, href: `/projects/${project.id}` }] : []),
           { label: (invoice.full_number as string | null) ?? 'Borrador' },
         ]}
@@ -494,12 +504,12 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                   </InvoiceInfoField>
                 ) : null}
                 <InvoiceInfoField label="Cliente" className="col-span-2">
-                  {client ? (
-                    <Link href={`/clients/${client.id}`} className="hover:underline">
-                      {client.name}
+                  {recipientHref && recipientName ? (
+                    <Link href={recipientHref} className="hover:underline">
+                      {recipientName}
                     </Link>
                   ) : (
-                    '—'
+                    (recipientName ?? '—')
                   )}
                 </InvoiceInfoField>
                 {project ? (

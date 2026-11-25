@@ -34,12 +34,13 @@ function findEventHandlers(node: ReactNode): string[] {
 
 describe('InvoicesPage', () => {
   it('only passes serializable invoice cells to the client list', async () => {
-    requireUser.mockResolvedValue({ id: 'user-1' })
+    requireUser.mockResolvedValue({ id: 'user-1', role: 'owner' })
     listInvoices.mockResolvedValue({
       data: [
         {
           id: 'invoice-1',
           client_id: 'client-1',
+          lead_id: 'lead-1',
           full_number: 'A-000001',
           idfact: null,
           concepts: ['Mantenimiento'],
@@ -83,7 +84,7 @@ describe('InvoicesPage', () => {
   })
 
   it('does not render the synthetic AEAT diagnostic card in the summary', async () => {
-    requireUser.mockResolvedValue({ id: 'user-1' })
+    requireUser.mockResolvedValue({ id: 'user-1', role: 'owner' })
     listInvoices.mockResolvedValue({
       data: [],
       count: 0,

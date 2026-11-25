@@ -6,10 +6,11 @@ import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { requireUser } from '@/lib/auth'
+import { getBillableLeadOptions } from '@/lib/subscriptions/lead-options'
 import { createServerClient } from '@/lib/supabase/server'
 
 import { createSubscription } from '../actions'
-import { SubscriptionFormFields } from '../subscription-form-fields'
+import { SubscriptionFormFields, type SubscriptionProjectOption } from '../subscription-form-fields'
 
 export const metadata: Metadata = { title: 'Nueva suscripción · doscientos' }
 
@@ -18,9 +19,9 @@ export default async function NewSubscriptionPage() {
   if (user.role === 'viewer') redirect('/subscriptions')
 
   const supabase = await createServerClient()
-  const [{ data: clients }, { data: projects }] = await Promise.all([
-    supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
-    supabase.from('projects').select('id, name, client_id').is('deleted_at', null).order('name'),
+  const [leads, { data: projects }] = await Promise.all([
+    getBillableLeadOptions(supabase),
+    supabase.from('projects').select('id, name, lead_id').is('deleted_at', null).order('name'),
   ])
 
   return (
@@ -29,7 +30,7 @@ export default async function NewSubscriptionPage() {
         <BackLink href="/subscriptions" label="Suscripciones" />
         <PageHeader
           title="Nueva suscripción"
-          description="Define un servicio recurrente vinculado a un cliente."
+          description="Define un servicio recurrente para un lead con datos de facturación."
         />
       </div>
 
@@ -44,8 +45,8 @@ export default async function NewSubscriptionPage() {
             className="flex flex-col gap-6"
           >
             <SubscriptionFormFields
-              clients={(clients ?? []) as { id: string; name: string }[]}
-              projects={(projects ?? []) as { id: string; name: string; client_id: string }[]}
+              leads={leads}
+              projects={(projects ?? []) as SubscriptionProjectOption[]}
             />
 
             <div className="flex justify-end">

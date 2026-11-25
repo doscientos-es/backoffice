@@ -15,10 +15,12 @@ import {
   buildSubscriptionPeriods,
   type PeriodInvoice,
 } from '@/lib/subscriptions/billing-periods'
+import { getBillableLeadOptions } from '@/lib/subscriptions/lead-options'
 import { createServerClient } from '@/lib/supabase/server'
 import { formatDate, formatEUR } from '@/lib/utils'
 
 import { deleteSubscription } from '../actions'
+import type { SubscriptionProjectOption } from '../subscription-form-fields'
 import { SubscriptionEditForm } from './subscription-edit-form'
 import { SubscriptionPeriods } from './subscription-periods'
 
@@ -36,35 +38,36 @@ export default async function SubscriptionDetailPage({
 
   const supabase = await createServerClient()
 
-  const [{ data: sub }, { data: clients }, { data: projects }, { data: invoices }] =
-    await Promise.all([
-      supabase
-        .from('subscriptions')
-        .select('*, clients(id, name), projects(id, name)')
-        .eq('id', id)
-        .is('deleted_at', null)
-        .maybeSingle(),
-      supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
-      supabase.from('projects').select('id, name, client_id').is('deleted_at', null).order('name'),
-      supabase
-        .from('invoices')
-        .select('id, full_number, subscription_period_start, issue_date, total, status')
-        .eq('subscription_id', id)
-        .is('deleted_at', null)
-        .order('subscription_period_start', {
-          ascending: false,
-          nullsFirst: false,
-        }),
-    ])
+  const [{ data: sub }, leads, { data: projects }, { data: invoices }] = await Promise.all([
+    supabase
+      .from('subscriptions')
+      .select('*, leads(id, name), clients(name)')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .maybeSingle(),
+    canEdit ? getBillableLeadOptions(supabase) : [],
+    supabase.from('projects').select('id, name, lead_id').is('deleted_at', null).order('name'),
+    supabase
+      .from('invoices')
+      .select('id, full_number, subscription_period_start, issue_date, total, status')
+      .eq('subscription_id', id)
+      .is('deleted_at', null)
+      .order('subscription_period_start', {
+        ascending: false,
+        nullsFirst: false,
+      }),
+  ])
 
   if (!sub) notFound()
 
-  const clientsArr = (clients ?? []) as { id: string; name: string }[]
-  const projectsArr = (projects ?? []) as {
-    id: string
-    name: string
-    client_id: string
-  }[]
+  const leadId = sub.lead_id as string
+  const { leads: lead, clients: client } = sub as unknown as {
+    leads: { name: string } | null
+    clients: { name: string } | null
+  }
+  const leadOptions = leads.some((option) => option.id === leadId)
+    ? leads
+    : [{ id: leadId, name: lead?.name ?? client?.name ?? 'Lead actual' }, ...leads]
 
   const today = new Date().toISOString().slice(0, 10)
   const periodRows = buildSubscriptionPeriods({
@@ -109,10 +112,10 @@ export default async function SubscriptionDetailPage({
             <SubscriptionEditForm
               id={id}
               version={Number(sub.version)}
-              clients={clientsArr}
-              projects={projectsArr}
+              leads={leadOptions}
+              projects={(projects ?? []) as SubscriptionProjectOption[]}
               defaults={{
-                client_id: sub.client_id as string,
+                lead_id: leadId,
                 project_id: (sub.project_id as string | null) ?? '',
                 name: sub.name as string,
                 description: (sub.description as string | null) ?? '',

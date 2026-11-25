@@ -67,7 +67,7 @@ export default async function SubscriptionsPage({
   let query = supabase
     .from('subscriptions')
     .select(
-      'id, name, status, billing_cycle, amount, vat_rate, next_invoice_date, clients(id, name)',
+      'id, name, status, billing_cycle, amount, vat_rate, next_invoice_date, leads(id, name), clients(name)',
       {
         count: 'exact',
       },
@@ -90,7 +90,8 @@ export default async function SubscriptionsPage({
     amount: number
     vat_rate: number
     next_invoice_date: string | null
-    clients: { id: string; name: string } | null
+    leads: { id: string; name: string } | null
+    clients: { name: string } | null
   }
 
   type SubscriptionInvoice = {
@@ -135,12 +136,14 @@ export default async function SubscriptionsPage({
     cells: {
       nombre: { content: s.name, value: s.name },
       cliente: {
-        content: s.clients ? (
-          <Link key="client" href={`/clients/${s.clients.id}`} className="hover:underline">
-            {s.clients.name}
+        content: s.leads ? (
+          <Link key="lead" href={`/leads/${s.leads.id}`} className="hover:underline">
+            {s.leads.name}
           </Link>
-        ) : null,
-        value: s.clients?.name ?? '',
+        ) : (
+          s.clients?.name
+        ),
+        value: s.leads?.name ?? s.clients?.name ?? '',
       },
       estado: {
         content: <StatusBadge key="status" meta={SUBSCRIPTION_STATUS} value={s.status} />,

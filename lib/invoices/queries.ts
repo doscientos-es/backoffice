@@ -47,17 +47,11 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
   const [listRes, pendingRes, overdueRes, paidMonthRes, verifactuKoRes] = await Promise.all([
     (async () => {
-      // Summary queries do not depend on the lead-to-client lookup.
-      const { data: leadClient } = params.leadId
-        ? await notDeleted(
-            supabase.from('clients').select('id').eq('lead_id', params.leadId),
-          ).maybeSingle()
-        : { data: null }
       let query = notDeleted(
         supabase
           .from('invoices')
           .select(
-            'id, client_id, billing_source, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name, proposal_id, proposals(id, number, title), invoice_items(description, position)',
+            'id, client_id, lead_id, billing_source, full_number, idfact, status, verifactu_status, total, issue_date, due_date, client_name, proposal_id, proposals(id, number, title), invoice_items(description, position)',
             { count: 'exact' },
           ),
       )
@@ -70,8 +64,7 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
       if (params.status) query = query.eq('status', params.status)
       if (params.verifactu) query = query.eq('verifactu_status', params.verifactu)
       if (params.billingSource) query = query.eq('billing_source', params.billingSource)
-      if (params.leadId)
-        query = leadClient ? query.eq('client_id', leadClient.id) : query.is('id', null)
+      if (params.leadId) query = query.eq('lead_id', params.leadId)
       const sortCol = params.sort ?? 'issue_date'
       const ascending = params.dir === 'asc'
       return query.order(sortCol, { ascending, nullsFirst: false }).range(from, to)
@@ -103,6 +96,7 @@ export async function listInvoices(params: InvoiceListParams): Promise<InvoiceLi
     data: (listRes.data ?? []).map((i) => ({
       id: i.id as string,
       client_id: i.client_id as string,
+      lead_id: i.lead_id as string,
       billing_source: parseInvoiceBillingSource(i.billing_source) ?? 'backoffice',
       full_number: (i.full_number as string | null) ?? null,
       idfact: (i.idfact as string | null) ?? null,
