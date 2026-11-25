@@ -1,10 +1,10 @@
 import {
   Document,
   Font,
-  Image,
   Link,
   Page,
   Path,
+  Rect,
   renderToBuffer,
   StyleSheet,
   Svg,
@@ -12,7 +12,7 @@ import {
   View,
 } from '@react-pdf/renderer'
 import { marked, type Token, type Tokens } from 'marked'
-import { toDataURL } from 'qrcode'
+import { create as createQrCode } from 'qrcode'
 
 import { formatPortalDate, formatPortalEUR, type PortalLanguage } from '@/lib/portal/language'
 import {
@@ -209,7 +209,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textDecoration: 'underline',
   },
-  ctaQr: { height: 96, width: 96 },
   acceptance: { borderTopColor: RULE, borderTopWidth: 1, marginTop: 21, paddingTop: 12 },
   acceptanceHash: { color: MUTED, fontSize: 8, lineHeight: 1.4, marginTop: 8 },
   legalClause: { marginBottom: 10 },
@@ -297,6 +296,25 @@ function SignatureDrawing({ signature }: { signature: HandwrittenSignature }) {
           strokeLinejoin="round"
         />
       ))}
+    </Svg>
+  )
+}
+
+function AcceptanceQr({ url }: { url: string }) {
+  const { modules } = createQrCode(url, { errorCorrectionLevel: 'M' })
+  // The four-module white border keeps the QR scannable against the callout background.
+  const margin = 4
+  const size = modules.size + margin * 2
+  const cells: string[] = []
+  for (let row = 0; row < modules.size; row++) {
+    for (let col = 0; col < modules.size; col++) {
+      if (modules.get(row, col)) cells.push(`M${col + margin} ${row + margin}h1v1h-1z`)
+    }
+  }
+  return (
+    <Svg width={96} height={96} viewBox={`0 0 ${size} ${size}`}>
+      <Rect x={0} y={0} width={size} height={size} fill="#FFFFFF" />
+      <Path d={cells.join(' ')} fill="#000000" />
     </Svg>
   )
 }
@@ -577,13 +595,7 @@ function MaintenancePlanList({
   )
 }
 
-function ProposalPdfDocument({
-  data,
-  acceptanceQr,
-}: {
-  data: ProposalPdfData
-  acceptanceQr: string | null
-}) {
+function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const language = data.language ?? 'es'
   const tr = proposalTr(language)
   const money = (value: number) => formatPortalEUR(value, language)
@@ -1084,7 +1096,7 @@ function ProposalPdfDocument({
           <SectionTitle>{copy.terms}</SectionTitle>
           <LegalTerms source={data.legalTerms} />
         </View>
-        {acceptanceQr ? (
+        {data.canAccept ? (
           <View style={styles.cta} wrap={false}>
             <View style={styles.ctaCopy}>
               <Link src={data.portalUrl} style={styles.ctaLink}>
@@ -1102,7 +1114,7 @@ function ProposalPdfDocument({
                 )}
               </Text>
             </View>
-            <Image src={acceptanceQr} style={styles.ctaQr} />
+            <AcceptanceQr url={data.portalUrl} />
           </View>
         ) : null}
         <Footer language={language} />
@@ -1112,8 +1124,5 @@ function ProposalPdfDocument({
 }
 
 export async function renderProposalPdf(data: ProposalPdfData): Promise<Buffer> {
-  const acceptanceQr = data.canAccept
-    ? await toDataURL(data.portalUrl, { errorCorrectionLevel: 'M', margin: 4, width: 384 })
-    : null
-  return renderToBuffer(<ProposalPdfDocument data={data} acceptanceQr={acceptanceQr} />)
+  return renderToBuffer(<ProposalPdfDocument data={data} />)
 }

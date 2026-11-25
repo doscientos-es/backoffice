@@ -268,9 +268,12 @@ describe('proposal PDF helpers', () => {
         changeManagementTerms: 'Los cambios fuera de alcance se presupuestan aparte.',
         legalTerms:
           developmentApproach === undefined
-            ? [...Array(28)]
-                .map((_, i) => `${i + 1}. **Cláusula** Condiciones de contratación.`)
-                .join('\n\n') + '\n\nFin del contrato.'
+            ? Array.from(
+                { length: 28 },
+                (_, i) => `${i + 1}. **Cláusula** Condiciones de contratación.`,
+              )
+                .concat('Fin del contrato.')
+                .join('\n\n')
             : 'Condiciones generales de contratación.',
         notes: null,
         subtotal: 1000,
@@ -355,11 +358,16 @@ describe('proposal PDF helpers', () => {
       if (data.canAccept) {
         const lastPageText = pages.at(-1)?.content.replace(/\s+/g, '') ?? ''
         expect(lastPageText).toContain('Revisaryaceptarlapropuesta')
+        expect(fullText).toContain('FINDELCONTRATO')
         expect(fullText.indexOf('REVISARYACEPTARLAPROPUESTA')).toBeGreaterThan(
           fullText.indexOf('FINDELCONTRATO'),
         )
         const { getDocument, OPS } = await import('pdfjs-dist/legacy/build/pdf.mjs')
-        const task = getDocument({ data: Uint8Array.from(pdf), useWasm: false })
+        const task = getDocument({
+          data: Uint8Array.from(pdf),
+          useWasm: false,
+          useSystemFonts: true,
+        })
         try {
           const document = await task.promise
           const page = await document.getPage(document.numPages)
@@ -369,8 +377,13 @@ describe('proposal PDF helpers', () => {
               expect.objectContaining({ subtype: 'Link', url: data.portalUrl }),
             ]),
           )
-          const operators = await page.getOperatorList()
-          expect(operators.fnArray).toContain(OPS.paintImageXObject)
+          const { fnArray, argsArray } = await page.getOperatorList()
+          // The QR is a vector of hundreds of filled modules, not a raster image.
+          expect(
+            fnArray.some(
+              (op, i) => op === OPS.constructPath && argsArray[i]?.[1]?.[0]?.length > 1000,
+            ),
+          ).toBe(true)
         } finally {
           await task.destroy()
         }
