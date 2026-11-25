@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from '@react-pdf/renderer'
+import { marked, type Token, type Tokens } from 'marked'
 
 import { formatPortalDate, formatPortalEUR, type PortalLanguage } from '@/lib/portal/language'
 import {
@@ -354,6 +355,67 @@ export function printableMarkdown(value: string | null): string {
     .replace(/[`*_>#-]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function PdfMarkdownInline({ tokens }: { tokens: Token[] }) {
+  return tokens.map((token, index) => {
+    if (token.type === 'strong' || token.type === 'em') {
+      return (
+        <Text
+          key={index}
+          style={{ fontFamily: token.type === 'strong' ? 'Helvetica-Bold' : 'Helvetica-Oblique' }}
+        >
+          <PdfMarkdownInline tokens={token.tokens ?? marked.Lexer.lexInline(token.text)} />
+        </Text>
+      )
+    }
+    if (token.type === 'link')
+      return (
+        <PdfMarkdownInline
+          key={index}
+          tokens={token.tokens ?? marked.Lexer.lexInline(token.text)}
+        />
+      )
+    if (token.type === 'br') return '\n'
+    if ('text' in token && typeof token.text === 'string') return token.text
+    return ''
+  })
+}
+
+function PdfMarkdown({ source }: { source: string }) {
+  return marked.lexer(source).map((token, index) => {
+    if (token.type === 'space') return null
+    if (token.type === 'paragraph' || token.type === 'heading') {
+      return (
+        <Text
+          key={index}
+          style={[
+            styles.body,
+            { marginBottom: 7 },
+            token.type === 'heading' ? { fontFamily: 'Helvetica-Bold' } : {},
+          ]}
+        >
+          <PdfMarkdownInline tokens={token.tokens ?? marked.Lexer.lexInline(token.text)} />
+        </Text>
+      )
+    }
+    if (token.type === 'list') {
+      return token.items.map((item: Tokens.ListItem, itemIndex: number) => (
+        <Text
+          key={`${index}-${itemIndex}`}
+          style={[styles.body, { marginBottom: 4, paddingLeft: 10 }]}
+        >
+          {token.ordered ? `${(Number(token.start) || 1) + itemIndex}. ` : '• '}
+          <PdfMarkdownInline tokens={marked.Lexer.lexInline(item.text)} />
+        </Text>
+      ))
+    }
+    return (
+      <Text key={index} style={styles.body}>
+        {printableMarkdown(token.raw)}
+      </Text>
+    )
+  })
 }
 
 function Footer({ language }: { language: 'es' | 'ca' | 'en' }) {
@@ -775,7 +837,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
                   ? 'How we will work during development'
                   : 'Cómo trabajaremos durante el desarrollo'}
             </Text>
-            <Text style={styles.body}>{printableMarkdown(developmentApproach)}</Text>
+            <PdfMarkdown source={developmentApproach} />
           </View>
         ) : null}
 

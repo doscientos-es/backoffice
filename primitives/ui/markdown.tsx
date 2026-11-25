@@ -50,7 +50,7 @@ function renderInline(line: string): ReactNode[] {
         return <em key={key}>{t.value}</em>
       case 'code':
         return (
-          <code key={key} className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">
+          <code key={key} className="bg-muted rounded px-1 py-0.5 font-mono text-[0.85em]">
             {t.value}
           </code>
         )
@@ -139,12 +139,20 @@ function tokenize(src: string): Block[] {
   return blocks
 }
 
-export function Markdown({ source, className }: { source: string; className?: string }) {
+export function Markdown({
+  source,
+  className,
+  fallbackHeading,
+}: {
+  source: string
+  className?: string
+  fallbackHeading?: ReactNode
+}) {
   const blocks = tokenize(source)
-  return (
+  const content = (
     <div
       className={cn(
-        'prose-doscientos flex flex-col gap-4 text-sm leading-relaxed text-foreground',
+        'prose-doscientos text-foreground flex flex-col gap-4 text-sm leading-relaxed',
         className,
       )}
     >
@@ -195,7 +203,7 @@ export function Markdown({ source, className }: { source: string; className?: st
               <blockquote
                 // biome-ignore lint/suspicious/noArrayIndexKey: blocks are fully recomputed from source on every render
                 key={i}
-                className="border-l-2 border-border pl-3 text-muted-foreground italic"
+                className="border-border text-muted-foreground border-l-2 pl-3 italic"
               >
                 {b.lines.map((l, j) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: quote lines are fully recomputed from source on every render
@@ -212,5 +220,12 @@ export function Markdown({ source, className }: { source: string; className?: st
         }
       })}
     </div>
+  )
+  if (blocks[0]?.kind === 'heading' || !fallbackHeading) return content
+  return (
+    <>
+      {fallbackHeading}
+      {content}
+    </>
   )
 }

@@ -51,4 +51,27 @@ describe('proposal section headings', () => {
         .classList.contains('text-base'),
     ).toBe(true)
   })
+
+  it('uses authored headings instead of adding another heading to each scope column', () => {
+    render(
+      <ScopeSection
+        modules={[]}
+        deliverables={'### Lliurables\n\n- Plataforma web\n\n#### Documentació\n\n- Guia d’ús'}
+        acceptanceCriteria={'### Validació i acceptació\n\n- Revisió conjunta'}
+        tr={makeTr('ca')}
+      />,
+    )
+
+    expect(screen.getAllByRole('heading').map(({ textContent }) => textContent)).toEqual([
+      'Abast del projecte',
+      'Lliurables',
+      'Documentació',
+      'Validació i acceptació',
+    ])
+    expect(screen.getAllByRole('listitem').map(({ textContent }) => textContent)).toEqual([
+      'Plataforma web',
+      'Guia d’ús',
+      'Revisió conjunta',
+    ])
+  })
 })

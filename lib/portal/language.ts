@@ -3,17 +3,16 @@ export type PortalLanguage = 'es' | 'ca' | 'en'
 const dateFormatters: Partial<Record<PortalLanguage, Intl.DateTimeFormat>> = {}
 const eurFormatters: Partial<Record<PortalLanguage, Intl.NumberFormat>> = {}
 
+export function isPortalLanguage(value: unknown): value is PortalLanguage {
+  return value === 'es' || value === 'ca' || value === 'en'
+}
+
 export function resolvePortalLanguage(
   leadLanguage: unknown,
   linkLanguage?: unknown,
 ): PortalLanguage {
-  if (linkLanguage === 'ca' || linkLanguage === 'en' || linkLanguage === 'es') {
-    return linkLanguage
-  }
-  if (leadLanguage === 'ca' || leadLanguage === 'en' || leadLanguage === 'es') {
-    return leadLanguage
-  }
-  return 'es'
+  if (isPortalLanguage(linkLanguage)) return linkLanguage
+  return isPortalLanguage(leadLanguage) ? leadLanguage : 'es'
 }
 
 export function formatPortalDate(

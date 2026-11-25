@@ -371,22 +371,25 @@ function DeliverySlide({ proposal }: { proposal: DeckProposal }) {
       )}
     >
       <div className="grid max-w-3xl gap-8 text-left sm:grid-cols-2">
-        {deliverables ? (
-          <div>
-            <p className="mb-3 text-sm font-semibold text-zinc-900">
-              {tr('Entregables', 'Lliurables', 'Deliverables')}
-            </p>
-            <Markdown source={deliverables} className="deck-markdown text-sm text-zinc-600" />
-          </div>
-        ) : null}
-        {acceptanceCriteria ? (
-          <div>
-            <p className="mb-3 text-sm font-semibold text-zinc-900">
-              {tr('Criterios de aceptación', 'Criteris d’acceptació', 'Acceptance criteria')}
-            </p>
-            <Markdown source={acceptanceCriteria} className="deck-markdown text-sm text-zinc-600" />
-          </div>
-        ) : null}
+        {[
+          { source: deliverables, title: tr('Entregables', 'Lliurables', 'Deliverables') },
+          {
+            source: acceptanceCriteria,
+            title: tr('Criterios de aceptación', 'Criteris d’acceptació', 'Acceptance criteria'),
+          },
+        ].map(({ source, title }) =>
+          source ? (
+            <section key={title}>
+              <Markdown
+                source={source}
+                className="deck-markdown text-sm text-zinc-600"
+                fallbackHeading={
+                  <h3 className="mb-3 text-sm font-semibold text-zinc-900">{title}</h3>
+                }
+              />
+            </section>
+          ) : null,
+        )}
       </div>
     </SectionSlide>
   )

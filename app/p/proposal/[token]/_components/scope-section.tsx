@@ -63,10 +63,12 @@ function ScopeBullets({
 function ProposalTextBlock({ label, source }: { label: string; source: string }) {
   return (
     <section>
-      <h3 className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100">{label}</h3>
       <Markdown
         source={source}
         className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300"
+        fallbackHeading={
+          <h3 className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100">{label}</h3>
+        }
       />
     </section>
   )

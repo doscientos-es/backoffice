@@ -307,7 +307,7 @@ export function ProposalScopeSection({
         <FormRow
           label="Cómo trabajaremos durante el desarrollo"
           htmlFor="development-approach"
-          hint="Opcional. Se mostrará después del alcance en la propuesta, el enlace público, el deck y el PDF. Si lo dejas vacío, no aparecerá."
+          hint="Opcional. Admite Markdown: usa **negrita**, títulos y listas. Se mostrará en la propuesta, el enlace público, el deck y el PDF. Si lo dejas vacío, no aparecerá."
         >
           <Textarea
             id="development-approach"

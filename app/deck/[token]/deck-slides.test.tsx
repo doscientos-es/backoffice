@@ -146,6 +146,23 @@ describe('buildSlides', () => {
     expect(slides).toContainEqual(expect.objectContaining({ key: 'delivery' }))
   })
 
+  it('only adds a default delivery heading when the content does not start with one', () => {
+    const slides = buildSlides(
+      {
+        ...proposal,
+        deliverables: '### Entregables\n\n- Portal publicado',
+        acceptance_criteria: '- Revisión conjunta\n\n#### Soporte\n\nRespuesta acordada.',
+      },
+      [],
+      'portal-token',
+    )
+    render(slides.find((slide) => slide.key === 'delivery')?.element)
+
+    expect(screen.getAllByText('Entregables')).toHaveLength(1)
+    expect(screen.getByRole('heading', { name: 'Criterios de aceptación' })).toBeDefined()
+    expect(screen.getByRole('heading', { name: 'Soporte' })).toBeDefined()
+  })
+
   it.each([
     [
       'ca',
