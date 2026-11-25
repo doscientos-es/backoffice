@@ -2,6 +2,14 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.221
+
+### Nuevas funciones
+
+- Enhance language selection and storage handling
+- Improve attachment actions UI and download handling
+- Add attachment preview dialog and upload handling
+
 ## 2026-11-25 — v0.1.220
 
 ### Nuevas funciones

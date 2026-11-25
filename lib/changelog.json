@@ -1,6 +1,44 @@
 {
   "releases": [
     {
+      "version": "0.1.221",
+      "date": "2026-11-25",
+      "title": "v0.1.221",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Enhance language selection and storage handling",
+            "Improve attachment actions UI and download handling",
+            "Add attachment preview dialog and upload handling"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "9ffeb8a87e2d3072c72d0dd4e88110fb84783752",
+          "type": "feat",
+          "scope": "language-switch",
+          "breaking": false,
+          "description": "Enhance language selection and storage handling"
+        },
+        {
+          "sha": "f0018dd0bc97e5034cfb8b811da78ad1e552c2f5",
+          "type": "feat",
+          "scope": "attachments",
+          "breaking": false,
+          "description": "Improve attachment actions UI and download handling"
+        },
+        {
+          "sha": "7177f4f9c31977a7a906d7a4be049a5d24f91714",
+          "type": "feat",
+          "scope": "attachments",
+          "breaking": false,
+          "description": "Add attachment preview dialog and upload handling"
+        }
+      ]
+    },
+    {
       "version": "0.1.220",
       "date": "2026-11-25",
       "title": "v0.1.220",
