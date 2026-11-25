@@ -1,9 +1,13 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-const { updateClient, refresh } = vi.hoisted(() => ({ updateClient: vi.fn(), refresh: vi.fn() }))
+const { updateClient, createLeadBilling, refresh } = vi.hoisted(() => ({
+  updateClient: vi.fn(),
+  createLeadBilling: vi.fn(),
+  refresh: vi.fn(),
+}))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }))
-vi.mock('@/app/(app)/clients/actions', () => ({ updateClient }))
+vi.mock('@/app/(app)/clients/actions', () => ({ updateClient, createLeadBilling }))
 vi.mock('@/app/(app)/clients/[id]/fiscal-verification-card', () => ({
   FiscalVerificationCard: ({
     clientId,
@@ -13,12 +17,6 @@ vi.mock('@/app/(app)/clients/[id]/fiscal-verification-card', () => ({
     canValidate: boolean
   }) => <p>{canValidate ? `Validar ${clientId}` : 'Solo lectura'}</p>,
 }))
-vi.mock('./lead-billing-create-dialog', () => ({
-  LeadBillingCreateDialog: ({ leadId }: { leadId: string }) => (
-    <button type="button">Añadir facturación {leadId}</button>
-  ),
-}))
-
 import { LeadBillingPanel } from './lead-billing-panel'
 
 const client = {
@@ -53,19 +51,24 @@ describe('LeadBillingPanel', () => {
     expect(screen.getByText('Validar client-1')).toBeDefined()
   })
 
-  it('enables saving and submits the linked billing record when only its logo changes', async () => {
+  it('edits fiscal data without showing or deleting the historical client logo', async () => {
     const logoUrl = 'https://example.test/logo.png'
     updateClient.mockResolvedValue({ ok: true, version: 2 })
-    render(<LeadBillingPanel leadId="lead-1" linkedClientId="client-1" client={client} canEdit />)
+    render(
+      <LeadBillingPanel
+        leadId="lead-1"
+        linkedClientId="client-1"
+        client={{ ...client, logo_url: logoUrl }}
+        canEdit
+      />,
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
 
     const dialog = within(screen.getByRole('dialog', { name: 'Editar datos de facturación' }))
     const save = dialog.getByRole('button', { name: 'Guardar cambios' })
     expect(save).toHaveProperty('disabled', true)
-    fireEvent.change(dialog.getByPlaceholderText('https://empresa.com/logo.png'), {
-      target: { value: logoUrl },
-    })
-    fireEvent.click(dialog.getByRole('button', { name: 'Usar URL' }))
+    expect(dialog.queryByText(/Logo del cliente/)).toBeNull()
+    fireEvent.change(dialog.getByLabelText(/Nombre/), { target: { value: 'Nueva razón social' } })
     expect(save).toHaveProperty('disabled', false)
     fireEvent.click(save)
 
@@ -75,6 +78,7 @@ describe('LeadBillingPanel', () => {
         id: client.id,
         expected_version: client.version,
         logo_url: logoUrl,
+        name: 'Nueva razón social',
         nif: client.nif,
       }),
     )
@@ -99,14 +103,33 @@ describe('LeadBillingPanel', () => {
     expect(screen.queryByRole('button', { name: /Añadir facturación/ })).toBeNull()
   })
 
-  it('offers billing data without converting the lead into a won client', () => {
-    render(<LeadBillingPanel leadId="lead-1" linkedClientId={null} client={null} canEdit />)
-    expect(screen.getByRole('button', { name: 'Añadir facturación lead-1' })).toBeDefined()
+  it('opens the same fiscal form and creates a record only when saved', async () => {
+    createLeadBilling.mockResolvedValue({ ok: true, clientId: 'client-1' })
+    render(
+      <LeadBillingPanel
+        leadId="lead-1"
+        linkedClientId={null}
+        client={null}
+        canEdit
+        defaults={{ name: 'Ejemplo SL' }}
+      />,
+    )
+    expect(createLeadBilling).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
+    const dialog = within(screen.getByRole('dialog', { name: 'Editar datos de facturación' }))
+    expect(dialog.queryByText(/Logo del cliente/)).toBeNull()
+    fireEvent.change(dialog.getByLabelText(/Nombre/), { target: { value: 'Nueva razón social' } })
+    fireEvent.click(dialog.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(createLeadBilling).toHaveBeenCalledOnce())
+    const data = createLeadBilling.mock.calls[0]?.[0] as FormData
+    expect(data.get('leadId')).toBe('lead-1')
+    expect(data.get('name')).toBe('Nueva razón social')
+    expect(data.has('logo_url')).toBe(false)
   })
 
   it('does not let viewers create billing data', () => {
     render(<LeadBillingPanel leadId="lead-1" linkedClientId={null} client={null} canEdit={false} />)
-    expect(screen.queryByRole('button', { name: /Añadir facturación/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull()
   })
 
   it('does not offer billing creation when the linked client is not visible', () => {
@@ -120,6 +143,6 @@ describe('LeadBillingPanel', () => {
       />,
     )
     expect(screen.getByText('No tienes acceso a los datos de facturación.')).toBeDefined()
-    expect(screen.queryByRole('button', { name: /Añadir facturación/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull()
   })
 })

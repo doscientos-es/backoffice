@@ -52,6 +52,17 @@ describe('UpdateLeadInput', () => {
     expect(UpdateLeadInput.safeParse({ id: uuid, name: 'X' }).success).toBe(false)
     expect(UpdateLeadInput.parse({ id: uuid, name: 'X', expected_version: 1 }).id).toBe(uuid)
   })
+  it('accepts or clears a logo, but rejects unsafe URLs', () => {
+    const base = { id: uuid, name: 'X', expected_version: 1 }
+    expect(
+      UpdateLeadInput.parse({ ...base, logo_url: 'https://example.test/logo.png' }).logo_url,
+    ).toBe('https://example.test/logo.png')
+    expect(UpdateLeadInput.parse({ ...base, logo_url: '' }).logo_url).toBeNull()
+    expect(UpdateLeadInput.parse(base).logo_url).toBeUndefined()
+    expect(UpdateLeadInput.safeParse({ ...base, logo_url: 'javascript:alert(1)' }).success).toBe(
+      false,
+    )
+  })
 })
 
 describe('ConvertLeadInput', () => {

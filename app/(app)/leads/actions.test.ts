@@ -375,6 +375,17 @@ describe('updateLead', () => {
     const row = db.updatedRows.find((r) => r.table === 'leads')
     expect(row?.updated_by).toBe('member-1')
   })
+
+  it('saves and removes the logo directly on the lead', async () => {
+    const base = { id: '00000000-0000-0000-0000-000000000001', expected_version: 1, name: 'X' }
+    await updateLead({ ...base, logo_url: 'https://example.test/logo.png' })
+    expect(db.updatedRows.find((r) => r.table === 'leads')?.logo_url).toBe(
+      'https://example.test/logo.png',
+    )
+    db.updatedRows.length = 0
+    await updateLead({ ...base, logo_url: '' })
+    expect(db.updatedRows.find((r) => r.table === 'leads')?.logo_url).toBeNull()
+  })
 })
 
 describe('updateLeadStatus', () => {

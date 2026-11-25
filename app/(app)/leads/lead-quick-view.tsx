@@ -341,6 +341,7 @@ function Body({
                 id: lead.id,
                 name: lead.name,
                 alias: lead.alias,
+                logo_url: lead.logo_url,
                 company: lead.company,
                 email: lead.email,
                 phone: lead.phone,

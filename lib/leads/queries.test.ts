@@ -287,7 +287,7 @@ describe('listLeads client avatar enrichment', () => {
     },
   )
 
-  it('maps the linked client logo and keeps unconverted leads without a client', async () => {
+  it('maps the lead logo without embedding billing records', async () => {
     state.rows = [
       {
         id: 'lead-1',
@@ -295,7 +295,7 @@ describe('listLeads client avatar enrichment', () => {
         status: 'new',
         created_at: '2026-07-16T10:00:00.000Z',
         updated_at: '2026-07-16T10:00:00.000Z',
-        client: [{ name: 'Acme SL', logo_url: 'https://cdn.example/acme.png' }],
+        logo_url: 'https://cdn.example/acme.png',
       },
       {
         id: 'lead-2',
@@ -303,7 +303,6 @@ describe('listLeads client avatar enrichment', () => {
         status: 'new',
         created_at: '2026-07-15T10:00:00.000Z',
         updated_at: '2026-07-15T10:00:00.000Z',
-        client: [],
       },
     ]
 
@@ -318,12 +317,10 @@ describe('listLeads client avatar enrichment', () => {
       page: 1,
     })
 
-    expect(state.leadSelect).toContain('client:clients!lead_id(name, logo_url)')
-    expect(result.leads[0]?.client).toEqual({
-      name: 'Acme SL',
-      logo_url: 'https://cdn.example/acme.png',
-    })
-    expect(result.leads[1]?.client).toBeNull()
+    expect(state.leadSelect).toContain('logo_url')
+    expect(state.leadSelect).not.toContain('client:clients')
+    expect(result.leads[0]?.logo_url).toBe('https://cdn.example/acme.png')
+    expect(result.leads[1]?.logo_url).toBeNull()
   })
 
   it('attaches the soonest pending reminder as the lead next action', async () => {

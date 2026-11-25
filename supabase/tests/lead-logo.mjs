@@ -15,7 +15,7 @@ await db.exec(`
     (4, 4, '  ', null);
 `)
 const migration = await readFile(
-  new URL('../migrations/20261125233000_lead_logo.sql', import.meta.url),
+  new URL('../migrations/20261125224216_lead_logo.sql', import.meta.url),
   'utf8',
 )
 await db.exec(migration)
