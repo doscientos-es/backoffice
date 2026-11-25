@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopyButton } from '@/components/ui/copy-button'
 import { CopySummaryButton } from '@/components/ui/copy-summary-button'
-import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { SectionBoundary } from '@/components/ui/error-boundary'
 import { LeadClientAttachmentsSection } from '@/components/ui/lead-client-attachments-section'
 import { MemberLabel } from '@/components/ui/member-avatar'
@@ -33,6 +32,7 @@ import { formatDate, formatEUR } from '@/lib/utils'
 
 import { buildAdsManagerUrl } from '../../marketing/_components/marketing-format'
 import { AdPreviewDialog } from '../../marketing/ad-preview-dialog'
+import { LeadAvatar } from '../lead-avatar'
 import { LeadActivityFeed, countActivityEvents } from './lead-activity-feed'
 import { LeadAiPanel } from './lead-ai-panel'
 import { LeadAssistant } from './lead-assistant'
@@ -183,7 +183,14 @@ export default async function LeadDetailPage({
         title={displayName}
         description={(lead.company as string | null) ?? undefined}
         icon={
-          <EntityAvatar name={displayName} logoUrl={billingClient?.logo_url ?? null} size="lg" />
+          <LeadAvatar
+            name={displayName}
+            email={lead.email}
+            company={lead.company}
+            researchedDomain={lead.company_research?.domain}
+            logoUrl={billingClient?.logo_url}
+            size="lg"
+          />
         }
         breadcrumbs={[{ label: 'Leads', href: '/leads' }, { label: displayName }]}
         actions={

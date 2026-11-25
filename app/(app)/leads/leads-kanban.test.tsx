@@ -101,6 +101,13 @@ describe('lead kanban responsive columns', () => {
     return toggle
   }
 
+  it('shows a corporate icon on cards without a billing record', () => {
+    const board = renderBoard([{ ...DRAGGABLE_LEAD, email: 'contact@example.test' }])
+    expect(within(board).getByRole('img', { name: 'Lead de prueba' }).getAttribute('src')).toBe(
+      '/api/leads/company-icon?domain=example.test',
+    )
+  })
+
   it('fills the mobile viewport without a category dock and keeps the board swipeable', () => {
     const board = renderBoard()
     const columns = within(board).getAllByRole('region')

@@ -10,6 +10,7 @@ import { LEAD_STATUS } from '@/lib/status'
 import { cn, relativeTime } from '@/lib/utils'
 
 import { LeadCallLink } from './[id]/phone-actions'
+import { LeadAvatar } from './lead-avatar'
 import { LeadNextAction } from './lead-next-action'
 
 export function LeadMobileCard({
@@ -31,6 +32,13 @@ export function LeadMobileCard({
         aria-label={`Abrir ficha rápida de ${name}`}
         className="flex min-h-18 w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset"
       >
+        <LeadAvatar
+          name={name}
+          email={lead.email}
+          company={lead.company}
+          logoUrl={lead.client?.logo_url}
+          className="rounded-full"
+        />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold">{name}</span>
           {lead.alias?.trim() && lead.alias.trim() !== lead.name ? (

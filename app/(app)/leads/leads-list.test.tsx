@@ -57,6 +57,15 @@ describe('responsive lead list', () => {
     expect(screen.getByLabelText('Lead seleccionado').textContent).toBe('lead-example')
   })
 
+  it('shows corporate icons in both desktop and mobile views without a billing record', () => {
+    renderList(leadFixture({ email: 'contact@example.test', client: null }))
+    const icons = screen.getAllByRole('img', { name: 'Contacto de ejemplo' })
+    expect(icons).toHaveLength(2)
+    for (const icon of icons) {
+      expect(icon.getAttribute('src')).toBe('/api/leads/company-icon?domain=example.test')
+    }
+  })
+
   it('shows the booked meeting in both the desktop table and mobile card', () => {
     renderList(leadFixture({ scheduled_meeting_at: '2026-10-20T10:00:00.000Z' }))
     expect(within(screen.getByRole('table')).getByText(/Reunión agendada/)).toBeTruthy()

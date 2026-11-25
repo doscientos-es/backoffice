@@ -32,7 +32,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useId, useOptimistic, useState, useTransition } from 'react'
 
 import { Badge } from '@/components/ui/badge'
-import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { MemberAvatar } from '@/components/ui/member-avatar'
@@ -64,6 +63,7 @@ import { LeadCallLink } from './[id]/phone-actions'
 import { deleteLead, updateLeadStatus } from './actions'
 import type { CloseReasonVariant } from './close-reason-dialog'
 import { LeadQuickView } from './lazy-lead-quick-view'
+import { LeadAvatar } from './lead-avatar'
 import { LeadHeatBadge } from './lead-heat-badge'
 import { LeadNextAction } from './lead-next-action'
 import { LeadNotesIndicator } from './lead-notes-indicator'
@@ -569,18 +569,6 @@ function AddLeadCard() {
   )
 }
 
-function LeadAvatar({ lead }: { lead: KanbanLead }) {
-  const name = lead.client?.name ?? leadDisplayName(lead)
-  return (
-    <EntityAvatar
-      name={name}
-      logoUrl={lead.client?.logo_url}
-      size="sm"
-      className="size-6 rounded-full"
-    />
-  )
-}
-
 function Card({
   lead,
   isOverlay = false,
@@ -622,7 +610,13 @@ function Card({
             <GripVertical className="size-3.5" aria-hidden />
           </button>
         ) : null}
-        <LeadAvatar lead={lead} />
+        <LeadAvatar
+          name={lead.client?.name ?? leadDisplayName(lead)}
+          email={lead.email}
+          company={lead.company}
+          logoUrl={lead.client?.logo_url}
+          className="size-6 rounded-full"
+        />
         <div className="min-w-0 flex-1">
           {onOpenQuickView ? (
             <button

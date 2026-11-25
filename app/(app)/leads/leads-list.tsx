@@ -11,7 +11,7 @@ import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
 import { nextActionForKanban } from '@/lib/leads/kanban-policy'
 import { leadSaleProductLabel } from '@/lib/leads/sale-products'
 import type { LeadListItem } from '@/lib/leads/types'
-import { getLeadInitials, leadDisplayName } from '@/lib/leads/utils'
+import { leadDisplayName } from '@/lib/leads/utils'
 import type { MemberOption } from '@/lib/members/queries'
 import { LEAD_STATUS } from '@/lib/status'
 import { relativeTime } from '@/lib/utils'
@@ -23,6 +23,7 @@ import {
   bulkUpdateLeadStatus,
 } from './actions'
 import { LeadQuickView } from './lazy-lead-quick-view'
+import { LeadAvatar } from './lead-avatar'
 import { LeadFastActions } from './lead-fast-actions'
 import { LeadHeatBadge } from './lead-heat-badge'
 import { LeadMobileCard } from './lead-mobile-card'
@@ -36,14 +37,6 @@ type LeadsListProps = Omit<ListPageProps<KanbanLead>, 'rows'> & {
   canEdit?: boolean
   members?: MemberOption[]
   senderName?: string
-}
-
-function LeadInitials({ lead }: { lead: KanbanLead }) {
-  return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary uppercase">
-      {getLeadInitials(lead)}
-    </span>
-  )
 }
 
 export function LeadsList({
@@ -69,7 +62,13 @@ export function LeadsList({
             className="group/leadname inline-flex items-center gap-2.5"
             onClick={(e) => e.stopPropagation()}
           >
-            <LeadInitials lead={l} />
+            <LeadAvatar
+              name={leadDisplayName(l)}
+              email={l.email}
+              company={l.company}
+              logoUrl={l.client?.logo_url}
+              className="rounded-full"
+            />
             <span className="max-w-40 truncate font-medium underline-offset-2 transition-colors group-hover/leadname:text-primary group-hover/leadname:underline">
               {leadDisplayName(l)}
             </span>

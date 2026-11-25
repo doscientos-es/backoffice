@@ -21,28 +21,10 @@ export type CompanyResearch = {
   sources: CompanyResearchSource[]
 }
 
-const FREE_EMAIL_DOMAINS = new Set([
-  'gmail.com',
-  'googlemail.com',
-  'hotmail.com',
-  'hotmail.es',
-  'outlook.com',
-  'live.com',
-  'yahoo.com',
-  'yahoo.es',
-  'icloud.com',
-  'proton.me',
-  'protonmail.com',
-])
+export { corporateDomainFromEmail } from './company-domain'
 
 const PAGE_HINT = /sobre|quienes-somos|nosotros|empresa|servicios|solutions|about|company/i
 const MAX_PAGE_BYTES = 350_000
-
-export function corporateDomainFromEmail(email: string | null | undefined): string | null {
-  const domain = email?.trim().toLowerCase().split('@')[1]?.replace(/\.$/, '')
-  if (!domain || FREE_EMAIL_DOMAINS.has(domain) || !domain.includes('.')) return null
-  return domain
-}
 
 function isPrivateAddress(address: string): boolean {
   const value = address.toLowerCase()
