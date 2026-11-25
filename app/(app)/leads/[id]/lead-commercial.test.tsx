@@ -38,7 +38,7 @@ describe('LeadCommercial', () => {
     ).toBe('/proposals/proposal-1')
     expect(
       within(mobileSection).getByRole('link', { name: 'Crear proyecto' }).getAttribute('href'),
-    ).toBe('/projects/new?client_id=client-1')
+    ).toBe('/projects/new?lead_id=lead-1')
     expect(within(mobileSection).getByText(/1200,00/)).toBeTruthy()
   })
 
@@ -68,6 +68,22 @@ describe('LeadCommercial', () => {
     )
 
     expect(screen.queryByText(/1200,00/)).toBeNull()
+  })
+
+  it('can start a project without a fiscal record', () => {
+    render(
+      <LeadCommercial
+        leadId="lead-1"
+        linkedClientId={null}
+        canSeeProposalPrices={false}
+        proposals={[]}
+        projects={[]}
+        invoices={[]}
+      />,
+    )
+    expect(screen.getByRole('link', { name: 'Crear proyecto' }).getAttribute('href')).toBe(
+      '/projects/new?lead_id=lead-1',
+    )
   })
 
   it('shows historical projects and invoices when there is no active billing record', () => {

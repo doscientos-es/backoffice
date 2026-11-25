@@ -7,8 +7,10 @@ const mockSupabase = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
   is: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  maybeSingle: vi.fn().mockResolvedValue({ data: { lead_id: 'lead-123' }, error: null }),
   order: vi.fn().mockResolvedValue({
-    data: [{ id: 'client-123', name: 'Client 123' }],
+    data: [{ id: 'lead-123', name: 'Lead 123' }],
     error: null,
   }),
 }
@@ -22,19 +24,22 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 describe('NewProjectPage pre-fill', () => {
-  it('pre-fills client_id from searchParams', async () => {
-    const searchParams = Promise.resolve({ client_id: 'client-123' })
-    const jsx = await NewProjectPage({ searchParams })
-    render(jsx)
-    const select = screen.getByLabelText(/cliente/i) as HTMLSelectElement
-    expect(select.value).toBe('client-123')
-  })
+  it.each([{ lead_id: 'lead-123' }, { client_id: 'legacy-123' }])(
+    'pre-fills the lead from %j',
+    async (params) => {
+      const searchParams = Promise.resolve(params)
+      const jsx = await NewProjectPage({ searchParams })
+      render(jsx)
+      const select = screen.getByRole('combobox', { name: /^Lead\b/i }) as HTMLSelectElement
+      expect(select.value).toBe('lead-123')
+    },
+  )
 
-  it('defaults to empty client when searchParams is empty', async () => {
+  it('defaults to no lead when searchParams is empty', async () => {
     const searchParams = Promise.resolve({})
     const jsx = await NewProjectPage({ searchParams })
     render(jsx)
-    const select = screen.getByLabelText(/cliente/i) as HTMLSelectElement
+    const select = screen.getByRole('combobox', { name: /^Lead\b/i }) as HTMLSelectElement
     expect(select.value).toBe('')
   })
 })

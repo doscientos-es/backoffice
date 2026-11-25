@@ -48,7 +48,8 @@ export const UpdateProjectWorkspacePathsInput = z.object({
 const ProjectBillingType = z.enum(['fixed', 'hourly'])
 
 const ProjectBase = z.object({
-  client_id: z.string().uuid('Cliente inválido'),
+  lead_id: z.string().uuid('Lead inválido').optional().or(emptyToUndef),
+  client_id: z.string().uuid('Ficha fiscal inválida').optional().or(emptyToUndef),
   name: requiredText(160, 'El nombre es obligatorio'),
   /** Template to clone as onboarding checklist (only used on create). */
   template_id: z.string().uuid().optional().or(emptyToUndef),
@@ -78,6 +79,9 @@ const ProjectBase = z.object({
 })
 
 const projectRefinement = (d: z.infer<typeof ProjectBase>, ctx: z.RefinementCtx) => {
+  if (!d.lead_id && !d.client_id) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['lead_id'], message: 'Selecciona un lead.' })
+  }
   if (d.billing_type === 'hourly' && !d.hourly_rate) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

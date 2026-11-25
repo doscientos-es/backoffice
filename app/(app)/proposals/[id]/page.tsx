@@ -357,20 +357,12 @@ export default async function ProposalDetailPage({
       : null
   const deliveredAt = (proposal.delivered_at as string | null) ?? null
 
-  // Projects available to link: same client or a client derived from this lead.
-  // This mirrors the database rule which protects the association on every write.
-  const clientId = (proposal.client_id as string | null) ?? null
-  const leadId = (proposal.lead_id as string | null) ?? null
-  const availableProjectsQuery = supabase
+  const { data: availableProjects } = await supabase
     .from('projects')
-    .select('id, name, clients!inner(lead_id)')
+    .select('id, name')
+    .eq('lead_id', proposal.lead_id)
     .is('deleted_at', null)
     .order('name')
-  const { data: availableProjects } = clientId
-    ? await availableProjectsQuery.eq('client_id', clientId)
-    : leadId
-      ? await availableProjectsQuery.eq('clients.lead_id', leadId)
-      : { data: [] }
 
   const [{ data: teamMembers }, { data: proposalTeam }] = await Promise.all([
     supabase

@@ -54,14 +54,16 @@ export default async function ProjectDetailPage({
   const canSeeProposalPrices = can(user.role, 'proposals.prices')
   const canSeeFinance = canViewFinance(user.role)
   const workspace = await getProjectWorkspace(id, {
-    includeClients: canEdit,
+    includeLeadOptions: canEdit,
     tasksView: isBoard ? 'board' : 'list',
   })
   if (!workspace) notFound()
   const {
     project,
     client,
-    clients,
+    lead,
+    leadId,
+    leadOptions,
     tasks,
     proposals,
     invoices,
@@ -77,6 +79,7 @@ export default async function ProjectDetailPage({
     clientRequests,
     projectTeamMemberIds,
   } = workspace
+  const recipientName = lead?.name ?? client?.name
   const assignableMembers =
     user.role === 'delivery'
       ? (members ?? []).filter((member) => projectTeamMemberIds.includes(member.id as string))
@@ -144,10 +147,10 @@ export default async function ProjectDetailPage({
     <div className="flex flex-col gap-6">
       <PageHeader
         title={project.name as string}
-        description={client?.name}
+        description={recipientName}
         breadcrumbs={[
           { label: 'Proyectos', href: '/projects' },
-          ...(client ? [{ label: client.name, href: `/clients/${client.id}` }] : []),
+          ...(lead ? [{ label: lead.name, href: `/leads/${lead.id}` }] : []),
           { label: project.name as string },
         ]}
         actions={
@@ -156,7 +159,7 @@ export default async function ProjectDetailPage({
               lines={(() => {
                 const parts: string[] = []
                 parts.push(
-                  [`🗂️ ${project.name as string}`, client && `— ${client.name}`]
+                  [`🗂️ ${project.name as string}`, recipientName && `— ${recipientName}`]
                     .filter(Boolean)
                     .join(' '),
                 )
@@ -191,7 +194,7 @@ export default async function ProjectDetailPage({
               <ProjectEditDialog
                 project={{
                   id: project.id as string,
-                  client_id: (client?.id as string | undefined) ?? '',
+                  lead_id: leadId,
                   name: project.name as string,
                   status: project.status as string,
                   starts_at: (project.starts_at as string | null) ?? null,
@@ -207,7 +210,11 @@ export default async function ProjectDetailPage({
                   github_auto_sync: (project.github_auto_sync as boolean | null) ?? true,
                   version: Number(project.version),
                 }}
-                clients={clients ?? []}
+                leads={
+                  leadOptions.some((option) => option.id === leadId)
+                    ? leadOptions
+                    : [{ id: leadId, name: recipientName ?? 'Lead no disponible' }, ...leadOptions]
+                }
                 orgDefaultInstallationId={githubDefaultInstallationId()}
               />
             ) : null}
@@ -222,18 +229,13 @@ export default async function ProjectDetailPage({
         </CardHeader>
         <CardContent>
           <DetailGrid>
-            <DetailRow label="Cliente">
-              {client ? (
-                <Link
-                  href={`/clients/${client.id}`}
-                  className="hover:underline"
-                  aria-disabled={user.role === 'delivery'}
-                  onClick={user.role === 'delivery' ? (event) => event.preventDefault() : undefined}
-                >
-                  {client.name}
+            <DetailRow label="Lead">
+              {lead ? (
+                <Link href={`/leads/${lead.id}`} className="hover:underline">
+                  {lead.name}
                 </Link>
               ) : (
-                '—'
+                (recipientName ?? '—')
               )}
             </DetailRow>
             <DetailRow label="Estado">{project.status as string}</DetailRow>
@@ -288,8 +290,8 @@ export default async function ProjectDetailPage({
           visible={Boolean(project.is_client_visible)}
           hasPassword={Boolean(project.portal_password_hash)}
           inviteSentAt={(project.portal_invite_sent_at as string | null) ?? null}
-          clientEmail={(client?.email as string | null) ?? null}
-          clientPhone={(client?.phone as string | null) ?? null}
+          clientEmail={client?.email ?? lead?.email ?? null}
+          clientPhone={client?.phone ?? lead?.phone ?? null}
           canEdit={canEdit}
           canPublish={user.role === 'owner' || user.role === 'admin'}
         />
@@ -579,11 +581,9 @@ export default async function ProjectDetailPage({
                     }[]
                   }
                 />
-                {client ? (
+                {lead ? (
                   <Button asChild size="sm">
-                    <Link href={`/proposals/new?client_id=${client.id}&project_id=${id}`}>
-                      Nueva
-                    </Link>
+                    <Link href={`/proposals/new?lead_id=${leadId}&project_id=${id}`}>Nueva</Link>
                   </Button>
                 ) : null}
               </div>

@@ -34,7 +34,7 @@ describe('NewProposalPage', () => {
     expect(screen.getByText('Formulario disponible')).toBeDefined()
   })
 
-  it.each(['clients', 'leads', 'projects'])(
+  it.each(['leads', 'projects'])(
     'explains a %s lookup failure instead of showing empty options',
     async (table) => {
       state.failedTable = table

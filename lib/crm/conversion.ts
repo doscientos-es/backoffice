@@ -104,10 +104,10 @@ export async function ensureProjectForProposal(
   try {
     const { data: proposal, error } = await client
       .from('proposals')
-      .select('client_id, project_id, title, context_markdown, notes')
+      .select('lead_id, client_id, project_id, title, context_markdown, notes')
       .eq('id', proposalId)
       .maybeSingle()
-    if (error || !proposal?.client_id) return { projectId: null, created: false }
+    if (error || !proposal?.lead_id) return { projectId: null, created: false }
 
     if (proposal.project_id) {
       return { projectId: proposal.project_id as string, created: false }
@@ -124,6 +124,7 @@ export async function ensureProjectForProposal(
     const { data: project, error: insertErr } = await client
       .from('projects')
       .insert({
+        lead_id: proposal.lead_id,
         client_id: proposal.client_id,
         name: projectName,
         description,
@@ -163,10 +164,9 @@ export async function ensureProjectForProposal(
  *      (don't overwrite existing values; the back-office is the source of
  *      truth once a client exists).
  *   2. proposal.lead_id set with a client already linked via `clients.lead_id`
- *      → reuse it, patch missing fiscal fields, and re-point the proposal.
+ *      → reuse it, patch missing fiscal fields, and link it to the proposal.
  *   3. proposal.lead_id set without a linked client → create a fresh client
- *      from the submitted fiscal data, link it to the lead, and re-point
- *      the proposal so future invoices flow to it.
+ *      from the submitted fiscal data and link it without changing the owner.
  */
 export async function ensureClientForProposal(
   client: AnyClient,
@@ -191,29 +191,18 @@ export async function ensureClientForProposal(
   }
   const leadId = proposal.lead_id as string
 
-  // A lead-first proposal may already be attached to a project whose client
-  // represents that lead. Reuse that exact client before considering another
-  // client for the lead, so the proposal/project relationship remains valid.
   if (proposal.project_id) {
     const { data: project, error: projectError } = await client
       .from('projects')
-      .select('client_id')
+      .select('lead_id')
       .eq('id', proposal.project_id as string)
       .is('deleted_at', null)
       .maybeSingle()
     if (projectError) return { error: 'No se pudo consultar el proyecto de la propuesta' }
-    if (!project?.client_id) return { error: 'No se encontró el proyecto de la propuesta' }
-    const { data: projectClient, error: clientError } = await client
-      .from('clients')
-      .select('lead_id')
-      .eq('id', project.client_id as string)
-      .is('deleted_at', null)
-      .maybeSingle()
-    if (clientError) return { error: 'No se pudo consultar la ficha de facturación del proyecto' }
-    if (!projectClient || projectClient.lead_id !== leadId) {
+    if (!project) return { error: 'No se encontró el proyecto de la propuesta' }
+    if (project.lead_id !== leadId) {
       return { error: 'El proyecto no pertenece al destinatario de la propuesta' }
     }
-    return linkExistingClientToProposal(client, proposalId, project.client_id as string, fiscal)
   }
 
   const { data: existing, error: lookupError } = await client
@@ -264,7 +253,7 @@ export async function ensureClientForProposal(
   const clientId = created.id as string
   const { error: updateError } = await client
     .from('proposals')
-    .update({ client_id: clientId, lead_id: null })
+    .update({ client_id: clientId })
     .eq('id', proposalId)
   if (updateError) return { error: updateError.message }
   return { clientId, created: true }
@@ -280,7 +269,7 @@ async function linkExistingClientToProposal(
   if (fiscalError) return { error: fiscalError }
   const { error } = await client
     .from('proposals')
-    .update({ client_id: clientId, lead_id: null })
+    .update({ client_id: clientId })
     .eq('id', proposalId)
   return error ? { error: error.message } : { clientId, created: false }
 }

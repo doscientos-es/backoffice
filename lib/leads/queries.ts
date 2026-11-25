@@ -390,7 +390,7 @@ export async function getLeadDetail(
       .order('priority', { ascending: true })
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true }),
-    supabase.from('clients').select('id, name, deleted_at').eq('lead_id', id),
+    supabase.from('clients').select('id, name').eq('lead_id', id).is('deleted_at', null),
     notDeleted(
       supabase
         .from('tasks')
@@ -477,25 +477,31 @@ export async function getLeadDetail(
   ])
   const marketingCampaignName = campaignNames.get(lead.utm_campaign as string) ?? null
 
-  const linkedClient = linkedClients?.find((client) => client.deleted_at === null)
+  const linkedClient = linkedClients?.[0]
   const linkedClientId = linkedClient?.id ?? null
   const linkedClientName = linkedClient?.name ?? null
-  const clientIds = (linkedClients ?? []).map((client) => client.id)
 
-  // Include historical billing records too: archived clients can still own
-  // proposals and issued invoices that must remain visible on the lead.
-  const proposalsBuilder = notDeleted(
-    supabase
-      .from('proposals')
-      .select('id, number, title, status, valid_until, sent_at, viewed_at, responded_at, notes'),
-  )
-  const { data: proposalRows } = await (
-    clientIds.length
-      ? proposalsBuilder.or(`lead_id.eq.${id},client_id.in.(${clientIds.join(',')})`)
-      : proposalsBuilder.eq('lead_id', id)
-  )
-    .order('created_at', { ascending: false })
-    .limit(LEAD_RELATED_LIMIT)
+  const [{ data: proposalRows }, { data: projectRows }, { data: invoiceRows }] = await Promise.all([
+    notDeleted(
+      supabase
+        .from('proposals')
+        .select('id, number, title, status, valid_until, sent_at, viewed_at, responded_at, notes')
+        .eq('lead_id', id),
+    )
+      .order('created_at', { ascending: false })
+      .limit(LEAD_RELATED_LIMIT),
+    notDeleted(supabase.from('projects').select('id, name, status, description').eq('lead_id', id))
+      .order('created_at', { ascending: false })
+      .limit(LEAD_RELATED_LIMIT),
+    notDeleted(
+      supabase
+        .from('invoices')
+        .select('id, full_number, status, total, issue_date')
+        .eq('lead_id', id),
+    )
+      .order('issue_date', { ascending: false })
+      .limit(LEAD_RELATED_LIMIT),
+  ])
 
   const proposalPriceById = new Map<string, number>()
   const proposalIds = (proposalRows ?? []).map((proposal) => proposal.id as string)
@@ -507,31 +513,6 @@ export async function getLeadDetail(
     for (const price of proposalPrices ?? []) {
       proposalPriceById.set(price.proposal_id as string, Number(price.total) || 0)
     }
-  }
-
-  let projectRows: Record<string, unknown>[] = []
-  let invoiceRows: Record<string, unknown>[] = []
-  if (clientIds.length) {
-    const [{ data: projects }, { data: invoices }] = await Promise.all([
-      notDeleted(
-        supabase
-          .from('projects')
-          .select('id, name, status, description')
-          .in('client_id', clientIds),
-      )
-        .order('created_at', { ascending: false })
-        .limit(LEAD_RELATED_LIMIT),
-      notDeleted(
-        supabase
-          .from('invoices')
-          .select('id, full_number, status, total, issue_date')
-          .in('client_id', clientIds),
-      )
-        .order('issue_date', { ascending: false })
-        .limit(LEAD_RELATED_LIMIT),
-    ])
-    projectRows = (projects ?? []) as Record<string, unknown>[]
-    invoiceRows = (invoices ?? []) as Record<string, unknown>[]
   }
 
   const detailInteractions: LeadDetailInteraction[] = (interactions ?? []).map((i) => ({
@@ -585,13 +566,13 @@ export async function getLeadDetail(
       responded_at: (p.responded_at as string | null) ?? null,
       notes: (p.notes as string | null) ?? null,
     })),
-    projects: projectRows.map((p) => ({
+    projects: (projectRows ?? []).map((p) => ({
       id: p.id as string,
       name: p.name as string,
       status: (p.status as string | null) ?? null,
       description: (p.description as string | null) ?? null,
     })),
-    invoices: invoiceRows.map((i) => ({
+    invoices: (invoiceRows ?? []).map((i) => ({
       id: i.id as string,
       full_number: (i.full_number as string | null) ?? null,
       status: (i.status as string | null) ?? null,

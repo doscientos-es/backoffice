@@ -20,15 +20,12 @@ import { CreateProposalInput } from '@/lib/schemas/proposal'
 import { createProposalAction } from '../actions'
 
 type Props = {
-  clients: Array<{ id: string; name: string }>
-  leads: Array<{ id: string; name: string; company: string | null; status: string }>
-  projects: Array<{ id: string; name: string; client_id: string }>
-  initialClientId?: string
+  leads: Array<{ id: string; name: string; company: string | null }>
+  projects: Array<{ id: string; name: string; lead_id: string }>
   initialLeadId?: string
+  initialProjectId?: string
   aiEnabled: boolean
 }
-
-type Recipient = { kind: 'client'; id: string } | { kind: 'lead'; id: string } | null
 
 /**
  * Explicit create flow for proposals. The detail page (`/proposals/[id]`)
@@ -36,15 +33,13 @@ type Recipient = { kind: 'client'; id: string } | { kind: 'lead'; id: string } |
  * and confirms with a single click — on success we navigate to the detail
  * view where further edits are saved explicitly.
  *
- * The recipient is either an existing client or an open lead. An existing
- * client project can optionally be linked.
+ * A lead owns the proposal and any optional project link.
  */
 export function NewProposalForm({
-  clients,
   leads,
   projects,
-  initialClientId,
   initialLeadId,
+  initialProjectId,
   aiEnabled,
 }: Props) {
   const router = useRouter()
@@ -55,45 +50,32 @@ export function NewProposalForm({
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [recovery, setRecovery] = useState<string | null>(null)
 
-  const [recipient, setRecipient] = useState<Recipient>(() => {
-    if (initialClientId && clients.some((client) => client.id === initialClientId))
-      return { kind: 'client', id: initialClientId }
-    if (initialLeadId && leads.some((lead) => lead.id === initialLeadId))
-      return { kind: 'lead', id: initialLeadId }
-    return null
-  })
-  const recipientValue = recipient ? `${recipient.kind}:${recipient.id}` : ''
+  const [leadId, setLeadId] = useState(
+    () => leads.find((lead) => lead.id === initialLeadId)?.id ?? '',
+  )
   const [title, setTitle] = useState('')
   const [validUntil, setValidUntil] = useState('')
   const [invalidDate, setInvalidDate] = useState(false)
   const [notes, setNotes] = useState('')
   const [demoUrl, setDemoUrl] = useState('')
-  const [projectId, setProjectId] = useState('')
-
-  // Projects available for the selected client
-  const clientProjects = useMemo(
+  const [projectId, setProjectId] = useState(
     () =>
-      recipient?.kind === 'client' ? projects.filter((p) => p.client_id === recipient.id) : [],
-    [projects, recipient],
+      projects.find((project) => project.id === initialProjectId && project.lead_id === leadId)
+        ?.id ?? '',
+  )
+  const leadProjects = useMemo(
+    () => projects.filter((project) => project.lead_id === leadId),
+    [projects, leadId],
   )
   const [items, setItems] = useState<LineItem[]>([{ ...EMPTY_LINE_ITEM, id: crypto.randomUUID() }])
 
-  const selectedRecipient = useMemo(() => {
-    if (!recipient) return null
-    return recipient.kind === 'lead'
-      ? (leads.find((lead) => lead.id === recipient.id) ?? null)
-      : (clients.find((client) => client.id === recipient.id) ?? null)
-  }, [clients, leads, recipient])
+  const selectedRecipient = leads.find((lead) => lead.id === leadId)
 
   function handleCreate(mode: 'blank' | 'ai') {
     if (creating.current || pending || recovery) return
-    if (!recipient || !selectedRecipient) {
+    if (!selectedRecipient) {
       feedback.setError('Selecciona el destinatario de la propuesta')
       document.getElementById('recipient')?.focus()
-      return
-    }
-    if (mode === 'ai' && recipient.kind !== 'lead') {
-      feedback.setError('El prerrelleno con IA necesita una propuesta vinculada a un lead')
       return
     }
     if (invalidDate) {
@@ -117,8 +99,7 @@ export function NewProposalForm({
       ? [{ ...firstItem, description: 'Pendiente de definir' }]
       : items.map((item) => ({ ...item, description: item.description.trim() }))
     const input = {
-      client_id: recipient.kind === 'client' ? recipient.id : undefined,
-      lead_id: recipient.kind === 'lead' ? recipient.id : undefined,
+      lead_id: selectedRecipient.id,
       project_id: projectId || undefined,
       title: title.trim() || `Propuesta para ${selectedRecipient.name}`.slice(0, 200),
       valid_until: validUntil || undefined,
@@ -162,15 +143,8 @@ export function NewProposalForm({
   }
 
   function onRecipientChange(value: string) {
-    setProjectId('') // reset project when recipient changes
-    if (!value) {
-      setRecipient(null)
-      return
-    }
-    const [kind, id] = value.split(':', 2)
-    if ((kind === 'client' || kind === 'lead') && id) {
-      setRecipient({ kind, id })
-    }
+    setProjectId('')
+    setLeadId(value)
   }
 
   return (
@@ -183,10 +157,7 @@ export function NewProposalForm({
         <Card className="border-border shadow-none">
           <CardContent className="pt-6">
             <header className="mb-5">
-              <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                01 · Base comercial
-              </p>
-              <h2 id="proposal-details-heading" className="mt-1 text-base font-semibold">
+              <h2 id="proposal-details-heading" className="text-base font-semibold">
                 Destinatario y contexto
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -199,21 +170,18 @@ export function NewProposalForm({
                 label="Destinatario"
                 htmlFor="recipient"
                 required
-                hint="Cliente existente o lead. Si es lead, le pediremos sus datos fiscales al aceptar."
+                hint="Selecciona un lead. Si faltan datos fiscales, se pedirán al aceptar."
               >
                 <EntityCombobox
                   id="recipient"
-                  items={[
-                    ...clients.map((c) => ({ id: `client:${c.id}`, label: c.name })),
-                    ...leads.map((l) => ({
-                      id: `lead:${l.id}`,
-                      label: l.name,
-                      sublabel: l.company,
-                    })),
-                  ]}
-                  value={recipientValue}
+                  items={leads.map((lead) => ({
+                    id: lead.id,
+                    label: lead.name,
+                    sublabel: lead.company,
+                  }))}
+                  value={leadId}
                   onChange={onRecipientChange}
-                  placeholder="Buscar cliente o lead…"
+                  placeholder="Buscar lead…"
                 />
               </FormRow>
               <FormRow
@@ -246,7 +214,7 @@ export function NewProposalForm({
                   aria-invalid={invalidDate}
                 />
               </FormRow>
-              {clientProjects.length > 0 && (
+              {leadProjects.length > 0 && (
                 <FormRow
                   label="Proyecto"
                   htmlFor="project_id"
@@ -254,7 +222,7 @@ export function NewProposalForm({
                 >
                   <EntityCombobox
                     id="project_id"
-                    items={clientProjects.map((p) => ({ id: p.id, label: p.name }))}
+                    items={leadProjects.map((p) => ({ id: p.id, label: p.name }))}
                     value={projectId}
                     onChange={setProjectId}
                     placeholder="Buscar proyecto…"
@@ -368,13 +336,11 @@ export function NewProposalForm({
                 pending ||
                 feedback.state.status === 'success' ||
                 Boolean(recovery) ||
-                recipient?.kind !== 'lead'
+                !selectedRecipient
               }
               onClick={() => handleCreate('ai')}
               title={
-                recipient?.kind !== 'lead'
-                  ? 'Selecciona un lead para usar su contexto con IA'
-                  : undefined
+                !selectedRecipient ? 'Selecciona un lead para usar su contexto con IA' : undefined
               }
             >
               {pending ? 'Creando…' : 'Crear y prerrellenar con IA'}

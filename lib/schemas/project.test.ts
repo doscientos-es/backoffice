@@ -10,7 +10,7 @@ import {
 
 const uuid = '11111111-1111-1111-1111-111111111111'
 
-const base = { client_id: uuid, name: 'Web corporativa' }
+const base = { lead_id: uuid, name: 'Web corporativa' }
 
 describe('project enums', () => {
   it('validate status and sync mode', () => {
@@ -21,6 +21,10 @@ describe('project enums', () => {
 })
 
 describe('ProjectInput github refinement', () => {
+  it('requires a lead or a legacy billing record', () => {
+    expect(ProjectInput.safeParse({ name: base.name }).success).toBe(false)
+    expect(ProjectInput.safeParse({ name: base.name, client_id: uuid }).success).toBe(true)
+  })
   it('applies defaults when sync is disabled', () => {
     const out = ProjectInput.parse(base)
     expect(out.status).toBe('planning')

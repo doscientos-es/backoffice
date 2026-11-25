@@ -23,12 +23,10 @@ import {
 } from '@/lib/schemas/project'
 import { createServerClient } from '@/lib/supabase/server'
 
-// biome-ignore lint/suspicious/noExplicitAny: complex dynamic payload from form
-function buildDbPayload(p: any) {
+function buildDbPayload(p: z.output<typeof ProjectInput>) {
   const repo = p.github_repo ? parseGithubRepoUrl(p.github_repo) : null
   const isHourly = p.billing_type === 'hourly'
   return {
-    client_id: p.client_id,
     name: p.name,
     description: p.description ?? null,
     status: p.status,
@@ -47,15 +45,41 @@ function buildDbPayload(p: any) {
   }
 }
 
+async function resolveProjectRecipient(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  input: z.output<typeof ProjectInput>,
+) {
+  if (!input.lead_id) return { client_id: input.client_id }
+
+  const [lead, billing] = await Promise.all([
+    supabase
+      .from('leads')
+      .select('id')
+      .eq('id', input.lead_id)
+      .is('deleted_at', null)
+      .maybeSingle(),
+    supabase
+      .from('clients')
+      .select('id')
+      .eq('lead_id', input.lead_id)
+      .is('deleted_at', null)
+      .maybeSingle(),
+  ])
+  if (lead.error || !lead.data) throw new Error('No se encontró el lead seleccionado')
+  if (billing.error) throw new Error('No se pudieron consultar los datos de facturación del lead')
+  return { lead_id: input.lead_id, client_id: billing.data?.id ?? null }
+}
+
 export const createProject = defineAction({
   name: 'projects.create',
   schema: ProjectInput,
   roles: ['owner', 'admin', 'member'],
   handler: async (input) => {
     const supabase = await createServerClient()
+    const recipient = await resolveProjectRecipient(supabase, input)
     const { data, error } = await supabase
       .from('projects')
-      .insert(buildDbPayload(input))
+      .insert({ ...buildDbPayload(input), ...recipient })
       .select('id')
       .single()
 
@@ -93,9 +117,19 @@ export const updateProject = defineAction({
   handler: async (input) => {
     const supabase = await createServerClient()
     const { id, expected_version } = input
+    const current = await supabase
+      .from('projects')
+      .select('lead_id')
+      .eq('id', id)
+      .eq('version', expected_version)
+      .maybeSingle()
+    if (current.error) throw new Error(current.error.message)
+    if (!current.data) throw new VersionConflictError()
+    const recipient =
+      input.lead_id === current.data.lead_id ? {} : await resolveProjectRecipient(supabase, input)
     const { data, error } = await supabase
       .from('projects')
-      .update(buildDbPayload(input))
+      .update({ ...buildDbPayload(input), ...recipient })
       .eq('id', id)
       .eq('version', expected_version)
       .select('version')

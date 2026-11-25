@@ -26,7 +26,7 @@ import { ProjectFormFields } from '../project-form-fields'
 
 type Project = {
   id: string
-  client_id: string
+  lead_id: string
   name: string
   status: string
   starts_at: string | null
@@ -44,12 +44,12 @@ type Project = {
 
 interface Props {
   project: Project
-  clients: Array<{ id: string; name: string }>
+  leads: Array<{ id: string; name: string }>
   /** Installation ID de la org, fallback cuando el proyecto no tiene uno propio. */
   orgDefaultInstallationId?: number | null
 }
 
-export function ProjectEditDialog({ project, clients, orgDefaultInstallationId = null }: Props) {
+export function ProjectEditDialog({ project, leads, orgDefaultInstallationId = null }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [conflictOpen, setConflictOpen] = useState(false)
@@ -66,7 +66,7 @@ export function ProjectEditDialog({ project, clients, orgDefaultInstallationId =
     const res = await updateProject({
       id: project.id,
       expected_version: project.version,
-      client_id: fd.get('client_id')?.toString() ?? '',
+      lead_id: fd.get('lead_id')?.toString() ?? '',
       name: fd.get('name')?.toString() ?? '',
       description: fd.get('description')?.toString() ?? '',
       status: (fd.get('status')?.toString() ?? 'planning') as ProjectStatusType,
@@ -121,11 +121,10 @@ export function ProjectEditDialog({ project, clients, orgDefaultInstallationId =
           <div className="no-scrollbar flex min-h-0 flex-1 scroll-fade flex-col gap-5 overflow-y-auto pr-1">
             <ProjectFormFields
               idPrefix={`edit-${project.id}`}
-              clients={clients}
-              showClientPlaceholder={false}
+              leads={leads}
               orgDefaultInstallationId={orgDefaultInstallationId}
               defaults={{
-                client_id: project.client_id,
+                lead_id: project.lead_id,
                 name: project.name,
                 status: project.status,
                 starts_at: project.starts_at,

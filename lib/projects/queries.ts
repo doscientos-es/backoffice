@@ -21,26 +21,18 @@ export async function listProjects(params: ProjectListParams): Promise<ProjectLi
   const page = Math.max(1, params.page ?? 1)
   const from = (page - 1) * PROJECT_LIST_PAGE_SIZE
   const to = from + PROJECT_LIST_PAGE_SIZE - 1
-  const { data: leadClient } = params.leadId
-    ? await notDeleted(
-        supabase.from('clients').select('id').eq('lead_id', params.leadId),
-      ).maybeSingle()
-    : { data: null }
-
-  if (params.leadId && !leadClient) return { data: [], count: 0 }
-
   let query = notDeleted(
     supabase
       .from('projects')
       .select(
-        'id, name, status, description, updated_at, client_id, github_sync_mode, github_repo, clients(name)',
+        'id, name, status, description, updated_at, client_id, github_sync_mode, github_repo, leads(name), clients(name)',
         { count: 'exact' },
       ),
   )
 
   if (params.q && params.q.length > 0) query = query.ilike('name', `%${escapeIlike(params.q)}%`)
   if (params.status) query = query.eq('status', params.status)
-  if (leadClient) query = query.eq('client_id', leadClient.id)
+  if (params.leadId) query = query.eq('lead_id', params.leadId)
 
   const sortCol = params.sort ?? 'created_at'
   const ascending = params.sort ? params.dir !== 'desc' : false
@@ -60,10 +52,18 @@ export async function listProjects(params: ProjectListParams): Promise<ProjectLi
       client_id: (p.client_id as string | null) ?? null,
       github_sync_mode: (p.github_sync_mode as string | null) ?? null,
       github_repo: (p.github_repo as string | null) ?? null,
-      client_name: (p as unknown as { clients: { name: string } | null }).clients?.name ?? null,
+      client_name: projectRecipientName(p),
     })),
     count: count ?? 0,
   }
+}
+
+function projectRecipientName(row: unknown) {
+  const { leads, clients } = row as {
+    leads: { name: string } | null
+    clients: { name: string } | null
+  }
+  return leads?.name ?? clients?.name ?? null
 }
 
 export async function listAccessibleProjects(params: { q?: string; page: number }) {
@@ -73,7 +73,7 @@ export async function listAccessibleProjects(params: { q?: string; page: number 
     supabase
       .from('projects')
       .select(
-        'id, name, status, description, updated_at, github_sync_mode, github_repo, clients(name)',
+        'id, name, status, description, updated_at, github_sync_mode, github_repo, leads(name), clients(name)',
         {
           count: 'exact',
         },
@@ -93,8 +93,7 @@ export async function listAccessibleProjects(params: { q?: string; page: number 
       updated_at: (project.updated_at as string | null) ?? null,
       github_sync_mode: (project.github_sync_mode as string | null) ?? null,
       github_repo: (project.github_repo as string | null) ?? null,
-      client_name:
-        (project as unknown as { clients: { name: string } | null }).clients?.name ?? null,
+      client_name: projectRecipientName(project),
     })),
     count: count ?? 0,
   }
@@ -106,12 +105,12 @@ export async function listAccessibleProjects(params: { q?: string; page: number 
  */
 export async function getProjectWorkspace(
   id: string,
-  options: { includeClients: boolean; tasksView: 'board' | 'list' },
+  options: { includeLeadOptions: boolean; tasksView: 'board' | 'list' },
 ) {
   const supabase = await createServerClient()
   const { data: project, error } = await supabase
     .from('projects')
-    .select('*, clients(id, name, email, phone, lead_id)')
+    .select('*, leads(id, name, email, phone), clients(id, name, email, phone)')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
@@ -119,20 +118,12 @@ export async function getProjectWorkspace(
   if (error) log.error({ projectId: id, err: error.message }, 'get_project_workspace_failed')
   if (!project) return null
 
-  const client = (
-    project as unknown as {
-      clients: {
-        id: string
-        name: string
-        email: string | null
-        phone: string | null
-        lead_id: string | null
-      } | null
-    }
-  ).clients
-  const clientsResult = options.includeClients
-    ? await supabase.from('clients').select('id, name').is('deleted_at', null).order('name')
-    : { data: [] as Array<{ id: string; name: string }> }
+  type Contact = { id: string; name: string; email: string | null; phone: string | null }
+  const { clients: client, leads: lead } = project as unknown as {
+    clients: Contact | null
+    leads: Contact | null
+  }
+  const leadId = project.lead_id as string
 
   const [
     { data: tasks },
@@ -147,6 +138,7 @@ export async function getProjectWorkspace(
     { data: settings },
     { data: checklistData },
     { data: unlinkedProposals },
+    { data: leadOptions },
     { data: reminders },
     { data: clientRequests },
     { data: webProjects },
@@ -211,19 +203,16 @@ export async function getProjectWorkspace(
       .eq('project_id', id)
       .is('deleted_at', null)
       .order('position'),
-    client
-      ? supabase
-          .from('proposals')
-          .select('id, number, title')
-          .or(
-            client.lead_id
-              ? `client_id.eq.${client.id},lead_id.eq.${client.lead_id}`
-              : `client_id.eq.${client.id}`,
-          )
-          .is('project_id', null)
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false })
-      : Promise.resolve({ data: [] }),
+    supabase
+      .from('proposals')
+      .select('id, number, title')
+      .eq('lead_id', leadId)
+      .is('project_id', null)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false }),
+    options.includeLeadOptions
+      ? supabase.from('leads').select('id, name').is('deleted_at', null).order('name')
+      : { data: [] },
     supabase
       .from('tasks')
       .select('id, title, start_at')
@@ -262,7 +251,9 @@ export async function getProjectWorkspace(
   return {
     project,
     client,
-    clients: clientsResult.data ?? [],
+    lead,
+    leadId,
+    leadOptions: (leadOptions ?? []) as Array<{ id: string; name: string }>,
     tasks: tasks ?? [],
     projectTeamMemberIds: (projectTeam ?? []).map((row) => row.member_id as string),
     proposals: (proposals ?? []).map((proposal) => ({

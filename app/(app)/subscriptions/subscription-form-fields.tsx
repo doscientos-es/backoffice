@@ -9,11 +9,11 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { SUBSCRIPTION_BILLING_CYCLE, SUBSCRIPTION_STATUS } from '@/lib/status'
 
-type ClientOption = { id: string; name: string }
-type ProjectOption = { id: string; name: string; client_id: string }
+export type SubscriptionLeadOption = { id: string; name: string }
+export type SubscriptionProjectOption = { id: string; name: string; lead_id: string }
 
 export type SubscriptionFormValues = {
-  client_id: string
+  lead_id: string
   project_id: string
   name: string
   description: string
@@ -27,23 +27,21 @@ export type SubscriptionFormValues = {
 }
 
 type Props = {
-  clients: ClientOption[]
-  projects: ProjectOption[]
+  leads: SubscriptionLeadOption[]
+  projects: SubscriptionProjectOption[]
   /** Pass a full SubscriptionFormValues when editing; omit for create (defaults kick in). */
   defaults?: Partial<SubscriptionFormValues>
 }
 
-export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
+export function SubscriptionFormFields({ leads, projects, defaults }: Props) {
   const today = new Date().toISOString().slice(0, 10)
   const [projectId, setProjectId] = useState(defaults?.project_id ?? '')
-  const [clientId, setClientId] = useState(defaults?.client_id ?? '')
-  const clientProjects = clientId ? projects.filter((p) => p.client_id === clientId) : []
+  const [leadId, setLeadId] = useState(defaults?.lead_id ?? '')
+  const leadProjects = projects.filter((project) => project.lead_id === leadId)
 
-  function changeClient(nextClientId: string) {
-    setClientId(nextClientId)
-    // Drop the selected project if it belongs to a different client.
-    const current = projects.find((p) => p.id === projectId)
-    if (current && current.client_id !== nextClientId) setProjectId('')
+  function changeLead(nextLeadId: string) {
+    setLeadId(nextLeadId)
+    setProjectId('')
   }
 
   return (
@@ -58,16 +56,21 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
         />
       </FormRow>
 
-      <FormRow label="Cliente" htmlFor="sub-client" required>
+      <FormRow
+        label="Lead"
+        htmlFor="sub-lead"
+        required
+        hint="Solo se muestran leads con datos de facturación."
+      >
         <Select
-          id="sub-client"
-          name="client_id"
-          value={clientId}
-          onChange={(e) => changeClient(e.target.value)}
+          id="sub-lead"
+          name="lead_id"
+          value={leadId}
+          onChange={(e) => changeLead(e.target.value)}
           required
         >
-          <option value="">— Selecciona cliente —</option>
-          {clients.map((c) => (
+          <option value="">— Selecciona lead —</option>
+          {leads.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
@@ -79,22 +82,22 @@ export function SubscriptionFormFields({ clients, projects, defaults }: Props) {
         label="Proyecto"
         htmlFor="sub-project"
         hint={
-          !clientId
-            ? 'Selecciona primero un cliente.'
-            : clientProjects.length === 0
-              ? 'Este cliente no tiene proyectos.'
+          !leadId
+            ? 'Selecciona primero un lead.'
+            : leadProjects.length === 0
+              ? 'Este lead no tiene proyectos.'
               : undefined
         }
       >
         <EntityCombobox
-          key={clientId}
+          key={leadId}
           id="sub-project"
           name="project_id"
-          items={clientProjects.map((p) => ({ id: p.id, label: p.name }))}
+          items={leadProjects.map((p) => ({ id: p.id, label: p.name }))}
           value={projectId}
           onChange={setProjectId}
-          placeholder={clientId ? 'Buscar proyecto…' : 'Selecciona cliente primero'}
-          disabled={!clientId}
+          placeholder={leadId ? 'Buscar proyecto…' : 'Selecciona un lead primero'}
+          disabled={!leadId}
         />
       </FormRow>
 

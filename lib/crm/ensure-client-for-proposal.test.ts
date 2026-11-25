@@ -57,7 +57,7 @@ describe('ensureClientForProposal', () => {
     expect(calls).toContainEqual({
       table: 'proposals',
       operation: 'update',
-      value: { client_id: 'client-1', lead_id: null },
+      value: { client_id: 'client-1' },
     })
   })
 
@@ -79,7 +79,7 @@ describe('ensureClientForProposal', () => {
     expect(calls).toContainEqual({
       table: 'proposals',
       operation: 'update',
-      value: { client_id: 'client-1', lead_id: null },
+      value: { client_id: 'client-1' },
     })
     expect(
       calls.filter((call) => call.table === 'clients' && call.operation === 'eq:lead_id'),
@@ -146,7 +146,6 @@ describe('ensureClientForProposal', () => {
   it('rejects a project belonging to a different lead before changing fiscal data', async () => {
     const { client, calls } = makeClient([
       { data: { ...proposal, project_id: 'project-1' }, error: null },
-      { data: { client_id: 'client-1' }, error: null },
       { data: { lead_id: 'other-lead' }, error: null },
     ])
     await expect(ensureClientForProposal(client, 'proposal-1', fiscal)).resolves.toEqual({
@@ -157,11 +156,11 @@ describe('ensureClientForProposal', () => {
     ).toEqual([])
   })
 
-  it('reuses the project fiscal record only when it belongs to the proposal lead', async () => {
+  it('finds the active fiscal record by lead even if the linked project has no fiscal record', async () => {
     const { client, calls } = makeClient([
       { data: { ...proposal, project_id: 'project-1' }, error: null },
-      { data: { client_id: 'client-1' }, error: null },
       { data: { lead_id: 'lead-1' }, error: null },
+      { data: { id: 'client-1' }, error: null },
       { data: { name: 'Test', nif: 'B123', billing_address_street: 'Test street' }, error: null },
       { data: null, error: null },
     ])
@@ -172,22 +171,27 @@ describe('ensureClientForProposal', () => {
     expect(calls).toContainEqual({
       table: 'proposals',
       operation: 'update',
-      value: { client_id: 'client-1', lead_id: null },
+      value: { client_id: 'client-1' },
     })
   })
 
-  it('stops if the project fiscal record cannot be read', async () => {
+  it('creates fiscal data on acceptance of a proposal linked to an unfunded project', async () => {
     const { client, calls } = makeClient([
       { data: { ...proposal, project_id: 'project-1' }, error: null },
-      { data: { client_id: 'client-1' }, error: null },
-      { data: null, error: { message: 'unavailable' } },
+      { data: { lead_id: 'lead-1' }, error: null },
+      { data: null, error: null },
+      { data: { id: 'client-1' }, error: null },
+      { data: null, error: null },
     ])
     await expect(ensureClientForProposal(client, 'proposal-1', fiscal)).resolves.toEqual({
-      error: 'No se pudo consultar la ficha de facturación del proyecto',
+      clientId: 'client-1',
+      created: true,
     })
-    expect(
-      calls.filter((call) => call.operation === 'insert' || call.operation === 'update'),
-    ).toEqual([])
+    expect(calls).toContainEqual({
+      table: 'proposals',
+      operation: 'update',
+      value: { client_id: 'client-1' },
+    })
   })
 
   it.each([

@@ -56,11 +56,6 @@ function MobileEmptyLink({ href, children }: { href: string; children: ReactNode
   )
 }
 
-/**
- * Commercial pipeline shortcuts for a lead: proposals (lead-first, no NIF
- * required), plus projects and invoices that only exist once the lead is
- * converted into a client.
- */
 export function LeadCommercial({
   leadId,
   linkedClientId,
@@ -136,12 +131,10 @@ export function LeadCommercial({
                     <StatusBadge meta={PROJECT_STATUS} value={project.status as ProjectStatus} />
                   </Link>
                 ))
-              ) : linkedClientId ? (
-                <MobileEmptyLink href={`/projects/new?client_id=${linkedClientId}`}>
+              ) : (
+                <MobileEmptyLink href={`/projects/new?lead_id=${leadId}`}>
                   Crear proyecto
                 </MobileEmptyLink>
-              ) : (
-                <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
               )}
             </MobileRelationshipRow>
 
@@ -165,7 +158,9 @@ export function LeadCommercial({
               ) : linkedClientId ? (
                 <span className="text-xs text-muted-foreground">Sin facturas</span>
               ) : (
-                <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
+                <span className="text-xs text-muted-foreground">
+                  Añade los datos de facturación
+                </span>
               )}
             </MobileRelationshipRow>
           </dl>

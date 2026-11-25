@@ -17,7 +17,7 @@ const PROJECT_STATUS_OPTIONS = [
 ] as const
 
 type ProjectFormDefaults = {
-  client_id?: string | null
+  lead_id?: string | null
   name?: string | null
   status?: string | null
   starts_at?: string | null
@@ -33,12 +33,10 @@ type ProjectFormDefaults = {
 }
 
 interface Props {
-  clients: Array<{ id: string; name: string }>
+  leads: Array<{ id: string; name: string }>
   defaults?: ProjectFormDefaults
   /** Avoids `id` collisions when create and edit forms coexist on the page. */
   idPrefix?: string
-  /** Whether the client selector includes the disabled placeholder option. */
-  showClientPlaceholder?: boolean
   autoFocusName?: boolean
   /**
    * Installation ID de la org, usado como fallback cuando el proyecto aún no
@@ -52,10 +50,9 @@ interface Props {
  * in sync so adding a column only requires touching one component.
  */
 export function ProjectFormFields({
-  clients,
+  leads,
   defaults,
   idPrefix = 'project',
-  showClientPlaceholder = true,
   autoFocusName = false,
   orgDefaultInstallationId = null,
 }: Props) {
@@ -64,25 +61,18 @@ export function ProjectFormFields({
     <>
       <div className="grid gap-5 sm:grid-cols-2">
         <FormRow
-          label="Cliente"
-          htmlFor={`${idPrefix}-client_id`}
+          label="Lead"
+          htmlFor={`${idPrefix}-lead_id`}
           required
-          hint="Cliente al que pertenece el proyecto."
+          hint="Lead al que pertenece el proyecto. No necesita datos fiscales."
         >
-          <Select
-            id={`${idPrefix}-client_id`}
-            name="client_id"
-            required
-            defaultValue={d.client_id ?? ''}
-          >
-            {showClientPlaceholder ? (
-              <option value="" disabled>
-                — Selecciona cliente —
-              </option>
-            ) : null}
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
+          <Select id={`${idPrefix}-lead_id`} name="lead_id" required defaultValue={d.lead_id ?? ''}>
+            <option value="" disabled>
+              — Selecciona lead —
+            </option>
+            {leads.map((lead) => (
+              <option key={lead.id} value={lead.id}>
+                {lead.name}
               </option>
             ))}
           </Select>

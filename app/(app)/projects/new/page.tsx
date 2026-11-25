@@ -20,20 +20,25 @@ export const dynamic = 'force-dynamic'
 export default async function NewProjectPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client_id?: string }>
+  searchParams: Promise<{ lead_id?: string; client_id?: string }>
 }) {
   await requireUser()
-  const { client_id } = await searchParams
+  const { lead_id, client_id } = await searchParams
   const supabase = await createServerClient()
 
-  const [{ data: clients }, { data: templates }] = await Promise.all([
-    supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
+  const [{ data: leads }, { data: templates }, legacyRecipient] = await Promise.all([
+    supabase.from('leads').select('id, name').is('deleted_at', null).order('name'),
     supabase
       .from('onboarding_templates')
       .select('id, name, description')
       .is('deleted_at', null)
       .order('position'),
+    !lead_id && client_id
+      ? supabase.from('clients').select('lead_id').eq('id', client_id).maybeSingle()
+      : null,
   ])
+  const leadOptions = (leads ?? []) as Array<{ id: string; name: string }>
+  const recipient = lead_id ?? legacyRecipient?.data?.lead_id
 
   type Template = { id: string; name: string; description: string | null }
 
@@ -48,11 +53,11 @@ export default async function NewProjectPage({
           <form action={createProject} className="flex flex-col gap-5">
             <ProjectFormFields
               idPrefix="new"
-              clients={(clients as Array<{ id: string; name: string }> | null) ?? []}
+              leads={leadOptions}
               autoFocusName
               orgDefaultInstallationId={githubDefaultInstallationId()}
               defaults={{
-                client_id: client_id ?? '',
+                lead_id: leadOptions.find((lead) => lead.id === recipient)?.id ?? '',
                 starts_at: todayIsoLocal(),
                 ends_at: addDaysIsoLocal(42),
               }}

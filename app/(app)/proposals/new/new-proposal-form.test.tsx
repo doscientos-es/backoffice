@@ -33,7 +33,6 @@ import { NewProposalForm } from './new-proposal-form'
 const leadId = '494d62cb-fd56-4650-b131-9e3a927a20ad'
 const proposalId = 'f4e5d6c7-b8a9-4012-8012-123456789abc'
 const props = {
-  clients: [],
   leads: [{ id: leadId, name: 'Ejemplo', company: null, status: 'open' }],
   projects: [],
   aiEnabled: true,
@@ -117,6 +116,25 @@ describe('NewProposalForm', () => {
     await waitFor(() => expect(push).toHaveBeenCalledWith(`/proposals/${proposalId}?ai_draft=1`))
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ lead_id: leadId }))
   })
+
+  it.each([leadId, proposalId])(
+    'only prelinks a project owned by the selected lead (%s)',
+    async (owner) => {
+      render(
+        <NewProposalForm
+          {...props}
+          initialLeadId={leadId}
+          initialProjectId={proposalId}
+          projects={[{ id: proposalId, name: 'Proyecto previo', lead_id: owner }]}
+        />,
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'Crear borrador' }))
+      await waitFor(() => expect(create).toHaveBeenCalled())
+      expect(create).toHaveBeenCalledWith(expect.objectContaining({ lead_id: leadId }))
+      const [payload] = create.mock.calls[0] as [{ project_id?: string }]
+      expect(payload.project_id).toBe(owner === leadId ? proposalId : undefined)
+    },
+  )
 
   it('allows retry after a confirmed failure without losing the title', async () => {
     create.mockResolvedValueOnce({ ok: false, error: 'No se pudo crear' })

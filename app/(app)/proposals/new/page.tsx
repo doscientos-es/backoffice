@@ -13,30 +13,25 @@ export const metadata: Metadata = { title: 'Nueva propuesta · doscientos' }
 export const dynamic = 'force-dynamic'
 
 /**
- * Lead-first proposal creation: the recipient is either an existing client
- * or an open lead. An optional project can be linked when the proposal
- * extends ongoing work for a known client.
+ * Pick a lead and optionally an existing project owned by that lead.
  */
 export default async function NewProposalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client_id?: string; lead_id?: string }>
+  searchParams: Promise<{ client_id?: string; lead_id?: string; project_id?: string }>
 }) {
   await requireUser()
-  const { client_id, lead_id } = await searchParams
+  const { client_id, lead_id, project_id } = await searchParams
 
   const supabase = await createServerClient()
-  const [clientsResult, leadsResult, projectsResult] = await Promise.all([
-    supabase.from('clients').select('id, name').is('deleted_at', null).order('name'),
-    supabase
-      .from('leads')
-      .select('id, name, company, status')
-      .is('deleted_at', null)
-      .not('status', 'in', '(won,lost,not_interested,archived)')
-      .order('name'),
-    supabase.from('projects').select('id, name, client_id').is('deleted_at', null).order('name'),
+  const [leadsResult, projectsResult, legacyRecipient] = await Promise.all([
+    supabase.from('leads').select('id, name, company').is('deleted_at', null).order('name'),
+    supabase.from('projects').select('id, name, lead_id').is('deleted_at', null).order('name'),
+    !lead_id && client_id
+      ? supabase.from('clients').select('lead_id').eq('id', client_id).maybeSingle()
+      : null,
   ])
-  const loadFailed = clientsResult.error || leadsResult.error || projectsResult.error
+  const loadFailed = leadsResult.error || projectsResult.error || legacyRecipient?.error
 
   return (
     <div className="flex flex-col gap-6">
@@ -51,20 +46,18 @@ export default async function NewProposalPage({
         </Alert>
       ) : (
         <NewProposalForm
-          clients={(clientsResult.data ?? []) as Array<{ id: string; name: string }>}
           leads={
             (leadsResult.data ?? []) as Array<{
               id: string
               name: string
               company: string | null
-              status: string
             }>
           }
           projects={
-            (projectsResult.data ?? []) as Array<{ id: string; name: string; client_id: string }>
+            (projectsResult.data ?? []) as Array<{ id: string; name: string; lead_id: string }>
           }
-          initialClientId={client_id}
-          initialLeadId={lead_id}
+          initialLeadId={lead_id ?? (legacyRecipient?.data?.lead_id as string | undefined)}
+          initialProjectId={project_id}
           aiEnabled={isAIEnabled()}
         />
       )}

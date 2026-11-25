@@ -14,7 +14,7 @@ import { createServerClient } from '@/lib/supabase/server'
 // Schema
 // ---------------------------------------------------------------------------
 const subscriptionFields = z.object({
-  client_id: z.string().uuid('Cliente requerido'),
+  lead_id: z.string().uuid('Lead requerido'),
   project_id: z.string().uuid().optional().or(z.literal('')),
   name: z.string().min(1, 'Nombre requerido').max(200),
   description: z.string().max(1000).optional(),
@@ -48,6 +48,22 @@ const updateSubscriptionSchema = subscriptionFields
 // ---------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------
+async function getSubscriptionBillingId(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  leadId: string,
+) {
+  const { data, error } = await supabase
+    .from('clients')
+    .select('id')
+    .eq('lead_id', leadId)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!data)
+    throw new Error('Añade los datos de facturación del lead antes de crear una suscripción')
+  return data.id
+}
+
 export const createSubscription = defineAction({
   name: 'subscriptions.create',
   schema: subscriptionSchema,
@@ -55,8 +71,10 @@ export const createSubscription = defineAction({
   revalidate: ['/subscriptions'],
   async handler(input) {
     const supabase = await createServerClient()
+    const clientId = await getSubscriptionBillingId(supabase, input.lead_id)
     const { error } = await supabase.from('subscriptions').insert({
       ...input,
+      client_id: clientId,
       // Internal cursor managed by the recurring-billing job. The first
       // invoice is due on the subscription start date.
       next_invoice_date: input.start_date,
@@ -76,7 +94,7 @@ export const updateSubscription = defineAction({
     const supabase = await createServerClient()
     const { data: current, error: currentError } = await supabase
       .from('subscriptions')
-      .select('status, next_invoice_date')
+      .select('status, next_invoice_date, lead_id')
       .eq('id', id)
       .eq('version', expected_version)
       .maybeSingle()
@@ -96,6 +114,9 @@ export const updateSubscription = defineAction({
       .from('subscriptions')
       .update({
         ...rest,
+        ...(rest.lead_id !== current.lead_id
+          ? { client_id: await getSubscriptionBillingId(supabase, rest.lead_id) }
+          : {}),
         project_id: rest.project_id || null,
         end_date: rest.end_date || null,
         ...(nextInvoiceDate ? { next_invoice_date: nextInvoiceDate } : {}),
