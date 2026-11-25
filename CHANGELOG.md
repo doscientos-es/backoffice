@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.231
+
+### Nuevas funciones
+
+- Implement lead avatar component with fallback logic
+
 ## 2026-11-25 — v0.1.230
 
 ### Nuevas funciones
