@@ -55,18 +55,17 @@ export default async function ProjectPortalPage({
   const { data: project } = await admin
     .from('projects')
     .select(
-      'id, name, status, starts_at, ends_at, portal_password_hash, is_client_visible, clients(name, lead_id, leads(language))',
+      'id, name, status, starts_at, ends_at, portal_password_hash, is_client_visible, clients(name), leads(language)',
     )
     .eq('portal_token', token)
     .is('deleted_at', null)
     .maybeSingle()
   if (!project) notFound()
-  const clientRelation = (
-    project as unknown as {
-      clients: { name: string; leads?: { language?: string | null } | null } | null
-    }
-  ).clients
-  const portalLanguage = resolvePortalLanguage(clientRelation?.leads?.language, lang)
+  const { clients: clientRelation, leads: leadRelation } = project as unknown as {
+    clients: { name: string } | null
+    leads: { language: string | null } | null
+  }
+  const portalLanguage = resolvePortalLanguage(leadRelation?.language, lang)
   const copy =
     portalLanguage === 'ca'
       ? {

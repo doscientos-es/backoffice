@@ -13,6 +13,7 @@ const state = vi.hoisted(() => ({
   linkedClients: [] as Array<{ id: string; name: string; deleted_at: string | null }>,
   linkedClientError: null as string | null,
   commercialFilters: [] as Array<{ table: string; column: string; value: unknown }>,
+  relatedFilters: [] as Array<{ table: string; filter: string }>,
   projectRows: [] as Record<string, unknown>[],
   invoiceRows: [] as Record<string, unknown>[],
   companyResearch: null as Record<string, unknown> | null,
@@ -95,6 +96,8 @@ vi.mock('@/lib/supabase/server', () => ({
             state.searchFilters.push(filter)
             state.leadOperations.push('search')
           }
+          if (table === 'tasks' || table === 'attachments')
+            state.relatedFilters.push({ table, filter })
           return builder
         },
         in: (column: string, values: unknown[]) => {
@@ -553,6 +556,20 @@ describe('getLeadDetail resilience', () => {
     expect(result?.linkedClientId).toBeNull()
     expect(result?.projects[0]?.id).toBe('project-old')
     expect(result?.invoices[0]?.id).toBe('invoice-old')
+  })
+
+  it('includes project tasks and project or proposal files without rewriting their ownership', async () => {
+    state.relatedFilters.length = 0
+
+    await getLeadDetail('lead-1')
+
+    expect(state.relatedFilters).toEqual([
+      { table: 'tasks', filter: 'lead_id.eq."lead-1",lead_project.not.is.null' },
+      {
+        table: 'attachments',
+        filter: 'lead_id.eq."lead-1",lead_project.not.is.null,lead_proposal.not.is.null',
+      },
+    ])
   })
 
   it('throws a query failure instead of treating it as a missing lead', async () => {

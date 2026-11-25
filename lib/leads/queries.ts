@@ -395,12 +395,14 @@ export async function getLeadDetail(
       supabase
         .from('tasks')
         .select(
-          'id, title, status, due_date, description, priority, kind, action_type, start_at, completed_at',
+          'id, title, status, due_date, description, priority, kind, action_type, start_at, completed_at, lead_project:projects!tasks_project_id_fkey()',
         )
         .eq('kind', 'task')
         .in('status', ['todo', 'in_progress', 'in_review'])
         .is('completed_at', null)
-        .eq('lead_id', id),
+        .eq('lead_project.lead_id', id)
+        .is('lead_project.deleted_at', null)
+        .or(`lead_id.eq.${JSON.stringify(id)},lead_project.not.is.null`),
     )
       .order('created_at', { ascending: false })
       .limit(LEAD_RELATED_LIMIT),
@@ -416,8 +418,14 @@ export async function getLeadDetail(
       .limit(LEAD_RELATED_LIMIT),
     supabase
       .from('attachments')
-      .select('name, mime_type')
-      .eq('lead_id', id)
+      .select(
+        'name, mime_type, lead_project:projects!attachments_project_id_fkey(), lead_proposal:proposals!attachments_proposal_id_fkey()',
+      )
+      .eq('lead_project.lead_id', id)
+      .is('lead_project.deleted_at', null)
+      .eq('lead_proposal.lead_id', id)
+      .is('lead_proposal.deleted_at', null)
+      .or(`lead_id.eq.${JSON.stringify(id)},lead_project.not.is.null,lead_proposal.not.is.null`)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(LEAD_RELATED_LIMIT),

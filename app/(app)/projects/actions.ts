@@ -244,31 +244,22 @@ export async function publishProjectPortal(input: unknown) {
   const { data, error } = await supabase
     .from('projects')
     .select(
-      'id, name, portal_token, is_client_visible, portal_invite_sent_at, portal_invite_recipient, portal_invite_resend_id, clients(name, email, lead_id, leads(language))',
+      'id, name, portal_token, is_client_visible, portal_invite_sent_at, portal_invite_recipient, portal_invite_resend_id, clients(name, email, phone), leads(name, email, phone, language)',
     )
     .eq('id', parsed.data.id)
     .is('deleted_at', null)
     .maybeSingle()
   if (error || !data) return { ok: false as const, error: 'Proyecto no encontrado' }
 
-  const project = data as unknown as {
-    id: string
-    name: string
-    portal_token: string | null
-    is_client_visible: boolean
+  const project = data as unknown as ProjectPortalEmailData & {
     portal_invite_sent_at: string | null
     portal_invite_recipient: string | null
     portal_invite_resend_id: string | null
-    clients: {
-      name: string
-      email: string | null
-      lead_id: string | null
-      leads: { language: 'es' | 'ca' | 'en' | null } | null
-    } | null
   }
   if (!project.portal_token)
     return { ok: false as const, error: 'El proyecto no tiene enlace público' }
-  if (!project.clients?.email) return { ok: false as const, error: 'El cliente no tiene email' }
+  const recipientEmail = project.clients?.email ?? project.leads?.email
+  if (!recipientEmail) return { ok: false as const, error: 'El destinatario no tiene email' }
   if (project.portal_invite_sent_at && !parsed.data.resend && project.is_client_visible) {
     return { ok: true as const, sentAt: project.portal_invite_sent_at, alreadySent: true }
   }
@@ -279,7 +270,7 @@ export async function publishProjectPortal(input: unknown) {
     .update({
       is_client_visible: true,
       portal_invite_sent_at: claimedAt,
-      portal_invite_recipient: project.clients.email,
+      portal_invite_recipient: recipientEmail,
       portal_invite_resend_id: null,
     })
     .eq('id', project.id)
@@ -294,31 +285,15 @@ export async function publishProjectPortal(input: unknown) {
   }
 
   try {
-    const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
-    const language = project.clients?.leads?.language ?? 'es'
-    const portalUrl = `${appUrl}/p/project/${project.portal_token}?lang=${language}`
-    const html = await renderEmail(
-      ProjectKickoffEmail({
-        clientName: project.clients.name,
-        projectName: project.name,
-        portalUrl,
-        appUrl,
-        message: parsed.data.message || undefined,
-        language,
-      }),
-    )
+    const rendered = await renderProjectPortalEmail(project, parsed.data.message || undefined)
+    if (!rendered.ok) throw new Error(rendered.error)
     const sent = await sendEmail({
       fromName: user.name,
       fromAlias: user.emailAlias ?? user.email,
-      to: project.clients.email,
+      to: recipientEmail,
       replyTo: user.email,
-      subject:
-        language === 'ca'
-          ? `Comencem amb ${project.name}`
-          : language === 'en'
-            ? `Getting started with ${project.name}`
-            : `Arrancamos con ${project.name}`,
-      html,
+      subject: rendered.subject,
+      html: rendered.html,
       tags: { project_id: project.id, kind: 'project_kickoff' },
     })
     await supabase
@@ -349,18 +324,15 @@ const ProjectPortalEmailInput = z.object({
   message: z.string().trim().max(1000, 'El mensaje es demasiado largo').optional(),
 })
 
+type ProjectPortalContact = { name: string; email: string | null; phone: string | null }
+
 type ProjectPortalEmailData = {
   id: string
   name: string
   portal_token: string | null
   is_client_visible: boolean
-  clients: {
-    name: string
-    email: string | null
-    phone: string | null
-    lead_id: string | null
-    leads: { language: 'es' | 'ca' | 'en' | null } | null
-  } | null
+  clients: ProjectPortalContact | null
+  leads: (ProjectPortalContact & { language: 'es' | 'ca' | 'en' | null }) | null
 }
 
 async function findProjectPortalEmailData(id: string): Promise<ProjectPortalEmailData | null> {
@@ -368,7 +340,7 @@ async function findProjectPortalEmailData(id: string): Promise<ProjectPortalEmai
   const { data, error } = await supabase
     .from('projects')
     .select(
-      'id, name, portal_token, is_client_visible, clients(name, email, phone, lead_id, leads(language))',
+      'id, name, portal_token, is_client_visible, clients(name, email, phone), leads(name, email, phone, language)',
     )
     .eq('id', id)
     .is('deleted_at', null)
@@ -386,11 +358,12 @@ async function renderProjectPortalEmail(
     return { ok: false as const, error: 'El proyecto no tiene enlace público' }
 
   const appUrl = externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)
-  const language = project.clients?.leads?.language ?? 'es'
+  const language = project.leads?.language ?? 'es'
+  const recipientName = project.clients?.name ?? project.leads?.name
   const portalUrl = `${appUrl}/p/project/${project.portal_token}?lang=${language}`
   const html = await renderEmail(
     ProjectKickoffEmail({
-      clientName: project.clients?.name ?? 'Hola',
+      clientName: recipientName ?? 'Hola',
       projectName: project.name,
       portalUrl,
       appUrl,
@@ -409,9 +382,9 @@ async function renderProjectPortalEmail(
           : `Arrancamos con ${project.name}`,
     html,
     portalUrl,
-    clientEmail: project.clients?.email ?? null,
-    clientPhone: project.clients?.phone ?? null,
-    clientName: project.clients?.name ?? 'cliente',
+    clientEmail: project.clients?.email ?? project.leads?.email ?? null,
+    clientPhone: project.clients?.phone ?? project.leads?.phone ?? null,
+    clientName: recipientName ?? 'cliente',
   }
 }
 
