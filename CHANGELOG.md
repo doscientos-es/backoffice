@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.225
+
+### Nuevas funciones
+
+- Add billing tab and panel for lead details
+- Update document header and decision brief layout
+
 ## 2026-11-25 — v0.1.224
 
 ### Nuevas funciones

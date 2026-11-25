@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.225",
+      "date": "2026-11-25",
+      "title": "v0.1.225",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add billing tab and panel for lead details",
+            "Update document header and decision brief layout"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "3d6f540e28206f6d67a19669c138992f418bc6cf",
+          "type": "feat",
+          "scope": "lead",
+          "breaking": false,
+          "description": "Add billing tab and panel for lead details"
+        },
+        {
+          "sha": "4212525822ccc160cf1c8f8500ebf019be4c2637",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Update document header and decision brief layout"
+        }
+      ]
+    },
+    {
       "version": "0.1.224",
       "date": "2026-11-25",
       "title": "v0.1.224",
