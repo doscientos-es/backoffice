@@ -15,14 +15,30 @@ export function LeadBillingPanel({
   client,
   linkedClientId,
   canEdit,
+  canRead = true,
   defaults = {},
 }: {
   leadId: string
   client: Client | null
   linkedClientId: string | null
   canEdit: boolean
+  canRead?: boolean
   defaults?: ClientFormDefaults
 }) {
+  if (!canRead) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Datos de facturación</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            No tienes acceso a los datos de facturación.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
   if (!client) {
     return (
       <Card>

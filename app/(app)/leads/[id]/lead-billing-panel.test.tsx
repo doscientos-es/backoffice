@@ -83,4 +83,18 @@ describe('LeadBillingPanel', () => {
     render(<LeadBillingPanel leadId="lead-1" linkedClientId={null} client={null} canEdit={false} />)
     expect(screen.queryByRole('button', { name: /Añadir facturación/ })).toBeNull()
   })
+
+  it('does not offer billing creation when the linked client is not visible', () => {
+    render(
+      <LeadBillingPanel
+        leadId="lead-1"
+        linkedClientId={null}
+        client={null}
+        canEdit
+        canRead={false}
+      />,
+    )
+    expect(screen.getByText('No tienes acceso a los datos de facturación.')).toBeDefined()
+    expect(screen.queryByRole('button', { name: /Añadir facturación/ })).toBeNull()
+  })
 })

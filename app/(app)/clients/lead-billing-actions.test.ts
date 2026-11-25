@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
   role: 'member',
+  accessScope: 'all',
   lead: { id: '11111111-1111-4111-8111-111111111111' } as { id: string } | null,
   leadError: null as { message: string } | null,
   insertError: null as { code: string; message: string } | null,
+  visibleClient: true,
   inserted: [] as Record<string, unknown>[],
   verify: vi.fn(),
 }))
@@ -13,7 +15,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/auth', () => ({
   requireRole: async (roles: string[]) => {
     if (!roles.includes(state.role)) throw new Error('Sin permiso')
-    return { id: 'member-1', role: state.role }
+    return { id: 'member-1', role: state.role, accessScope: state.accessScope }
   },
   requireUser: vi.fn(),
 }))
@@ -34,6 +36,17 @@ vi.mock('@/lib/supabase/server', () => ({
       }
       if (table !== 'clients') throw new Error('Unexpected table')
       return {
+        select: () => {
+          const query = {
+            eq: () => query,
+            is: () => query,
+            maybeSingle: async () => ({
+              data: state.visibleClient ? { id: 'client-1' } : null,
+              error: null,
+            }),
+          }
+          return query
+        },
         insert: (record: Record<string, unknown>) => {
           state.inserted.push(record)
           return {
@@ -50,16 +63,18 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }))
 
-import { createLeadBilling } from './actions'
+import { createLeadBilling, validateClientFiscalIdentity } from './actions'
 
 const leadId = '11111111-1111-4111-8111-111111111111'
 
 describe('createLeadBilling', () => {
   beforeEach(() => {
     state.role = 'member'
+    state.accessScope = 'all'
     state.lead = { id: leadId }
     state.leadError = null
     state.insertError = null
+    state.visibleClient = true
     state.inserted = []
     state.verify.mockReset()
   })
@@ -102,5 +117,29 @@ describe('createLeadBilling', () => {
       error: 'Lead no encontrado',
     })
     expect(state.inserted).toEqual([])
+  })
+
+  it('rejects assigned-only users without exposing or creating billing data', async () => {
+    state.accessScope = 'assigned'
+    expect(await createLeadBilling({ leadId, name: 'Ejemplo' })).toEqual({
+      ok: false,
+      error: 'No tienes acceso a los datos de facturación.',
+    })
+    expect(state.inserted).toEqual([])
+  })
+
+  it('checks client access before calling the privileged AEAT verification', async () => {
+    const clientId = '22222222-2222-4222-8222-222222222222'
+    state.role = 'sales'
+    state.visibleClient = false
+    expect(await validateClientFiscalIdentity({ clientId })).toEqual({
+      ok: false,
+      error: 'Cliente no encontrado',
+    })
+    expect(state.verify).not.toHaveBeenCalled()
+    state.visibleClient = true
+    state.verify.mockResolvedValue({ status: 'verified', aeatName: null, message: 'Validado' })
+    expect((await validateClientFiscalIdentity({ clientId })).ok).toBe(true)
+    expect(state.verify).toHaveBeenCalledWith(clientId, 'member-1')
   })
 })

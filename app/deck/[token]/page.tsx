@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 
+import { resolveRecipientLogo } from '@/app/p/proposal/[token]/_lib/recipient-logo'
 import { getCurrentUser } from '@/lib/auth'
 import type { BillingCycle } from '@/lib/finance'
 import { scopedLogger } from '@/lib/logger'
@@ -133,7 +134,9 @@ export default async function DeckPage({
 
   const { data: proposal, error: proposalError } = await admin
     .from('proposals')
-    .select('*, clients(name, email, logo_url, leads(language)), leads(language)')
+    .select(
+      '*, clients(name, email, logo_url, leads(language)), leads(name, company, email, language)',
+    )
     .eq('portal_token', token)
     .is('deleted_at', null)
     .maybeSingle()
@@ -236,6 +239,16 @@ export default async function DeckPage({
       clients: { name: string; email: string | null; logo_url: string | null } | null
     }
   ).clients
+  const lead = proposal.leads as {
+    name: string | null
+    company: string | null
+    email: string | null
+  } | null
+  const recipientLogo = await resolveRecipientLogo(
+    admin,
+    client?.logo_url ?? null,
+    client ? null : ((proposal.lead_id as string | null) ?? null),
+  )
 
   const deckProposal: DeckProposal = {
     id: proposal.id as string,
@@ -262,9 +275,9 @@ export default async function DeckPage({
     discount_reason: (proposal.discount_reason as string | null) ?? null,
     valid_until: (proposal.valid_until as string | null) ?? null,
     created_at: (proposal.created_at as string | null) ?? null,
-    client_name: client?.name ?? null,
-    client_email: client?.email ?? null,
-    client_logo_url: client?.logo_url ?? null,
+    client_name: client?.name ?? lead?.company ?? lead?.name ?? null,
+    client_email: client?.email ?? lead?.email ?? null,
+    client_logo_url: recipientLogo,
   }
 
   const deckItems = (items ?? []) as unknown as DeckProposalItem[]

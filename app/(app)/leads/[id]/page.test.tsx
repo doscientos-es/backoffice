@@ -53,7 +53,7 @@ function rowsInSection(node: ReactNode, heading: string) {
 
 describe('LeadDetailPage', () => {
   it('connects the billing tab to the existing linked client', async () => {
-    requireUser.mockResolvedValue({ id: 'member-1', role: 'viewer' })
+    requireUser.mockResolvedValue({ id: 'member-1', role: 'viewer', accessScope: 'all' })
     getLeadDetail.mockResolvedValue({
       lead: { id: 'lead-1', name: 'María', status: 'new', created_at: '2026-09-22' },
       interactions: [],
@@ -76,6 +76,30 @@ describe('LeadDetailPage', () => {
     const panel = elements(page).find((element) => element.type === LeadBillingPanel)
     expect(getClientBillingDetail).toHaveBeenCalledWith('client-1')
     expect(panel?.props).toMatchObject({ leadId: 'lead-1', client, canEdit: false })
+  })
+
+  it('does not offer fiscal data for a user without full client scope', async () => {
+    requireUser.mockResolvedValue({ id: 'member-1', role: 'sales', accessScope: 'assigned' })
+    getLeadDetail.mockResolvedValue({
+      lead: { id: 'lead-1', name: 'María', status: 'new', created_at: '2026-09-22' },
+      interactions: [],
+      auditEvents: [],
+      linkedClientId: null,
+      linkedClientName: null,
+      proposals: [],
+      projects: [],
+      invoices: [],
+      contacts: [],
+      tasks: [],
+      reminders: [],
+      attachments: [],
+      discoveryQuestions: [],
+    })
+    getClientBillingDetail.mockClear()
+    const page = await LeadDetailPage({ params: Promise.resolve({ id: 'lead-1' }) })
+    const panel = elements(page).find((element) => element.type === LeadBillingPanel)
+    expect(panel?.props).toMatchObject({ canRead: false, canEdit: false })
+    expect(getClientBillingDetail).not.toHaveBeenCalled()
   })
 
   it('shows the full name in Contacto and the status only in Oportunidad', async () => {

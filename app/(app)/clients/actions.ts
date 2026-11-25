@@ -10,6 +10,7 @@ import { validateAndRecordClientFiscalIdentity } from '@/lib/clients/fiscal-veri
 import type { FiscalVerificationStatus } from '@/lib/clients/types'
 import { VersionConflictError } from '@/lib/concurrency/version-conflict'
 import { findCompanyByCif, getCompanyDetails, isCifNumber } from '@/lib/openmercantil/client'
+import { effectiveAccessScope } from '@/lib/permissions'
 import {
   CreateClientInput,
   CreateLeadBillingInput,
@@ -102,9 +103,12 @@ export async function createClient(formData: FormData): Promise<void> {
 export const createLeadBilling = defineAction({
   name: 'leads.createBilling',
   schema: CreateLeadBillingInput,
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin', 'member', 'sales'],
   revalidate: (_payload, input) => ['/leads', `/leads/${input.leadId}`, '/clients'],
   handler: async (input, { user }) => {
+    if (effectiveAccessScope(user.role, user.accessScope) !== 'all') {
+      throw new Error('No tienes acceso a los datos de facturación.')
+    }
     const supabase = await createServerClient()
     const { data: lead, error: leadError } = await supabase
       .from('leads')
@@ -203,9 +207,20 @@ export const validateClientFiscalIdentity = defineAction<
 >({
   name: 'clients.validateFiscalIdentity',
   schema: ValidateClientFiscalIdentityInput,
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin', 'member', 'sales'],
   revalidate: (_payload, input) => [`/clients/${input.clientId}`, '/clients'],
-  handler: ({ clientId }, { user }) => validateAndRecordClientFiscalIdentity(clientId, user.id),
+  handler: async ({ clientId }, { user }) => {
+    const supabase = await createServerClient()
+    const { data, error } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('id', clientId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!data) throw new Error('Cliente no encontrado')
+    return validateAndRecordClientFiscalIdentity(clientId, user.id)
+  },
 })
 
 // ---------- DELETE ----------

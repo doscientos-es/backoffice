@@ -89,6 +89,10 @@ export default async function LeadDetailPage({
   const user = await requireUser()
   const canSeeProposalPrices = can(user.role, 'proposals.prices')
   const canEdit = user.role !== 'viewer'
+  const canReadBilling =
+    can(user.role, 'clients.read') &&
+    (user.role === 'owner' || user.role === 'admin' || user.accessScope === 'all')
+  const canEditBilling = canReadBilling && can(user.role, 'clients.write')
 
   const [result, members] = await Promise.all([
     getLeadDetail(id, { includeProposalPrices: canSeeProposalPrices }),
@@ -112,7 +116,8 @@ export default async function LeadDetailPage({
     attachments,
     discoveryQuestions,
   } = result
-  const billingClient = linkedClientId ? await getClientBillingDetail(linkedClientId) : null
+  const billingClient =
+    canReadBilling && linkedClientId ? await getClientBillingDetail(linkedClientId) : null
 
   const aiEnabled = isAIEnabled()
   const ownerSuggestion = canEdit
@@ -598,7 +603,8 @@ export default async function LeadDetailPage({
               leadId={lead.id}
               linkedClientId={linkedClientId}
               client={billingClient}
-              canEdit={canEdit}
+              canEdit={canEditBilling}
+              canRead={canReadBilling}
               defaults={{
                 name: lead.company || lead.name,
                 email: lead.email,
