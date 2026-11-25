@@ -284,10 +284,10 @@ export default async function LeadDetailPage({
           <LeadTabPanel tab="resumen">
             <Card>
               <CardContent className="pt-5">
-                <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-x-10 gap-y-8 md:grid-cols-2">
                   <section className="min-w-0">
-                    <h3 className="mb-4 text-sm font-semibold">Contacto</h3>
-                    <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                    <h3 className="mb-4 text-base font-semibold">Contacto</h3>
+                    <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-sm">
                       {alias && <DetailRow label="Alias">{alias}</DetailRow>}
                       <DetailRow label="Nombre">{lead.name}</DetailRow>
                       {(lead.status === 'lost' || lead.status === 'not_interested') &&
@@ -349,8 +349,8 @@ export default async function LeadDetailPage({
                   </section>
 
                   <section className="min-w-0">
-                    <h3 className="mb-4 text-sm font-semibold">Oportunidad</h3>
-                    <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                    <h3 className="mb-4 text-base font-semibold">Oportunidad</h3>
+                    <DetailGrid className="grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-3 text-sm">
                       <DetailRow label="Estado">
                         <StatusBadge meta={LEAD_STATUS} value={lead.status as string} />
                       </DetailRow>
@@ -364,7 +364,9 @@ export default async function LeadDetailPage({
                       )}
                       {lead.estimated_value != null && (
                         <DetailRow label="Valor estimado">
-                          {formatEUR(Number(lead.estimated_value))}
+                          <span className="font-semibold tabular-nums">
+                            {formatEUR(Number(lead.estimated_value))}
+                          </span>
                         </DetailRow>
                       )}
                       <DetailRow label="Creado">{formatDate(lead.created_at as string)}</DetailRow>
@@ -377,10 +379,12 @@ export default async function LeadDetailPage({
                       )}
                     </DetailGrid>
                   </section>
+                </div>
 
+                <div className="mt-8 grid gap-6 border-t border-border pt-6 md:grid-cols-2 xl:grid-cols-3">
                   <section className="min-w-0">
                     <h3 className="mb-4 text-sm font-semibold">Captación</h3>
-                    <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
+                    <DetailGrid className="grid-cols-[90px_minmax(0,1fr)] gap-x-3 gap-y-3 text-sm">
                       {lead.source && <DetailRow label="Origen">{lead.source}</DetailRow>}
                       {campaignName && <DetailRow label="Campaña Meta">{campaignName}</DetailRow>}
                       {metaAdId && metaAdName && (
@@ -433,60 +437,54 @@ export default async function LeadDetailPage({
                       )}
                     </DetailGrid>
                   </section>
+                  {lead.landing_subject || firstTouch || lastTouch ? (
+                    <section className="min-w-0">
+                      <h3 className="mb-2 text-sm font-semibold">Recorrido</h3>
+                      <div className="space-y-2 text-xs leading-5 text-muted-foreground">
+                        {lead.landing_subject ? (
+                          <p>
+                            <span className="font-medium text-foreground">Asunto:</span>{' '}
+                            {lead.landing_subject}
+                          </p>
+                        ) : null}
+                        {firstTouch ? (
+                          <p>
+                            <span className="font-medium text-foreground">First touch:</span>{' '}
+                            {firstTouch}
+                          </p>
+                        ) : null}
+                        {lastTouch ? (
+                          <p>
+                            <span className="font-medium text-foreground">Last touch:</span>{' '}
+                            {lastTouch}
+                          </p>
+                        ) : null}
+                      </div>
+                    </section>
+                  ) : null}
+                  {lead.notes ? (
+                    <section className="min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-sm font-semibold">Notas</h3>
+                        <LeadNotesDialog notes={lead.notes as string} />
+                      </div>
+                      <p className="mt-2 line-clamp-5 text-sm leading-6 whitespace-pre-wrap">
+                        {lead.notes as string}
+                      </p>
+                    </section>
+                  ) : null}
                 </div>
-
-                {(lead.landing_subject || firstTouch || lastTouch || lead.notes) && (
-                  <div className="mt-8 grid gap-6 border-t border-border pt-6 sm:grid-cols-2">
-                    {lead.landing_subject || firstTouch || lastTouch ? (
-                      <section className="min-w-0">
-                        <h3 className="mb-2 text-sm font-semibold">Recorrido</h3>
-                        <div className="space-y-2 text-xs leading-5 text-muted-foreground">
-                          {lead.landing_subject ? (
-                            <p>
-                              <span className="font-medium text-foreground">Asunto:</span>{' '}
-                              {lead.landing_subject}
-                            </p>
-                          ) : null}
-                          {firstTouch ? (
-                            <p>
-                              <span className="font-medium text-foreground">First touch:</span>{' '}
-                              {firstTouch}
-                            </p>
-                          ) : null}
-                          {lastTouch ? (
-                            <p>
-                              <span className="font-medium text-foreground">Last touch:</span>{' '}
-                              {lastTouch}
-                            </p>
-                          ) : null}
-                        </div>
-                      </section>
-                    ) : (
-                      <span />
-                    )}
-                    {lead.notes ? (
-                      <section className="min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <h3 className="text-sm font-semibold">Notas</h3>
-                          <LeadNotesDialog notes={lead.notes as string} />
-                        </div>
-                        <p className="mt-2 line-clamp-5 text-sm leading-6 whitespace-pre-wrap">
-                          {lead.notes as string}
-                        </p>
-                      </section>
-                    ) : null}
-                  </div>
-                )}
               </CardContent>
             </Card>
-            <SectionBoundary label="No se pudieron cargar los adjuntos">
-              <LeadClientAttachmentsSection
-                leadId={lead.id}
-                clientId={linkedClientId}
-                entityType="lead"
+            {canEdit || nextActions.length > 0 ? (
+              <NextActionsCard
                 canEdit={canEdit}
+                leadId={id}
+                members={members}
+                currentUserId={user.id}
+                actions={nextActions}
               />
-            </SectionBoundary>
+            ) : null}
             <LeadCommercial
               leadId={lead.id as string}
               linkedClientId={linkedClientId}
@@ -516,16 +514,6 @@ export default async function LeadDetailPage({
               />
             ) : null}
 
-            {canEdit || nextActions.length > 0 ? (
-              <NextActionsCard
-                canEdit={canEdit}
-                leadId={id}
-                members={members}
-                currentUserId={user.id}
-                actions={nextActions}
-              />
-            ) : null}
-
             <LeadRecentInteractions
               leadId={lead.id as string}
               leadName={displayName}
@@ -545,6 +533,14 @@ export default async function LeadDetailPage({
                 tasks,
               })}
             />
+            <SectionBoundary label="No se pudieron cargar los adjuntos">
+              <LeadClientAttachmentsSection
+                leadId={lead.id}
+                clientId={linkedClientId}
+                entityType="lead"
+                canEdit={canEdit}
+              />
+            </SectionBoundary>
           </LeadTabPanel>
 
           <LeadTabPanel tab="actividad">

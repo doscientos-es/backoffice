@@ -101,6 +101,30 @@ describe('attachment list', () => {
     expect(link.getAttribute('target')).toBeNull()
   })
 
+  it.each(['lead', 'client', 'project', 'proposal', 'expense'] as const)(
+    'keeps uploads and keyboard-accessible actions available for %s attachments',
+    async (entityType) => {
+      render(<AttachmentSection {...BASE_PROPS} entityType={entityType} attachments={items} />)
+      const input = document.querySelector('input[multiple]') as HTMLInputElement
+      const click = vi.spyOn(input, 'click').mockImplementation(() => {})
+      fireEvent.click(screen.getByRole('button', { name: 'Añadir archivos' }))
+      expect(click).toHaveBeenCalledOnce()
+
+      const preview = screen.getByRole('button', { name: 'Ver report.pdf' })
+      preview.focus()
+      expect(document.activeElement).toBe(preview)
+      simulateFileInput(input, [makeFile('new.pdf')])
+      await waitFor(() =>
+        expect(mockUpload).toHaveBeenCalledWith(
+          expect.objectContaining({ name: 'new.pdf' }),
+          entityType,
+          'lead-1',
+          expect.any(Function),
+        ),
+      )
+    },
+  )
+
   it('offers a separate preview for images and no preview for unsupported files', () => {
     render(
       <AttachmentSection

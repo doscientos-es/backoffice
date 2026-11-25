@@ -469,11 +469,12 @@ export function AttachmentSection({
             disabled={uploading || deletingAll}
             onClick={() => fileRef.current?.click()}
             className={cn(
-              'flex w-full items-center gap-3 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-3 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-wait disabled:opacity-60',
+              'flex w-full items-center gap-3 rounded-lg border border-dashed border-border bg-muted/30 px-3 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-wait disabled:opacity-60',
+              visibleAttachments.length > 0 ? 'py-2' : 'py-3',
               dragActive && 'border-primary bg-primary/5',
             )}
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-background text-primary">
+            <span className="flex size-8 shrink-0 items-center justify-center text-primary">
               {uploading ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
               ) : (
@@ -486,9 +487,11 @@ export function AttachmentSection({
                   ? `Subiendo ${progress?.done ?? 0}/${progress?.total ?? 0}…`
                   : dragActive
                     ? 'Suelta los archivos para adjuntarlos'
-                    : 'Arrastra archivos aquí'}
+                    : visibleAttachments.length > 0
+                      ? 'Añadir archivos'
+                      : 'Arrastra archivos aquí'}
               </span>
-              {!uploading && (
+              {!uploading && visibleAttachments.length === 0 && (
                 <span className="block text-xs text-muted-foreground">
                   o pulsa para seleccionar uno o varios
                 </span>
@@ -606,13 +609,16 @@ export function AttachmentSection({
             No hay adjuntos que coincidan con los filtros.
           </p>
         ) : (
-          <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),1fr))] gap-2">
+          <ul
+            aria-label={title}
+            className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))] gap-x-4"
+          >
             {filteredAttachments.map((a) => (
               <li
                 key={a.id}
-                className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted/20 px-2.5 py-2"
+                className="group/attachment flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 transition-colors focus-within:bg-muted/50 hover:bg-muted/50"
               >
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground">
+                <span className="flex size-6 shrink-0 items-center justify-center text-muted-foreground">
                   {a.source === 'drive' ? (
                     <GoogleDriveIcon />
                   ) : (
@@ -631,57 +637,59 @@ export function AttachmentSection({
                     {a.size_bytes ? ` · ${formatSize(a.size_bytes)}` : ''}
                   </p>
                 </div>
-                {a.source === 'drive' ? (
-                  a.web_view_link && (
-                    <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
-                      <Link
-                        href={a.web_view_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Abrir en Drive"
-                      >
-                        <ExternalLink className="size-3.5" />
-                        <span className="sr-only">Abrir en Drive</span>
-                      </Link>
-                    </Button>
-                  )
-                ) : (
-                  <>
-                    {canPreviewAttachment(a.mime_type) ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 shrink-0"
-                        aria-label={`Ver ${a.name}`}
-                        title={`Ver ${a.name}`}
-                        onClick={() => setPreviewAttachment(a)}
-                      >
-                        <Eye className="size-3.5" />
+                <div className="flex shrink-0 items-center gap-0.5 transition-opacity group-focus-within/attachment:opacity-100 group-hover/attachment:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:opacity-0">
+                  {a.source === 'drive' ? (
+                    a.web_view_link && (
+                      <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
+                        <Link
+                          href={a.web_view_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Abrir en Drive"
+                        >
+                          <ExternalLink className="size-3.5" />
+                          <span className="sr-only">Abrir en Drive: {a.name}</span>
+                        </Link>
                       </Button>
-                    ) : null}
-                    <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
-                      <a href={`/api/documents/${a.id}/download`} title={`Descargar ${a.name}`}>
-                        <Download className="size-3.5" />
-                        <span className="sr-only">Descargar {a.name}</span>
-                      </a>
+                    )
+                  ) : (
+                    <>
+                      {canPreviewAttachment(a.mime_type) ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 shrink-0"
+                          aria-label={`Ver ${a.name}`}
+                          title={`Ver ${a.name}`}
+                          onClick={() => setPreviewAttachment(a)}
+                        >
+                          <Eye className="size-3.5" />
+                        </Button>
+                      ) : null}
+                      <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
+                        <a href={`/api/documents/${a.id}/download`} title={`Descargar ${a.name}`}>
+                          <Download className="size-3.5" />
+                          <span className="sr-only">Descargar {a.name}</span>
+                        </a>
+                      </Button>
+                    </>
+                  )}
+                  {canEdit ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 shrink-0"
+                      aria-label={`Eliminar adjunto ${a.name}`}
+                      title="Eliminar adjunto"
+                      disabled={uploading || deletingId !== null || deletingAll}
+                      onClick={() => void removeAttachment(a)}
+                    >
+                      <Trash2 className="size-3.5" />
                     </Button>
-                  </>
-                )}
-                {canEdit ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 shrink-0"
-                    aria-label={`Eliminar adjunto ${a.name}`}
-                    title="Eliminar adjunto"
-                    disabled={uploading || deletingId !== null || deletingAll}
-                    onClick={() => void removeAttachment(a)}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                ) : null}
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>
