@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.219",
+      "date": "2026-11-25",
+      "title": "v0.1.219",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Hide deleted attachments immediately and restore on failure"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "6e185d10140eb3697aafbadb4c1de0bb0c5cc8d3",
+          "type": "feat",
+          "scope": "attachments",
+          "breaking": false,
+          "description": "Hide deleted attachments immediately and restore on failure"
+        }
+      ]
+    },
+    {
       "version": "0.1.218",
       "date": "2026-11-25",
       "title": "v0.1.218",
