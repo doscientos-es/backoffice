@@ -83,6 +83,8 @@ describe('buildSlides', () => {
     expect(slides.map((slide) => slide.key)).toContain('timeline-4')
     render(slides.find((slide) => slide.key === 'timeline-0')?.element)
     expect(screen.getByText('Hito 5')).toBeDefined()
+    expect(screen.getByRole('heading', { name: 'Plazos del proyecto' })).toBeDefined()
+    expect(screen.queryByText('El camino')).toBeNull()
     const href =
       screen.getByRole('link', { name: /Añadir a mi calendario/ }).getAttribute('href') ?? ''
     expect(decodeURIComponent(href).match(/BEGIN:VEVENT/g)).toHaveLength(5)

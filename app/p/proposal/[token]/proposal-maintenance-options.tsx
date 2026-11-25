@@ -46,10 +46,7 @@ export function ProposalMaintenanceOptions({
   return (
     <section className="border-t border-zinc-100 bg-[#2A4227]/3 px-6 py-7 sm:px-8 dark:border-zinc-800/60 dark:bg-[#9CC196]/4">
       <header className="max-w-3xl">
-        <p className="text-[11px] font-semibold tracking-widest text-[#2A4227] uppercase dark:text-[#9CC196]">
-          {offer.heading}
-        </p>
-        <SectionLabel className="mt-2">{copy.heading}</SectionLabel>
+        <SectionLabel>{copy.heading}</SectionLabel>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{offer.intro}</p>
         <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
           {copy.intro}
@@ -82,7 +79,7 @@ export function ProposalMaintenanceOptions({
                 </div>
               </div>
               <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{plan.summary}</p>
-              <p className="mt-4 text-[11px] font-semibold tracking-wide text-[#2A4227] uppercase dark:text-[#9CC196]">
+              <p className="mt-4 text-xs font-semibold text-[#2A4227] dark:text-[#9CC196]">
                 {copy.includes}
               </p>
               <ul className="mt-3 space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
@@ -95,7 +92,7 @@ export function ProposalMaintenanceOptions({
               </ul>
               {plan.exclusions.length > 0 ? (
                 <div className="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800/60">
-                  <p className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                     {copy.excludes}
                   </p>
                   <ul className="mt-2 space-y-1.5 text-xs text-zinc-500 dark:text-zinc-400">

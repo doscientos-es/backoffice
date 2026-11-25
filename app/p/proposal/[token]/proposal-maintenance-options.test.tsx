@@ -10,6 +10,8 @@ describe('ProposalMaintenanceOptions', () => {
     render(<ProposalMaintenanceOptions offer={DEFAULT_MAINTENANCE_OFFER} />)
 
     expect(screen.getByRole('heading', { name: 'Opciones de mantenimiento' })).toBeDefined()
+    expect(screen.queryByText(DEFAULT_MAINTENANCE_OFFER.heading)).toBeNull()
+    expect(screen.getByText(DEFAULT_MAINTENANCE_OFFER.intro)).toBeDefined()
     const growthPlan = screen.getByRole('heading', { name: 'Crecimiento' }).closest('article')
     expect(within(growthPlan!).getByText('Recomendado')).toBeDefined()
     expect(screen.getAllByText('Incluye')).toHaveLength(DEFAULT_MAINTENANCE_OFFER.plans.length)

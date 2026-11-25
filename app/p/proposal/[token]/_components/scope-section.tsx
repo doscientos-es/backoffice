@@ -74,24 +74,13 @@ function ProposalTextBlock({ label, source }: { label: string; source: string })
   )
 }
 
-function ScopeModuleCard({ module, index, tr }: { module: ScopeModule; index: number; tr: Tr }) {
+function ScopeModuleCard({ module, tr }: { module: ScopeModule; tr: Tr }) {
   const duration = scopeModuleDurationText(module)
   return (
     <section aria-labelledby={`module-${module.id}`} className="py-4">
-      <div className="flex items-center gap-2.5">
-        <span
-          aria-hidden
-          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#BDFF7B] text-sm font-semibold text-zinc-950 tabular-nums"
-        >
-          {String(index + 1).padStart(2, '0')}
-        </span>
-        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-          {tr('Módulo', 'Mòdul', 'Module')} {String(index + 1).padStart(2, '0')}
-        </p>
-      </div>
       <h3
         id={`module-${module.id}`}
-        className="mt-4 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+        className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
       >
         {module.title}
       </h3>
@@ -150,8 +139,8 @@ export function ScopeSection({
         {tr('Alcance del proyecto', 'Abast del projecte', 'Project scope')}
       </SectionLabel>
       <div className="mt-6 flex flex-col gap-8">
-        {modules.map((module, index) => (
-          <ScopeModuleCard key={module.id} module={module} index={index} tr={tr} />
+        {modules.map((module) => (
+          <ScopeModuleCard key={module.id} module={module} tr={tr} />
         ))}
         {deliverables || acceptanceCriteria ? (
           <div

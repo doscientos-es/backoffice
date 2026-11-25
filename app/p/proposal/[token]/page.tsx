@@ -459,10 +459,7 @@ export default async function PortalProposalPage({
             <DevelopmentApproachSection source={developmentApproach} tr={tr} />
             {timeline.length > 0 ? (
               <section id="plazos" className={`${PROPOSAL_SURFACE_CLASS} scroll-mt-16 p-6 sm:p-8`}>
-                <p className="text-xs font-semibold tracking-widest text-[#2A4227] uppercase">
-                  {tr('El camino', 'El camí', 'The journey')}
-                </p>
-                <h2 className="mt-2 mb-5 text-2xl font-bold text-zinc-900">
+                <h2 className="mb-5 text-2xl font-bold text-zinc-900">
                   {tr('Plazos del proyecto', 'Terminis del projecte', 'Project timeline')}
                 </h2>
                 <TimelineChart

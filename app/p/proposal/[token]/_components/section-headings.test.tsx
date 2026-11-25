@@ -74,4 +74,18 @@ describe('proposal section headings', () => {
       'Revisió conjunta',
     ])
   })
+
+  it('shows module titles without a decorative module label', () => {
+    render(
+      <ScopeSection
+        modules={[{ id: '1', title: 'Magatzem', included: ['Estoc'], excluded: [] }]}
+        deliverables=""
+        acceptanceCriteria=""
+        tr={makeTr('ca')}
+      />,
+    )
+    expect(screen.getByRole('heading', { name: 'Magatzem' })).toBeDefined()
+    expect(screen.queryByText('Mòdul 01')).toBeNull()
+    expect(screen.getByText('Estoc')).toBeDefined()
+  })
 })

@@ -81,15 +81,15 @@ function CoverSlide({ proposal }: { proposal: DeckProposal }) {
       <Stagger i={0}>
         <LogoMark size={56} variant="brand" className="mb-8 opacity-80 sm:mb-12 sm:size-[72px]" />
       </Stagger>
-      <Stagger i={1}>
-        <p className="mb-4 text-[10px] font-semibold tracking-[0.25em] text-white/50 uppercase sm:mb-6 sm:text-xs sm:tracking-[0.3em]">
-          {tr('Propuesta', 'Proposta', 'Proposal')} {proposal.number}
-        </p>
-      </Stagger>
       <Stagger i={2}>
         <h1 className="mb-6 max-w-4xl text-3xl leading-[1.1] font-bold tracking-tight text-balance sm:mb-8 sm:text-5xl md:text-6xl lg:text-7xl">
           {proposal.title}
         </h1>
+      </Stagger>
+      <Stagger i={1}>
+        <p className="mb-4 text-sm text-white/60 sm:mb-6">
+          {tr('Propuesta', 'Proposta', 'Proposal')} {proposal.number}
+        </p>
       </Stagger>
       {proposal.client_name && (
         <Stagger i={3}>
@@ -122,12 +122,10 @@ function CoverSlide({ proposal }: { proposal: DeckProposal }) {
 }
 
 function SectionSlide({
-  label,
   title,
   children,
   accent = 'white',
 }: {
-  label: string
   title: string
   children: ReactNode
   accent?: 'white' | 'zinc'
@@ -135,11 +133,6 @@ function SectionSlide({
   const bg = accent === 'zinc' ? 'bg-zinc-50' : 'bg-white'
   return (
     <div className={`deck-slide justify-center p-6 text-zinc-900 sm:p-10 md:p-16 lg:p-24 ${bg}`}>
-      <Stagger i={0}>
-        <p className="mb-3 text-[10px] font-semibold tracking-[0.25em] text-[#2A4227] uppercase sm:mb-4 sm:text-xs sm:tracking-[0.3em]">
-          {label}
-        </p>
-      </Stagger>
       <Stagger i={1}>
         <h2 className="mb-8 max-w-3xl text-2xl leading-tight font-bold tracking-tight text-balance sm:mb-12 sm:text-4xl md:text-5xl lg:text-6xl">
           {title}
@@ -155,10 +148,7 @@ function SectionSlide({
 function ContextSlide({ proposal }: { proposal: DeckProposal }) {
   const tr = proposalTr(useContext(LanguageContext))
   return (
-    <SectionSlide
-      label={tr('Contexto', 'Context', 'Context')}
-      title={tr('Dónde estamos hoy', 'On som avui', 'Where we are today')}
-    >
+    <SectionSlide title={tr('Dónde estamos hoy', 'On som avui', 'Where we are today')}>
       <div className="w-full max-w-3xl text-left">
         <Markdown
           source={proposal.context_markdown ?? ''}
@@ -176,13 +166,11 @@ function ContextSlide({ proposal }: { proposal: DeckProposal }) {
  * green for solutions (something we do about it).
  */
 function KeyPointsListSlide({
-  label,
   title,
   items,
   accent,
   badgeVariant,
 }: {
-  label: string
   title: string
   items: KeyPoint[]
   accent?: 'white' | 'zinc'
@@ -191,7 +179,7 @@ function KeyPointsListSlide({
   const badgeClass =
     badgeVariant === 'brand' ? 'bg-[#2A4227] text-white' : 'bg-zinc-200 text-zinc-700'
   return (
-    <SectionSlide label={label} title={title} accent={accent}>
+    <SectionSlide title={title} accent={accent}>
       <ul className="flex w-full max-w-3xl flex-col gap-4 text-left sm:gap-6">
         {items.map((kp, i) => (
           <li
@@ -240,11 +228,7 @@ function CadenceBadge({ cycle }: { cycle: BillingCycle }) {
 function ServicesSlide({ items }: { items: DeckProposalItem[] }) {
   const tr = proposalTr(useContext(LanguageContext))
   return (
-    <SectionSlide
-      label={tr('Servicios', 'Serveis', 'Services')}
-      title={tr('Qué ofrecemos', 'Què oferim', 'What we offer')}
-      accent="zinc"
-    >
+    <SectionSlide title={tr('Qué ofrecemos', 'Què oferim', 'What we offer')} accent="zinc">
       <ul className="flex w-full max-w-3xl flex-col gap-4 text-left sm:gap-6">
         {items.map((item, i) => {
           const cycle: BillingCycle = item.billing_cycle ?? 'none'
@@ -278,16 +262,12 @@ function ServicesSlide({ items }: { items: DeckProposalItem[] }) {
   )
 }
 
-function ScopeModuleSlide({ module, index }: { module: ScopeModule; index: number }) {
+function ScopeModuleSlide({ module }: { module: ScopeModule }) {
   const language = useContext(LanguageContext)
   const tr = proposalTr(language)
   const duration = publicScopeDuration(module, language)
   return (
-    <SectionSlide
-      label={`${tr('Alcance', 'Abast', 'Scope')} · ${String(index + 1).padStart(2, '0')}`}
-      title={module.title}
-      accent="zinc"
-    >
+    <SectionSlide title={module.title} accent="zinc">
       <div className="w-full max-w-3xl text-left">
         {module.description ? (
           <p className="mb-6 text-base leading-relaxed text-zinc-600 sm:text-lg">
@@ -359,7 +339,6 @@ function DeliverySlide({ proposal }: { proposal: DeckProposal }) {
   const acceptanceCriteria = proposal.acceptance_criteria?.trim()
   return (
     <SectionSlide
-      label={tr('Entrega', 'Lliurament', 'Delivery')}
       title={tr(
         'Cómo validaremos el proyecto',
         'Com validarem el projecte',
@@ -491,10 +470,7 @@ function PricingSlide({ proposal, items }: { proposal: DeckProposal; items: Deck
   const formatEUR = (value: number) => formatPortalEUR(value, language)
   const totals = buildTotals(items, proposal)
   return (
-    <SectionSlide
-      label={tr('Inversión', 'Inversió', 'Investment')}
-      title={tr('Detalle económico', 'Detall econòmic', 'Pricing details')}
-    >
+    <SectionSlide title={tr('Detalle económico', 'Detall econòmic', 'Pricing details')}>
       <div className="w-full max-w-3xl">
         <table className="mb-6 w-full text-left text-xs sm:mb-8 sm:text-sm md:text-base">
           <thead>
@@ -567,7 +543,6 @@ function TeamSlide({ team }: { team: DeckTeamMember[] }) {
   const tr = proposalTr(useContext(LanguageContext))
   return (
     <SectionSlide
-      label={tr('El equipo', 'L’equip', 'The team')}
       title={tr(
         'Quién trabajará en tu proyecto',
         'Qui treballarà en el teu projecte',
@@ -621,10 +596,7 @@ function PricingBarChart({
   const maxVal = Math.max(...items.map((i) => i.subtotal), 1)
   const totals = buildTotals(items, proposal)
   return (
-    <SectionSlide
-      label={tr('Inversión', 'Inversió', 'Investment')}
-      title={tr('Detalle económico', 'Detall econòmic', 'Pricing details')}
-    >
+    <SectionSlide title={tr('Detalle económico', 'Detall econòmic', 'Pricing details')}>
       <div className="w-full max-w-3xl">
         <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:gap-5">
           {items.map((item, i) => {
@@ -759,7 +731,6 @@ export function buildSlides(
       accent: 'zinc',
       element: wm(
         <KeyPointsListSlide
-          label={tr('Retos detectados', 'Reptes detectats', 'Challenges identified')}
           title={tr('Lo que queremos resolver', 'Allò que volem resoldre', 'What we want to solve')}
           items={proposal.problems}
           accent="zinc"
@@ -775,7 +746,6 @@ export function buildSlides(
       accent: 'white',
       element: wm(
         <KeyPointsListSlide
-          label={tr('Nuestra propuesta', 'La nostra proposta', 'Our proposal')}
           title={tr('Cómo lo abordamos', 'Com ho abordem', 'How we approach it')}
           items={proposal.solutions}
           accent="white"
@@ -789,7 +759,7 @@ export function buildSlides(
       key: `scope-${module.id}`,
       label: `${tr('Módulo', 'Mòdul', 'Module')} ${index + 1}`,
       accent: 'zinc',
-      element: wm(<ScopeModuleSlide module={module} index={index} />),
+      element: wm(<ScopeModuleSlide module={module} />),
     })
   })
   const timeline = timelineLayout(proposal.timeline ?? []).map(({ item }) => item)
@@ -800,7 +770,6 @@ export function buildSlides(
       accent: 'zinc',
       element: wm(
         <SectionSlide
-          label={tr('El camino', 'El camí', 'The journey')}
           title={tr('Plazos del proyecto', 'Terminis del projecte', 'Project timeline')}
           accent="zinc"
         >
@@ -832,7 +801,6 @@ export function buildSlides(
       accent: 'white',
       element: wm(
         <SectionSlide
-          label={tr('Desarrollo', 'Desenvolupament', 'Development')}
           title={tr(
             'Cómo trabajaremos durante el desarrollo',
             'Com treballarem durant el desenvolupament',

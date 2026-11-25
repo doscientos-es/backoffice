@@ -56,9 +56,7 @@ export function ProposalPriceBreakdown({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <p className="text-xs font-semibold tracking-wider text-zinc-600 uppercase dark:text-zinc-400">
-        {title}
-      </p>
+      <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400">{title}</p>
       {hasDiscount && discounts ? (
         <div className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
           <div className="flex justify-between gap-3">
