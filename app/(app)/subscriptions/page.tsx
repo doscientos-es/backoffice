@@ -6,6 +6,7 @@ import { ListPage } from '@/components/layout/list-page'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { requirePagePermission } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import {
   SUBSCRIPTION_BILLING_CYCLE,
   SUBSCRIPTION_STATUS,
@@ -43,7 +44,8 @@ export default async function SubscriptionsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  await requirePagePermission('finance.read')
+  const user = await requirePagePermission('finance.read')
+  const canEdit = can(user.role, 'finance.write')
   const sp = await searchParams
 
   const q = parseStringParam(sp, 'q')
@@ -67,7 +69,7 @@ export default async function SubscriptionsPage({
   let query = supabase
     .from('subscriptions')
     .select(
-      'id, name, status, billing_cycle, amount, vat_rate, next_invoice_date, leads(id, name), clients(name)',
+      'id, name, status, billing_cycle, amount, vat_rate, next_invoice_date, leads(id, name), clients(id, name)',
       {
         count: 'exact',
       },
@@ -91,7 +93,7 @@ export default async function SubscriptionsPage({
     vat_rate: number
     next_invoice_date: string | null
     leads: { id: string; name: string } | null
-    clients: { name: string } | null
+    clients: { id: string; name: string } | null
   }
 
   type SubscriptionInvoice = {
@@ -140,9 +142,11 @@ export default async function SubscriptionsPage({
           <Link key="lead" href={`/leads/${s.leads.id}`} className="hover:underline">
             {s.leads.name}
           </Link>
-        ) : (
-          s.clients?.name
-        ),
+        ) : s.clients ? (
+          <Link key="client" href={`/clients/${s.clients.id}`} className="hover:underline">
+            {s.clients.name}
+          </Link>
+        ) : null,
         value: s.leads?.name ?? s.clients?.name ?? '',
       },
       estado: {
@@ -209,24 +213,26 @@ export default async function SubscriptionsPage({
       pagination={{ page, pageSize: PAGE_SIZE, total: count ?? 0 }}
       exportFilename="suscripciones"
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/subscriptions/from-proposal"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted"
-          >
-            Crear desde propuesta
-          </Link>
-          <Link
-            href="/subscriptions/new"
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
-          >
-            <Plus className="size-4" />
-            Nueva suscripción
-          </Link>
-        </div>
+        canEdit ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/subscriptions/from-proposal"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted"
+            >
+              Crear desde propuesta
+            </Link>
+            <Link
+              href="/subscriptions/new"
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
+            >
+              <Plus className="size-4" />
+              Nueva suscripción
+            </Link>
+          </div>
+        ) : undefined
       }
-      addHref="/subscriptions/new"
-      addLabel="Nueva suscripción"
+      addHref={canEdit ? '/subscriptions/new' : undefined}
+      addLabel={canEdit ? 'Nueva suscripción' : undefined}
     />
   )
 }
