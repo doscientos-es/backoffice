@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.220",
+      "date": "2026-11-25",
+      "title": "v0.1.220",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Enhance file upload functionality and UI improvements"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "247b52d2f5c4d77cc5a4296904fc32372f69b27f",
+          "type": "feat",
+          "scope": "attachments",
+          "breaking": false,
+          "description": "Enhance file upload functionality and UI improvements"
+        }
+      ]
+    },
+    {
       "version": "0.1.219",
       "date": "2026-11-25",
       "title": "v0.1.219",

@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.220
+
+### Nuevas funciones
+
+- Enhance file upload functionality and UI improvements
+
 ## 2026-11-25 — v0.1.219
 
 ### Nuevas funciones
