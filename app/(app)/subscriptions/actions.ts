@@ -67,7 +67,7 @@ async function getSubscriptionBillingId(
 export const createSubscription = defineAction({
   name: 'subscriptions.create',
   schema: subscriptionSchema,
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin', 'accountant'],
   revalidate: ['/subscriptions'],
   async handler(input) {
     const supabase = await createServerClient()
@@ -88,7 +88,7 @@ export const createSubscription = defineAction({
 export const updateSubscription = defineAction({
   name: 'subscriptions.update',
   schema: updateSubscriptionSchema,
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin', 'accountant'],
   revalidate: (_, input) => ['/subscriptions', `/subscriptions/${input.id}`],
   async handler({ id, expected_version, ...rest }) {
     const supabase = await createServerClient()
@@ -134,7 +134,7 @@ export const updateSubscription = defineAction({
 export const generateSubscriptionInvoicesNow = defineAction({
   name: 'subscriptions.generate-invoices',
   schema: z.object({ id: z.string().uuid() }),
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin', 'accountant'],
   revalidate: (_, input) => ['/subscriptions', `/subscriptions/${input.id}`, '/invoices'],
   async handler({ id }) {
     // Verify the subscription is visible to the user before using the admin client.
@@ -160,7 +160,7 @@ export const generateSubscriptionInvoicesNow = defineAction({
 export const generateNextSubscriptionInvoiceDraft = defineAction({
   name: 'subscriptions.generate-next-invoice',
   schema: z.object({ id: z.string().uuid() }),
-  roles: ['owner', 'admin', 'member'],
+  roles: ['owner', 'admin', 'accountant'],
   revalidate: (_, input) => ['/subscriptions', `/subscriptions/${input.id}`, '/invoices'],
   async handler({ id }) {
     const supabase = await createServerClient()

@@ -7,8 +7,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { DangerZone } from '@/components/ui/danger-zone'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { SubmitButton } from '@/components/ui/submit-button'
-import { requireUser } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
 import { computeLineTotals } from '@/lib/finance'
+import { can } from '@/lib/permissions'
 import { SUBSCRIPTION_STATUS, type SubscriptionStatus } from '@/lib/status'
 import {
   type BillingCycle,
@@ -33,15 +34,15 @@ export default async function SubscriptionDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const user = await requireUser()
-  const canEdit = user.role !== 'viewer'
+  const user = await requirePagePermission('finance.read')
+  const canEdit = can(user.role, 'finance.write')
 
   const supabase = await createServerClient()
 
   const [{ data: sub }, leads, { data: projects }, { data: invoices }] = await Promise.all([
     supabase
       .from('subscriptions')
-      .select('*, leads(id, name), clients(name)')
+      .select('*, leads(name), clients(name), projects(name)')
       .eq('id', id)
       .is('deleted_at', null)
       .maybeSingle(),
@@ -61,13 +62,31 @@ export default async function SubscriptionDetailPage({
   if (!sub) notFound()
 
   const leadId = sub.lead_id as string
-  const { leads: lead, clients: client } = sub as unknown as {
+  const {
+    leads: lead,
+    clients: client,
+    projects: linkedProject,
+  } = sub as unknown as {
     leads: { name: string } | null
     clients: { name: string } | null
+    projects: { name: string } | null
   }
   const leadOptions = leads.some((option) => option.id === leadId)
     ? leads
     : [{ id: leadId, name: lead?.name ?? client?.name ?? 'Lead actual' }, ...leads]
+  const linkedProjectId = (sub.project_id as string | null) ?? ''
+  const projectOptions = (projects ?? []) as SubscriptionProjectOption[]
+  const availableProjects =
+    linkedProjectId && !projectOptions.some((p) => p.id === linkedProjectId && p.lead_id === leadId)
+      ? [
+          ...projectOptions,
+          {
+            id: linkedProjectId,
+            lead_id: leadId,
+            name: linkedProject?.name ?? 'Proyecto vinculado',
+          },
+        ]
+      : projectOptions
 
   const today = new Date().toISOString().slice(0, 10)
   const periodRows = buildSubscriptionPeriods({
@@ -113,10 +132,10 @@ export default async function SubscriptionDetailPage({
               id={id}
               version={Number(sub.version)}
               leads={leadOptions}
-              projects={(projects ?? []) as SubscriptionProjectOption[]}
+              projects={availableProjects}
               defaults={{
                 lead_id: leadId,
-                project_id: (sub.project_id as string | null) ?? '',
+                project_id: linkedProjectId,
                 name: sub.name as string,
                 description: (sub.description as string | null) ?? '',
                 status: sub.status as string,
@@ -140,7 +159,7 @@ export default async function SubscriptionDetailPage({
         overdueCount={periodRows.filter((row) => row.state === 'overdue').length}
       />
 
-      {canEdit && user.role !== 'member' ? (
+      {user.role === 'owner' || user.role === 'admin' ? (
         <DangerZone
           title="Eliminar suscripción"
           description="Se eliminará de forma permanente. Esta acción no se puede deshacer."

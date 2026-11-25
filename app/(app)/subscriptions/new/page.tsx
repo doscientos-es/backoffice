@@ -1,22 +1,19 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 
 import { BackLink } from '@/components/layout/back-link'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent } from '@/components/ui/card'
-import { SubmitButton } from '@/components/ui/submit-button'
-import { requireUser } from '@/lib/auth'
+import { requirePagePermission } from '@/lib/auth'
 import { getBillableLeadOptions } from '@/lib/subscriptions/lead-options'
 import { createServerClient } from '@/lib/supabase/server'
 
-import { createSubscription } from '../actions'
-import { SubscriptionFormFields, type SubscriptionProjectOption } from '../subscription-form-fields'
+import type { SubscriptionProjectOption } from '../subscription-form-fields'
+import { SubscriptionCreateForm } from './subscription-create-form'
 
 export const metadata: Metadata = { title: 'Nueva suscripción · doscientos' }
 
 export default async function NewSubscriptionPage() {
-  const user = await requireUser()
-  if (user.role === 'viewer') redirect('/subscriptions')
+  await requirePagePermission('finance.write')
 
   const supabase = await createServerClient()
   const [leads, { data: projects }] = await Promise.all([
@@ -36,23 +33,10 @@ export default async function NewSubscriptionPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <form
-            action={async (fd) => {
-              'use server'
-              const res = await createSubscription(fd)
-              if (res.ok) redirect('/subscriptions')
-            }}
-            className="flex flex-col gap-6"
-          >
-            <SubscriptionFormFields
-              leads={leads}
-              projects={(projects ?? []) as SubscriptionProjectOption[]}
-            />
-
-            <div className="flex justify-end">
-              <SubmitButton>Crear suscripción</SubmitButton>
-            </div>
-          </form>
+          <SubscriptionCreateForm
+            leads={leads}
+            projects={(projects ?? []) as SubscriptionProjectOption[]}
+          />
         </CardContent>
       </Card>
     </div>

@@ -18,7 +18,7 @@ begin
   ] loop
     definition := pg_get_functiondef(target);
     if (select count(*) from regexp_matches(definition, join_pattern, 'gi')) <>
-      case when target = 'public.resolve_interaction_project()'::regprocedure then 2 else 3 end then
+      (case when target = 'public.resolve_interaction_project()'::regprocedure then 2 else 3 end) then
       raise exception 'Unexpected project join in %', target;
     end if;
     rewritten := regexp_replace(definition, join_pattern, '', 'gi');
