@@ -397,7 +397,11 @@ export function AttachmentSection({
               onChange={handleFileChange}
               disabled={uploading || deletingAll}
             />
-            <div className="flex shrink-0 items-center gap-1">
+          </>
+        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {canEdit && (
+            <>
               <IconButton
                 type="button"
                 variant="ghost"
@@ -418,40 +422,44 @@ export function AttachmentSection({
               >
                 <GoogleDriveIcon />
               </IconButton>
-              {visibleAttachments.length > 0 && (
-                <DropdownMenuTrigger>
-                  <MenuButton
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Más acciones de adjuntos"
-                    isDisabled={
-                      uploading ||
-                      deletingId !== null ||
-                      deletingAll ||
-                      driveLinking ||
-                      downloadingAll
-                    }
+            </>
+          )}
+          {(storedAttachments.length > 0 || (canEdit && visibleAttachments.length > 0)) && (
+            <DropdownMenuTrigger>
+              <MenuButton
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Más acciones de adjuntos"
+                isDisabled={
+                  uploading || deletingId !== null || deletingAll || driveLinking || downloadingAll
+                }
+              >
+                {deletingAll || downloadingAll ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Ellipsis className="size-4" />
+                )}
+              </MenuButton>
+              <DropdownMenuContent placement="bottom end">
+                {storedAttachments.length > 0 && (
+                  <DropdownMenuItem onAction={() => void downloadAll()}>
+                    <Download aria-hidden />
+                    Descargar todos los adjuntos
+                  </DropdownMenuItem>
+                )}
+                {canEdit && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onAction={() => setDeleteAllTargets([...visibleAttachments])}
                   >
-                    {deletingAll ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <Ellipsis className="size-4" />
-                    )}
-                  </MenuButton>
-                  <DropdownMenuContent placement="bottom end">
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onAction={() => setDeleteAllTargets([...visibleAttachments])}
-                    >
-                      <Trash2 aria-hidden />
-                      Eliminar todos los adjuntos
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenuTrigger>
-              )}
-            </div>
-          </>
-        )}
+                    <Trash2 aria-hidden />
+                    Eliminar todos los adjuntos
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenuTrigger>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-3 px-4 sm:px-6">
         {canEdit && (
@@ -549,28 +557,15 @@ export function AttachmentSection({
             {deletingAll ? 'Eliminando adjuntos…' : 'Eliminando adjunto…'}
           </p>
         )}
-        {storedAttachments.length > 0 && (
-          <div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={downloadingAll || deletingAll}
-              onClick={() => void downloadAll()}
-            >
-              {downloadingAll ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Download className="size-3.5" />
-              )}
-              {downloadingAll ? 'Preparando descarga…' : 'Descargar todos los adjuntos'}
-            </Button>
-            {hasDriveAttachments && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Los enlaces de Google Drive no se incluyen; ábrelos desde Drive.
-              </p>
-            )}
-          </div>
+        {downloadingAll && (
+          <p role="status" className="text-sm text-muted-foreground">
+            Preparando descarga…
+          </p>
+        )}
+        {storedAttachments.length > 0 && hasDriveAttachments && (
+          <p className="text-xs text-muted-foreground">
+            Los enlaces de Google Drive no se incluyen; ábrelos desde Drive.
+          </p>
         )}
         {errors.length > 0 && (
           <ul className="space-y-0.5">
