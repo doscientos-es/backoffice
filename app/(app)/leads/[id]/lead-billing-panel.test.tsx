@@ -1,11 +1,9 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/app/(app)/clients/[id]/client-edit-dialog', () => ({
-  ClientEditDialog: ({ client }: { client: { id: string } }) => (
-    <button type="button">Editar {client.id}</button>
-  ),
-}))
+const { updateClient, refresh } = vi.hoisted(() => ({ updateClient: vi.fn(), refresh: vi.fn() }))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }))
+vi.mock('@/app/(app)/clients/actions', () => ({ updateClient }))
 vi.mock('@/app/(app)/clients/[id]/fiscal-verification-card', () => ({
   FiscalVerificationCard: ({
     clientId,
@@ -51,8 +49,35 @@ describe('LeadBillingPanel', () => {
     expect(screen.getByText('Ejemplo SL')).toBeDefined()
     expect(screen.getByText('B12345678')).toBeDefined()
     expect(screen.getByText(/Calle Mayor 1/)).toBeDefined()
-    expect(screen.getByRole('button', { name: 'Editar client-1' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Editar' })).toBeDefined()
     expect(screen.getByText('Validar client-1')).toBeDefined()
+  })
+
+  it('enables saving and submits the linked billing record when only its logo changes', async () => {
+    const logoUrl = 'https://example.test/logo.png'
+    updateClient.mockResolvedValue({ ok: true, version: 2 })
+    render(<LeadBillingPanel leadId="lead-1" linkedClientId="client-1" client={client} canEdit />)
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
+
+    const dialog = within(screen.getByRole('dialog', { name: 'Editar datos de facturación' }))
+    const save = dialog.getByRole('button', { name: 'Guardar cambios' })
+    expect(save).toHaveProperty('disabled', true)
+    fireEvent.change(dialog.getByPlaceholderText('https://empresa.com/logo.png'), {
+      target: { value: logoUrl },
+    })
+    fireEvent.click(dialog.getByRole('button', { name: 'Usar URL' }))
+    expect(save).toHaveProperty('disabled', false)
+    fireEvent.click(save)
+
+    await waitFor(() => expect(refresh).toHaveBeenCalled())
+    expect(updateClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: client.id,
+        expected_version: client.version,
+        logo_url: logoUrl,
+        nif: client.nif,
+      }),
+    )
   })
 
   it('does not offer editing or fiscal validation to viewers', () => {
@@ -64,7 +89,7 @@ describe('LeadBillingPanel', () => {
         canEdit={false}
       />,
     )
-    expect(screen.queryByRole('button', { name: 'Editar client-1' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull()
     expect(screen.getByText('Solo lectura')).toBeDefined()
   })
 
