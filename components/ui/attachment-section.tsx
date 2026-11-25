@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -113,6 +113,7 @@ export function AttachmentSection({
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deletingAll, setDeletingAll] = useState(false)
   const [deleteAllTargets, setDeleteAllTargets] = useState<AttachmentItem[] | null>(null)
+  const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set())
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [errors, setErrors] = useState<string[]>([])
   const [dragActive, setDragActive] = useState(false)
@@ -121,8 +122,31 @@ export function AttachmentSection({
   const [driveLinking, setDriveLinking] = useState(false)
   const [driveError, setDriveError] = useState<string | null>(null)
   const [downloadingAll, setDownloadingAll] = useState(false)
-  const storedAttachments = attachments.filter((attachment) => attachment.source !== 'drive')
-  const hasDriveAttachments = attachments.some((attachment) => attachment.source === 'drive')
+  const visibleAttachments = attachments.filter((attachment) => !removedIds.has(attachment.id))
+  const storedAttachments = visibleAttachments.filter((attachment) => attachment.source !== 'drive')
+  const hasDriveAttachments = visibleAttachments.some((attachment) => attachment.source === 'drive')
+
+  // Keep successful removals hidden until the server has reflected them in its props.
+  useEffect(() => {
+    if (deletingId || deletingAll) return
+    const serverIds = new Set(attachments.map((attachment) => attachment.id))
+    setRemovedIds((current) => {
+      const remaining = new Set([...current].filter((id) => serverIds.has(id)))
+      return remaining.size === current.size ? current : remaining
+    })
+  }, [attachments, deletingId, deletingAll])
+
+  function hideAttachments(ids: string[]) {
+    setRemovedIds((current) => new Set([...current, ...ids]))
+  }
+
+  function restoreAttachment(id: string) {
+    setRemovedIds((current) => {
+      const next = new Set(current)
+      next.delete(id)
+      return next
+    })
+  }
 
   async function downloadAll() {
     if (downloadingAll || deletingAll || storedAttachments.length === 0) return
@@ -288,9 +312,13 @@ export function AttachmentSection({
 
     setErrors([])
     setDeletingId(attachment.id)
+    hideAttachments([attachment.id])
     try {
       const error = await deleteAttachment(attachment)
-      if (error) setErrors([error])
+      if (error) {
+        restoreAttachment(attachment.id)
+        setErrors([error])
+      }
       router.refresh()
     } finally {
       setDeletingId(null)
@@ -301,15 +329,19 @@ export function AttachmentSection({
     if (!canEdit || !deleteAllTargets?.length || uploading || deletingId || deletingAll) return
     setErrors([])
     setDeletingAll(true)
+    setDeleteAllTargets(null)
+    hideAttachments(deleteAllTargets.map((attachment) => attachment.id))
     const failures: string[] = []
     try {
       for (const attachment of deleteAllTargets) {
         const error = await deleteAttachment(attachment)
-        if (error) failures.push(`${attachment.name}: ${error}`)
+        if (error) {
+          restoreAttachment(attachment.id)
+          failures.push(`${attachment.name}: ${error}`)
+        }
       }
       if (failures.length) setErrors(['No se pudieron eliminar todos los adjuntos:', ...failures])
     } finally {
-      setDeleteAllTargets(null)
       setDeletingAll(false)
       router.refresh()
     }
@@ -396,7 +428,7 @@ export function AttachmentSection({
                 <GoogleDriveIcon />
                 <span className="sr-only sm:not-sr-only">Vincular desde Google Drive</span>
               </IconButton>
-              {attachments.length > 0 && (
+              {visibleAttachments.length > 0 && (
                 <DropdownMenuTrigger>
                   <MenuButton
                     variant="ghost"
@@ -419,7 +451,7 @@ export function AttachmentSection({
                   <DropdownMenuContent placement="bottom end">
                     <DropdownMenuItem
                       variant="destructive"
-                      onAction={() => setDeleteAllTargets([...attachments])}
+                      onAction={() => setDeleteAllTargets([...visibleAttachments])}
                     >
                       <Trash2 aria-hidden />
                       Eliminar todos los adjuntos
@@ -432,6 +464,11 @@ export function AttachmentSection({
         )}
       </CardHeader>
       <CardContent className="px-0">
+        {(deletingAll || deletingId) && (
+          <p role="status" className="px-6 pb-3 text-sm text-muted-foreground">
+            {deletingAll ? 'Eliminando adjuntos…' : 'Eliminando adjunto…'}
+          </p>
+        )}
         {storedAttachments.length > 0 && (
           <div className="px-6 pb-3">
             <Button
@@ -464,7 +501,7 @@ export function AttachmentSection({
             ))}
           </ul>
         )}
-        {attachments.length === 0 ? (
+        {visibleAttachments.length === 0 ? (
           <p className="px-6 py-2 text-sm text-muted-foreground">
             {canEdit
               ? 'Sin adjuntos. Arrastra archivos aquí o usa «Añadir archivos».'
@@ -472,7 +509,7 @@ export function AttachmentSection({
           </p>
         ) : (
           <ul className="divide-y divide-border">
-            {attachments.map((a) => (
+            {visibleAttachments.map((a) => (
               <li key={a.id} className="flex items-center gap-3 px-6 py-2.5">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{a.name}</p>
@@ -528,11 +565,7 @@ export function AttachmentSection({
                     disabled={uploading || deletingId !== null || deletingAll}
                     onClick={() => void removeAttachment(a)}
                   >
-                    {deletingId === a.id ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="size-3.5" />
-                    )}
+                    <Trash2 className="size-3.5" />
                   </Button>
                 ) : null}
               </li>

@@ -159,6 +159,37 @@ describe('attachment list', () => {
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
     expect(mockConfirm).toHaveBeenCalledWith('¿Quitar «report.pdf» de este registro?')
     expect(fetch).toHaveBeenCalledWith('/api/attachments/a1', { method: 'DELETE' })
+    expect(screen.queryByText('report.pdf')).toBeNull()
+  })
+
+  it('hides a single attachment immediately and restores it on failure', async () => {
+    let finishDelete!: (response: { ok: boolean; json: () => Promise<{ error: string }> }) => void
+    ;(fetch as ReturnType<typeof vi.fn>).mockReturnValue(
+      new Promise((resolve) => {
+        finishDelete = resolve
+      }),
+    )
+    render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
+    fireEvent.click(screen.getByRole('button', { name: /eliminar adjunto report.pdf/i }))
+    expect(screen.queryByText('report.pdf')).toBeNull()
+    expect(screen.getByRole('status').textContent).toContain('Eliminando adjunto')
+
+    finishDelete({ ok: false, json: async () => ({ error: 'Sin permiso' }) })
+    expect(await screen.findByText('Sin permiso')).toBeDefined()
+    expect(screen.getByText('report.pdf')).toBeDefined()
+  })
+
+  it('keeps a successful removal hidden until the server confirms it, then accepts later changes', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true })
+    const { rerender } = render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
+    fireEvent.click(screen.getByRole('button', { name: /eliminar adjunto report.pdf/i }))
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
+
+    rerender(<AttachmentSection {...BASE_PROPS} attachments={[...items]} />)
+    expect(screen.queryByText('report.pdf')).toBeNull()
+    rerender(<AttachmentSection {...BASE_PROPS} attachments={[]} />)
+    rerender(<AttachmentSection {...BASE_PROPS} attachments={items} />)
+    expect(screen.getByText('report.pdf')).toBeDefined()
   })
 
   it('does not call the delete endpoint when the user cancels', () => {
@@ -209,9 +240,12 @@ describe('attachment list', () => {
     expect(fetch).toHaveBeenNthCalledWith(1, '/api/attachments/a1', { method: 'DELETE' })
     expect(fetch).toHaveBeenNthCalledWith(2, '/api/attachments/drive', { method: 'DELETE' })
     expect(screen.queryByRole('alertdialog')).toBeNull()
+    expect(screen.queryByText('report.pdf')).toBeNull()
+    expect(screen.queryByText('Drive')).toBeNull()
+    expect(screen.getByText('new.pdf')).toBeDefined()
   })
 
-  it('keeps the confirmation pending while deletion is in progress', async () => {
+  it('hides all confirmed attachments immediately while deletion is in progress', async () => {
     let finishDelete!: (response: { ok: boolean }) => void
     ;(fetch as ReturnType<typeof vi.fn>).mockReturnValue(
       new Promise((resolve) => {
@@ -223,9 +257,10 @@ describe('attachment list', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Eliminar todos los adjuntos' }))
     fireEvent.click(screen.getByRole('button', { name: 'Eliminar todos' }))
-    const confirm = screen.getByRole('button', { name: 'Eliminando…' })
-    expect(confirm.getAttribute('aria-disabled')).toBe('true')
-    fireEvent.click(confirm)
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    expect(screen.queryByText('report.pdf')).toBeNull()
+    expect(screen.getByRole('status').textContent).toContain('Eliminando adjuntos')
+    expect(screen.queryByRole('button', { name: 'Más acciones de adjuntos' })).toBeNull()
     expect(fetch).toHaveBeenCalledOnce()
     finishDelete({ ok: true })
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
@@ -245,6 +280,8 @@ describe('attachment list', () => {
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
     expect(fetch).toHaveBeenCalledTimes(2)
     expect(screen.getByText('report.pdf: Sin permiso')).toBeDefined()
+    expect(screen.getByText('report.pdf')).toBeDefined()
+    expect(screen.queryByText('second.pdf')).toBeNull()
   })
 
   it('renders drive attachments with an external link to web_view_link', () => {
