@@ -376,6 +376,7 @@ describe('markProposalAsAccepted', () => {
   beforeEach(() => {
     state.inserts = []
     state.updates = []
+    crm.ensureClientForProposal.mockClear()
     createProposalDraftInvoices.mockClear()
     sendProposalAcceptedEmail.mockClear()
     state.proposal = {
@@ -416,6 +417,18 @@ describe('markProposalAsAccepted', () => {
       }),
     )
     expect(createProposalDraftInvoices).toHaveBeenCalledWith(expect.anything(), ID, 'member-1')
+  })
+
+  it('accepts without requesting fiscal data when lead and billing record are both linked', async () => {
+    state.proposal.client_id = 'client-1'
+    state.proposal.clients = { name: 'Ejemplo', nif: 'B123', billing_address_street: 'Calle 1' }
+    crm.hasCompleteFiscalData.mockReturnValue(true)
+
+    await expect(markProposalAsAccepted({ id: ID })).resolves.toEqual({ ok: true })
+    expect(crm.ensureClientForProposal).not.toHaveBeenCalled()
+    expect(state.updates).toContainEqual(
+      expect.objectContaining({ table: 'proposals', status: 'accepted' }),
+    )
   })
 
   it('repairs an already accepted lead-first proposal when fiscal data is provided', async () => {

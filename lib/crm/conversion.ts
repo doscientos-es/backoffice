@@ -181,7 +181,8 @@ export async function ensureClientForProposal(
   if (readErr || !proposal) return { error: 'Propuesta no encontrada' }
 
   if (proposal.client_id) {
-    await patchMissingClientFiscal(client, proposal.client_id as string, fiscal)
+    const fiscalError = await patchMissingClientFiscal(client, proposal.client_id as string, fiscal)
+    if (fiscalError) return { error: fiscalError }
     return { clientId: proposal.client_id as string, created: false }
   }
 
@@ -201,9 +202,18 @@ export async function ensureClientForProposal(
       .is('deleted_at', null)
       .maybeSingle()
     if (projectError) return { error: 'No se pudo consultar el proyecto de la propuesta' }
-    if (project?.client_id) {
-      return linkExistingClientToProposal(client, proposalId, project.client_id as string, fiscal)
+    if (!project?.client_id) return { error: 'No se encontró el proyecto de la propuesta' }
+    const { data: projectClient, error: clientError } = await client
+      .from('clients')
+      .select('lead_id')
+      .eq('id', project.client_id as string)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (clientError) return { error: 'No se pudo consultar la ficha de facturación del proyecto' }
+    if (!projectClient || projectClient.lead_id !== leadId) {
+      return { error: 'El proyecto no pertenece al destinatario de la propuesta' }
     }
+    return linkExistingClientToProposal(client, proposalId, project.client_id as string, fiscal)
   }
 
   const { data: existing, error: lookupError } = await client
@@ -266,7 +276,8 @@ async function linkExistingClientToProposal(
   clientId: string,
   fiscal: AcceptProposalFiscalDataType,
 ): Promise<{ clientId: string; created: false } | { error: string }> {
-  await patchMissingClientFiscal(client, clientId, fiscal)
+  const fiscalError = await patchMissingClientFiscal(client, clientId, fiscal)
+  if (fiscalError) return { error: fiscalError }
   const { error } = await client
     .from('proposals')
     .update({ client_id: clientId, lead_id: null })
@@ -283,22 +294,30 @@ async function patchMissingClientFiscal(
   client: AnyClient,
   clientId: string,
   fiscal: AcceptProposalFiscalDataType,
-): Promise<void> {
-  const { data: row } = await client
+): Promise<string | null> {
+  const { data: row, error: readError } = await client
     .from('clients')
     .select('name, nif, billing_address_street, email, phone, contact_person')
     .eq('id', clientId)
     .maybeSingle()
-  if (!row) return
+  if (readError || !row) return 'No se pudo consultar la ficha de facturación'
 
   const patch: Record<string, unknown> = {}
-  if (!row.nif && fiscal.nif) patch.nif = fiscal.nif
-  if (!row.billing_address_street && fiscal.billing_address)
+  if (!row.name?.trim() && fiscal.name) patch.name = fiscal.name
+  if (!row.nif?.trim() && fiscal.nif) patch.nif = fiscal.nif
+  if (!row.billing_address_street?.trim() && fiscal.billing_address)
     patch.billing_address_street = fiscal.billing_address
-  if (!row.email && fiscal.email) patch.email = fiscal.email
-  if (!row.phone && fiscal.phone) patch.phone = fiscal.phone
-  if (!row.contact_person && fiscal.contact_person) patch.contact_person = fiscal.contact_person
+  if (!row.email?.trim() && fiscal.email) patch.email = fiscal.email
+  if (!row.phone?.trim() && fiscal.phone) patch.phone = fiscal.phone
+  if (!row.contact_person?.trim() && fiscal.contact_person)
+    patch.contact_person = fiscal.contact_person
 
-  if (Object.keys(patch).length === 0) return
-  await client.from('clients').update(patch).eq('id', clientId)
+  if (Object.keys(patch).length === 0) return null
+  const { data: updated, error } = await client
+    .from('clients')
+    .update(patch)
+    .eq('id', clientId)
+    .select('id')
+    .maybeSingle()
+  return error || !updated ? 'No se pudieron guardar los datos fiscales' : null
 }

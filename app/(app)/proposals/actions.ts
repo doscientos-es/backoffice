@@ -921,7 +921,7 @@ export async function markProposalAsAccepted(
       } | null
     }
   ).clients
-  const needsFiscal = proposal.lead_id != null || !client || !hasCompleteFiscalData(client)
+  const needsFiscal = !client || !hasCompleteFiscalData(client)
   if (proposal.status === 'accepted' && !needsFiscal) return { ok: true }
   let fiscal: z.infer<typeof AcceptProposalFiscalData> | undefined
   if (needsFiscal) {

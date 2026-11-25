@@ -185,8 +185,7 @@ async function acceptWithFiscal(
     return { ok: false, error: 'No se pudo preparar la firma de la propuesta' }
   }
 
-  // Decide whether we need fiscal data: leads always require it, clients
-  // only when their row is missing the legal minimum (name + NIF + address).
+  // A direct lead relationship does not itself mean fiscal data is missing.
   const client = (
     proposal as unknown as {
       clients: {
@@ -196,7 +195,7 @@ async function acceptWithFiscal(
       } | null
     }
   ).clients
-  const needsFiscal = proposal.lead_id != null || !client || !hasCompleteFiscalData(client)
+  const needsFiscal = !client || !hasCompleteFiscalData(client)
 
   let fiscal: AcceptProposalFiscalDataType | undefined
   if (needsFiscal) {

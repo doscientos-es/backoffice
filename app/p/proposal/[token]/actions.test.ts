@@ -315,6 +315,15 @@ describe('portal proposal actions', () => {
     expect(revalidatePath).toHaveBeenCalledWith(`/p/proposal/${VALID_TOKEN}`)
   })
 
+  it('accepts without requesting fiscal data when lead and billing record are both linked', async () => {
+    state.fetchResult = {
+      data: { id: 'p1', status: 'sent', lead_id: 'l1', client_id: 'c1', clients: COMPLETE_CLIENT },
+      error: null,
+    }
+    await expect(acceptProposal(VALID_TOKEN, SIGNATURE)).resolves.toEqual({ ok: true })
+    expect(state.lastRpc?.name).toBe('accept_proposal_with_evidence_versioned')
+  })
+
   it('rejects a stale page before writing fiscal data or recording acceptance', async () => {
     state.fetchResult = {
       data: { id: 'p1', status: 'sent', document_revision: 2, clients: COMPLETE_CLIENT },
