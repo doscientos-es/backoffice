@@ -365,7 +365,7 @@ export async function getLeadDetail(
     companyResearch,
     { data: interactions },
     { data: discoveryQuestionRows, error: discoveryQuestionsError },
-    { data: linkedClient },
+    { data: linkedClient, error: linkedClientError },
     { data: tasks },
     { data: reminders },
     { data: attachments },
@@ -443,6 +443,11 @@ export async function getLeadDetail(
     throw new Error('No se pudo cargar el lead.')
   }
   if (!lead) return null
+
+  if (linkedClientError) {
+    log.error({ leadId: id, err: linkedClientError.message }, 'lead_linked_client_query_failed')
+    throw new Error('No se pudieron cargar los datos de facturación vinculados.')
+  }
 
   if (discoveryQuestionsError) {
     log.warn(

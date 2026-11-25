@@ -10,6 +10,7 @@ const state = vi.hoisted(() => ({
   ads: [] as Record<string, unknown>[],
   detailLead: null as Record<string, unknown> | null,
   detailLeadError: null as string | null,
+  linkedClientError: null as string | null,
   companyResearch: null as Record<string, unknown> | null,
   companyResearchError: null as string | null,
   auditRows: [] as Record<string, unknown>[],
@@ -100,6 +101,12 @@ vi.mock('@/lib/supabase/server', () => ({
             return {
               data: state.detailLead,
               error: state.detailLeadError ? { message: state.detailLeadError } : null,
+            }
+          }
+          if (table === 'clients') {
+            return {
+              data: null,
+              error: state.linkedClientError ? { message: state.linkedClientError } : null,
             }
           }
           if (table === 'marketing_ads') {
@@ -414,6 +421,7 @@ describe('getLeadDetail resilience', () => {
     state.ads = []
     state.detailLead = { id: 'lead-1', name: 'María García', utm_campaign: null }
     state.detailLeadError = null
+    state.linkedClientError = null
     state.companyResearch = null
     state.companyResearchError = null
     state.auditRows = []
@@ -501,6 +509,14 @@ describe('getLeadDetail resilience', () => {
     state.detailLeadError = 'permission denied for table leads'
 
     await expect(getLeadDetail('lead-1')).rejects.toThrow('No se pudo cargar el lead.')
+  })
+
+  it('does not treat a failed or ambiguous billing lookup as an unlinked lead', async () => {
+    state.linkedClientError = 'multiple clients or permission denied'
+
+    await expect(getLeadDetail('lead-1')).rejects.toThrow(
+      'No se pudieron cargar los datos de facturación vinculados.',
+    )
   })
 
   it('resolves the Meta ad name from the ID stored in UTM content', async () => {
