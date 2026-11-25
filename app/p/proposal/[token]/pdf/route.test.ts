@@ -56,8 +56,8 @@ vi.mock('next/server', async (importOriginal) => ({
   ...(await importOriginal<typeof NextServer>()),
   after: (task: () => unknown) => void task(),
 }))
-vi.mock('@/lib/proposals/proposal-pdf-document', () => ({
-  proposalPdfFilename: (number: string | null, id: string) => `propuesta-${number ?? id}.pdf`,
+vi.mock('@/lib/proposals/proposal-pdf-document', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/proposals/proposal-pdf-document')>()),
   renderProposalPdf,
 }))
 vi.mock('@/lib/supabase/admin', () => ({
@@ -190,7 +190,9 @@ describe('GET /p/proposal/[token]/pdf', () => {
 
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toBe('application/pdf')
-    expect(response.headers.get('content-disposition')).toContain('propuesta-P-001.pdf')
+    expect(response.headers.get('content-disposition')).toBe(
+      'attachment; filename="Automatizacion-comercial-Acme-SL-doscientos.pdf"',
+    )
     expect(renderProposalPdf).toHaveBeenCalledWith(
       expect.objectContaining({
         maintenanceOffer: expect.objectContaining({ plans: expect.any(Array) }),
@@ -242,6 +244,7 @@ describe('GET /p/proposal/[token]/pdf', () => {
       ...state.proposal,
       status: 'accepted',
       title: 'Título modificado',
+      clients: { name: 'Cliente modificado' },
       responded_at: '2026-09-10T12:34:56.000Z',
     }
     state.items = [
@@ -303,6 +306,9 @@ describe('GET /p/proposal/[token]/pdf', () => {
     const response = await GET(request(), context)
 
     expect(response.status).toBe(200)
+    expect(response.headers.get('content-disposition')).toBe(
+      'attachment; filename="Titulo-firmado-Acme-SL-doscientos.pdf"',
+    )
     expect(renderProposalPdf).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Título firmado',
@@ -538,7 +544,12 @@ describe('GET /p/proposal/[token]/pdf', () => {
         provider: { name: 'Proveedor anterior', nif: 'Y456', iban: 'ES01', city: 'Madrid' },
       },
     }
-    expect((await GET(request('?revision=revision-1'), context)).status).toBe(200)
+    const response = await GET(request('?revision=revision-1'), context)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-disposition')).toBe(
+      'attachment; filename="Anterior-Cliente-anterior-doscientos.pdf"',
+    )
     expect(renderProposalPdf).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Anterior',

@@ -10,9 +10,20 @@ import {
 } from './proposal-pdf-document'
 
 describe('proposal PDF helpers', () => {
-  it('creates a safe download filename from the proposal number', () => {
-    expect(proposalPdfFilename('P/2026 001', 'fallback-id')).toBe('propuesta-P-2026-001.pdf')
-    expect(proposalPdfFilename(null, 'fallback-id')).toBe('propuesta-fallback-id.pdf')
+  it('creates a download filename from the proposal title and client without accents or unsafe characters', () => {
+    expect(proposalPdfFilename(' Integració / logística ', 'Sardà "SL"\r\n')).toBe(
+      'Integracio-logistica-Sarda-SL-doscientos.pdf',
+    )
+  })
+
+  it('uses readable fallbacks when the title or client cannot be used', () => {
+    expect(proposalPdfFilename('', '///')).toBe('propuesta-cliente-doscientos.pdf')
+  })
+
+  it('keeps both parts in the filename even when the title and client are very long', () => {
+    expect(proposalPdfFilename('A'.repeat(300), 'B'.repeat(300))).toBe(
+      `${'A'.repeat(100)}-${'B'.repeat(100)}-doscientos.pdf`,
+    )
   })
 
   it('turns the markdown content into PDF-friendly text', () => {

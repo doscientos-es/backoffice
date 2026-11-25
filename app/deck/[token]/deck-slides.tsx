@@ -7,11 +7,7 @@ import { Markdown } from '@/components/ui/markdown'
 import { type BillingCycle, computeProposalTotals, type ProposalTotals } from '@/lib/finance'
 import { formatPortalDate, formatPortalEUR, type PortalLanguage } from '@/lib/portal/language'
 import type { KeyPoint } from '@/lib/proposals/key-points'
-import {
-  proposalTr,
-  publicPaymentScheduleLabel,
-  publicScopeDuration,
-} from '@/lib/proposals/public-copy'
+import { proposalTr, publicScopeDuration } from '@/lib/proposals/public-copy'
 import type { ScopeModule } from '@/lib/proposals/scope'
 import { timelineLayout } from '@/lib/proposals/timeline'
 
@@ -664,46 +660,6 @@ function PricingBarChart({
   )
 }
 
-function TermsSlide({ proposal }: { proposal: DeckProposal }) {
-  const language = useContext(LanguageContext)
-  const tr = proposalTr(language)
-  return (
-    <SectionSlide
-      label={tr('Condiciones', 'Condicions', 'Terms')}
-      title={tr('Términos del acuerdo', 'Termes de l’acord', 'Agreement terms')}
-      accent="zinc"
-    >
-      <div className="w-full max-w-3xl text-left">
-        {proposal.payment_terms ? (
-          <div className="mb-6">
-            <p className="text-sm font-semibold text-zinc-900">
-              {tr('Forma de pago', 'Forma de pagament', 'Payment terms')}
-            </p>
-            <p className="mt-1 text-xs font-semibold tracking-wider text-[#2A4227] uppercase">
-              {publicPaymentScheduleLabel(proposal.payment_schedule, language)}
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-600">{proposal.payment_terms}</p>
-          </div>
-        ) : null}
-        {proposal.change_management_terms ? (
-          <div className="mb-6">
-            <p className="text-sm font-semibold text-zinc-900">
-              {tr('Cambios de alcance', 'Canvis d’abast', 'Scope changes')}
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-              {proposal.change_management_terms}
-            </p>
-          </div>
-        ) : null}
-        <Markdown
-          source={proposal.terms ?? ''}
-          className="deck-markdown deck-markdown-terms text-sm text-zinc-600 sm:text-base"
-        />
-      </div>
-    </SectionSlide>
-  )
-}
-
 function ClosingSlide({ proposal, token }: { proposal: DeckProposal; token: string }) {
   const language = useContext(LanguageContext)
   const tr = proposalTr(language)
@@ -919,14 +875,6 @@ export function buildSlides(
       label: tr('Inversión', 'Inversió', 'Investment'),
       accent: 'white',
       element: wm(pricing),
-    })
-  }
-  if (proposal.payment_terms || proposal.change_management_terms || proposal.terms) {
-    slides.push({
-      key: 'terms',
-      label: tr('Condiciones', 'Condicions', 'Terms'),
-      accent: 'zinc',
-      element: wm(<TermsSlide proposal={proposal} />),
     })
   }
   slides.push({

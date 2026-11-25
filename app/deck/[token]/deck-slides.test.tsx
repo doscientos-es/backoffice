@@ -164,23 +164,11 @@ describe('buildSlides', () => {
   })
 
   it.each([
-    [
-      'ca',
-      'Termini estimat: 2 setmanes',
-      'Forma de pagament',
-      '50 % en acceptar · 50 % en el lliurament',
-      'Veure i acceptar la proposta',
-    ],
-    [
-      'en',
-      'Estimated duration: 2 weeks',
-      'Payment terms',
-      '50 % on acceptance · 50 % on delivery',
-      'View and accept proposal',
-    ],
+    ['ca', 'Termini estimat: 2 setmanes', 'Veure i acceptar la proposta'],
+    ['en', 'Estimated duration: 2 weeks', 'View and accept proposal'],
   ] as const)(
     'localizes slides and preserves the %s language in links',
-    (language, duration, payment, schedule, accept) => {
+    (language, duration, accept) => {
       const slides = buildSlides(
         {
           ...proposal,
@@ -210,8 +198,7 @@ describe('buildSlides', () => {
         </div>,
       )
       expect(screen.getByText(duration)).toBeDefined()
-      expect(screen.getByText(payment)).toBeDefined()
-      expect(screen.getByText(schedule)).toBeDefined()
+      expect(slides.some((slide) => slide.key === 'terms')).toBe(false)
       expect(screen.getByText('Custom content')).toBeDefined()
       expect(screen.getByRole('link', { name: accept }).getAttribute('href')).toBe(
         `/p/proposal/portal-token?lang=${language}`,

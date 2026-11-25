@@ -306,18 +306,20 @@ export async function GET(
     ? Number(documentSource.tax_amount ?? 0)
     : calculatedTotals.oneTime.taxAmount
   const pdfTotal = preserved ? Number(documentSource.total ?? 0) : calculatedTotals.oneTime.total
+  const title = typeof documentSource.title === 'string' ? documentSource.title : ''
+  const recipientName =
+    signedSnapshot?.parties?.client?.name ??
+    signedSnapshot?.fiscal_data?.name ??
+    (signedProposal
+      ? 'Cliente'
+      : revision
+        ? (revision.recipient?.name ?? 'Cliente')
+        : (client?.name ?? lead?.company ?? lead?.name ?? 'Cliente'))
   const pdf = await renderProposalPdf({
     language,
     number: (documentSource.number as string | null) ?? null,
-    title: documentSource.title as string,
-    recipientName:
-      signedSnapshot?.parties?.client?.name ??
-      signedSnapshot?.fiscal_data?.name ??
-      (signedProposal
-        ? 'Cliente'
-        : revision
-          ? (revision.recipient?.name ?? 'Cliente')
-          : (client?.name ?? lead?.company ?? lead?.name ?? 'Cliente')),
+    title,
+    recipientName,
     recipientNif:
       signedSnapshot?.parties?.client?.nif ??
       (signedSnapshot?.fiscal_data as { nif?: string } | null)?.nif ??
@@ -402,7 +404,7 @@ export async function GET(
   return new NextResponse(new Uint8Array(pdf), {
     headers: {
       'Cache-Control': 'no-store',
-      'Content-Disposition': `attachment; filename="${proposalPdfFilename((proposal.number as string | null) ?? null, proposal.id as string)}"`,
+      'Content-Disposition': `attachment; filename="${proposalPdfFilename(title, recipientName)}"`,
       'Content-Type': 'application/pdf',
     },
   })

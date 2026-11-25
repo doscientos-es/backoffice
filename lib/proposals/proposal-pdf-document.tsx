@@ -344,9 +344,17 @@ function cycleLabel(cycle: string | null, language: 'es' | 'ca' | 'en'): string 
   return labels[cycle as 'monthly' | 'quarterly' | 'yearly'] ?? labels.once
 }
 
-export function proposalPdfFilename(number: string | null, id: string): string {
-  const reference = number?.trim().replace(/[^a-zA-Z0-9_-]+/g, '-') || id
-  return `propuesta-${reference}.pdf`
+/** ASCII-only attachment name, with each part capped to fit common filesystem limits. */
+export function proposalPdfFilename(title: string, recipientName: string): string {
+  const filePart = (value: string, fallback: string) =>
+    value
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .slice(0, 100)
+      .replace(/^-+|-+$/g, '') || fallback
+
+  return `${filePart(title, 'propuesta')}-${filePart(recipientName, 'cliente')}-doscientos.pdf`
 }
 
 export function printableMarkdown(value: string | null): string {
