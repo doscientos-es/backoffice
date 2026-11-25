@@ -2,6 +2,14 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.227
+
+### Nuevas funciones
+
+- Enhance billing access control and visibility for users
+- Add billing creation functionality for leads
+- Create unique index for active client per lead
+
 ## 2026-11-25 — v0.1.226
 
 ### Nuevas funciones

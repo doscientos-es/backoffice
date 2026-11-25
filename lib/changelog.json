@@ -1,6 +1,44 @@
 {
   "releases": [
     {
+      "version": "0.1.227",
+      "date": "2026-11-25",
+      "title": "v0.1.227",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Enhance billing access control and visibility for users",
+            "Add billing creation functionality for leads",
+            "Create unique index for active client per lead"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "9b5fa7d3905f1a11c9083d57340be9262c252557",
+          "type": "feat",
+          "scope": "lead",
+          "breaking": false,
+          "description": "Enhance billing access control and visibility for users"
+        },
+        {
+          "sha": "9b31799753de5d925ac26249018d6b9afe4b33d9",
+          "type": "feat",
+          "scope": "lead",
+          "breaking": false,
+          "description": "Add billing creation functionality for leads"
+        },
+        {
+          "sha": "663a66bf371020d218af46434a21db2389554a45",
+          "type": "feat",
+          "scope": "migration",
+          "breaking": false,
+          "description": "Create unique index for active client per lead"
+        }
+      ]
+    },
+    {
       "version": "0.1.226",
       "date": "2026-11-25",
       "title": "v0.1.226",
