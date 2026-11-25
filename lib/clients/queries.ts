@@ -110,7 +110,7 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
   const supabase = await createServerClient()
 
   const { data: client, error } = await notDeleted(
-    supabase.from('clients').select('*, leads(id, name, company)').eq('id', id),
+    supabase.from('clients').select('*, leads(id, name, company, deleted_at)').eq('id', id),
   ).maybeSingle()
 
   if (error) log.error({ clientId: id, err: error.message }, 'get_client_detail_failed')
@@ -181,11 +181,16 @@ export async function getClientDetail(id: string): Promise<ClientDetailResult> {
     originLead: (() => {
       const lead = (
         client as unknown as {
-          leads: { id: string; name: string; company: string | null } | null
+          leads: {
+            id: string
+            name: string
+            company: string | null
+            deleted_at: string | null
+          } | null
         }
       ).leads
 
-      return lead
+      return lead && !lead.deleted_at
         ? {
             id: lead.id,
             name: lead.name,

@@ -61,7 +61,7 @@ const TYPE_ICON = {
 
 const TYPE_LABEL: Record<SearchResultItem['type'], string> = {
   lead: 'Leads',
-  client: 'Clientes',
+  client: 'Datos de facturación',
   project: 'Proyectos',
   invoice: 'Facturas',
   task: 'Tareas',

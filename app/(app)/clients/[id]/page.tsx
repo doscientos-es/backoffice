@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 import { RemindersSection } from '@/app/(app)/inicio/_components/reminders-section'
 import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
@@ -50,6 +50,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   if (!result) notFound()
 
   const { client, originLead, projects, proposals, invoices, tasks, reminders } = result
+  if (originLead && can(user.role, 'leads.read')) redirect(`/leads/${originLead.id}`)
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,7 +65,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           />
         }
         breadcrumbs={[
-          { label: 'Clientes', href: '/clients' },
+          { label: 'Datos de facturación', href: '/clients' },
           { label: (client.label as string | null)?.trim() || (client.name as string) },
         ]}
         actions={

@@ -185,11 +185,7 @@ export default async function LeadDetailPage({
         icon={
           <EntityAvatar name={displayName} logoUrl={billingClient?.logo_url ?? null} size="lg" />
         }
-        breadcrumbs={[
-          { label: 'Leads', href: '/leads' },
-          { label: displayName },
-          ...(linkedClientId ? [{ label: 'Cliente', href: `/clients/${linkedClientId}` }] : []),
-        ]}
+        breadcrumbs={[{ label: 'Leads', href: '/leads' }, { label: displayName }]}
         actions={
           <>
             {aiEnabled && can(user.role, 'leads.read') ? (
@@ -255,11 +251,6 @@ export default async function LeadDetailPage({
               version={Number(lead.version)}
               language={(lead.language as string | null) ?? null}
             />
-            {linkedClientId ? (
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/clients/${linkedClientId}`}>Ver cliente</Link>
-              </Button>
-            ) : null}
             {canEdit && (
               <LeadStatusSelect
                 leadId={lead.id as string}

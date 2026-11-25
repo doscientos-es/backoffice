@@ -9,6 +9,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { requireUser } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import { VAULT_SERVICE_LABELS, type VaultService } from '@/lib/schemas/vault'
 import { createServerClient } from '@/lib/supabase/server'
 
@@ -35,7 +36,7 @@ function escapeIlike(value: string): string {
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  await requireUser()
+  const user = await requireUser()
 
   const q = (req.nextUrl.searchParams.get('q') ?? '').trim()
   if (q.length < 1) {
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .limit(PER_GROUP),
     supabase
       .from('clients')
-      .select('id, name, nif, email')
+      .select('id, name, nif, email, leads(id, deleted_at)')
       .is('deleted_at', null)
       .or(`name.ilike.${pattern},nif.ilike.${pattern},email.ilike.${pattern}`)
       .order('created_at', { ascending: false })
@@ -102,9 +103,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   ])
 
   const items: SearchResultItem[] = []
+  const leadIds = new Set<string>()
 
   for (const r of leadsRes.data ?? []) {
     const alias = (r.alias as string | null)?.trim()
+    leadIds.add(r.id as string)
     items.push({
       id: `lead-${r.id as string}`,
       type: 'lead',
@@ -122,6 +125,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     })
   }
   for (const r of clientsRes.data ?? []) {
+    const lead = (r as unknown as { leads: { id: string; deleted_at: string | null } | null }).leads
+    if (can(user.role, 'leads.read') && lead && !lead.deleted_at) {
+      if (!leadIds.has(lead.id)) {
+        leadIds.add(lead.id)
+        items.push({
+          id: `lead-${lead.id}`,
+          type: 'lead',
+          label: r.name as string,
+          sublabel: (r.nif as string | null) ?? (r.email as string | null) ?? null,
+          href: `/leads/${lead.id}`,
+        })
+      }
+      continue
+    }
     items.push({
       id: `client-${r.id as string}`,
       type: 'client',

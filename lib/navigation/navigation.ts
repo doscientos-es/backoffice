@@ -31,6 +31,7 @@ export type NavigationItem = {
   label: string
   icon: ComponentType<{ className?: string }>
   requires?: PermissionKey
+  hideWith?: PermissionKey
 }
 
 export type NavigationGroup = {
@@ -56,7 +57,13 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
     items: [
       { href: '/leads', label: 'Leads', icon: Inbox, requires: 'leads.read' },
       { href: '/leads/recovery', label: 'Repesca', icon: LifeBuoy, requires: 'leads.read' },
-      { href: '/clients', label: 'Clientes', icon: Users, requires: 'clients.read' },
+      {
+        href: '/clients',
+        label: 'Datos de facturación',
+        icon: Users,
+        requires: 'clients.read',
+        hideWith: 'leads.read',
+      },
       { href: '/proposals', label: 'Propuestas', icon: FileSignature, requires: 'proposals.read' },
     ],
   },
@@ -114,6 +121,10 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
 export function visibleNavigationGroups(role: MemberRole) {
   return NAVIGATION_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !item.requires || can(role, item.requires)),
+    items: group.items.filter(
+      (item) =>
+        (!item.requires || can(role, item.requires)) &&
+        (!item.hideWith || !can(role, item.hideWith)),
+    ),
   })).filter((group) => group.items.length > 0)
 }

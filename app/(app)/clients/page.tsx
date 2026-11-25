@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
@@ -8,12 +9,13 @@ import { requireUser } from '@/lib/auth'
 import { listClients } from '@/lib/clients/queries'
 import { CLIENT_LIST_PAGE_SIZE, CLIENT_SORT_COLUMNS } from '@/lib/clients/types'
 import { clientDisplayName } from '@/lib/clients/utils'
+import { can } from '@/lib/permissions'
 import { parsePage, parseSortParam, parseStringParam } from '@/lib/utils/search-params'
 
 import { ClientRowActions } from './client-row-actions'
 import { ClientsList } from './clients-list'
 
-export const metadata: Metadata = { title: 'Clientes · doscientos' }
+export const metadata: Metadata = { title: 'Datos de facturación · doscientos' }
 export const dynamic = 'force-dynamic'
 
 export default async function ClientsPage({
@@ -22,7 +24,8 @@ export default async function ClientsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const user = await requireUser()
-  const canEdit = user.role !== 'viewer'
+  if (can(user.role, 'leads.read')) redirect('/leads')
+  const canEdit = can(user.role, 'clients.write')
   const sp = await searchParams
   const q = parseStringParam(sp, 'q')
   const page = parsePage(sp)
@@ -33,29 +36,33 @@ export default async function ClientsPage({
   return (
     <ClientsList
       canEdit={canEdit}
-      title="Clientes"
-      empty={q ? 'Sin coincidencias para tu búsqueda.' : 'Aún no hay clientes.'}
+      title="Datos de facturación"
+      empty={q ? 'Sin coincidencias para tu búsqueda.' : 'Aún no hay datos de facturación.'}
       error={undefined}
       searchKey="q"
       searchPlaceholder="Buscar por nombre, NIF o email…"
       pagination={{ page, pageSize: CLIENT_LIST_PAGE_SIZE, total: count }}
-      addHref="/clients/new"
-      addLabel="Nuevo cliente"
+      addHref={canEdit ? '/clients/new' : undefined}
+      addLabel={canEdit ? 'Añadir datos de facturación' : undefined}
       actions={
-        <Button asChild size="sm" className="min-h-11 w-full sm:w-auto">
-          <Link href="/clients/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo
-          </Link>
-        </Button>
+        canEdit ? (
+          <Button asChild size="sm" className="min-h-11 w-full sm:w-auto">
+            <Link href="/clients/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Añadir datos de facturación
+            </Link>
+          </Button>
+        ) : undefined
       }
       emptyAction={
-        <Button asChild size="sm">
-          <Link href="/clients/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Crear primer cliente
-          </Link>
-        </Button>
+        canEdit ? (
+          <Button asChild size="sm">
+            <Link href="/clients/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Añadir datos de facturación
+            </Link>
+          </Button>
+        ) : undefined
       }
       columns={[
         { key: 'nombre', label: 'Nombre', sortKey: 'name' },
@@ -101,7 +108,7 @@ export default async function ClientsPage({
               email: { content: (c.email as string | null) ?? '—', value: c.email ?? '' },
             },
 
-            rowActions: (
+            rowActions: canEdit ? (
               <ClientRowActions
                 client={{
                   id: c.id,
@@ -121,7 +128,7 @@ export default async function ClientsPage({
                   logo_url: c.logo_url,
                 }}
               />
-            ),
+            ) : undefined,
           }
         }) ?? []
       }

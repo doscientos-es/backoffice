@@ -23,7 +23,6 @@ export const NAV_SHORTCUTS: Shortcut[] = [
   { href: '/leads', label: 'Leads', key: 'l' },
   { href: '/marketing', label: 'Publicidad', key: 'm' },
   { href: '/marketing/newsletters', label: 'Email marketing', key: 'n' },
-  { href: '/clients', label: 'Clientes', key: 'c' },
   { href: '/projects', label: 'Proyectos', key: 'p' },
   { href: '/webs', label: 'Webs', key: 'w' },
   { href: '/proposals', label: 'Propuestas', key: 'r' },
@@ -38,7 +37,6 @@ export const NAV_SHORTCUTS: Shortcut[] = [
 /** Creación rápida vía `c` + tecla. */
 export const CREATE_SHORTCUTS: Shortcut[] = [
   { href: '/leads/new', label: 'Nuevo lead', key: 'l' },
-  { href: '/clients/new', label: 'Nuevo cliente', key: 'c' },
   { href: '/projects/new', label: 'Nuevo proyecto', key: 'p' },
   { href: '/tasks/new', label: 'Nueva tarea', key: 't' },
   { href: '/proposals/new', label: 'Nueva propuesta', key: 'r' },

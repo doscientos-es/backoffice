@@ -24,4 +24,11 @@ describe('navigation', () => {
     expect(visible).not.toContain('/settings/team')
     expect(visible).toContain('/leads/recovery')
   })
+
+  it('shows a single commercial directory while retaining fiscal access for non-CRM roles', () => {
+    expect(routes(visibleNavigationGroups('owner'))).toContain('/leads')
+    expect(routes(visibleNavigationGroups('owner'))).not.toContain('/clients')
+    expect(routes(visibleNavigationGroups('accountant'))).toContain('/clients')
+    expect(routes(visibleNavigationGroups('delivery'))).toContain('/clients')
+  })
 })

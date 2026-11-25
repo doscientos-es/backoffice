@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 import { BackLink } from '@/components/layout/back-link'
 import { PageHeader } from '@/components/layout/page-header'
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { requireUser } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 
 import { createClient } from '../actions'
 import { ClientFormFields } from '../client-form-fields'
@@ -14,7 +16,8 @@ import { ClientFormFields } from '../client-form-fields'
 export const metadata: Metadata = { title: 'Nuevo cliente · doscientos' }
 
 export default async function NewClientPage() {
-  await requireUser()
+  const user = await requireUser()
+  if (can(user.role, 'leads.write')) redirect('/leads/new')
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
