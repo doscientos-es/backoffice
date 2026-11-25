@@ -1,17 +1,23 @@
 'use client'
 
-import { IconButton } from '@doscientos/ui'
 import {
+  Button as MenuButton,
+  ConfirmDialog,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  IconButton,
 } from '@doscientos/ui'
 import {
   Camera,
   Download,
+  Ellipsis,
   ExternalLink,
   Eye,
   LoaderCircle as Loader2,
@@ -105,6 +111,8 @@ export function AttachmentSection({
   const dragDepth = useRef(0)
   const [uploading, setUploading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deletingAll, setDeletingAll] = useState(false)
+  const [deleteAllTargets, setDeleteAllTargets] = useState<AttachmentItem[] | null>(null)
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [errors, setErrors] = useState<string[]>([])
   const [dragActive, setDragActive] = useState(false)
@@ -117,7 +125,7 @@ export function AttachmentSection({
   const hasDriveAttachments = attachments.some((attachment) => attachment.source === 'drive')
 
   async function downloadAll() {
-    if (downloadingAll || storedAttachments.length === 0) return
+    if (downloadingAll || deletingAll || storedAttachments.length === 0) return
     setErrors([])
     setDownloadingAll(true)
     try {
@@ -165,7 +173,7 @@ export function AttachmentSection({
 
   /** Uploads files sequentially, reporting per-file failures. Shared by the button and drop zone. */
   async function uploadFiles(files: File[]) {
-    if (files.length === 0 || uploading) return
+    if (files.length === 0 || uploading || deletingAll) return
 
     setErrors([])
     setUploading(true)
@@ -193,19 +201,19 @@ export function AttachmentSection({
   }
 
   function handleDragEnter(e: React.DragEvent) {
-    if (!canEdit || uploading) return
+    if (!canEdit || uploading || deletingAll) return
     e.preventDefault()
     dragDepth.current += 1
     setDragActive(true)
   }
 
   function handleDragOver(e: React.DragEvent) {
-    if (!canEdit || uploading) return
+    if (!canEdit || uploading || deletingAll) return
     e.preventDefault()
   }
 
   function handleDragLeave(e: React.DragEvent) {
-    if (!canEdit || uploading) return
+    if (!canEdit || uploading || deletingAll) return
     e.preventDefault()
     dragDepth.current -= 1
     if (dragDepth.current <= 0) {
@@ -215,7 +223,7 @@ export function AttachmentSection({
   }
 
   function handleDrop(e: React.DragEvent) {
-    if (!canEdit || uploading) return
+    if (!canEdit || uploading || deletingAll) return
     e.preventDefault()
     dragDepth.current = 0
     setDragActive(false)
@@ -231,7 +239,7 @@ export function AttachmentSection({
   /** Links an existing Drive file as a reference attachment (no copy is made). */
   async function submitDriveLink(e: React.FormEvent) {
     e.preventDefault()
-    if (driveLinking) return
+    if (driveLinking || deletingAll) return
 
     setDriveLinking(true)
     setDriveError(null)
@@ -258,8 +266,21 @@ export function AttachmentSection({
     }
   }
 
+  async function deleteAttachment(attachment: AttachmentItem): Promise<string | null> {
+    try {
+      const res = await fetch(`/api/attachments/${attachment.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const json = (await res.json().catch(() => ({}))) as { error?: string }
+        return json.error ?? 'No se pudo eliminar el adjunto'
+      }
+      return null
+    } catch {
+      return 'Error de red al eliminar el adjunto'
+    }
+  }
+
   async function removeAttachment(attachment: AttachmentItem) {
-    if (!canEdit || uploading || deletingId) return
+    if (!canEdit || uploading || deletingId || deletingAll) return
     const driveNote =
       attachment.source === 'drive' ? ' El archivo original de Drive no se eliminará.' : ''
     const confirmationMessage = `¿Quitar «${attachment.name}» de este registro?${driveNote}`
@@ -268,17 +289,29 @@ export function AttachmentSection({
     setErrors([])
     setDeletingId(attachment.id)
     try {
-      const res = await fetch(`/api/attachments/${attachment.id}`, { method: 'DELETE' })
-      const json = (await res.json()) as { error?: string }
-      if (!res.ok) {
-        setErrors([json.error ?? 'No se pudo eliminar el adjunto'])
-        return
-      }
+      const error = await deleteAttachment(attachment)
+      if (error) setErrors([error])
       router.refresh()
-    } catch {
-      setErrors(['Error de red al eliminar el adjunto'])
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  async function removeAllAttachments() {
+    if (!canEdit || !deleteAllTargets?.length || uploading || deletingId || deletingAll) return
+    setErrors([])
+    setDeletingAll(true)
+    const failures: string[] = []
+    try {
+      for (const attachment of deleteAllTargets) {
+        const error = await deleteAttachment(attachment)
+        if (error) failures.push(`${attachment.name}: ${error}`)
+      }
+      if (failures.length) setErrors(['No se pudieron eliminar todos los adjuntos:', ...failures])
+    } finally {
+      setDeleteAllTargets(null)
+      setDeletingAll(false)
+      router.refresh()
     }
   }
 
@@ -307,7 +340,7 @@ export function AttachmentSection({
               multiple
               className="sr-only"
               onChange={handleFileChange}
-              disabled={uploading}
+              disabled={uploading || deletingAll}
             />
             <input
               ref={cameraRef}
@@ -316,7 +349,7 @@ export function AttachmentSection({
               capture="environment"
               className="sr-only"
               onChange={handleFileChange}
-              disabled={uploading}
+              disabled={uploading || deletingAll}
             />
             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
               <IconButton
@@ -324,7 +357,7 @@ export function AttachmentSection({
                 variant="outline"
                 label="Hacer foto"
                 className="sm:h-7 sm:w-auto sm:px-2.5"
-                disabled={uploading}
+                disabled={uploading || deletingAll}
                 onClick={() => cameraRef.current?.click()}
               >
                 <Camera className="size-3.5" />
@@ -335,7 +368,7 @@ export function AttachmentSection({
                 variant="outline"
                 label={uploading ? 'Subiendo archivos' : 'Añadir archivos'}
                 className="sm:h-7 sm:w-auto sm:px-2.5"
-                disabled={uploading}
+                disabled={uploading || deletingAll}
                 onClick={() => fileRef.current?.click()}
               >
                 {uploading ? (
@@ -357,11 +390,43 @@ export function AttachmentSection({
                 variant="outline"
                 label="Vincular desde Google Drive"
                 className="sm:h-7 sm:w-auto sm:px-2.5"
+                disabled={deletingAll}
                 onClick={openDriveDialog}
               >
                 <GoogleDriveIcon />
                 <span className="sr-only sm:not-sr-only">Vincular desde Google Drive</span>
               </IconButton>
+              {attachments.length > 0 && (
+                <DropdownMenuTrigger>
+                  <MenuButton
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Más acciones de adjuntos"
+                    isDisabled={
+                      uploading ||
+                      deletingId !== null ||
+                      deletingAll ||
+                      driveLinking ||
+                      downloadingAll
+                    }
+                  >
+                    {deletingAll ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Ellipsis className="size-4" />
+                    )}
+                  </MenuButton>
+                  <DropdownMenuContent placement="bottom end">
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onAction={() => setDeleteAllTargets([...attachments])}
+                    >
+                      <Trash2 aria-hidden />
+                      Eliminar todos los adjuntos
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenuTrigger>
+              )}
             </div>
           </>
         )}
@@ -373,7 +438,7 @@ export function AttachmentSection({
               type="button"
               variant="outline"
               size="sm"
-              disabled={downloadingAll}
+              disabled={downloadingAll || deletingAll}
               onClick={() => void downloadAll()}
             >
               {downloadingAll ? (
@@ -460,7 +525,7 @@ export function AttachmentSection({
                     className="size-7 shrink-0"
                     aria-label={`Eliminar adjunto ${a.name}`}
                     title="Eliminar adjunto"
-                    disabled={uploading || deletingId !== null}
+                    disabled={uploading || deletingId !== null || deletingAll}
                     onClick={() => void removeAttachment(a)}
                   >
                     {deletingId === a.id ? (
@@ -475,6 +540,18 @@ export function AttachmentSection({
           </ul>
         )}
       </CardContent>
+      <ConfirmDialog
+        open={deleteAllTargets !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteAllTargets(null)
+        }}
+        title="¿Eliminar todos los adjuntos?"
+        description={`Se quitarán los ${deleteAllTargets?.length ?? 0} adjuntos de esta lista y se intentará eliminar los archivos subidos. Esta acción no se puede deshacer.${entityType === 'lead' || entityType === 'client' ? ' La lista puede incluir adjuntos compartidos entre la oportunidad y el cliente.' : ''}${deleteAllTargets?.some((attachment) => attachment.source === 'drive') ? ' Los archivos originales de Google Drive no se eliminarán; solo se quitarán sus enlaces.' : ''}`}
+        confirmLabel={deletingAll ? 'Eliminando…' : 'Eliminar todos'}
+        destructive
+        pending={deletingAll}
+        onConfirm={() => void removeAllAttachments()}
+      />
       <Dialog open={driveDialogOpen} onOpenChange={setDriveDialogOpen}>
         <DialogContent>
           <form onSubmit={submitDriveLink}>

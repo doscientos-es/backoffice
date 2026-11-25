@@ -33,6 +33,7 @@ beforeEach(() => {
   vi.stubGlobal('confirm', mockConfirm)
   mockRefresh.mockClear()
   mockConfirm.mockClear()
+  mockConfirm.mockReturnValue(true)
 })
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -165,6 +166,59 @@ describe('attachment list', () => {
     render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
     fireEvent.click(screen.getByRole('button', { name: /eliminar adjunto report.pdf/i }))
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('only offers bulk deletion to editors with attachments', () => {
+    const { rerender } = render(<AttachmentSection {...BASE_PROPS} />)
+    expect(screen.queryByRole('button', { name: 'Más acciones de adjuntos' })).toBeNull()
+    rerender(<AttachmentSection {...BASE_PROPS} canEdit={false} attachments={items} />)
+    expect(screen.queryByRole('button', { name: 'Más acciones de adjuntos' })).toBeNull()
+  })
+
+  it('asks for confirmation and does not delete when cancelled', async () => {
+    const drive = { ...item, id: 'drive', name: 'Drive', source: 'drive' as const }
+    render(<AttachmentSection {...BASE_PROPS} attachments={[item, drive]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Eliminar todos los adjuntos' }))
+    expect(screen.getByRole('alertdialog', { name: '¿Eliminar todos los adjuntos?' })).toBeDefined()
+    expect(screen.getByText(/adjuntos compartidos entre la oportunidad y el cliente/)).toBeDefined()
+    expect(screen.getByText(/archivos originales de Google Drive no se eliminarán/)).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(fetch).not.toHaveBeenCalled()
+    expect(mockRefresh).not.toHaveBeenCalled()
+  })
+
+  it('deletes each confirmed attachment and refreshes once', async () => {
+    const drive = { ...item, id: 'drive', name: 'Drive', source: 'drive' as const }
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true })
+    render(<AttachmentSection {...BASE_PROPS} attachments={[item, drive]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Eliminar todos los adjuntos' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar todos' }))
+
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(fetch).toHaveBeenNthCalledWith(1, '/api/attachments/a1', { method: 'DELETE' })
+    expect(fetch).toHaveBeenNthCalledWith(2, '/api/attachments/drive', { method: 'DELETE' })
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+  })
+
+  it('continues after a failure and reports which attachment could not be deleted', async () => {
+    const second = { ...item, id: 'a2', name: 'second.pdf' }
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: false, json: async () => ({ error: 'Sin permiso' }) })
+      .mockResolvedValueOnce({ ok: true })
+    render(<AttachmentSection {...BASE_PROPS} attachments={[item, second]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Eliminar todos los adjuntos' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar todos' }))
+
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(screen.getByText('report.pdf: Sin permiso')).toBeDefined()
   })
 
   it('renders drive attachments with an external link to web_view_link', () => {
