@@ -35,6 +35,8 @@ import { parseTimeline } from '@/lib/proposals/timeline'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createServerClient } from '@/lib/supabase/server'
 
+import { daysUntilExpiry } from '../_lib/summary'
+
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
@@ -307,6 +309,12 @@ export async function GET(
     : calculatedTotals.oneTime.taxAmount
   const pdfTotal = preserved ? Number(documentSource.total ?? 0) : calculatedTotals.oneTime.total
   const title = typeof documentSource.title === 'string' ? documentSource.title : ''
+  const validUntil = (documentSource.valid_until as string | null) ?? null
+  const canAccept =
+    !historical &&
+    proposal.is_client_visible !== false &&
+    (proposal.status === 'sent' || proposal.status === 'viewed') &&
+    (daysUntilExpiry(validUntil) ?? 0) >= 0
   const recipientName =
     signedSnapshot?.parties?.client?.name ??
     signedSnapshot?.fiscal_data?.name ??
@@ -328,7 +336,7 @@ export async function GET(
     recipientAddress:
       signedSnapshot?.parties?.client?.address ??
       (signedProposal || !revision?.recipient ? null : formatAddress(revision.recipient) || null),
-    validUntil: (documentSource.valid_until as string | null) ?? null,
+    validUntil,
     context: (documentSource.context_markdown as string | null) ?? null,
     problems: parseKeyPoints(documentSource.problems),
     solutions: parseKeyPoints(documentSource.solutions),
@@ -353,7 +361,8 @@ export async function GET(
     },
     items: pdfItems,
     maintenanceOffer,
-    portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${token}?lang=${language}`,
+    portalUrl: `${externalAppUrl(publicEnv.NEXT_PUBLIC_APP_URL)}/p/proposal/${encodeURIComponent(token)}?lang=${language}`,
+    canAccept,
     companyName:
       signedSnapshot?.parties?.provider?.name ??
       (signedProposal

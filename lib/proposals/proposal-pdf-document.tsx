@@ -1,6 +1,7 @@
 import {
   Document,
   Font,
+  Image,
   Link,
   Page,
   Path,
@@ -11,6 +12,7 @@ import {
   View,
 } from '@react-pdf/renderer'
 import { marked, type Token, type Tokens } from 'marked'
+import { toDataURL } from 'qrcode'
 
 import { formatPortalDate, formatPortalEUR, type PortalLanguage } from '@/lib/portal/language'
 import {
@@ -33,11 +35,12 @@ import {
 import { formatTimelineDate, timelineLayout, type TimelineItem } from '@/lib/proposals/timeline'
 
 const BRAND = '#2A4227'
-const INK = '#183017'
-const ACCENT = '#BDFF7B'
-const PAPER = '#FAFAF7'
-const MIST = '#E9F1E6'
-const MUTED = '#657067'
+const INK = '#1D261E'
+const PAPER = '#F8F9F5'
+const MIST = '#EEF2EB'
+const MUTED = '#505B52'
+const RULE = '#D7DED5'
+const SIDE = 48
 
 Font.registerHyphenationCallback((word) => [word])
 
@@ -58,56 +61,44 @@ const coverWordBreaks = coverHyphenation(12, 15)
 const longCoverTitleWordBreaks = coverHyphenation(18)
 
 const styles = StyleSheet.create({
-  cover: { backgroundColor: PAPER, color: INK, fontFamily: 'Helvetica', padding: 48 },
+  cover: { backgroundColor: PAPER, color: INK, fontFamily: 'Helvetica', padding: SIDE },
   page: {
-    backgroundColor: PAPER,
+    backgroundColor: '#FFFFFF',
     color: INK,
     fontFamily: 'Helvetica',
-    fontSize: 9.5,
+    fontSize: 10.5,
     paddingBottom: 60,
-    paddingHorizontal: 48,
-    paddingTop: 82,
+    paddingHorizontal: SIDE,
+    paddingTop: 62,
   },
-  brand: { fontFamily: 'Helvetica-Bold', fontSize: 11, letterSpacing: 1.2 },
-  coverHeader: { borderTopColor: ACCENT, borderTopWidth: 7, paddingTop: 18 },
-  coverBrand: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 14, letterSpacing: 0.5 },
-  coverTag: {
-    color: BRAND,
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 8,
-    letterSpacing: 1,
-    lineHeight: 1.4,
-    textTransform: 'uppercase',
-  },
-  coverHero: { marginTop: 48 },
+  brand: { color: BRAND, fontFamily: 'Helvetica-Bold', fontSize: 11 },
+  coverHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  coverBrand: { color: BRAND, fontFamily: 'Helvetica-Bold', fontSize: 17 },
+  coverReference: { color: MUTED, fontSize: 10, maxWidth: '55%', textAlign: 'right' },
+  coverHero: { marginTop: 94 },
   coverTitle: {
     color: INK,
     fontFamily: 'Helvetica-Bold',
-    fontSize: 34,
-    lineHeight: 1.12,
-    marginTop: 15,
+    lineHeight: 1.08,
   },
-  coverRecipientLabel: { color: MUTED, fontSize: 9, marginTop: 20 },
   coverRecipient: {
-    color: INK,
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 13,
-    lineHeight: 1.35,
-    marginTop: 5,
+    color: MUTED,
+    fontSize: 16,
+    lineHeight: 1.28,
+    marginTop: 16,
   },
-  metricCard: { backgroundColor: BRAND, borderRadius: 14, marginTop: 24, padding: 20 },
-  metricLabel: {
-    color: '#DDE9DB',
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 8,
-    letterSpacing: 0.9,
-    textTransform: 'uppercase',
+  coverInvestment: {
+    borderTopColor: RULE,
+    borderTopWidth: 1,
+    marginTop: 34,
+    paddingTop: 18,
   },
-  metricValue: { color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 27, marginTop: 7 },
-  metricText: { color: '#DDE9DB', fontSize: 9, lineHeight: 1.4, marginTop: 6 },
+  metricLabel: { color: MUTED, fontSize: 11 },
+  metricValue: { color: BRAND, fontFamily: 'Helvetica-Bold', fontSize: 30, marginTop: 4 },
+  metricText: { color: MUTED, fontSize: 10, lineHeight: 1.4, marginTop: 12 },
   coverSpacer: { flexGrow: 1, minHeight: 28 },
   coverFooter: {
-    borderTopColor: '#D9E1D7',
+    borderTopColor: RULE,
     borderTopWidth: 1,
     color: MUTED,
     fontSize: 8,
@@ -115,90 +106,51 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
+    borderBottomColor: RULE,
+    borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    left: 48,
+    left: SIDE,
+    paddingBottom: 9,
     position: 'absolute',
-    right: 48,
-    top: 35,
+    right: SIDE,
+    top: 29,
   },
-  pageLabel: { color: MUTED, fontSize: 8 },
-  section: { marginTop: 24 },
-  sectionLabel: {
-    color: BRAND,
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 8,
-    letterSpacing: 1.05,
-    textTransform: 'uppercase',
-  },
-  sectionTitle: { fontFamily: 'Helvetica-Bold', fontSize: 18, lineHeight: 1.18, marginTop: 7 },
-  body: { color: MUTED, fontSize: 9.5, lineHeight: 1.55, marginTop: 10 },
+  pageLabel: { color: MUTED, fontSize: 9 },
+  section: { marginTop: 21 },
+  sectionTitle: { fontFamily: 'Helvetica-Bold', fontSize: 17, lineHeight: 1.2, marginBottom: 6 },
+  body: { color: INK, fontSize: 10.5, lineHeight: 1.5, marginTop: 5 },
   point: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#D9E1D7',
-    borderRadius: 10,
-    borderWidth: 1,
-    marginTop: 9,
-    padding: 12,
-  },
-  pointTitle: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 10 },
-  pointText: { color: MUTED, fontSize: 8.5, lineHeight: 1.45, marginTop: 4 },
-  maintenanceTable: {
-    borderColor: '#D9E1D7',
-    borderRadius: 10,
-    borderWidth: 1,
-    marginTop: 13,
-    overflow: 'hidden',
-  },
-  maintenanceRow: {
-    borderTopColor: '#E5EAE3',
+    borderTopColor: RULE,
     borderTopWidth: 1,
-    flexDirection: 'row',
-    paddingHorizontal: 11,
-    paddingVertical: 10,
+    marginTop: 8,
+    paddingTop: 9,
+    paddingBottom: 4,
   },
-  maintenancePlanName: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 9.5 },
+  pointTitle: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 11 },
+  pointText: { color: MUTED, fontSize: 10, lineHeight: 1.4, marginTop: 4 },
+  parties: { flexDirection: 'row', columnGap: 24 },
   maintenanceRecommendation: {
     color: BRAND,
     fontFamily: 'Helvetica-Bold',
-    fontSize: 7.5,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
+    fontSize: 8.5,
+    marginTop: 3,
   },
-  maintenanceSummary: { color: MUTED, fontSize: 8, lineHeight: 1.4, marginTop: 3 },
   maintenanceListLabel: {
-    color: BRAND,
+    color: INK,
     fontFamily: 'Helvetica-Bold',
-    fontSize: 7,
-    letterSpacing: 0.5,
-    marginTop: 7,
-    textTransform: 'uppercase',
+    fontSize: 9,
+    marginTop: 6,
   },
-  maintenanceList: { color: MUTED, fontSize: 7.5, lineHeight: 1.4, marginTop: 2 },
+  maintenanceList: { color: MUTED, fontSize: 9, lineHeight: 1.4, marginTop: 2 },
   maintenancePrice: {
     color: BRAND,
     fontFamily: 'Helvetica-Bold',
     fontSize: 11,
     textAlign: 'right',
   },
-  maintenanceVat: { color: MUTED, fontSize: 7.5, marginTop: 2, textAlign: 'right' },
-  investment: { backgroundColor: BRAND, borderRadius: 14, marginTop: 13, padding: 18 },
-  investmentLabel: {
-    color: ACCENT,
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 8,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  investmentValue: { color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 23, marginTop: 6 },
-  investmentText: { color: '#DDE9DB', fontSize: 8.5, marginTop: 5 },
-  table: {
-    borderColor: '#D9E1D7',
-    borderRadius: 10,
-    borderWidth: 1,
-    marginTop: 13,
-    overflow: 'hidden',
-  },
+  maintenanceVat: { color: MUTED, fontSize: 9, marginTop: 2, textAlign: 'right' },
+  table: { marginTop: 9 },
   tableHeader: {
     backgroundColor: MIST,
     flexDirection: 'row',
@@ -208,39 +160,61 @@ const styles = StyleSheet.create({
   tableHeaderText: {
     color: BRAND,
     fontFamily: 'Helvetica-Bold',
-    fontSize: 7,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
+    fontSize: 9,
   },
   row: {
-    borderTopColor: '#E5EAE3',
-    borderTopWidth: 1,
+    borderBottomColor: RULE,
+    borderBottomWidth: 1,
     flexDirection: 'row',
     paddingHorizontal: 11,
     paddingVertical: 9,
   },
-  itemDescription: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 8.5 },
-  itemMeta: { color: MUTED, fontSize: 7.5, marginTop: 3 },
-  amount: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 8.5, textAlign: 'right' },
+  itemDescription: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 10 },
+  itemMeta: { color: MUTED, fontSize: 9, marginTop: 3 },
+  amount: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 10, textAlign: 'right' },
   totalRow: {
-    alignItems: 'flex-end',
+    alignItems: 'baseline',
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 14,
+    marginTop: 8,
   },
-  totalLabel: { color: MUTED, fontSize: 8.5, marginRight: 12 },
-  totalValue: { color: MUTED, fontSize: 9 },
-  footer: { bottom: 25, color: MUTED, fontSize: 7.5, left: 48, position: 'absolute', right: 48 },
-  footerLine: { borderTopColor: '#D9E1D7', borderTopWidth: 1, paddingTop: 8 },
-  bullet: { color: MUTED, fontSize: 8.5, lineHeight: 1.45, marginTop: 3 },
-  cta: { backgroundColor: BRAND, borderRadius: 10, marginTop: 20, padding: 15 },
-  ctaText: { color: '#DDE9DB', fontSize: 8.5, lineHeight: 1.45 },
-  ctaLink: { color: ACCENT, fontFamily: 'Helvetica-Bold', fontSize: 10, marginTop: 7 },
-  acceptance: { borderColor: BRAND, borderRadius: 10, borderWidth: 1, marginTop: 20, padding: 16 },
-  acceptanceHash: { color: MUTED, fontSize: 6.5, lineHeight: 1.35, marginTop: 8 },
-  legalClause: { marginBottom: 8 },
-  legalTitle: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 8, lineHeight: 1.3 },
-  legalBody: { color: MUTED, fontSize: 7.5, lineHeight: 1.35, marginTop: 2 },
+  totalLabel: { color: MUTED, flexShrink: 1, fontSize: 10, marginRight: 15 },
+  totalValue: { color: INK, fontSize: 10, minWidth: 72, textAlign: 'right' },
+  grandTotal: { color: BRAND, fontFamily: 'Helvetica-Bold', fontSize: 12 },
+  footer: {
+    borderTopColor: RULE,
+    borderTopWidth: 1,
+    bottom: 25,
+    color: MUTED,
+    flexDirection: 'row',
+    fontSize: 8,
+    justifyContent: 'space-between',
+    left: SIDE,
+    paddingTop: 8,
+    position: 'absolute',
+    right: SIDE,
+  },
+  bullet: { color: INK, fontSize: 10, lineHeight: 1.4, marginTop: 3, paddingLeft: 8 },
+  cta: {
+    alignItems: 'center',
+    backgroundColor: MIST,
+    flexDirection: 'row',
+    marginTop: 24,
+    padding: 16,
+  },
+  ctaCopy: { flex: 1, paddingRight: 16 },
+  ctaLink: {
+    color: BRAND,
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 15,
+    textDecoration: 'underline',
+  },
+  ctaQr: { height: 96, width: 96 },
+  acceptance: { borderTopColor: RULE, borderTopWidth: 1, marginTop: 21, paddingTop: 12 },
+  acceptanceHash: { color: MUTED, fontSize: 8, lineHeight: 1.4, marginTop: 8 },
+  legalClause: { marginBottom: 10 },
+  legalTitle: { color: INK, fontFamily: 'Helvetica-Bold', fontSize: 10, lineHeight: 1.3 },
+  legalBody: { color: MUTED, fontSize: 9.5, lineHeight: 1.45, marginTop: 3 },
 })
 
 export type ProposalPdfItem = {
@@ -290,6 +264,7 @@ export type ProposalPdfData = {
   items: ProposalPdfItem[]
   maintenanceOffer: MaintenanceOffer
   portalUrl: string
+  canAccept?: boolean
   companyName: string | null
   companyNif?: string | null
   companyAddress?: string | null
@@ -426,6 +401,14 @@ function PdfMarkdown({ source }: { source: string }) {
   })
 }
 
+function SectionTitle({ children }: { children: string }) {
+  return (
+    <Text style={styles.sectionTitle} minPresenceAhead={32}>
+      {children}
+    </Text>
+  )
+}
+
 function Footer({ language }: { language: 'es' | 'ca' | 'en' }) {
   const label =
     language === 'ca'
@@ -435,7 +418,8 @@ function Footer({ language }: { language: 'es' | 'ca' | 'en' }) {
         : 'Propuesta confidencial'
   return (
     <View fixed style={styles.footer}>
-      <Text style={styles.footerLine}>doscientos · {label}</Text>
+      <Text>{label}</Text>
+      <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
     </View>
   )
 }
@@ -444,8 +428,10 @@ function PointList({ points }: { points: KeyPoint[] }) {
   return (
     <>
       {points.map((point) => (
-        <View key={point.id} style={styles.point} wrap={false}>
-          <Text style={styles.pointTitle}>{point.title}</Text>
+        <View key={point.id} style={styles.point}>
+          <Text style={styles.pointTitle} minPresenceAhead={22}>
+            {point.title}
+          </Text>
           {point.description ? (
             <Text style={styles.pointText}>{printableMarkdown(point.description)}</Text>
           ) : null}
@@ -466,9 +452,10 @@ function ScopeModuleList({
   return (
     <>
       {modules.map((module, index) => (
-        <View key={module.id} style={styles.point} wrap={false}>
+        <View key={module.id} style={styles.point}>
           <Text
             style={styles.pointTitle}
+            minPresenceAhead={22}
           >{`${String(index + 1).padStart(2, '0')} · ${module.title}`}</Text>
           {module.description ? <Text style={styles.pointText}>{module.description}</Text> : null}
           {publicScopeDuration(module, language) ? (
@@ -520,8 +507,11 @@ function LegalTerms({ source }: { source: string }) {
           )
         }
         return (
-          <View key={`clause-${index}`} style={styles.legalClause} wrap={false}>
-            <Text style={styles.legalTitle}>{`${match[1]}. ${match[2]}`}</Text>
+          <View key={`clause-${index}`} style={styles.legalClause}>
+            <Text
+              style={styles.legalTitle}
+              minPresenceAhead={20}
+            >{`${match[1]}. ${match[2]}`}</Text>
             {match[3]?.trim() ? (
               <Text style={styles.legalBody}>{printableMarkdown(match[3])}</Text>
             ) : null}
@@ -542,8 +532,8 @@ function MaintenancePlanList({
   const tr = proposalTr(language)
   const recommendedPlanId = recommendedMaintenancePlanId(offer)
   return (
-    <View style={styles.maintenanceTable}>
-      <View style={styles.tableHeader}>
+    <View style={styles.table}>
+      <View style={styles.tableHeader} minPresenceAhead={42}>
         <Text style={[styles.tableHeaderText, { width: '74%' }]}>
           {tr('Cobertura', 'Cobertura', 'Coverage')}
         </Text>
@@ -554,15 +544,15 @@ function MaintenancePlanList({
       {offer.plans.map((plan) => {
         const recommended = plan.id === recommendedPlanId
         return (
-          <View key={plan.id} style={styles.maintenanceRow} wrap={false}>
+          <View key={plan.id} style={styles.row} wrap={false}>
             <View style={{ width: '74%' }}>
-              <Text style={styles.maintenancePlanName}>{plan.name}</Text>
+              <Text style={styles.pointTitle}>{plan.name}</Text>
               {recommended ? (
                 <Text style={styles.maintenanceRecommendation}>
                   {tr('Recomendado', 'Recomanat', 'Recommended')}
                 </Text>
               ) : null}
-              <Text style={styles.maintenanceSummary}>{plan.summary}</Text>
+              <Text style={styles.pointText}>{plan.summary}</Text>
               <Text style={styles.maintenanceListLabel}>{tr('Incluye', 'Inclou', 'Includes')}</Text>
               <Text style={styles.maintenanceList}>{plan.coverage.join(' · ')}</Text>
               {plan.exclusions.length > 0 ? (
@@ -587,7 +577,13 @@ function MaintenancePlanList({
   )
 }
 
-function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
+function ProposalPdfDocument({
+  data,
+  acceptanceQr,
+}: {
+  data: ProposalPdfData
+  acceptanceQr: string | null
+}) {
   const language = data.language ?? 'es'
   const tr = proposalTr(language)
   const money = (value: number) => formatPortalEUR(value, language)
@@ -595,10 +591,8 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const en = language === 'en'
   const copy = {
     proposal: ca ? 'Proposta' : en ? 'Proposal' : 'Propuesta',
-    custom: ca ? 'personalitzada' : en ? 'custom' : 'personalizada',
-    prepared: ca ? 'Preparada per a' : en ? 'Prepared for' : 'Preparada para',
     investment: ca ? 'Inversió inicial' : en ? 'Initial investment' : 'Inversión inicial',
-    taxExcluded: ca ? '(IVA no inclòs)' : en ? '(VAT excluded)' : '(IVA no incluido)',
+    vat: en ? 'VAT' : 'IVA',
     valid: ca ? 'Vàlida fins al' : en ? 'Valid until' : 'Válida hasta el',
     context: ca ? 'Context' : en ? 'Context' : 'Contexto',
     challenges: ca ? 'Reptes detectats' : en ? 'Challenges identified' : 'Retos detectados',
@@ -616,12 +610,6 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
     globalDiscount: ca ? 'Descompte' : en ? 'Discount' : 'Descuento',
     payment: ca ? 'Pagament' : en ? 'Payment' : 'Pago',
     notes: ca ? 'Notes' : en ? 'Notes' : 'Notas',
-    maintenance: ca ? 'Manteniment' : en ? 'Maintenance' : 'Mantenimiento',
-    acceptance: ca
-      ? 'Acceptació electrònica'
-      : en
-        ? 'Electronic acceptance'
-        : 'Aceptación electrónica',
     accepted: ca ? 'Proposta acceptada' : en ? 'Proposal accepted' : 'Propuesta aceptada',
     manualAcceptance: ca
       ? 'Acceptació registrada manualment a Doscientos. No consta signatura electrònica del client.'
@@ -633,7 +621,6 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
       : en
         ? 'Proposal signed and accepted'
         : 'Propuesta firmada y aceptada',
-    annex: ca ? 'Annex contractual' : en ? 'Contractual annex' : 'Anexo contractual',
     terms: ca
       ? 'Condicions generals i particulars'
       : en
@@ -670,20 +657,21 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
   const acceptanceCriteria = data.acceptanceCriteria?.trim()
   const initialPaymentPercentage = paymentInitialPercentage(data.paymentSchedule)
   const hasConditions = Boolean(data.paymentTerms || data.changeManagementTerms)
+  const reference = data.number ? `${copy.proposal} ${data.number}` : copy.proposal
   return (
-    <Document title={`${copy.proposal} ${data.number ?? ''} · ${data.title}`} author="doscientos">
+    <Document title={`${reference} · ${data.title}`} author="doscientos">
       <Page size="A4" style={styles.cover} wrap>
         <View style={styles.coverHeader}>
           <Text style={styles.coverBrand}>doscientos</Text>
+          <Text style={styles.coverReference} hyphenationCallback={coverWordBreaks}>
+            {reference}
+          </Text>
         </View>
         <View style={styles.coverHero}>
-          <Text style={styles.coverTag} hyphenationCallback={coverWordBreaks}>
-            {copy.proposal} · {data.number ?? copy.custom}
-          </Text>
           <Text
             style={[
               styles.coverTitle,
-              { fontSize: data.title.length > 140 ? 21 : data.title.length > 80 ? 27 : 34 },
+              { fontSize: data.title.length > 140 ? 22 : data.title.length > 80 ? 28 : 36 },
             ]}
             hyphenationCallback={
               data.title.length > 80 ? longCoverTitleWordBreaks : coverWordBreaks
@@ -691,15 +679,13 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
           >
             {data.title}
           </Text>
-          <Text style={styles.coverRecipientLabel}>{copy.prepared}</Text>
           <Text style={styles.coverRecipient} hyphenationCallback={coverWordBreaks}>
             {data.recipientName}
           </Text>
         </View>
-        <View style={styles.metricCard} wrap={false}>
+        <View style={styles.coverInvestment} wrap={false}>
           <Text style={styles.metricLabel}>{copy.investment}</Text>
           <Text style={styles.metricValue}>{money(data.subtotal)}</Text>
-          <Text style={styles.metricText}>{copy.taxExcluded}</Text>
           {validUntil ? (
             <Text style={styles.metricText}>{`${copy.valid} ${validUntil}.`}</Text>
           ) : null}
@@ -714,65 +700,44 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
       <Page size="A4" style={styles.page} wrap>
         <View fixed style={styles.header}>
           <Text style={styles.brand}>doscientos</Text>
-          <Text style={styles.pageLabel}>
-            {copy.proposal} {data.number ?? copy.custom}
-          </Text>
+          <Text style={styles.pageLabel}>{reference}</Text>
         </View>
 
         {data.context ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{copy.context}</Text>
-            <Text style={styles.sectionTitle}>
-              {tr('El punto de partida', 'El punt de partida', 'The starting point')}
-            </Text>
+            <SectionTitle>{copy.context}</SectionTitle>
             <Text style={styles.body}>{printableMarkdown(data.context)}</Text>
           </View>
         ) : null}
 
         {data.problems.length > 0 ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{copy.challenges}</Text>
-            <Text style={styles.sectionTitle}>
-              {tr('Lo que queremos resolver', 'Allò que volem resoldre', 'What we want to solve')}
-            </Text>
+            <SectionTitle>{copy.challenges}</SectionTitle>
             <PointList points={data.problems} />
           </View>
         ) : null}
 
         {data.solutions.length > 0 ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>
-              {tr('Nuestra propuesta', 'La nostra proposta', 'Our proposal')}
-            </Text>
-            <Text style={styles.sectionTitle}>
-              {tr('Cómo lo abordamos', 'Com ho abordem', 'How we approach it')}
-            </Text>
+            <SectionTitle>
+              {tr('Solución propuesta', 'Solució proposada', 'Proposed solution')}
+            </SectionTitle>
             <PointList points={data.solutions} />
           </View>
         ) : null}
 
         {data.scopeModules.length > 0 ? (
-          <View
-            style={styles.section}
-            break={Boolean(data.context || data.problems.length || data.solutions.length)}
-          >
-            <Text style={styles.sectionLabel}>{copy.proposalScope}</Text>
-            <Text style={styles.sectionTitle}>
-              {tr(
-                'Qué incluye esta propuesta',
-                'Què inclou aquesta proposta',
-                'What this proposal includes',
-              )}
-            </Text>
+          <View style={styles.section}>
+            <SectionTitle>{copy.proposalScope}</SectionTitle>
             <ScopeModuleList modules={data.scopeModules} language={language} />
           </View>
         ) : null}
 
         {deliverables || acceptanceCriteria ? (
-          <View style={styles.section} break={data.scopeModules.length > 0}>
-            <Text style={styles.sectionLabel}>
+          <View style={styles.section}>
+            <SectionTitle>
               {tr('Entrega y validación', 'Lliurament i validació', 'Delivery and validation')}
-            </Text>
+            </SectionTitle>
             {deliverables ? (
               <>
                 <Text style={styles.pointTitle}>
@@ -794,10 +759,9 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
 
         {data.timeline?.length ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{tr('El camino', 'El camí', 'The journey')}</Text>
-            <Text style={styles.sectionTitle}>
+            <SectionTitle>
               {tr('Plazos del proyecto', 'Terminis del projecte', 'Project timeline')}
-            </Text>
+            </SectionTitle>
             {timelineLayout(data.timeline).map(({ item, left, width }) => (
               <View key={item.id} style={{ marginBottom: 12 }} wrap={false}>
                 <Text style={styles.pointTitle}>{item.title}</Text>
@@ -838,74 +802,51 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
 
         {developmentApproach ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
+            <SectionTitle>
               {ca
                 ? 'Com treballarem durant el desenvolupament'
                 : en
                   ? 'How we will work during development'
                   : 'Cómo trabajaremos durante el desarrollo'}
-            </Text>
+            </SectionTitle>
             <PdfMarkdown source={developmentApproach} />
           </View>
         ) : null}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{copy.parties}</Text>
-          <View style={styles.point}>
-            <Text style={styles.pointTitle}>{copy.provider}</Text>
-            <Text style={styles.pointText}>
-              {[
-                data.companyName,
-                data.companyNif ? `${copy.taxId}: ${data.companyNif}` : null,
-                data.companyAddress ? `${copy.address}: ${data.companyAddress}` : null,
-              ]
-                .filter(Boolean)
-                .join('\n')}
-            </Text>
-          </View>
-          <View style={styles.point}>
-            <Text style={styles.pointTitle}>{copy.client}</Text>
-            <Text style={styles.pointText}>
-              {[
-                data.recipientName,
-                data.recipientNif ? `${copy.taxId}: ${data.recipientNif}` : null,
-                data.recipientAddress ? `${copy.address}: ${data.recipientAddress}` : null,
-              ]
-                .filter(Boolean)
-                .join('\n')}
-            </Text>
+        <View style={styles.section} wrap={false}>
+          <SectionTitle>{copy.parties}</SectionTitle>
+          <View style={styles.parties}>
+            <View style={[styles.point, { flex: 1 }]}>
+              <Text style={styles.pointTitle}>{copy.provider}</Text>
+              <Text style={styles.pointText}>
+                {[
+                  data.companyName,
+                  data.companyNif ? `${copy.taxId}: ${data.companyNif}` : null,
+                  data.companyAddress ? `${copy.address}: ${data.companyAddress}` : null,
+                ]
+                  .filter(Boolean)
+                  .join('\n')}
+              </Text>
+            </View>
+            <View style={[styles.point, { flex: 1 }]}>
+              <Text style={styles.pointTitle}>{copy.client}</Text>
+              <Text style={styles.pointText}>
+                {[
+                  data.recipientName,
+                  data.recipientNif ? `${copy.taxId}: ${data.recipientNif}` : null,
+                  data.recipientAddress ? `${copy.address}: ${data.recipientAddress}` : null,
+                ]
+                  .filter(Boolean)
+                  .join('\n')}
+              </Text>
+            </View>
           </View>
         </View>
 
-        <View
-          style={styles.section}
-          break={Boolean(
-            data.context ||
-            data.problems.length ||
-            data.solutions.length ||
-            data.scopeModules.length ||
-            developmentApproach ||
-            deliverables ||
-            acceptanceCriteria,
-          )}
-        >
-          <Text style={styles.sectionLabel}>{copy.economics}</Text>
-          <Text style={styles.sectionTitle}>
-            {tr('Inversión y alcance', 'Inversió i abast', 'Investment and scope')}
-          </Text>
-          <View style={styles.investment}>
-            <Text style={styles.investmentLabel}>{copy.investment}</Text>
-            <Text style={styles.investmentValue}>{money(data.subtotal)}</Text>
-            <Text style={styles.investmentText}>
-              {ca
-                ? `S'hi afegirà l'IVA corresponent: ${money(data.taxAmount)}.`
-                : en
-                  ? `VAT of ${money(data.taxAmount)} will be added.`
-                  : `Se añadirá el IVA correspondiente: ${money(data.taxAmount)}.`}
-            </Text>
-          </View>
+        <View style={styles.section}>
+          <SectionTitle>{copy.economics}</SectionTitle>
           <View style={styles.table}>
-            <View style={styles.tableHeader}>
+            <View style={styles.tableHeader} minPresenceAhead={32}>
               <Text style={[styles.tableHeaderText, { width: '70%' }]}>{copy.concept}</Text>
               <Text style={[styles.tableHeaderText, { textAlign: 'right', width: '30%' }]}>
                 {copy.amount}
@@ -968,15 +909,25 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
               ) : null}
             </>
           ) : null}
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>{copy.total}</Text>
-            <Text style={styles.totalValue}>{money(data.total)}</Text>
+          <View wrap={false}>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>{copy.investment}</Text>
+              <Text style={styles.totalValue}>{money(data.subtotal)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>{copy.vat}</Text>
+              <Text style={styles.totalValue}>{money(data.taxAmount)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, styles.grandTotal]}>{copy.total}</Text>
+              <Text style={[styles.totalValue, styles.grandTotal]}>{money(data.total)}</Text>
+            </View>
           </View>
         </View>
 
         {hasConditions || data.iban ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>
+            <SectionTitle>
               {hasConditions
                 ? ca
                   ? 'Condicions i pagament'
@@ -984,7 +935,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
                     ? 'Terms and payment'
                     : 'Condiciones y pago'
                 : copy.payment}
-            </Text>
+            </SectionTitle>
             {data.paymentTerms ? (
               <>
                 <Text style={styles.pointTitle}>
@@ -1036,14 +987,13 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         ) : null}
         {data.notes ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{copy.notes}</Text>
+            <SectionTitle>{copy.notes}</SectionTitle>
             <Text style={styles.body}>{printableMarkdown(data.notes)}</Text>
           </View>
         ) : null}
         {data.maintenanceOffer.enabled && data.maintenanceOffer.plans.length > 0 ? (
-          <View style={styles.section} break>
-            <Text style={styles.sectionLabel}>{copy.maintenance}</Text>
-            <Text style={styles.sectionTitle}>{data.maintenanceOffer.heading}</Text>
+          <View style={styles.section}>
+            <SectionTitle>{data.maintenanceOffer.heading}</SectionTitle>
             <Text style={styles.body}>{data.maintenanceOffer.intro}</Text>
             <MaintenancePlanList offer={data.maintenanceOffer} language={language} />
             <Text style={styles.body}>
@@ -1057,9 +1007,9 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         ) : null}
         {data.providerSignature && !data.acceptance ? (
           <View style={styles.acceptance} wrap={false}>
-            <Text style={styles.sectionLabel}>
+            <SectionTitle>
               {tr('Firma del proveedor', 'Signatura del proveïdor', 'Provider signature')}
-            </Text>
+            </SectionTitle>
             <SignatureDrawing signature={data.providerSignature.drawing} />
             <Text style={styles.body}>
               {data.providerSignature.name}
@@ -1069,8 +1019,7 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
         ) : null}
         {data.acceptance ? (
           <View style={styles.acceptance} break>
-            <Text style={styles.sectionLabel}>{copy.acceptance}</Text>
-            <Text style={[styles.sectionTitle, { fontSize: 15 }]}>{copy.signed}</Text>
+            <SectionTitle>{copy.signed}</SectionTitle>
             {data.acceptance.handwrittenSignature ? (
               <SignatureDrawing signature={data.acceptance.handwrittenSignature} />
             ) : null}
@@ -1116,43 +1065,46 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
             >{`${tr('Huella SHA-256 del documento aceptado', 'Empremta SHA-256 del document acceptat', 'SHA-256 fingerprint of the accepted document')}: ${data.acceptance.documentHash}`}</Text>
           </View>
         ) : data.acceptedWithoutSignature ? (
-          <View style={styles.acceptance} break wrap={false}>
-            <Text style={styles.sectionLabel}>{copy.accepted}</Text>
+          <View style={styles.acceptance} wrap={false}>
+            <SectionTitle>{copy.accepted}</SectionTitle>
             <Text style={styles.body}>{copy.manualAcceptance}</Text>
           </View>
-        ) : (
-          <View style={styles.cta} wrap={false}>
-            <Text style={styles.ctaText}>
-              {tr(
-                '¿Todo claro? Revisa la propuesta online y confírmala para que podamos empezar.',
-                'Tot clar? Revisa la proposta en línia i confirma-la perquè puguem començar.',
-                'All clear? Review and confirm the proposal online so we can get started.',
-              )}
-            </Text>
-            <Link src={data.portalUrl} style={styles.ctaLink}>
-              {tr(
-                'Revisar y aceptar la propuesta →',
-                'Revisar i acceptar la proposta →',
-                'Review and accept the proposal →',
-              )}
-            </Link>
-          </View>
-        )}
+        ) : null}
         <Footer language={language} />
       </Page>
       <Page size="A4" style={styles.page} wrap>
         <View fixed style={styles.header}>
           <Text style={styles.brand}>doscientos</Text>
           <Text style={styles.pageLabel}>
-            {ca ? 'Annex de la proposta' : en ? 'Proposal annex' : 'Anexo de la propuesta'}{' '}
-            {data.number ?? copy.custom}
+            {tr('Anexo contractual', 'Annex contractual', 'Contractual annex')}
+            {data.number ? ` · ${data.number}` : ''}
           </Text>
         </View>
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{copy.annex}</Text>
-          <Text style={styles.sectionTitle}>{copy.terms}</Text>
+          <SectionTitle>{copy.terms}</SectionTitle>
           <LegalTerms source={data.legalTerms} />
         </View>
+        {acceptanceQr ? (
+          <View style={styles.cta} wrap={false}>
+            <View style={styles.ctaCopy}>
+              <Link src={data.portalUrl} style={styles.ctaLink}>
+                {tr(
+                  'Revisar y aceptar la propuesta',
+                  'Revisar i acceptar la proposta',
+                  'Review and accept the proposal',
+                )}
+              </Link>
+              <Text style={styles.body}>
+                {tr(
+                  'Escanea el código o abre el enlace para firmar en línea.',
+                  'Escaneja el codi o obre l’enllaç per signar en línia.',
+                  'Scan the code or open the link to sign online.',
+                )}
+              </Text>
+            </View>
+            <Image src={acceptanceQr} style={styles.ctaQr} />
+          </View>
+        ) : null}
         <Footer language={language} />
       </Page>
     </Document>
@@ -1160,5 +1112,8 @@ function ProposalPdfDocument({ data }: { data: ProposalPdfData }) {
 }
 
 export async function renderProposalPdf(data: ProposalPdfData): Promise<Buffer> {
-  return renderToBuffer(<ProposalPdfDocument data={data} />)
+  const acceptanceQr = data.canAccept
+    ? await toDataURL(data.portalUrl, { errorCorrectionLevel: 'M', margin: 4, width: 384 })
+    : null
+  return renderToBuffer(<ProposalPdfDocument data={data} acceptanceQr={acceptanceQr} />)
 }

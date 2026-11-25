@@ -165,9 +165,39 @@ describe('GET /p/proposal/[token]/pdf', () => {
     const { GET } = await import('./route')
     state.proposal = { ...state.proposal, leads: { language: 'ca' } }
     await GET(request('?lang=en'), context)
-    expect(renderProposalPdf).toHaveBeenCalledWith(expect.objectContaining({ language: 'en' }))
+    expect(renderProposalPdf).toHaveBeenCalledWith(
+      expect.objectContaining({
+        language: 'en',
+        canAccept: true,
+        portalUrl: expect.stringContaining(`/p/proposal/${TOKEN}?lang=en`),
+      }),
+    )
     await GET(request(), context)
     expect(renderProposalPdf).toHaveBeenLastCalledWith(expect.objectContaining({ language: 'ca' }))
+  })
+
+  it('allows the QR on the last day of validity for a viewed proposal', async () => {
+    const { GET } = await import('./route')
+    state.proposal = {
+      ...state.proposal,
+      status: 'viewed',
+      valid_until: new Date().toISOString().slice(0, 10),
+    }
+    await GET(request(), context)
+    expect(renderProposalPdf).toHaveBeenCalledWith(expect.objectContaining({ canAccept: true }))
+  })
+
+  it.each([
+    ['expired by date', { valid_until: '2000-01-01' }],
+    ['marked as expired', { status: 'expired' }],
+    ['rejected', { status: 'rejected' }],
+    ['hidden from the client', { is_client_visible: false }],
+  ])('omits the acceptance QR when the proposal is %s', async (_, override) => {
+    const { GET } = await import('./route')
+    state.isTeam = true
+    state.proposal = { ...state.proposal, ...override }
+    expect((await GET(request(), context)).status).toBe(200)
+    expect(renderProposalPdf).toHaveBeenCalledWith(expect.objectContaining({ canAccept: false }))
   })
 
   it('returns the attachment to a team member previewing a draft', async () => {
@@ -195,6 +225,7 @@ describe('GET /p/proposal/[token]/pdf', () => {
     )
     expect(renderProposalPdf).toHaveBeenCalledWith(
       expect.objectContaining({
+        canAccept: false,
         maintenanceOffer: expect.objectContaining({ plans: expect.any(Array) }),
       }),
     )
@@ -312,6 +343,7 @@ describe('GET /p/proposal/[token]/pdf', () => {
     expect(renderProposalPdf).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Título firmado',
+        canAccept: false,
         recipientName: 'Acme SL',
         recipientNif: 'B22222222',
         recipientAddress: 'Madrid',
@@ -553,6 +585,7 @@ describe('GET /p/proposal/[token]/pdf', () => {
     expect(renderProposalPdf).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Anterior',
+        canAccept: false,
         total: 121,
         recipientName: 'Cliente anterior',
         recipientNif: 'X123',

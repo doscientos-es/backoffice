@@ -83,7 +83,7 @@ describe('proposal PDF helpers', () => {
           .replace(/[\s-]/g, '')
         expect(text).toContain(title.replace(/\s+/g, ''))
         expect(text).toContain(recipient.replace(/\s+/g, ''))
-        expect(text).toContain('INVERSIÓNINICIAL')
+        expect(text).toContain('Inversióninicial')
         expect(text).toContain('1000,00€')
         expect(text).toContain('Documentoconfidencial')
         if (validUntil) expect(text).toContain('Válidahastael')
@@ -234,6 +234,8 @@ describe('proposal PDF helpers', () => {
       }
       expect(text).not.toContain('PLAZOESTIMADO')
       expect(text).not.toContain('FIRMADELPROVEEDOR')
+      expect(pages[0]?.content).not.toMatch(/IVA no inclòs|VAT excluded/i)
+      expect(text).not.toMatch(/REVISARIACCEPTARLAPROPOSTA|REVIEWANDACCEPTTHEPROPOSAL/)
     },
   )
 
@@ -264,7 +266,12 @@ describe('proposal PDF helpers', () => {
         paymentSchedule: 'half_half',
         paymentTerms: '50 % al aceptar y 50 % a la entrega.',
         changeManagementTerms: 'Los cambios fuera de alcance se presupuestan aparte.',
-        legalTerms: 'Condiciones generales de contratación.',
+        legalTerms:
+          developmentApproach === undefined
+            ? [...Array(28)]
+                .map((_, i) => `${i + 1}. **Cláusula** Condiciones de contratación.`)
+                .join('\n\n') + '\n\nFin del contrato.'
+            : 'Condiciones generales de contratación.',
         notes: null,
         subtotal: 1000,
         taxAmount: 210,
@@ -281,7 +288,8 @@ describe('proposal PDF helpers', () => {
           },
         ],
         maintenanceOffer: DEFAULT_MAINTENANCE_OFFER,
-        portalUrl: 'https://example.test/p/proposal/token',
+        portalUrl: `https://example.test/p/proposal/${'a'.repeat(48)}?lang=es`,
+        canAccept: developmentApproach === undefined,
         companyName: 'Doscientos S.L.',
         iban: 'ES12 3456 7890 1234 5678 9012',
         providerSignature: developmentApproach?.trim()
@@ -335,14 +343,40 @@ describe('proposal PDF helpers', () => {
         .toLocaleUpperCase()
       expect(coverText).toContain('INVERSIÓNINICIAL')
       expect(coverText).toContain('1000,00€')
-      expect(coverText).toContain('(IVANOINCLUIDO)')
+      expect(coverText).not.toMatch(/IVA/)
       expect(coverText).not.toContain('1210,00€')
-      expect(fullText).toContain('SEAÑADIRÁELIVACORRESPONDIENTE')
+      expect(fullText).toContain('IVA210,00€')
       expect(fullText).toContain('TOTAL INICIAL PREVISTO CON IVA'.replace(/ /g, ''))
       expect(fullText).toContain('1210,00€')
       expect(fullText).toContain('RECOMENDADO')
       expect(fullText).not.toContain('PLANELEGIDO')
       expect(fullText).not.toContain('SELECCIONADESDELAPROPUESTAONLINE')
+      expect(fullText).not.toContain('QUÉINCLUYEESTAPROPUESTA')
+      if (data.canAccept) {
+        const lastPageText = pages.at(-1)?.content.replace(/\s+/g, '') ?? ''
+        expect(lastPageText).toContain('Revisaryaceptarlapropuesta')
+        expect(fullText.indexOf('REVISARYACEPTARLAPROPUESTA')).toBeGreaterThan(
+          fullText.indexOf('FINDELCONTRATO'),
+        )
+        const { getDocument, OPS } = await import('pdfjs-dist/legacy/build/pdf.mjs')
+        const task = getDocument({ data: Uint8Array.from(pdf), useWasm: false })
+        try {
+          const document = await task.promise
+          const page = await document.getPage(document.numPages)
+          const annotations = await page.getAnnotations()
+          expect(annotations).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({ subtype: 'Link', url: data.portalUrl }),
+            ]),
+          )
+          const operators = await page.getOperatorList()
+          expect(operators.fnArray).toContain(OPS.paintImageXObject)
+        } finally {
+          await task.destroy()
+        }
+      } else {
+        expect(fullText).not.toContain('REVISARYACEPTARLAPROPUESTA')
+      }
       const heading = 'CÓMOTRABAJAREMOSDURANTEELDESARROLLO'
       if (developmentApproach?.trim()) {
         const { getDocument, OPS } = await import('pdfjs-dist/legacy/build/pdf.mjs')
@@ -379,7 +413,7 @@ describe('proposal PDF helpers', () => {
         expect(fullText.indexOf(heading)).toBeGreaterThan(
           fullText.indexOf('ELCLIENTEVALIDAELACCESO'),
         )
-        expect(fullText.indexOf(heading)).toBeLessThan(fullText.indexOf('INVERSIÓNYALCANCE'))
+        expect(fullText.indexOf(heading)).toBeLessThan(fullText.indexOf('PROPUESTAECONÓMICA'))
       } else {
         expect(fullText).not.toContain(heading)
       }
