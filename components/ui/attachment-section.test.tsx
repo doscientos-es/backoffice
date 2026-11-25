@@ -1,7 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AttachmentSection } from '@/components/ui/attachment-section'
+
+const mockUpload = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/attachments/upload', () => ({ uploadAttachment: mockUpload }))
 
 // ── router stub ──────────────────────────────────────────────────────────────
 const mockRefresh = vi.fn()
@@ -34,6 +37,8 @@ beforeEach(() => {
   mockRefresh.mockClear()
   mockConfirm.mockClear()
   mockConfirm.mockReturnValue(true)
+  mockUpload.mockReset()
+  mockUpload.mockResolvedValue(null)
 })
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -90,9 +95,7 @@ describe('attachment list', () => {
   it('renders attachment names with download links', () => {
     render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
     expect(screen.getByText('report.pdf')).toBeDefined()
-    expect(screen.getByRole('link', { name: /ver report.pdf/i }).getAttribute('href')).toBe(
-      '/api/documents/a1/view',
-    )
+    expect(screen.getByRole('button', { name: /ver report.pdf/i })).toBeDefined()
     const link = screen.getByRole('link', { name: /descargar report.pdf/i })
     expect(link.getAttribute('href')).toBe('/api/documents/a1/download')
     expect(link.getAttribute('target')).toBeNull()
@@ -108,10 +111,116 @@ describe('attachment list', () => {
         ]}
       />,
     )
-    const preview = screen.getByRole('link', { name: /ver foto.jpg/i })
-    expect(preview.getAttribute('href')).toBe('/api/documents/image/view')
-    expect(preview.getAttribute('target')).toBe('_blank')
-    expect(screen.queryByRole('link', { name: /ver datos.xlsx/i })).toBeNull()
+    expect(screen.getByRole('button', { name: /ver foto.jpg/i })).toBeDefined()
+    expect(screen.queryByRole('button', { name: /ver datos.xlsx/i })).toBeNull()
+  })
+
+  it('previews an image in a dialog and releases its temporary URL when closed', async () => {
+    const image = { ...item, name: 'foto.jpg', mime_type: 'image/jpeg' }
+    const createObjectURL = vi.fn(() => 'blob:preview')
+    const revokeObjectURL = vi.fn()
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL }))
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'image/jpeg' }),
+      blob: async () => new Blob(['image']),
+    })
+    render(<AttachmentSection {...BASE_PROPS} attachments={[image]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Ver foto.jpg' }))
+    const dialog = await screen.findByRole('dialog')
+    expect((await within(dialog).findByRole('img', { name: 'foto.jpg' })).getAttribute('src')).toBe(
+      'blob:preview',
+    )
+    expect(
+      within(dialog)
+        .getByRole('link', { name: /abrir en otra pestaña/i })
+        .getAttribute('href'),
+    ).toBe('/api/documents/a1/view')
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview'))
+  })
+
+  it('embeds PDF previews in the dialog', async () => {
+    vi.stubGlobal(
+      'URL',
+      Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:pdf'), revokeObjectURL: vi.fn() }),
+    )
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'application/pdf' }),
+      blob: async () => new Blob(['pdf'], { type: 'application/pdf' }),
+    })
+    render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Ver report.pdf' }))
+    expect((await screen.findByTitle('Vista previa de report.pdf')).getAttribute('src')).toBe(
+      'blob:pdf',
+    )
+  })
+
+  it('renders plain text safely and reports preview failures', async () => {
+    const textItem = { ...item, name: 'notes.txt', mime_type: 'text/plain' }
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'text/plain; charset=utf-8' }),
+        text: async () => '<script>unsafe</script>',
+      })
+      .mockResolvedValueOnce({ ok: false })
+    render(<AttachmentSection {...BASE_PROPS} attachments={[textItem]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Ver notes.txt' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(await within(dialog).findByText('<script>unsafe</script>')).toBeDefined()
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    fireEvent.click(screen.getByRole('button', { name: 'Ver notes.txt' }))
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'No se pudo cargar la vista previa',
+    )
+  })
+
+  it('shows filters only for many attachments and keeps bulk actions scoped to all attachments', async () => {
+    const items = Array.from({ length: 10 }, (_, index) => ({
+      ...item,
+      id: `id-${index}`,
+      name: `document-${index}.pdf`,
+    }))
+    const { rerender } = render(
+      <AttachmentSection {...BASE_PROPS} attachments={items.slice(0, 9)} />,
+    )
+    expect(screen.queryByLabelText('Buscar adjuntos')).toBeNull()
+    rerender(<AttachmentSection {...BASE_PROPS} attachments={items} />)
+    fireEvent.change(screen.getByLabelText('Buscar adjuntos'), { target: { value: 'DOCUMENT-1' } })
+    expect(screen.getByText('document-1.pdf')).toBeDefined()
+    expect(screen.queryByText('document-0.pdf')).toBeNull()
+    fireEvent.change(screen.getByLabelText('Filtrar adjuntos por tipo'), {
+      target: { value: 'image' },
+    })
+    expect(screen.getByText(/no hay adjuntos que coincidan/i)).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Eliminar todos los adjuntos' }))
+    expect(screen.getByText(/10 archivos subidos y 0 enlaces/)).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: 'Descarga no disponible' }),
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: /descargar todos los adjuntos/i }))
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/attachments/download-all',
+        expect.objectContaining({
+          body: JSON.stringify({ ids: items.map((attachment) => attachment.id) }),
+        }),
+      ),
+    )
+    rerender(<AttachmentSection {...BASE_PROPS} attachments={items.slice(0, 9)} />)
+    expect(screen.getByLabelText('Buscar adjuntos')).toBeDefined()
+    fireEvent.change(screen.getByLabelText('Buscar adjuntos'), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText('Filtrar adjuntos por tipo'), {
+      target: { value: 'all' },
+    })
+    expect(screen.queryByLabelText('Buscar adjuntos')).toBeNull()
   })
 
   it('downloads a ZIP containing stored attachments for read-only users and explains Drive exclusions', async () => {
@@ -131,7 +240,10 @@ describe('attachment list', () => {
     })
 
     render(<AttachmentSection {...BASE_PROPS} canEdit={false} attachments={[item, drive]} />)
-    fireEvent.click(screen.getByRole('button', { name: /descargar todos los adjuntos/i }))
+    expect(screen.queryByRole('button', { name: /descargar todos los adjuntos/i })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
+    expect(screen.queryByRole('menuitem', { name: 'Eliminar todos los adjuntos' })).toBeNull()
+    fireEvent.click(await screen.findByRole('menuitem', { name: /descargar todos los adjuntos/i }))
     await waitFor(() => expect(click).toHaveBeenCalledOnce())
     expect(fetch).toHaveBeenCalledWith(
       '/api/attachments/download-all',
@@ -151,7 +263,8 @@ describe('attachment list', () => {
       json: async () => ({ error: 'Descarga no disponible' }),
     })
     render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
-    fireEvent.click(screen.getByRole('button', { name: /descargar todos los adjuntos/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: /descargar todos los adjuntos/i }))
     await waitFor(() => expect(screen.getByText('Descarga no disponible')).toBeDefined())
   })
 
@@ -165,7 +278,9 @@ describe('attachment list', () => {
     fireEvent.click(screen.getByRole('button', { name: /eliminar adjunto report.pdf/i }))
 
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
-    expect(mockConfirm).toHaveBeenCalledWith('¿Quitar «report.pdf» de este registro?')
+    expect(mockConfirm).toHaveBeenCalledWith(
+      expect.stringContaining('esta acción no se puede deshacer'),
+    )
     expect(fetch).toHaveBeenCalledWith('/api/attachments/a1', { method: 'DELETE' })
     expect(screen.queryByText('report.pdf')).toBeNull()
   })
@@ -207,10 +322,26 @@ describe('attachment list', () => {
     expect(fetch).not.toHaveBeenCalled()
   })
 
-  it('only offers bulk deletion to editors with attachments', () => {
+  it('only offers bulk deletion to editors with attachments', async () => {
     const { rerender } = render(<AttachmentSection {...BASE_PROPS} />)
     expect(screen.queryByRole('button', { name: 'Más acciones de adjuntos' })).toBeNull()
     rerender(<AttachmentSection {...BASE_PROPS} canEdit={false} attachments={items} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
+    expect(
+      await screen.findByRole('menuitem', { name: /descargar todos los adjuntos/i }),
+    ).toBeDefined()
+    expect(screen.queryByRole('menuitem', { name: 'Eliminar todos los adjuntos' })).toBeNull()
+  })
+
+  it('does not offer bulk download when there are only Drive links', async () => {
+    const drive = { ...item, id: 'drive', source: 'drive' as const }
+    const { rerender } = render(<AttachmentSection {...BASE_PROPS} attachments={[drive]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
+    expect(
+      await screen.findByRole('menuitem', { name: 'Eliminar todos los adjuntos' }),
+    ).toBeDefined()
+    expect(screen.queryByRole('menuitem', { name: /descargar todos los adjuntos/i })).toBeNull()
+    rerender(<AttachmentSection {...BASE_PROPS} canEdit={false} attachments={[drive]} />)
     expect(screen.queryByRole('button', { name: 'Más acciones de adjuntos' })).toBeNull()
   })
 
@@ -223,6 +354,7 @@ describe('attachment list', () => {
     expect(screen.getByRole('alertdialog', { name: '¿Eliminar todos los adjuntos?' })).toBeDefined()
     expect(screen.getByText(/adjuntos compartidos entre la oportunidad y el cliente/)).toBeDefined()
     expect(screen.getByText(/archivos originales de Google Drive no se eliminarán/)).toBeDefined()
+    expect(screen.getByText(/1 archivo subido y 1 enlace de Google Drive/)).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
     expect(fetch).not.toHaveBeenCalled()
     expect(mockRefresh).not.toHaveBeenCalled()
@@ -405,25 +537,52 @@ function simulateFileInput(input: HTMLInputElement, files: File[]) {
 
 // ── button-triggered upload ───────────────────────────────────────────────────
 describe('button upload', () => {
-  it('calls /api/attachments/upload and refreshes on success', async () => {
-    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: async () => ({ id: 'new-id' }),
-    })
+  it('shows per-file progress and allows retrying or dismissing failed uploads', async () => {
+    let complete!: (error: string | null) => void
+    mockUpload
+      .mockImplementationOnce((_file, _type, _id, onProgress) => {
+        onProgress(42)
+        return new Promise((resolve) => {
+          complete = resolve
+        })
+      })
+      .mockResolvedValueOnce('Tipo no permitido')
+      .mockResolvedValueOnce(null)
+    render(<AttachmentSection {...BASE_PROPS} />)
+    const input = document.querySelector('input[type=file]') as HTMLInputElement
+    simulateFileInput(input, [makeFile('first.pdf'), makeFile('second.pdf')])
+    expect(
+      screen.getByRole('progressbar', { name: 'Progreso de first.pdf' }).getAttribute('value'),
+    ).toBe('42')
+    expect(screen.getByText('En espera')).toBeDefined()
+    await act(async () => complete(null))
+    expect(await screen.findByText('Tipo no permitido')).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    await waitFor(() => expect(mockUpload).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(screen.queryByText('second.pdf')).toBeNull())
 
+    mockUpload.mockResolvedValueOnce('Error de prueba')
+    simulateFileInput(input, [makeFile('third.pdf')])
+    expect(await screen.findByText('Error de prueba')).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: 'Descartar error de third.pdf' }))
+    expect(screen.queryByText('third.pdf')).toBeNull()
+  })
+  it('calls /api/attachments/upload and refreshes on success', async () => {
     render(<AttachmentSection {...BASE_PROPS} />)
     const input = document.querySelector('input[type=file]') as HTMLInputElement
     simulateFileInput(input, [makeFile('doc.pdf')])
 
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
-    expect(fetch).toHaveBeenCalledOnce()
+    expect(mockUpload).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'doc.pdf' }),
+      'lead',
+      'lead-1',
+      expect.any(Function),
+    )
   })
 
   it('displays per-file error when upload fails', async () => {
-    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: false,
-      json: async () => ({ error: 'Tipo no permitido' }),
-    })
+    mockUpload.mockResolvedValue('Tipo no permitido')
 
     render(<AttachmentSection {...BASE_PROPS} />)
     const input = document.querySelector('input[type=file]') as HTMLInputElement
@@ -434,17 +593,14 @@ describe('button upload', () => {
   })
 
   it('uploads multiple files sequentially and collects partial errors', async () => {
-    const fetchMock = fetch as ReturnType<typeof vi.fn>
-    fetchMock
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'id-1' }) })
-      .mockResolvedValueOnce({ ok: false, json: async () => ({ error: 'Demasiado grande' }) })
+    mockUpload.mockResolvedValueOnce(null).mockResolvedValueOnce('Demasiado grande')
 
     render(<AttachmentSection {...BASE_PROPS} />)
     const input = document.querySelector('input[type=file]') as HTMLInputElement
     simulateFileInput(input, [makeFile('a.pdf'), makeFile('b.pdf')])
 
     await waitFor(() => screen.getByText(/Demasiado grande/))
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(mockUpload).toHaveBeenCalledTimes(2)
     // first file succeeded — no error for it
     expect(screen.queryByText(/a\.pdf/)).toBeNull()
     // second file failed — error present
@@ -453,7 +609,7 @@ describe('button upload', () => {
   })
 
   it("shows 'Error de red' on network failure", async () => {
-    ;(fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('network'))
+    mockUpload.mockRejectedValue(new Error('network'))
 
     render(<AttachmentSection {...BASE_PROPS} />)
     const input = document.querySelector('input[type=file]') as HTMLInputElement
@@ -478,11 +634,6 @@ describe('drag-and-drop', () => {
   })
 
   it('uploads files dropped on the visible dropzone', async () => {
-    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: async () => ({ id: 'dropped-id' }),
-    })
-
     render(<AttachmentSection {...BASE_PROPS} />)
     const file = makeFile('dropped.pdf')
     fireEvent.drop(screen.getByRole('button', { name: 'Añadir archivos' }), {
@@ -490,15 +641,12 @@ describe('drag-and-drop', () => {
     })
 
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
-    expect(fetch).toHaveBeenCalledOnce()
-    const request = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as { body: FormData }
-    expect(request.body.get('file')).toBe(file)
-    expect(request.body.get('entityId')).toBe('lead-1')
+    expect(mockUpload).toHaveBeenCalledWith(file, 'lead', 'lead-1', expect.any(Function))
   })
 
   it('disables the dropzone during upload and ignores additional drops', async () => {
-    let finishUpload!: (response: { ok: boolean; json: () => Promise<{ id: string }> }) => void
-    ;(fetch as ReturnType<typeof vi.fn>).mockReturnValue(
+    let finishUpload!: (error: string | null) => void
+    mockUpload.mockReturnValue(
       new Promise((resolve) => {
         finishUpload = resolve
       }),
@@ -510,8 +658,8 @@ describe('drag-and-drop', () => {
     expect((zone as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText('Subiendo 0/1…')).toBeDefined()
     fireEvent.drop(card, { dataTransfer: { files: [makeFile('second.pdf')] } })
-    expect(fetch).toHaveBeenCalledOnce()
-    finishUpload({ ok: true, json: async () => ({ id: 'new-id' }) })
+    expect(mockUpload).toHaveBeenCalledOnce()
+    finishUpload(null)
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
   })
 

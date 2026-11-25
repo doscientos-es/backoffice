@@ -36,6 +36,9 @@ import { Input } from '@/components/ui/input'
 import { canPreviewAttachment } from '@/lib/attachments/preview'
 import { cn } from '@/lib/utils'
 
+import { AttachmentPreviewDialog } from './attachment-preview-dialog'
+import { useAttachmentUploads } from './use-attachment-uploads'
+
 export type AttachmentItem = {
   id: string
   name: string
@@ -63,6 +66,12 @@ function formatSize(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1_048_576) return `${Math.ceil(bytes / 1024)} KB`
   return `${(bytes / 1_048_576).toFixed(1)} MB`
+}
+
+function attachmentType(attachment: AttachmentItem): string {
+  if (attachment.source === 'drive') return 'Google Drive'
+  const extension = attachment.name.match(/\.([a-z0-9]{1,8})$/i)?.[1]
+  return extension ? extension.toUpperCase() : attachment.mime_type || 'Archivo'
 }
 
 /** Official Google Drive product mark. It is only resized, as permitted by Google. */
@@ -109,12 +118,18 @@ export function AttachmentSection({
   const fileRef = useRef<HTMLInputElement>(null)
   // Tracks nested dragenter/dragleave so the drop highlight doesn't flicker over children.
   const dragDepth = useRef(0)
-  const [uploading, setUploading] = useState(false)
+  const {
+    uploading,
+    progress,
+    entries: uploads,
+    add: addUploads,
+    retry: retryUpload,
+    dismiss: dismissUpload,
+  } = useAttachmentUploads(entityType, entityId, () => router.refresh())
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deletingAll, setDeletingAll] = useState(false)
   const [deleteAllTargets, setDeleteAllTargets] = useState<AttachmentItem[] | null>(null)
   const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set())
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [errors, setErrors] = useState<string[]>([])
   const [dragActive, setDragActive] = useState(false)
   const [driveDialogOpen, setDriveDialogOpen] = useState(false)
@@ -122,9 +137,35 @@ export function AttachmentSection({
   const [driveLinking, setDriveLinking] = useState(false)
   const [driveError, setDriveError] = useState<string | null>(null)
   const [downloadingAll, setDownloadingAll] = useState(false)
+  const [previewAttachment, setPreviewAttachment] = useState<AttachmentItem | null>(null)
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState('all')
   const visibleAttachments = attachments.filter((attachment) => !removedIds.has(attachment.id))
   const storedAttachments = visibleAttachments.filter((attachment) => attachment.source !== 'drive')
   const hasDriveAttachments = visibleAttachments.some((attachment) => attachment.source === 'drive')
+  const showFilters = visibleAttachments.length >= 10 || search !== '' || filter !== 'all'
+  const driveDeleteCount =
+    deleteAllTargets?.filter((attachment) => attachment.source === 'drive').length ?? 0
+  const storedDeleteCount = (deleteAllTargets?.length ?? 0) - driveDeleteCount
+  const filteredAttachments = visibleAttachments.filter((attachment) => {
+    const matchesSearch = attachment.name
+      .toLocaleLowerCase()
+      .includes(search.trim().toLocaleLowerCase())
+    const matchesFilter =
+      filter === 'all' ||
+      (filter === 'drive' && attachment.source === 'drive') ||
+      (filter === 'pdf' &&
+        attachment.source !== 'drive' &&
+        attachment.mime_type === 'application/pdf') ||
+      (filter === 'image' &&
+        attachment.source !== 'drive' &&
+        attachment.mime_type?.startsWith('image/')) ||
+      (filter === 'other' &&
+        attachment.source !== 'drive' &&
+        attachment.mime_type !== 'application/pdf' &&
+        !attachment.mime_type?.startsWith('image/'))
+    return matchesSearch && matchesFilter
+  })
 
   // Keep successful removals hidden until the server has reflected them in its props.
   useEffect(() => {
@@ -177,50 +218,14 @@ export function AttachmentSection({
     }
   }
 
-  /** Uploads a single file; resolves to an error message or null on success. */
-  async function uploadFile(file: File): Promise<string | null> {
-    try {
-      const formData = new FormData()
-      formData.set('file', file)
-      formData.set('entityType', entityType)
-      formData.set('entityId', entityId)
-
-      const res = await fetch('/api/attachments/upload', { method: 'POST', body: formData })
-      const json = (await res.json()) as { id?: string; error?: string }
-
-      if (!res.ok || !json.id) return json.error ?? 'Error al subir'
-      return null
-    } catch {
-      return 'Error de red'
-    }
-  }
-
-  /** Uploads files sequentially, reporting per-file failures. Shared by the button and drop zone. */
-  async function uploadFiles(files: File[]) {
+  function uploadFiles(files: File[]) {
     if (files.length === 0 || uploading || deletingAll) return
-
     dragDepth.current = 0
     setDragActive(false)
     setErrors([])
-    setUploading(true)
-    setProgress({ done: 0, total: files.length })
-
-    const failures: string[] = []
-    let done = 0
-    for (const file of files) {
-      const err = await uploadFile(file)
-      if (err) failures.push(`${file.name}: ${err}`)
-      done += 1
-      setProgress({ done, total: files.length })
-    }
-
-    setErrors(failures)
-    setUploading(false)
-    setProgress(null)
-    // reset input so the same file can be re-selected after an error
+    addUploads(files)
     if (fileRef.current) fileRef.current.value = ''
     if (cameraRef.current) cameraRef.current.value = ''
-    router.refresh()
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -309,9 +314,15 @@ export function AttachmentSection({
 
   async function removeAttachment(attachment: AttachmentItem) {
     if (!canEdit || uploading || deletingId || deletingAll) return
-    const driveNote =
-      attachment.source === 'drive' ? ' El archivo original de Drive no se eliminará.' : ''
-    const confirmationMessage = `¿Quitar «${attachment.name}» de este registro?${driveNote}`
+    const note =
+      attachment.source === 'drive'
+        ? ' Solo se quitará el enlace; el archivo original de Drive no se eliminará.'
+        : ' El archivo subido se eliminará y esta acción no se puede deshacer.'
+    const sharedNote =
+      entityType === 'lead' || entityType === 'client'
+        ? ' Si está compartido, también desaparecerá de la oportunidad o cliente vinculado.'
+        : ''
+    const confirmationMessage = `¿Eliminar «${attachment.name}»?${note}${sharedNote}`
     if (!window.confirm(confirmationMessage)) return
 
     setErrors([])
@@ -482,6 +493,57 @@ export function AttachmentSection({
             Subiendo {progress?.done ?? 0} de {progress?.total ?? 0} archivos
           </p>
         )}
+        {uploads.length > 0 && (
+          <ul aria-label="Estado de las subidas" className="space-y-2">
+            {uploads.map((entry) => (
+              <li key={entry.id} className="rounded-lg border p-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate font-medium" title={entry.file.name}>
+                    {entry.file.name}
+                  </span>
+                  {entry.status === 'error' ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={uploading || deletingAll}
+                        onClick={() => retryUpload(entry)}
+                      >
+                        Reintentar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Descartar error de ${entry.file.name}`}
+                        onClick={() => dismissUpload(entry.id)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {entry.status === 'queued' ? 'En espera' : `${entry.percent}%`}
+                    </span>
+                  )}
+                </div>
+                {entry.status === 'error' ? (
+                  <p role="alert" className="mt-1 text-xs text-destructive">
+                    {entry.error}
+                  </p>
+                ) : (
+                  <progress
+                    className="mt-1 w-full"
+                    aria-label={`Progreso de ${entry.file.name}`}
+                    value={entry.percent}
+                    max={100}
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
         {(deletingAll || deletingId) && (
           <p role="status" className="text-sm text-muted-foreground">
             {deletingAll ? 'Eliminando adjuntos…' : 'Eliminando adjunto…'}
@@ -519,11 +581,38 @@ export function AttachmentSection({
             ))}
           </ul>
         )}
+        {showFilters && (
+          <div className="flex flex-wrap gap-2">
+            <Input
+              aria-label="Buscar adjuntos"
+              placeholder="Buscar adjuntos"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="min-w-40 flex-1"
+            />
+            <select
+              aria-label="Filtrar adjuntos por tipo"
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+              className="border-input rounded-md border bg-background px-3 text-sm"
+            >
+              <option value="all">Todos los tipos</option>
+              <option value="pdf">PDF</option>
+              <option value="image">Imágenes</option>
+              <option value="drive">Google Drive</option>
+              <option value="other">Otros archivos</option>
+            </select>
+          </div>
+        )}
         {visibleAttachments.length === 0 ? (
           <p className="text-sm text-muted-foreground">Sin adjuntos.</p>
+        ) : filteredAttachments.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No hay adjuntos que coincidan con los filtros.
+          </p>
         ) : (
           <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),1fr))] gap-2">
-            {visibleAttachments.map((a) => (
+            {filteredAttachments.map((a) => (
               <li
                 key={a.id}
                 className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted/20 px-2.5 py-2"
@@ -539,8 +628,12 @@ export function AttachmentSection({
                   <p className="truncate text-sm font-medium" title={a.name}>
                     {a.name}
                   </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {a.source === 'drive' ? 'Google Drive' : formatSize(a.size_bytes) || 'Archivo'}
+                  <p
+                    className="truncate text-xs text-muted-foreground"
+                    title={a.mime_type || attachmentType(a)}
+                  >
+                    {attachmentType(a)}
+                    {a.size_bytes ? ` · ${formatSize(a.size_bytes)}` : ''}
                   </p>
                 </div>
                 {a.source === 'drive' ? (
@@ -560,16 +653,16 @@ export function AttachmentSection({
                 ) : (
                   <>
                     {canPreviewAttachment(a.mime_type) ? (
-                      <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
-                        <Link
-                          href={`/api/documents/${a.id}/view`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={`Ver ${a.name}`}
-                        >
-                          <Eye className="size-3.5" />
-                          <span className="sr-only">Ver {a.name}</span>
-                        </Link>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 shrink-0"
+                        aria-label={`Ver ${a.name}`}
+                        title={`Ver ${a.name}`}
+                        onClick={() => setPreviewAttachment(a)}
+                      >
+                        <Eye className="size-3.5" />
                       </Button>
                     ) : null}
                     <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
@@ -605,7 +698,7 @@ export function AttachmentSection({
           if (!open) setDeleteAllTargets(null)
         }}
         title="¿Eliminar todos los adjuntos?"
-        description={`Se quitarán los ${deleteAllTargets?.length ?? 0} adjuntos de esta lista y se intentará eliminar los archivos subidos. Esta acción no se puede deshacer.${entityType === 'lead' || entityType === 'client' ? ' La lista puede incluir adjuntos compartidos entre la oportunidad y el cliente.' : ''}${deleteAllTargets?.some((attachment) => attachment.source === 'drive') ? ' Los archivos originales de Google Drive no se eliminarán; solo se quitarán sus enlaces.' : ''}`}
+        description={`Se quitarán ${storedDeleteCount} ${storedDeleteCount === 1 ? 'archivo subido' : 'archivos subidos'} y ${driveDeleteCount} ${driveDeleteCount === 1 ? 'enlace' : 'enlaces'} de Google Drive. Se intentará eliminar los archivos subidos; esta acción no se puede deshacer.${entityType === 'lead' || entityType === 'client' ? ' La lista puede incluir adjuntos compartidos entre la oportunidad y el cliente.' : ''}${driveDeleteCount ? ' Los archivos originales de Google Drive no se eliminarán; solo se quitarán sus enlaces.' : ''}`}
         confirmLabel={deletingAll ? 'Eliminando…' : 'Eliminar todos'}
         destructive
         pending={deletingAll}
@@ -647,6 +740,12 @@ export function AttachmentSection({
           </form>
         </DialogContent>
       </Dialog>
+      {previewAttachment && (
+        <AttachmentPreviewDialog
+          attachment={previewAttachment}
+          onClose={() => setPreviewAttachment(null)}
+        />
+      )}
     </Card>
   )
 }
