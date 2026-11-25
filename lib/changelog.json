@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.224",
+      "date": "2026-11-25",
+      "title": "v0.1.224",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add summary view link and enhance share links",
+            "Add QR code generation for proposal acceptance"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "8bda503d9fba4c1af6ffb9ae4752e01150b4b1d6",
+          "type": "feat",
+          "scope": "proposal",
+          "breaking": false,
+          "description": "Add summary view link and enhance share links"
+        },
+        {
+          "sha": "10378f42a6df7fa0e25774ec023dbcefe352a797",
+          "type": "feat",
+          "scope": "pdf",
+          "breaking": false,
+          "description": "Add QR code generation for proposal acceptance"
+        }
+      ]
+    },
+    {
       "version": "0.1.223",
       "date": "2026-11-25",
       "title": "v0.1.223",

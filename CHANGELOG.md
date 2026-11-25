@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.224
+
+### Nuevas funciones
+
+- Add summary view link and enhance share links
+- Add QR code generation for proposal acceptance
+
 ## 2026-11-25 — v0.1.223
 
 ### Nuevas funciones
