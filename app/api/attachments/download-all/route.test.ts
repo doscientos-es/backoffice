@@ -78,7 +78,7 @@ describe('POST /api/attachments/download-all', () => {
     state.queryError = false
     state.rows = ids.map((id, index) => ({
       id,
-      name: '../factura.pdf',
+      name: '../factura\u0001.pdf',
       storage_path: `path-${index}`,
       size_bytes: 4,
       source: 'storage',
@@ -103,8 +103,8 @@ describe('POST /api/attachments/download-all', () => {
     expect(state.selectedIds).toEqual(ids)
     expect(state.deletedFilter).toBeNull()
     expect(zipEntries(Buffer.from(await response.arrayBuffer()))).toEqual([
-      { name: '_factura.pdf', content: 'path-0' },
-      { name: '_factura (2).pdf', content: 'path-1' },
+      { name: '_factura_.pdf', content: 'path-0' },
+      { name: '_factura_ (2).pdf', content: 'path-1' },
     ])
   })
 

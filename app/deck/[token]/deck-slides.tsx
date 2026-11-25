@@ -845,7 +845,7 @@ export function buildSlides(
           title={tr('Plazos del proyecto', 'Terminis del projecte', 'Project timeline')}
           accent="zinc"
         >
-          <div className="w-full max-w-3xl overflow-y-auto" style={{ maxHeight: '55vh' }}>
+          <div className="max-h-[55vh] w-full max-w-3xl overflow-y-auto print:max-h-none print:overflow-visible">
             <TimelineChart
               items={timeline.slice(offset, offset + 4)}
               allItems={timeline}

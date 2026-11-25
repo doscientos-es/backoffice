@@ -1,4 +1,4 @@
-export async function readJsonResponse<T = any>(
+export async function readJsonResponse<T = unknown>(
   response: Response,
   fallbackMessage: string,
 ): Promise<T> {

@@ -161,6 +161,12 @@ export function DeckViewer({
         if (e.key === 'Escape') setGridOpen(false)
         return
       }
+      if (
+        e.key === ' ' &&
+        e.target instanceof Element &&
+        e.target.closest('summary, button, a, input, textarea, select, [contenteditable="true"]')
+      )
+        return
       setShowTooltip(false)
       if (e.key >= '1' && e.key <= '9' && !e.metaKey && !e.ctrlKey) {
         goTo(Number.parseInt(e.key, 10) - 1)
@@ -244,7 +250,7 @@ export function DeckViewer({
     if (window.matchMedia === undefined && window.innerWidth > 768) return
 
     const target = e.target as HTMLElement
-    if (target.closest("a,button,input,textarea,select,[role='button']")) return
+    if (target.closest("a,button,summary,input,textarea,select,[role='button']")) return
     const viewport = e.currentTarget.getBoundingClientRect()
     const direction = getDeckTapDirection(e.clientX, viewport.left, viewport.width)
     ;(direction === 'prev' ? prev : next)()

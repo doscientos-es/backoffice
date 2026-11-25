@@ -291,11 +291,11 @@ export default async function PortalProposalPage({
   const navItems: NavItem[] = [
     hasNarrative && { id: 'contexto', label: tr('Contexto', 'Context', 'Context') },
     hasScope && { id: 'alcance', label: tr('Alcance', 'Abast', 'Scope') },
-    timeline.length > 0 && { id: 'plazos', label: tr('Plazos', 'Terminis', 'Timeline') },
     Boolean(developmentApproach) && {
       id: 'desarrollo',
       label: tr('Cómo trabajaremos', 'Com treballarem', 'How we work'),
     },
+    timeline.length > 0 && { id: 'plazos', label: tr('Plazos', 'Terminis', 'Timeline') },
     team.length > 0 && { id: 'equipo', label: tr('Equipo', 'Equip', 'Team') },
     { id: 'inversion', label: tr('Inversión', 'Inversió', 'Investment') },
     Boolean(paymentTerms || changeManagementTerms) && {
@@ -435,6 +435,7 @@ export default async function PortalProposalPage({
                 tr={tr}
               />
             </div>
+            <DevelopmentApproachSection source={developmentApproach} tr={tr} />
             {timeline.length > 0 ? (
               <section id="plazos" className={`${PROPOSAL_SURFACE_CLASS} scroll-mt-16 p-6 sm:p-8`}>
                 <p className="text-xs font-semibold tracking-widest text-[#2A4227] uppercase">
@@ -451,7 +452,6 @@ export default async function PortalProposalPage({
                 />
               </section>
             ) : null}
-            <DevelopmentApproachSection source={developmentApproach} tr={tr} />
             <TeamSection team={team} tr={tr} />
             <div
               id="inversion"

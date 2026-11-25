@@ -1,8 +1,11 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { buildSlides } from './deck-slides'
+import { DeckViewer } from './deck-viewer-client'
 import type { DeckProposal } from './page'
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ prefetch: vi.fn() }) }))
 
 const proposal: DeckProposal = {
   id: 'proposal-1',
@@ -33,7 +36,40 @@ const proposal: DeckProposal = {
 }
 
 describe('buildSlides', () => {
-  afterEach(cleanup)
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+  })
+
+  it('opens timeline details on mobile without navigating, and preserves keyboard activation', () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({ matches: true })),
+    )
+    localStorage.setItem('deckHelpSeen', '1')
+    const timeline = [
+      {
+        id: 'design',
+        title: 'Diseño',
+        description: 'Detalle del diseño',
+        start_date: '2028-02-28',
+        end_date: '2028-02-29',
+      },
+    ]
+    const { container } = render(
+      <DeckViewer proposal={{ ...proposal, timeline }} items={[]} team={[]} token="portal-token" />,
+    )
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    const stage = container.querySelector<HTMLElement>('.deck-stage')
+    expect(stage?.style.transform).toBe('translateX(-100%)')
+    const summary = stage?.querySelector('[data-active="true"] summary')
+    if (!summary) throw new Error('Missing milestone summary')
+    expect(fireEvent.keyDown(summary, { key: ' ', cancelable: true })).toBe(true)
+    expect(stage?.style.transform).toBe('translateX(-100%)')
+    fireEvent.click(summary)
+    expect(summary.closest('details')?.open).toBe(true)
+    expect(stage?.style.transform).toBe('translateX(-100%)')
+  })
 
   it('splits timelines across slides and offers the complete calendar', () => {
     const timeline = Array.from({ length: 5 }, (_, index) => ({

@@ -13,8 +13,9 @@ const bodySchema = z.object({ ids: z.array(z.string().uuid()).min(1).max(100) })
 
 function uniqueFilename(name: string, used: Set<string>): string {
   const safe =
-    name
-      .replace(/[\\/<>:"|?*\x00-\x1f]/g, '_')
+    Array.from(name, (char) => (char.charCodeAt(0) < 32 ? '_' : char))
+      .join('')
+      .replace(/[\\/<>:"|?*]/g, '_')
       .replace(/^\.+|[. ]+$/g, '')
       .slice(0, 200) || 'adjunto'
   const extensionIndex = safe.lastIndexOf('.')
