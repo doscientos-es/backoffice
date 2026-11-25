@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.233
+
+### Nuevas funciones
+
+- Enhance accessibility and improve UI for attachment section
+
 ## 2026-11-25 — v0.1.232
 
 ### Nuevas funciones

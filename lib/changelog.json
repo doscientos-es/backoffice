@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.233",
+      "date": "2026-11-25",
+      "title": "v0.1.233",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Enhance accessibility and improve UI for attachment section"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "dc04cfe55dae0c1140ed540478765bd31c9147e7",
+          "type": "feat",
+          "scope": "attachments",
+          "breaking": false,
+          "description": "Enhance accessibility and improve UI for attachment section"
+        }
+      ]
+    },
+    {
       "version": "0.1.232",
       "date": "2026-11-25",
       "title": "v0.1.232",
