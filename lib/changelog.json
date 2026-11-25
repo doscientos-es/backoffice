@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.226",
+      "date": "2026-11-25",
+      "title": "v0.1.226",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add error handling for linked client data retrieval"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "6a44ed23d6776f042505b5079171ce09f77f3c95",
+          "type": "feat",
+          "scope": "lead",
+          "breaking": false,
+          "description": "Add error handling for linked client data retrieval"
+        }
+      ]
+    },
+    {
       "version": "0.1.225",
       "date": "2026-11-25",
       "title": "v0.1.225",

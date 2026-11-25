@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.226
+
+### Nuevas funciones
+
+- Add error handling for linked client data retrieval
+
 ## 2026-11-25 — v0.1.225
 
 ### Nuevas funciones
