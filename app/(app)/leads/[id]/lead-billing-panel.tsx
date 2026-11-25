@@ -1,12 +1,12 @@
-import Link from 'next/link'
-
 import { ClientEditDialog } from '@/app/(app)/clients/[id]/client-edit-dialog'
 import { FiscalVerificationCard } from '@/app/(app)/clients/[id]/fiscal-verification-card'
+import type { ClientFormDefaults } from '@/app/(app)/clients/client-form-fields'
 import { DetailGrid, DetailRow } from '@/components/layout/detail-grid'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatAddress } from '@/lib/address'
 import type { ClientDetailResult } from '@/lib/clients/types'
+
+import { LeadBillingCreateDialog } from './lead-billing-create-dialog'
 
 type Client = NonNullable<ClientDetailResult>['client']
 
@@ -15,11 +15,13 @@ export function LeadBillingPanel({
   client,
   linkedClientId,
   canEdit,
+  defaults = {},
 }: {
   leadId: string
   client: Client | null
   linkedClientId: string | null
   canEdit: boolean
+  defaults?: ClientFormDefaults
 }) {
   if (!client) {
     return (
@@ -34,9 +36,7 @@ export function LeadBillingPanel({
               : 'Este lead todavía no tiene datos de facturación vinculados.'}
           </p>
           {!linkedClientId && canEdit ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/leads/${leadId}/convert`}>Convertir en cliente</Link>
-            </Button>
+            <LeadBillingCreateDialog leadId={leadId} defaults={defaults} />
           ) : null}
         </CardContent>
       </Card>

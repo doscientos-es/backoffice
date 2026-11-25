@@ -34,6 +34,10 @@ export const UpdateClientInput = CreateClientInput.extend({
   expected_version: z.coerce.number().int().positive(),
 })
 
+export const CreateLeadBillingInput = CreateClientInput.extend({
+  leadId: z.string().uuid(),
+})
+
 export const ValidateClientFiscalIdentityInput = z.object({
   clientId: z.string().uuid(),
 })

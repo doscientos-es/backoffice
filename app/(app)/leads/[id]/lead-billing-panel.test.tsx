@@ -15,6 +15,11 @@ vi.mock('@/app/(app)/clients/[id]/fiscal-verification-card', () => ({
     canValidate: boolean
   }) => <p>{canValidate ? `Validar ${clientId}` : 'Solo lectura'}</p>,
 }))
+vi.mock('./lead-billing-create-dialog', () => ({
+  LeadBillingCreateDialog: ({ leadId }: { leadId: string }) => (
+    <button type="button">Añadir facturación {leadId}</button>
+  ),
+}))
 
 import { LeadBillingPanel } from './lead-billing-panel'
 
@@ -66,13 +71,16 @@ describe('LeadBillingPanel', () => {
   it('does not mistake a failed lookup for a lead without a linked client', () => {
     render(<LeadBillingPanel leadId="lead-1" linkedClientId="client-1" client={null} canEdit />)
     expect(screen.getByText(/No se han podido cargar/)).toBeDefined()
-    expect(screen.queryByRole('link', { name: 'Convertir en cliente' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Añadir facturación/ })).toBeNull()
   })
 
-  it('explains how to link billing data when there is no client', () => {
+  it('offers billing data without converting the lead into a won client', () => {
     render(<LeadBillingPanel leadId="lead-1" linkedClientId={null} client={null} canEdit />)
-    expect(screen.getByRole('link', { name: 'Convertir en cliente' }).getAttribute('href')).toBe(
-      '/leads/lead-1/convert',
-    )
+    expect(screen.getByRole('button', { name: 'Añadir facturación lead-1' })).toBeDefined()
+  })
+
+  it('does not let viewers create billing data', () => {
+    render(<LeadBillingPanel leadId="lead-1" linkedClientId={null} client={null} canEdit={false} />)
+    expect(screen.queryByRole('button', { name: /Añadir facturación/ })).toBeNull()
   })
 })

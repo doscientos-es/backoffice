@@ -599,6 +599,11 @@ export default async function LeadDetailPage({
               linkedClientId={linkedClientId}
               client={billingClient}
               canEdit={canEdit}
+              defaults={{
+                name: lead.company || lead.name,
+                email: lead.email,
+                phone: lead.phone,
+              }}
             />
           </LeadTabPanel>
 

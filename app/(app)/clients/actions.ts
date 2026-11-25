@@ -12,6 +12,7 @@ import { VersionConflictError } from '@/lib/concurrency/version-conflict'
 import { findCompanyByCif, getCompanyDetails, isCifNumber } from '@/lib/openmercantil/client'
 import {
   CreateClientInput,
+  CreateLeadBillingInput,
   UpdateClientInput,
   ValidateClientFiscalIdentityInput,
 } from '@/lib/schemas/client'
@@ -30,6 +31,24 @@ function canVerifySpanishFiscalIdentity(input: {
     Boolean(input.nif?.trim()) &&
     (input.billing_address_country ?? 'ES').trim().toUpperCase() === 'ES'
   )
+}
+
+function clientFields(input: typeof CreateClientInput._output) {
+  return {
+    name: input.name,
+    label: input.label ?? null,
+    nif: input.nif ?? null,
+    email: input.email ?? null,
+    phone: input.phone ?? null,
+    billing_address_street: input.billing_address_street ?? null,
+    billing_address_zip: input.billing_address_zip ?? null,
+    billing_address_city: input.billing_address_city ?? null,
+    billing_address_province: input.billing_address_province ?? null,
+    billing_address_country: input.billing_address_country ?? 'ES',
+    contact_person: input.contact_person ?? null,
+    notes: input.notes ?? null,
+    logo_url: input.logo_url ?? null,
+  }
 }
 
 async function refreshFiscalVerification(clientId: string, userId: string) {
@@ -67,21 +86,7 @@ export async function createClient(formData: FormData): Promise<void> {
   const supabase = await createServerClient()
   const { data, error } = await supabase
     .from('clients')
-    .insert({
-      name: parsed.data.name,
-      label: parsed.data.label ?? null,
-      nif: parsed.data.nif ?? null,
-      email: parsed.data.email ?? null,
-      phone: parsed.data.phone ?? null,
-      billing_address_street: parsed.data.billing_address_street ?? null,
-      billing_address_zip: parsed.data.billing_address_zip ?? null,
-      billing_address_city: parsed.data.billing_address_city ?? null,
-      billing_address_province: parsed.data.billing_address_province ?? null,
-      billing_address_country: parsed.data.billing_address_country ?? 'ES',
-      contact_person: parsed.data.contact_person ?? null,
-      notes: parsed.data.notes ?? null,
-      logo_url: parsed.data.logo_url ?? null,
-    })
+    .insert(clientFields(parsed.data))
     .select('id')
     .single()
 
@@ -92,6 +97,37 @@ export async function createClient(formData: FormData): Promise<void> {
   revalidatePath('/clients')
   redirect(`/clients/${data.id}`)
 }
+
+// Transitional backing record for billing; creating it must not win the lead.
+export const createLeadBilling = defineAction({
+  name: 'leads.createBilling',
+  schema: CreateLeadBillingInput,
+  roles: ['owner', 'admin', 'member'],
+  revalidate: (_payload, input) => ['/leads', `/leads/${input.leadId}`, '/clients'],
+  handler: async (input, { user }) => {
+    const supabase = await createServerClient()
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .select('id')
+      .eq('id', input.leadId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (leadError) throw new Error(leadError.message)
+    if (!lead) throw new Error('Lead no encontrado')
+
+    const { data, error } = await supabase
+      .from('clients')
+      .insert({ ...clientFields(input), lead_id: input.leadId })
+      .select('id')
+      .single()
+    if (error?.code === '23505') {
+      throw new Error('Ya existen datos de facturación para este lead. Recarga la ficha.')
+    }
+    if (error || !data) throw new Error(error?.message ?? 'No se pudieron guardar los datos')
+    if (canVerifySpanishFiscalIdentity(input)) await refreshFiscalVerification(data.id, user.id)
+    return { clientId: data.id }
+  },
+})
 
 // ---------- UPDATE ----------
 // Public, backward-compatible input shape for callers (form values are
