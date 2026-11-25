@@ -1,6 +1,44 @@
 {
   "releases": [
     {
+      "version": "0.1.229",
+      "date": "2026-11-25",
+      "title": "v0.1.229",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Include historical documents in lead details and tests",
+            "Add client lead backfill migration and trigger function",
+            "Allow acceptance without fiscal data for linked records"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "8beabfa8b422e81b508c41e951da07cbac03d55e",
+          "type": "feat",
+          "scope": "lead",
+          "breaking": false,
+          "description": "Include historical documents in lead details and tests"
+        },
+        {
+          "sha": "8334b708098139b8cacca64ea962d6426adef301",
+          "type": "feat",
+          "scope": "migration",
+          "breaking": false,
+          "description": "Add client lead backfill migration and trigger function"
+        },
+        {
+          "sha": "6e77fe10219811a270d7a0b8d22f8e9949b46401",
+          "type": "feat",
+          "scope": "proposals",
+          "breaking": false,
+          "description": "Allow acceptance without fiscal data for linked records"
+        }
+      ]
+    },
+    {
       "version": "0.1.227",
       "date": "2026-11-25",
       "title": "v0.1.227",

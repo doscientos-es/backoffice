@@ -2,6 +2,14 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.229
+
+### Nuevas funciones
+
+- Include historical documents in lead details and tests
+- Add client lead backfill migration and trigger function
+- Allow acceptance without fiscal data for linked records
+
 ## 2026-11-25 — v0.1.227
 
 ### Nuevas funciones
