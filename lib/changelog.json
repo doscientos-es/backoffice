@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.232",
+      "date": "2026-11-25",
+      "title": "v0.1.232",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add logo handling and editing functionality for leads",
+            "Add logo upload functionality for leads"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "7c1d8668d120976dc95c4f0cbbd4c967a2e3d0b7",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add logo handling and editing functionality for leads"
+        },
+        {
+          "sha": "9967fa1c81a74e819122d6ade81ca39721fbaa88",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Add logo upload functionality for leads"
+        }
+      ]
+    },
+    {
       "version": "0.1.231",
       "date": "2026-11-25",
       "title": "v0.1.231",

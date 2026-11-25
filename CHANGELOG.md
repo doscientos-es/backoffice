@@ -2,6 +2,13 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.232
+
+### Nuevas funciones
+
+- Add logo handling and editing functionality for leads
+- Add logo upload functionality for leads
+
 ## 2026-11-25 — v0.1.231
 
 ### Nuevas funciones
