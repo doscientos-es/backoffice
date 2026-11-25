@@ -194,40 +194,29 @@ export async function ensureClientForProposal(
   // represents that lead. Reuse that exact client before considering another
   // client for the lead, so the proposal/project relationship remains valid.
   if (proposal.project_id) {
-    const { data: project } = await client
+    const { data: project, error: projectError } = await client
       .from('projects')
       .select('client_id')
       .eq('id', proposal.project_id as string)
       .is('deleted_at', null)
       .maybeSingle()
+    if (projectError) return { error: 'No se pudo consultar el proyecto de la propuesta' }
     if (project?.client_id) {
-      const clientId = project.client_id as string
-      await patchMissingClientFiscal(client, clientId, fiscal)
-      const { error: updateError } = await client
-        .from('proposals')
-        .update({ client_id: clientId, lead_id: null })
-        .eq('id', proposalId)
-      if (updateError) return { error: updateError.message }
-      return { clientId, created: false }
+      return linkExistingClientToProposal(client, proposalId, project.client_id as string, fiscal)
     }
   }
 
-  const { data: existing } = await client
+  const { data: existing, error: lookupError } = await client
     .from('clients')
     .select('id')
     .eq('lead_id', leadId)
     .is('deleted_at', null)
     .maybeSingle()
 
+  if (lookupError) return { error: 'No se pudo consultar la ficha de facturación' }
+
   if (existing?.id) {
-    const clientId = existing.id as string
-    await patchMissingClientFiscal(client, clientId, fiscal)
-    const { error: updateError } = await client
-      .from('proposals')
-      .update({ client_id: clientId, lead_id: null })
-      .eq('id', proposalId)
-    if (updateError) return { error: updateError.message }
-    return { clientId, created: false }
+    return linkExistingClientToProposal(client, proposalId, existing.id as string, fiscal)
   }
 
   const { data: created, error: insertErr } = await client
@@ -244,6 +233,20 @@ export async function ensureClientForProposal(
     .select('id')
     .single()
   if (insertErr || !created) {
+    // Another acceptance or billing action may have created this lead's
+    // active fiscal record after our lookup. Reuse it, but only when the
+    // unique violation is actually resolved by a record for this lead.
+    if (insertErr?.code === '23505') {
+      const { data: concurrent, error: concurrentError } = await client
+        .from('clients')
+        .select('id')
+        .eq('lead_id', leadId)
+        .is('deleted_at', null)
+        .maybeSingle()
+      if (!concurrentError && concurrent?.id) {
+        return linkExistingClientToProposal(client, proposalId, concurrent.id as string, fiscal)
+      }
+    }
     log.warn({ err: insertErr, proposalId, leadId }, 'client_create_failed')
     return { error: insertErr?.message ?? 'No se pudo crear el cliente' }
   }
@@ -255,6 +258,20 @@ export async function ensureClientForProposal(
     .eq('id', proposalId)
   if (updateError) return { error: updateError.message }
   return { clientId, created: true }
+}
+
+async function linkExistingClientToProposal(
+  client: AnyClient,
+  proposalId: string,
+  clientId: string,
+  fiscal: AcceptProposalFiscalDataType,
+): Promise<{ clientId: string; created: false } | { error: string }> {
+  await patchMissingClientFiscal(client, clientId, fiscal)
+  const { error } = await client
+    .from('proposals')
+    .update({ client_id: clientId, lead_id: null })
+    .eq('id', proposalId)
+  return error ? { error: error.message } : { clientId, created: false }
 }
 
 /**
