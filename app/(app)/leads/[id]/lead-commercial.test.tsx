@@ -69,4 +69,28 @@ describe('LeadCommercial', () => {
 
     expect(screen.queryByText(/1200,00/)).toBeNull()
   })
+
+  it('shows historical projects and invoices when there is no active billing record', () => {
+    render(
+      <LeadCommercial
+        leadId="lead-1"
+        linkedClientId={null}
+        canSeeProposalPrices
+        proposals={[]}
+        projects={[
+          { id: 'project-old', name: 'Proyecto anterior', status: 'active', description: null },
+        ]}
+        invoices={[
+          { id: 'invoice-old', full_number: 'F-001', status: 'paid', total: 100, issue_date: null },
+        ]}
+      />,
+    )
+
+    expect(screen.getByRole('link', { name: /Proyecto anterior/ }).getAttribute('href')).toBe(
+      '/projects/project-old',
+    )
+    expect(screen.getByRole('link', { name: /F-001/ }).getAttribute('href')).toBe(
+      '/invoices/invoice-old',
+    )
+  })
 })

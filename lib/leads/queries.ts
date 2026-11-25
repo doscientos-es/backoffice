@@ -365,7 +365,7 @@ export async function getLeadDetail(
     companyResearch,
     { data: interactions },
     { data: discoveryQuestionRows, error: discoveryQuestionsError },
-    { data: linkedClient, error: linkedClientError },
+    { data: linkedClients, error: linkedClientError },
     { data: tasks },
     { data: reminders },
     { data: attachments },
@@ -390,7 +390,7 @@ export async function getLeadDetail(
       .order('priority', { ascending: true })
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true }),
-    notDeleted(supabase.from('clients').select('id, name').eq('lead_id', id)).maybeSingle(),
+    supabase.from('clients').select('id, name, deleted_at').eq('lead_id', id),
     notDeleted(
       supabase
         .from('tasks')
@@ -477,20 +477,21 @@ export async function getLeadDetail(
   ])
   const marketingCampaignName = campaignNames.get(lead.utm_campaign as string) ?? null
 
-  const linkedClientId = (linkedClient?.id as string | undefined) ?? null
-  const linkedClientName = (linkedClient?.name as string | undefined) ?? null
+  const linkedClient = linkedClients?.find((client) => client.deleted_at === null)
+  const linkedClientId = linkedClient?.id ?? null
+  const linkedClientName = linkedClient?.name ?? null
+  const clientIds = (linkedClients ?? []).map((client) => client.id)
 
-  // Commercial pipeline. Proposals may target the lead directly (lead-first
-  // flow) or the linked client once converted; projects and invoices only
-  // exist against a client, so we skip them until one is linked.
+  // Include historical billing records too: archived clients can still own
+  // proposals and issued invoices that must remain visible on the lead.
   const proposalsBuilder = notDeleted(
     supabase
       .from('proposals')
       .select('id, number, title, status, valid_until, sent_at, viewed_at, responded_at, notes'),
   )
   const { data: proposalRows } = await (
-    linkedClientId
-      ? proposalsBuilder.or(`lead_id.eq.${id},client_id.eq.${linkedClientId}`)
+    clientIds.length
+      ? proposalsBuilder.or(`lead_id.eq.${id},client_id.in.(${clientIds.join(',')})`)
       : proposalsBuilder.eq('lead_id', id)
   )
     .order('created_at', { ascending: false })
@@ -510,13 +511,13 @@ export async function getLeadDetail(
 
   let projectRows: Record<string, unknown>[] = []
   let invoiceRows: Record<string, unknown>[] = []
-  if (linkedClientId) {
+  if (clientIds.length) {
     const [{ data: projects }, { data: invoices }] = await Promise.all([
       notDeleted(
         supabase
           .from('projects')
           .select('id, name, status, description')
-          .eq('client_id', linkedClientId),
+          .in('client_id', clientIds),
       )
         .order('created_at', { ascending: false })
         .limit(LEAD_RELATED_LIMIT),
@@ -524,7 +525,7 @@ export async function getLeadDetail(
         supabase
           .from('invoices')
           .select('id, full_number, status, total, issue_date')
-          .eq('client_id', linkedClientId),
+          .in('client_id', clientIds),
       )
         .order('issue_date', { ascending: false })
         .limit(LEAD_RELATED_LIMIT),

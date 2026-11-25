@@ -10,7 +10,12 @@ const state = vi.hoisted(() => ({
   ads: [] as Record<string, unknown>[],
   detailLead: null as Record<string, unknown> | null,
   detailLeadError: null as string | null,
+  linkedClients: [] as Array<{ id: string; name: string; deleted_at: string | null }>,
   linkedClientError: null as string | null,
+  commercialFilters: [] as Array<{ table: string; column: string; values: unknown[] }>,
+  proposalFilter: '',
+  projectRows: [] as Record<string, unknown>[],
+  invoiceRows: [] as Record<string, unknown>[],
   companyResearch: null as Record<string, unknown> | null,
   companyResearchError: null as string | null,
   auditRows: [] as Record<string, unknown>[],
@@ -40,18 +45,27 @@ vi.mock('@/lib/supabase/server', () => ({
         data:
           table === 'leads'
             ? state.rows
-            : table === 'proposals'
-              ? state.proposalRows
-              : table === 'proposal_prices'
-                ? state.proposalPrices
-                : table === 'tasks'
-                  ? state.tasks
-                  : table === 'marketing_campaigns'
-                    ? state.campaigns
-                    : table === 'marketing_ads'
-                      ? state.ads
-                      : [],
-        error: null,
+            : table === 'clients'
+              ? state.linkedClients
+              : table === 'projects'
+                ? state.projectRows
+                : table === 'invoices'
+                  ? state.invoiceRows
+                  : table === 'proposals'
+                    ? state.proposalRows
+                    : table === 'proposal_prices'
+                      ? state.proposalPrices
+                      : table === 'tasks'
+                        ? state.tasks
+                        : table === 'marketing_campaigns'
+                          ? state.campaigns
+                          : table === 'marketing_ads'
+                            ? state.ads
+                            : [],
+        error:
+          table === 'clients' && state.linkedClientError
+            ? { message: state.linkedClientError }
+            : null,
         count: table === 'leads' ? state.rows.length : null,
       }
       // `then` makes the builder awaitable for chains that don't end in
@@ -75,6 +89,7 @@ vi.mock('@/lib/supabase/server', () => ({
           return builder
         },
         or: (filter: string) => {
+          if (table === 'proposals') state.proposalFilter = filter
           if (table === 'leads') {
             state.searchFilters.push(filter)
             state.leadOperations.push('search')
@@ -83,6 +98,9 @@ vi.mock('@/lib/supabase/server', () => ({
         },
         in: (column: string, values: unknown[]) => {
           if (table === 'leads') state.inCalls.push([column, values])
+          if (table === 'projects' || table === 'invoices') {
+            state.commercialFilters.push({ table, column, values })
+          }
           return builder
         },
         limit: async () => result,
@@ -422,6 +440,11 @@ describe('getLeadDetail resilience', () => {
     state.detailLead = { id: 'lead-1', name: 'María García', utm_campaign: null }
     state.detailLeadError = null
     state.linkedClientError = null
+    state.linkedClients = []
+    state.commercialFilters = []
+    state.proposalFilter = ''
+    state.projectRows = []
+    state.invoiceRows = []
     state.companyResearch = null
     state.companyResearchError = null
     state.auditRows = []
@@ -503,6 +526,46 @@ describe('getLeadDetail resilience', () => {
 
     expect(state.proposalPriceQueries).toBe(1)
     expect(result?.proposals[0]?.total).toBe(1200)
+  })
+
+  it('includes documents from archived billing records without using them as the active record', async () => {
+    state.linkedClients = [
+      { id: 'client-active', name: 'Active', deleted_at: null },
+      { id: 'client-archived', name: 'Archived', deleted_at: '2025-01-01' },
+    ]
+    state.projectRows = [{ id: 'project-old', name: 'Old project' }]
+    state.invoiceRows = [{ id: 'invoice-old', full_number: 'F-001' }]
+    state.proposalRows = [{ id: 'proposal-old', title: 'Old proposal' }]
+
+    const result = await getLeadDetail('lead-1')
+
+    expect(result?.linkedClientId).toBe('client-active')
+    expect(result?.proposals[0]?.id).toBe('proposal-old')
+    expect(result?.projects[0]?.id).toBe('project-old')
+    expect(result?.invoices[0]?.id).toBe('invoice-old')
+    expect(state.proposalFilter).toBe(
+      'lead_id.eq.lead-1,client_id.in.(client-active,client-archived)',
+    )
+    expect(state.commercialFilters).toEqual([
+      { table: 'projects', column: 'client_id', values: ['client-active', 'client-archived'] },
+      { table: 'invoices', column: 'client_id', values: ['client-active', 'client-archived'] },
+    ])
+  })
+
+  it('shows historical documents even if there is no active billing record', async () => {
+    state.linkedClients = [{ id: 'client-archived', name: 'Archived', deleted_at: '2025-01-01' }]
+    state.projectRows = [{ id: 'project-old', name: 'Old project' }]
+    state.invoiceRows = [{ id: 'invoice-old', full_number: 'F-001' }]
+
+    const result = await getLeadDetail('lead-1')
+
+    expect(result?.linkedClientId).toBeNull()
+    expect(result?.projects[0]?.id).toBe('project-old')
+    expect(result?.invoices[0]?.id).toBe('invoice-old')
+    expect(state.commercialFilters).toEqual([
+      { table: 'projects', column: 'client_id', values: ['client-archived'] },
+      { table: 'invoices', column: 'client_id', values: ['client-archived'] },
+    ])
   })
 
   it('throws a query failure instead of treating it as a missing lead', async () => {

@@ -125,13 +125,7 @@ export function LeadCommercial({
               icon={<BriefcaseBusiness className="size-3.5" />}
               label="Proyectos"
             >
-              {!linkedClientId ? (
-                <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
-              ) : projects.length === 0 ? (
-                <MobileEmptyLink href={`/projects/new?client_id=${linkedClientId}`}>
-                  Crear proyecto
-                </MobileEmptyLink>
-              ) : (
+              {projects.length > 0 ? (
                 projects.map((project) => (
                   <Link
                     key={project.id}
@@ -142,15 +136,17 @@ export function LeadCommercial({
                     <StatusBadge meta={PROJECT_STATUS} value={project.status as ProjectStatus} />
                   </Link>
                 ))
+              ) : linkedClientId ? (
+                <MobileEmptyLink href={`/projects/new?client_id=${linkedClientId}`}>
+                  Crear proyecto
+                </MobileEmptyLink>
+              ) : (
+                <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
               )}
             </MobileRelationshipRow>
 
             <MobileRelationshipRow icon={<ReceiptText className="size-3.5" />} label="Facturas">
-              {!linkedClientId ? (
-                <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
-              ) : invoices.length === 0 ? (
-                <span className="text-xs text-muted-foreground">Sin facturas</span>
-              ) : (
+              {invoices.length > 0 ? (
                 invoices.map((invoice) => (
                   <Link
                     key={invoice.id}
@@ -166,6 +162,10 @@ export function LeadCommercial({
                     </span>
                   </Link>
                 ))
+              ) : linkedClientId ? (
+                <span className="text-xs text-muted-foreground">Sin facturas</span>
+              ) : (
+                <span className="text-xs text-muted-foreground">Cuando sea cliente</span>
               )}
             </MobileRelationshipRow>
           </dl>
