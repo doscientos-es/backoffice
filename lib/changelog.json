@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.218",
+      "date": "2026-11-25",
+      "title": "v0.1.218",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add bulk deletion functionality for attachments"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "ed634b54724f40b0908492a8d9c4b755e51a5757",
+          "type": "feat",
+          "scope": "attachments",
+          "breaking": false,
+          "description": "Add bulk deletion functionality for attachments"
+        }
+      ]
+    },
+    {
       "version": "0.1.217",
       "date": "2026-11-25",
       "title": "v0.1.217",

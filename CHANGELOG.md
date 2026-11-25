@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-25 — v0.1.218
+
+### Nuevas funciones
+
+- Add bulk deletion functionality for attachments
+
 ## 2026-11-25 — v0.1.217
 
 ### Nuevas funciones
