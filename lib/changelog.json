@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "0.1.217",
+      "date": "2026-11-25",
+      "title": "v0.1.217",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add timeline chart component with expandable milestones",
+            "Add functionality to download all attachments as ZIP"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "38b82500ed42db82a54fc9d8b857aac2390cc23d",
+          "type": "feat",
+          "scope": "timeline-chart",
+          "breaking": false,
+          "description": "Add timeline chart component with expandable milestones"
+        },
+        {
+          "sha": "881a849a671c2db86bd9cc46404188727d59004d",
+          "type": "feat",
+          "scope": "attachments",
+          "breaking": false,
+          "description": "Add functionality to download all attachments as ZIP"
+        }
+      ]
+    },
+    {
       "version": "0.1.216",
       "date": "2026-11-24",
       "title": "v0.1.216",
