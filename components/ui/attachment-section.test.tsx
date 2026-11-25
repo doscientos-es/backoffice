@@ -192,10 +192,16 @@ describe('attachment list', () => {
   it('deletes each confirmed attachment and refreshes once', async () => {
     const drive = { ...item, id: 'drive', name: 'Drive', source: 'drive' as const }
     ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true })
-    render(<AttachmentSection {...BASE_PROPS} attachments={[item, drive]} />)
+    const { rerender } = render(<AttachmentSection {...BASE_PROPS} attachments={[item, drive]} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Eliminar todos los adjuntos' }))
+    rerender(
+      <AttachmentSection
+        {...BASE_PROPS}
+        attachments={[item, drive, { ...item, id: 'new', name: 'new.pdf' }]}
+      />,
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Eliminar todos' }))
 
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
@@ -203,6 +209,26 @@ describe('attachment list', () => {
     expect(fetch).toHaveBeenNthCalledWith(1, '/api/attachments/a1', { method: 'DELETE' })
     expect(fetch).toHaveBeenNthCalledWith(2, '/api/attachments/drive', { method: 'DELETE' })
     expect(screen.queryByRole('alertdialog')).toBeNull()
+  })
+
+  it('keeps the confirmation pending while deletion is in progress', async () => {
+    let finishDelete!: (response: { ok: boolean }) => void
+    ;(fetch as ReturnType<typeof vi.fn>).mockReturnValue(
+      new Promise((resolve) => {
+        finishDelete = resolve
+      }),
+    )
+    render(<AttachmentSection {...BASE_PROPS} attachments={items} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones de adjuntos' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Eliminar todos los adjuntos' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar todos' }))
+    const confirm = screen.getByRole('button', { name: 'Eliminando…' })
+    expect(confirm.getAttribute('aria-disabled')).toBe('true')
+    fireEvent.click(confirm)
+    expect(fetch).toHaveBeenCalledOnce()
+    finishDelete({ ok: true })
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce())
   })
 
   it('continues after a failure and reports which attachment could not be deleted', async () => {
