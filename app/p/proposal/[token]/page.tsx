@@ -28,6 +28,7 @@ import { parseTimeline } from '@/lib/proposals/timeline'
 import type { ProposalStatus } from '@/lib/status'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+import { DecisionBrief } from './_components/decision-brief'
 import { DecisionSummary } from './_components/decision-summary'
 import { DemoLink } from './_components/demo-link'
 import { DocumentHeader, RecipientBlock } from './_components/document-header'
@@ -70,10 +71,10 @@ export default async function PortalProposalPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>
-  searchParams: Promise<{ success?: string; error?: string; lang?: string }>
+  searchParams: Promise<{ success?: string; error?: string; lang?: string; view?: string }>
 }) {
   const { token } = await params
-  const { success, error, lang } = await searchParams
+  const { success, error, lang, view } = await searchParams
   const admin = createAdminClient()
 
   // Auth and proposal lookup are independent, so run them together. Auth decides
@@ -286,6 +287,26 @@ export default async function PortalProposalPage({
 
   const canRespond = !isDraft && !responded && !expired
   const paymentPlan = effectivePaymentPlan(proposal.payment_plan, proposal.payment_schedule)
+  if (view === 'summary') {
+    return (
+      <DecisionBrief
+        token={token}
+        language={portalLanguage}
+        title={proposal.title as string}
+        number={proposalNumber}
+        recipient={recipientName}
+        statusLabel={statusLabel}
+        validUntil={validUntil}
+        totals={totals}
+        items={safeItems}
+        scopeModules={scopeModules}
+        solutions={solutions}
+        maintenanceOffer={maintenanceOffer}
+        canRespond={canRespond}
+        isDraft={isDraft}
+      />
+    )
+  }
   const hasScope = scopeModules.length > 0 || Boolean(deliverables) || Boolean(acceptanceCriteria)
   const hasNarrative = Boolean(contextMarkdown) || problems.length > 0 || solutions.length > 0
   const navItems: NavItem[] = [

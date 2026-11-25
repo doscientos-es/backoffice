@@ -15,7 +15,7 @@ import { sileo } from 'sileo'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-type ShareLinkKind = 'portal' | 'deck'
+type ShareLinkKind = 'portal' | 'summary' | 'deck'
 
 type Meta = {
   label: string
@@ -25,6 +25,7 @@ type Meta = {
 
 const META: Record<ShareLinkKind, Meta> = {
   portal: { label: 'Propuesta', path: (t) => `/p/proposal/${t}`, Icon: FileText },
+  summary: { label: 'Resumen', path: (t) => `/p/proposal/${t}?view=summary`, Icon: FileText },
   deck: { label: 'Presentación', path: (t) => `/deck/${t}`, Icon: Presentation },
 }
 
@@ -39,7 +40,7 @@ function formatViewedAt(value: string): string {
 }
 
 /**
- * Renders the two public share links of a proposal (portal + deck) with
+ * Renders public share links for the proposal, summary and deck with
  * copy-to-clipboard and open-in-new-tab affordances. When `isDraft` is true
  * a warning callout is shown so team members don't accidentally share the
  * link before the proposal has been sent (clients would get a 404).
@@ -73,6 +74,13 @@ export function ShareLinks({
         token={token}
         proposalTitle={proposalTitle}
         lastViewedAt={portalViewedAt}
+        isDraft={isDraft}
+      />
+      <ShareLinkRow
+        kind="summary"
+        token={token}
+        proposalTitle={proposalTitle}
+        lastViewedAt={null}
         isDraft={isDraft}
       />
       <ShareLinkRow
@@ -154,7 +162,7 @@ function ShareLinkRow({
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-sm leading-tight font-medium">{meta.label}</span>
         <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
-          {lastViewedAt ? (
+          {kind === 'summary' ? null : lastViewedAt ? (
             <>
               <span
                 className="inline-flex size-1.5 shrink-0 rounded-full bg-emerald-500"
@@ -176,9 +184,11 @@ function ShareLinkRow({
               <span>Sin abrir</span>
             </>
           )}
-          <span className="text-muted-foreground/60" aria-hidden>
-            ·
-          </span>
+          {kind !== 'summary' ? (
+            <span className="text-muted-foreground/60" aria-hidden>
+              ·
+            </span>
+          ) : null}
           <span className="truncate font-mono text-muted-foreground/80">{path}</span>
         </span>
       </div>

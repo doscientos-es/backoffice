@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, Download, Presentation } from 'lucide-react'
+import { CalendarDays, Clock, Download, FileText, Presentation } from 'lucide-react'
 
 import { formatPortalDate } from '@/lib/portal/language'
 
@@ -75,6 +75,13 @@ export function DocumentHeader({
           </p>
         ) : null}
         <div className="flex flex-wrap items-center justify-center gap-3">
+          <a
+            href={`/p/proposal/${encodeURIComponent(token)}?view=summary&lang=${language}`}
+            className={headerActionClass}
+          >
+            <FileText className="size-3.5" aria-hidden />
+            {tr('Resumen para compartir', 'Resum per compartir', 'Shareable summary')}
+          </a>
           <a href={`/p/proposal/${token}/pdf?lang=${language}`} className={headerActionClass}>
             <Download className="size-3.5" aria-hidden />
             {copy.download}
