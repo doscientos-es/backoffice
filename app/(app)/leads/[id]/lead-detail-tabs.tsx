@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import type { MouseEvent, ReactNode } from 'react'
 
 import { TabCount, TabList, TabTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
 
 const LEAD_TABS = ['resumen', 'actividad', 'comercial', 'facturacion', 'inteligencia'] as const
 
@@ -80,7 +81,7 @@ export function LeadDetailTabs({
   return (
     <TabList
       aria-label="Secciones del lead"
-      className="grid w-full grid-cols-3 gap-1 p-1 sm:flex sm:w-auto sm:gap-0.5"
+      className="grid w-full grid-cols-3 gap-1 border-0 p-0 sm:flex sm:w-auto"
     >
       {LEAD_TABS.map((tab) => {
         const count = counts?.[tab]
@@ -90,7 +91,10 @@ export function LeadDetailTabs({
             key={tab}
             asChild
             active={tab === current}
-            className="group/tab min-h-11 justify-center gap-1.5 px-1.5 text-[11px] sm:min-h-9 sm:gap-2 sm:px-3 sm:text-sm"
+            className={cn(
+              'group/tab mb-0 min-h-11 justify-center gap-1.5 rounded-md border-0 px-2 text-[11px] sm:min-h-9 sm:gap-2 sm:px-3 sm:text-sm',
+              'hover:bg-muted/60 data-[active]:bg-primary/10 data-[active]:text-primary',
+            )}
           >
             <LeadTabLink
               leadId={leadId}
