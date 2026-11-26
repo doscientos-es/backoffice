@@ -27,7 +27,9 @@ export type InsertEventInput = {
   /** Stable event ID and fingerprint for safe retries. Both are required together. */
   idempotency?: { eventId: string; fingerprint: string }
   /** Defaults to notifying external guests only. */
-  sendUpdates?: 'all' | 'externalOnly'
+  sendUpdates?: 'all' | 'externalOnly' | 'none'
+  /** Private background context must not block a new slot or invite anyone. */
+  privateContext?: boolean
 }
 
 export type InsertedEvent = { id: string; htmlLink: string | null; meetUrl: string | null }
@@ -114,6 +116,12 @@ export async function insertEvent(input: InsertEventInput): Promise<InsertedEven
     start: startField,
     end: endField,
   }
+  if (input.privateContext) {
+    if (input.attendees?.length || input.withMeet)
+      throw new Error('Private calendar context cannot have guests or a new Meet.')
+    body.visibility = 'private'
+    body.transparency = 'transparent'
+  }
   if (input.idempotency) body.id = input.idempotency.eventId
 
   const privateProperties = {
@@ -138,7 +146,9 @@ export async function insertEvent(input: InsertEventInput): Promise<InsertedEven
   // "externalOnly" → only external (non-Workspace-domain) attendees receive invite
   // emails; internal @doscientos.es members already see the event on the shared
   // group calendar, so "all" would send them a duplicate notification.
-  const params = new URLSearchParams({ sendUpdates: input.sendUpdates ?? 'externalOnly' })
+  const params = new URLSearchParams({
+    sendUpdates: input.privateContext ? 'none' : (input.sendUpdates ?? 'externalOnly'),
+  })
   if (input.withMeet) params.set('conferenceDataVersion', '1')
   const url = `${BASE}/${encodeURIComponent(input.calendarId)}/events?${params}`
 

@@ -84,6 +84,8 @@ const LeadIntakeSchema = z.object({
   externalId: z.string().optional().nullable(),
   /** Provider key. Must match externalId namespace, e.g. "Anuncios Meta". */
   externalSource: z.string().optional().nullable(),
+  /** Authenticated product adapters can dedupe by an immutable account ID, not an email. */
+  exactIdentityOnly: z.boolean().optional(),
   /** Signed-webhook-only escape hatch to enrich a known existing lead. */
   mergeIntoLeadId: z.string().uuid().optional().nullable(),
   utm: utmSchema.optional(),
@@ -293,7 +295,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   // the second event, we merge whatever new context it carries into the
   // existing lead (filling gaps + appending notes) and suppress the duplicate
   // notification by returning `duplicate: true`.
-  {
+  if (!norm.exactIdentityOnly) {
     const cutoff = new Date(Date.now() - SOFT_DEDUPE_WINDOW_MS).toISOString()
 
     let matchedId: string | null = null

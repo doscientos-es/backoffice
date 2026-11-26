@@ -118,6 +118,8 @@ export const ServerSchema = PublicSchema.extend({
   GITHUB_WEBHOOK_SECRET: z.string().optional().default(''),
   // Installation ID por defecto (instalación de la App en la org doscientos-es).
   GITHUB_DEFAULT_INSTALLATION_ID: z.string().optional().default(''),
+  MENOSLIOS_CRM_SECRET: z.string().optional().default(''),
+  MENOSLIOS_CALENDAR_SUBJECT: z.string().optional().default(''),
   CAL_WEBHOOK_SECRET: z.string().optional().default(''),
   // Google Workspace service account (domain-wide delegation over doscientos.es).
   // Powers Drive backups and Calendar scheduling server-to-server, impersonating

@@ -2,6 +2,7 @@ import { FormRow } from '@/components/ui/form-row'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { MENOSLIOS_LEAD_SOURCE } from '@/lib/leads/constants'
 import type { MemberOption } from '@/lib/members/queries'
 
 export const SOLUTION_TYPES = [
@@ -17,6 +18,7 @@ export const LEAD_SOURCES = [
   'Landing',
   'Anuncios Meta',
   'Cal.com',
+  MENOSLIOS_LEAD_SOURCE,
   'Referencia',
   'Conocido',
   'LinkedIn',
