@@ -22,9 +22,9 @@ describe('LeadBillingCreateDialog', () => {
   it('submits the lead and editable billing data and refreshes after saving', async () => {
     createLeadBilling.mockResolvedValue({ ok: true, clientId: 'client-1' })
     render(<LeadBillingCreateDialog leadId="lead-1" defaults={{ name: 'Empresa ficticia' }} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Añadir datos de facturación' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
     fireEvent.change(screen.getByLabelText('Razón social'), { target: { value: 'Nombre fiscal' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
     await waitFor(() => expect(refresh).toHaveBeenCalled())
     const submitted = createLeadBilling.mock.calls[0]?.[0] as FormData
