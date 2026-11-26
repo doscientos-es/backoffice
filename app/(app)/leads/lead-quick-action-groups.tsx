@@ -1,7 +1,7 @@
 'use client'
 
-import { ListTodo, Phone } from 'lucide-react'
-import { useState } from 'react'
+import { ChevronDown, ListTodo, Phone } from 'lucide-react'
+import { useId, useState } from 'react'
 
 import { GoogleCalendarIcon } from '@/components/icons/google-calendar-icon'
 
@@ -41,9 +41,10 @@ type Props = {
   defaultCallOutcome?: 'connected' | 'no_answer'
   callSessionId?: string
   createTaskAction?: ExtractTasksDialogProps['createTaskAction']
+  collapsible?: boolean
 }
 
-/** Shared, always-visible action layout for the lead detail page and side drawer. */
+/** Shared action layout for the lead detail page and side drawer. */
 export function LeadQuickActionGroups({
   leadId,
   leadName,
@@ -64,22 +65,15 @@ export function LeadQuickActionGroups({
   defaultCallOutcome,
   callSessionId,
   createTaskAction,
+  collapsible = false,
 }: Props) {
   const [scheduleOpen, setScheduleOpen] = useState(openScheduleInitially ?? false)
+  const [expanded, setExpanded] = useState(Boolean(openCallInitially))
+  const secondaryId = useId()
   const hasTools = googleEnabled || Boolean(aiEnabled && createTaskAction)
 
-  return (
-    <section aria-label="Acciones rápidas" className="grid grid-cols-2 gap-2 sm:gap-1.5">
-      {leadPhone && (
-        <LeadCallLink
-          leadId={leadId}
-          phone={leadPhone}
-          className="flex h-8 w-full min-w-0 items-center justify-start gap-2 rounded-md border border-border/80 bg-card/60 px-2.5 text-left text-xs font-medium transition-colors hover:border-foreground/25 hover:bg-muted/60"
-        >
-          <Phone className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate">Llamar</span>
-        </LeadCallLink>
-      )}
+  const secondaryActions = (
+    <>
       {leadPhone && (
         <LeadContactSaveButton
           leadId={leadId}
@@ -105,39 +99,8 @@ export function LeadQuickActionGroups({
         defaultOutcome={defaultCallOutcome}
         callSessionId={callSessionId}
       />
-      <QWhatsAppDialog
-        leadId={leadId}
-        leadName={leadName}
-        leadAlias={leadAlias}
-        leadCompany={leadCompany}
-        leadEmail={leadEmail}
-        leadPhone={leadPhone}
-        leadLanguage={leadLanguage}
-        senderName={senderName}
-        aiEnabled={aiEnabled}
-      />
-      <QSendEmailDialog
-        leadId={leadId}
-        leadEmail={leadEmail}
-        defaultLanguage={leadLanguage}
-        aiEnabled={aiEnabled}
-      />
       <QEmailDialog leadId={leadId} leadEmail={leadEmail} />
 
-      <ScheduleReminderDialog
-        leadId={leadId}
-        defaultTitle={`Llamar a ${leadName}`}
-        defaultActionType="call"
-        members={scheduleMembers}
-        open={scheduleOpen}
-        onOpenChange={setScheduleOpen}
-        trigger={
-          <QuickActionTile
-            icon={<GoogleCalendarIcon className="h-3.5 w-auto shrink-0" />}
-            label="Programar"
-          />
-        }
-      />
       <QNoteDialog leadId={leadId} />
 
       {googleEnabled ? (
@@ -175,6 +138,71 @@ export function LeadQuickActionGroups({
           ) : null}
         </>
       ) : null}
+    </>
+  )
+
+  return (
+    <section aria-label="Acciones rápidas" className="grid grid-cols-2 gap-2">
+      {leadPhone && (
+        <LeadCallLink
+          leadId={leadId}
+          phone={leadPhone}
+          className="flex h-9 w-full min-w-0 items-center justify-start gap-2 rounded-md bg-primary px-3 text-left text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          <Phone className="size-4 shrink-0" />
+          <span className="truncate">Llamar</span>
+        </LeadCallLink>
+      )}
+      <QWhatsAppDialog
+        leadId={leadId}
+        leadName={leadName}
+        leadAlias={leadAlias}
+        leadCompany={leadCompany}
+        leadEmail={leadEmail}
+        leadPhone={leadPhone}
+        leadLanguage={leadLanguage}
+        senderName={senderName}
+        aiEnabled={aiEnabled}
+      />
+      <QSendEmailDialog
+        leadId={leadId}
+        leadEmail={leadEmail}
+        defaultLanguage={leadLanguage}
+        aiEnabled={aiEnabled}
+      />
+      <ScheduleReminderDialog
+        leadId={leadId}
+        defaultTitle={`Llamar a ${leadName}`}
+        defaultActionType="call"
+        members={scheduleMembers}
+        open={scheduleOpen}
+        onOpenChange={setScheduleOpen}
+        trigger={
+          <QuickActionTile
+            icon={<GoogleCalendarIcon className="h-3.5 w-auto shrink-0" />}
+            label="Programar"
+          />
+        }
+      />
+      {collapsible ? (
+        <div className="col-span-2">
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-controls={secondaryId}
+            onClick={() => setExpanded((value) => !value)}
+            className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            Más acciones
+            <ChevronDown className={expanded ? 'size-4 rotate-180' : 'size-4'} aria-hidden />
+          </button>
+          <div id={secondaryId} hidden={!expanded} className="mt-2 grid grid-cols-2 gap-2">
+            {secondaryActions}
+          </div>
+        </div>
+      ) : (
+        secondaryActions
+      )}
     </section>
   )
 }

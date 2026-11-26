@@ -43,6 +43,6 @@ describe('authenticated app mobile layout', () => {
 
     expect(main?.props.className).toContain('pb-4')
     expect(main?.props.className).not.toContain('pb-24')
-    expect(main?.props.className).toContain('md:py-6')
+    expect(main?.props.className).toContain('md:py-8')
   })
 })

@@ -44,13 +44,13 @@ export function CommandPaletteTrigger({
       type="button"
       onClick={openCommandPalette}
       className={cn(
-        'group flex w-full items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground',
+        'group flex w-full items-center gap-2.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/30 hover:bg-muted hover:text-foreground',
         className,
       )}
     >
       <Search className="h-4 w-4 shrink-0" />
       <span className="flex-1 text-left">Buscar…</span>
-      <kbd className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+      <kbd className="rounded-md bg-card px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
         ⌘K
       </kbd>
     </button>

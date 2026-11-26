@@ -21,8 +21,8 @@ export function Sidebar({ user }: { user: CurrentUser }) {
   const visibleGroups = visibleNavigationGroups(user.role)
 
   return (
-    <aside className="app-sidebar h-full w-56 shrink-0 flex-col border-r border-border bg-card">
-      <div className="px-4 py-5">
+    <aside className="app-sidebar h-full w-60 shrink-0 flex-col border-r border-border/60 bg-card">
+      <div className="px-5 pt-6 pb-5">
         <Link
           href="/inicio"
           aria-label="doscientos · Inicio"
@@ -31,17 +31,17 @@ export function Sidebar({ user }: { user: CurrentUser }) {
           <Logo size="md" />
         </Link>
       </div>
-      <div className="px-2 pb-2">
+      <div className="px-3 pb-3">
         <CommandPaletteTrigger />
       </div>
       <nav
-        className="no-scrollbar flex flex-1 scroll-fade flex-col overflow-y-auto px-2 py-1"
+        className="no-scrollbar flex flex-1 scroll-fade flex-col overflow-y-auto px-3 py-1"
         aria-label="Navegación principal"
       >
         <NavigationTree groups={visibleGroups} pathname={pathname} />
       </nav>
 
-      <footer className="flex flex-col gap-2 border-t border-border p-2">
+      <footer className="flex flex-col gap-2 border-t border-border/60 px-3 py-3">
         <ErrorBoundary>
           <div className="flex items-center justify-between gap-1">
             <div className="ml-auto flex items-center gap-1">

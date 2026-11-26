@@ -282,6 +282,15 @@ export default async function LeadDetailPage({
       <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="order-2 flex min-w-0 flex-col gap-6 lg:order-1">
           <LeadTabPanel tab="resumen">
+            {canEdit || nextActions.length > 0 ? (
+              <NextActionsCard
+                canEdit={canEdit}
+                leadId={id}
+                members={members}
+                currentUserId={user.id}
+                actions={nextActions}
+              />
+            ) : null}
             <Card>
               <CardContent className="pt-5">
                 <div className="grid gap-x-10 gap-y-8 md:grid-cols-2">
@@ -476,15 +485,6 @@ export default async function LeadDetailPage({
                 </div>
               </CardContent>
             </Card>
-            {canEdit || nextActions.length > 0 ? (
-              <NextActionsCard
-                canEdit={canEdit}
-                leadId={id}
-                members={members}
-                currentUserId={user.id}
-                actions={nextActions}
-              />
-            ) : null}
             <LeadCommercial
               leadId={lead.id as string}
               linkedClientId={linkedClientId}

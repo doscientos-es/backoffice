@@ -22,7 +22,7 @@ export function QuickActionTile({
       variant="outline"
       size="sm"
       className={cn(
-        'h-8 w-full min-w-0 justify-start gap-2 border-border/80 bg-card/60 px-2.5 text-left font-medium [&>span]:min-w-0',
+        'h-9 w-full min-w-0 justify-start gap-2 border-border/60 bg-card px-3 text-left font-medium [&>span]:min-w-0',
         'transition-colors hover:border-foreground/25 hover:bg-muted/60',
         tone === 'whatsapp' &&
           'border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10',
@@ -30,7 +30,7 @@ export function QuickActionTile({
       {...props}
     >
       {icon}
-      <span className="truncate text-xs">{label}</span>
+      <span className="truncate text-sm">{label}</span>
     </Button>
   )
 }

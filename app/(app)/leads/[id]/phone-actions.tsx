@@ -161,7 +161,7 @@ export function LeadContactSaveButton({
       type="button"
       variant="outline"
       size="sm"
-      className="h-8 w-full min-w-0 justify-start gap-2 px-2.5 text-left text-xs"
+      className="h-9 w-full min-w-0 justify-start gap-2 px-3 text-left text-sm"
       onClick={() => downloadLeadVCard({ leadId, name, phone, email, company })}
     >
       <Contact className="size-3.5 shrink-0 text-muted-foreground" />

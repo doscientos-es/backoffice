@@ -86,7 +86,7 @@ export function PageHeader({
             ) : null}
             <h1
               className={cn(
-                'text-xl font-semibold tracking-tight wrap-break-word text-foreground sm:text-2xl',
+                'text-2xl font-semibold tracking-tight wrap-break-word text-foreground sm:text-3xl',
                 titleClassName,
               )}
             >

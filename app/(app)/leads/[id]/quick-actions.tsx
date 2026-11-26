@@ -81,6 +81,7 @@ export function LeadQuickActions({
         defaultCallOutcome={defaultCallOutcome}
         callSessionId={callSessionId}
         createTaskAction={createTaskAction}
+        collapsible
       />
     </div>
   )

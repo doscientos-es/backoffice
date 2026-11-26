@@ -87,11 +87,10 @@ function NavigationLink({
           onNavigate?.()
         }}
         className={cn(
-          'relative flex items-center gap-2.5 rounded-md px-2.5 py-2 pr-8 text-sm transition-colors',
-          'before:absolute before:top-1/2 before:left-0 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:transition-opacity',
+          'relative flex items-center gap-3 rounded-lg px-3 py-2 pr-8 text-sm transition-colors',
           active
-            ? 'bg-secondary font-medium text-foreground before:opacity-100'
-            : 'text-muted-foreground before:opacity-0 hover:bg-secondary/60 hover:text-foreground',
+            ? 'bg-primary/10 font-medium text-primary'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
         )}
       >
         <Icon
@@ -148,7 +147,7 @@ function NavigationSection({
         aria-expanded={open}
         className="group flex w-full items-center justify-between rounded-md px-2.5 py-1 text-left transition-colors hover:bg-secondary/40"
       >
-        <span className="text-[10px] font-semibold tracking-widest text-muted-foreground/60 uppercase transition-colors select-none group-hover:text-muted-foreground">
+        <span className="text-xs font-medium text-muted-foreground transition-colors select-none group-hover:text-foreground">
           {group.label}
         </span>
         <ChevronDown
@@ -206,9 +205,7 @@ export function NavigationTree({
     <>
       {pinnedItems.length > 0 ? (
         <div className="mb-3 flex flex-col gap-0.5 border-b border-border pb-3">
-          <span className="px-2.5 py-1 text-[10px] font-semibold tracking-widest text-muted-foreground/60 uppercase">
-            Fijados
-          </span>
+          <span className="px-2.5 py-1 text-xs font-medium text-muted-foreground">Fijados</span>
           {pinnedItems.map((item) => (
             <NavigationLink
               key={item.href}

@@ -33,7 +33,7 @@ export default async function AppLayout({
       <div className="app-shell flex h-dvh overflow-hidden bg-background">
         <Sidebar user={user} />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <header className="app-mobile-header h-14 shrink-0 items-center gap-2 border-b border-border px-3">
+          <header className="app-mobile-header h-14 shrink-0 items-center gap-2 border-b border-border/60 px-3">
             <MobileNav user={user} />
             <Link
               href="/inicio"
@@ -44,7 +44,7 @@ export default async function AppLayout({
             </Link>
             <CommandPaletteTrigger variant="icon" className="ml-auto" />
           </header>
-          <main className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 pt-4 pb-4 md:px-6 md:py-6">
+          <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-muted/40 px-4 pt-4 pb-4 md:px-8 md:py-8">
             {children}
           </main>
         </div>

@@ -1,10 +1,15 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('../actions', () => ({ claimLead: vi.fn() }))
 vi.mock('sileo', () => ({ sileo: { error: vi.fn() } }))
 vi.mock('../../reminders/schedule-reminder-dialog', () => ({
-  ScheduleReminderDialog: ({ trigger }: { trigger: React.ReactNode }) => trigger,
+  ScheduleReminderDialog: ({ trigger, open }: { trigger: React.ReactNode; open: boolean }) => (
+    <>
+      {trigger}
+      {open && <div role="dialog" aria-label="Programar llamada" />}
+    </>
+  ),
 }))
 vi.mock('../lead-quick-action-dialogs', () => ({
   QuickActionTile: ({ icon, label }: { icon: React.ReactNode; label: string }) => (
@@ -13,7 +18,12 @@ vi.mock('../lead-quick-action-dialogs', () => ({
       {label}
     </button>
   ),
-  QCallDialog: () => <button type="button">Llamar</button>,
+  QCallDialog: ({ openInitially }: { openInitially?: boolean }) => (
+    <>
+      <button type="button">Registrar llamada</button>
+      {openInitially && <div role="dialog" aria-label="Registrar llamada" />}
+    </>
+  ),
   QWhatsAppDialog: () => <button type="button">Preparar</button>,
   QSendEmailDialog: () => <button type="button">Enviar</button>,
   QEmailDialog: () => <button type="button">Registrar</button>,
@@ -39,7 +49,7 @@ const props = {
 }
 
 describe('LeadQuickActions', () => {
-  it('shows every action in a flat grid without a collapsible section', () => {
+  it('keeps primary actions visible and reveals secondary actions on demand', () => {
     render(
       <LeadQuickActions
         {...props}
@@ -49,12 +59,19 @@ describe('LeadQuickActions', () => {
       />,
     )
 
+    expect(screen.getByRole('link', { name: 'Llamar' })).not.toBeNull()
+    for (const name of ['Preparar', 'Enviar', 'Programar']) {
+      expect(screen.getByRole('button', { name })).not.toBeNull()
+    }
+    const toggle = screen.getByRole('button', { name: 'Más acciones' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('button', { name: 'Registrar' })).toBeNull()
+
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
     for (const name of [
-      'Llamar',
-      'Preparar',
-      'Enviar',
+      'Registrar llamada',
       'Registrar',
-      'Programar',
       'Nota',
       'Ahora',
       'Agendar',
@@ -64,7 +81,8 @@ describe('LeadQuickActions', () => {
       expect(screen.getByRole('button', { name })).not.toBeNull()
     }
     expect(screen.getByRole('region', { name: 'Acciones rápidas' })).not.toBeNull()
-    expect(screen.queryByRole('button', { name: /Más acciones/ })).toBeNull()
+    fireEvent.click(toggle)
+    expect(screen.queryByRole('button', { name: 'Registrar' })).toBeNull()
   })
 
   it('only shows meeting and sync actions when Google is enabled', () => {
@@ -76,8 +94,21 @@ describe('LeadQuickActions', () => {
       />,
     )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     expect(screen.getByRole('button', { name: 'Tareas' })).not.toBeNull()
     expect(screen.queryByRole('button', { name: 'Ahora' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Sincronizar' })).toBeNull()
+  })
+
+  it('keeps direct links to the call and scheduling dialogs functional', () => {
+    const { unmount } = render(<LeadQuickActions {...props} openCallInitially />)
+    expect(screen.getByRole('dialog', { name: 'Registrar llamada' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Más acciones' }).getAttribute('aria-expanded')).toBe(
+      'true',
+    )
+    unmount()
+
+    render(<LeadQuickActions {...props} openScheduleInitially />)
+    expect(screen.getByRole('dialog', { name: 'Programar llamada' })).not.toBeNull()
   })
 })
