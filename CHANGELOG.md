@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-26 — v0.1.234
+
+### Nuevas funciones
+
+- Improve styling and accessibility for lead detail tabs
+
 ## 2026-11-25 — v0.1.233
 
 ### Nuevas funciones

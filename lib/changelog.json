@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.234",
+      "date": "2026-11-26",
+      "title": "v0.1.234",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Improve styling and accessibility for lead detail tabs"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "4b8e42f8546f016277f4fe24a3cb896a907ca3a3",
+          "type": "feat",
+          "scope": "leads",
+          "breaking": false,
+          "description": "Improve styling and accessibility for lead detail tabs"
+        }
+      ]
+    },
+    {
       "version": "0.1.233",
       "date": "2026-11-25",
       "title": "v0.1.233",
