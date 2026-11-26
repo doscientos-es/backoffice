@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-26 — v0.1.235
+
+### Nuevas funciones
+
+- Enhance lead detail page with next actions and UI improvements
+
 ## 2026-11-26 — v0.1.234
 
 ### Nuevas funciones
