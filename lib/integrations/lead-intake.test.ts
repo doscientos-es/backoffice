@@ -25,6 +25,7 @@ const { notifyNewLead, pushMetaConversion, sendLeadConfirmation, store } = vi.ho
   sendLeadConfirmation: vi.fn().mockResolvedValue(undefined),
   store: {
     existingById: null as Record<string, unknown> | null,
+    conflictById: null as Record<string, unknown> | null,
     existingByEmail: null as Record<string, unknown> | null,
     existingByPhone: null as Record<string, unknown> | null,
     updatedRow: null as Record<string, unknown> | null,
@@ -98,7 +99,8 @@ function buildChain(table: string) {
       filters[col] = val
       return chain
     },
-    is(_col: string, _val: unknown) {
+    is(col: string, val: unknown) {
+      filters[col] = val
       return chain
     },
     gte(_col: string, _val: unknown) {
@@ -111,6 +113,9 @@ function buildChain(table: string) {
       return chain
     },
     async single() {
+      if (op === 'insert' && table === 'leads' && store.conflictById) {
+        return { data: null, error: { code: '23505', message: 'duplicate external id' } }
+      }
       if (op === 'insert') return { data: { id: 'new-lead-uuid' }, error: null }
       return { data: null, error: null }
     },
@@ -119,7 +124,8 @@ function buildChain(table: string) {
 
       // externalId idempotency lookup
       if (filters.external_id) {
-        return { data: store.existingById, error: null }
+        const data = 'deleted_at' in filters ? store.existingById : store.conflictById
+        return { data, error: null }
       }
       // enrichLead inner select (by id)
       if (filters.id) {
@@ -169,6 +175,7 @@ beforeEach(() => {
   pushMetaConversion.mockClear()
   sendLeadConfirmation.mockClear()
   store.existingById = null
+  store.conflictById = null
   store.existingByEmail = null
   store.existingByPhone = null
   store.updatedRow = null
@@ -256,6 +263,24 @@ describe('ingestLead – externalId dedupe', () => {
     const result = await ingestLead(calIntake)
     expect(result).toEqual({ ok: true, leadId: 'existing-lead-uuid', duplicate: true })
     expect(store.insertedRow).toBeNull()
+  })
+
+  it('rejects a deleted external lead instead of acknowledging the duplicate', async () => {
+    store.conflictById = { id: 'deleted-lead', deleted_at: '2026-11-27T10:00:00.000Z' }
+    const result = await ingestLead({ ...calIntake, exactIdentityOnly: true })
+    expect(result).toEqual({
+      ok: false,
+      error: 'External lead was deleted',
+      code: 'external_lead_deleted',
+    })
+    expect(store.updatedRow).toBeNull()
+    expect(notifyNewLead).not.toHaveBeenCalled()
+  })
+
+  it('still acknowledges a concurrent insert of an active external lead', async () => {
+    store.conflictById = { id: 'active-lead', deleted_at: null }
+    const result = await ingestLead({ ...calIntake, exactIdentityOnly: true })
+    expect(result).toEqual({ ok: true, leadId: 'active-lead', duplicate: true })
   })
 })
 

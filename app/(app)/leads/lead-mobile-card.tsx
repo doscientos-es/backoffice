@@ -2,8 +2,10 @@
 
 import { ChevronRight, Mail, Phone } from 'lucide-react'
 
+import { Badge } from '@/components/ui/badge'
 import { MemberLabel } from '@/components/ui/member-avatar'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { MENOSLIOS_LEAD_SOURCE } from '@/lib/leads/constants'
 import type { LeadListItem } from '@/lib/leads/types'
 import { leadDisplayName } from '@/lib/leads/utils'
 import { LEAD_STATUS } from '@/lib/status'
@@ -49,8 +51,11 @@ export function LeadMobileCard({
               {lead.company}
             </span>
           ) : null}
-          <span className="mt-2 inline-flex">
+          <span className="mt-2 inline-flex flex-wrap items-center gap-1">
             <StatusBadge meta={LEAD_STATUS} value={lead.status} />
+            {lead.source === MENOSLIOS_LEAD_SOURCE && (
+              <Badge variant="secondary">{MENOSLIOS_LEAD_SOURCE}</Badge>
+            )}
           </span>
         </span>
         <ChevronRight className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />

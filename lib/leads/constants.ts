@@ -1,7 +1,10 @@
+export const MENOSLIOS_LEAD_SOURCE = 'Menoslios (Ábaco)'
+
 const LEAD_SOURCES = [
   'Landing',
   'Anuncios Meta',
   'Cal.com',
+  MENOSLIOS_LEAD_SOURCE,
   'Referencia',
   'Conocido',
   'LinkedIn',

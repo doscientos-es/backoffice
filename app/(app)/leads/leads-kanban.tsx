@@ -36,6 +36,7 @@ import { FormFeedback, useFormFeedback } from '@/components/ui/form-feedback'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { MemberAvatar } from '@/components/ui/member-avatar'
 import { requiresCyaProspectSoftwareCommission } from '@/lib/leads/attribution'
+import { MENOSLIOS_LEAD_SOURCE } from '@/lib/leads/constants'
 import {
   boardColumnForLead,
   countLeadsNeedingAttention,
@@ -647,6 +648,11 @@ function Card({
           </span>
         )}
       </div>
+      {!isOverlay && lead.source === MENOSLIOS_LEAD_SOURCE && (
+        <div className="pl-8">
+          <Badge variant="secondary">{MENOSLIOS_LEAD_SOURCE}</Badge>
+        </div>
+      )}
       {!isOverlay && <LeadNextAction lead={lead} className="pl-8" />}
       {!isOverlay && (lead.company || lead.phone || lead.email) && (
         <div className="flex min-w-0 flex-col gap-0.5 pl-8 text-xs">

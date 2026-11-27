@@ -58,23 +58,19 @@ describe('insertEvent', () => {
       idempotency: { eventId: 'mcp12345', fingerprint: 'fingerprint' },
       sendUpdates: 'all' as const,
     }
-    googleFetch
-      .mockRejectedValueOnce(new GoogleApiError('conflict', 409))
-      .mockResolvedValueOnce({
-        id: 'mcp12345',
-        extendedProperties: { private: { mcpFingerprint: 'fingerprint' } },
-      })
+    googleFetch.mockRejectedValueOnce(new GoogleApiError('conflict', 409)).mockResolvedValueOnce({
+      id: 'mcp12345',
+      extendedProperties: { private: { mcpFingerprint: 'fingerprint' } },
+    })
     await expect(insertEvent(input)).resolves.toMatchObject({ id: 'mcp12345' })
     const call = googleFetch.mock.calls.at(-2)!
     expect(call[2]).toContain('sendUpdates=all')
     expect(JSON.parse(call[3].body)).toMatchObject({ id: 'mcp12345' })
 
-    googleFetch
-      .mockRejectedValueOnce(new GoogleApiError('conflict', 409))
-      .mockResolvedValueOnce({
-        id: 'mcp12345',
-        extendedProperties: { private: { mcpFingerprint: 'other' } },
-      })
+    googleFetch.mockRejectedValueOnce(new GoogleApiError('conflict', 409)).mockResolvedValueOnce({
+      id: 'mcp12345',
+      extendedProperties: { private: { mcpFingerprint: 'other' } },
+    })
     await expect(insertEvent(input)).rejects.toThrow('idempotencia')
   })
 
@@ -92,5 +88,24 @@ describe('insertEvent', () => {
         idempotency: { eventId: 'mcp12345', fingerprint: 'fingerprint' },
       }),
     ).rejects.toThrow('cancelada')
+  })
+  it('writes context as private and free, without guests or a second Meet', async () => {
+    googleFetch.mockResolvedValueOnce({ id: 'context' })
+    const input = {
+      subject: 'gerard@example.test',
+      calendarId: 'primary',
+      summary: 'Contexto',
+      start: new Date('2030-08-10T10:00:00Z'),
+      end: new Date('2030-08-10T10:30:00Z'),
+      privateContext: true,
+    }
+    await insertEvent(input)
+    const call = googleFetch.mock.calls.at(-1)!
+    expect(call[2]).toContain('sendUpdates=none')
+    const event = JSON.parse(call[3].body)
+    expect(event).toMatchObject({ visibility: 'private', transparency: 'transparent' })
+    expect(event).not.toHaveProperty('attendees')
+    expect(event).not.toHaveProperty('conferenceData')
+    await expect(insertEvent({ ...input, attendees: ['customer@example.test'] })).rejects.toThrow()
   })
 })

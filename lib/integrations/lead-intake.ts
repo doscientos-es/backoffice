@@ -84,6 +84,8 @@ const LeadIntakeSchema = z.object({
   externalId: z.string().optional().nullable(),
   /** Provider key. Must match externalId namespace, e.g. "Anuncios Meta". */
   externalSource: z.string().optional().nullable(),
+  /** Authenticated product adapters can dedupe by an immutable account ID, not an email. */
+  exactIdentityOnly: z.boolean().optional(),
   /** Signed-webhook-only escape hatch to enrich a known existing lead. */
   mergeIntoLeadId: z.string().uuid().optional().nullable(),
   utm: utmSchema.optional(),
@@ -101,7 +103,7 @@ function normalizeContactLanguage(value: string | null | undefined): 'ca' | 'es'
 
 export type LeadIntakeResult =
   | { ok: true; leadId: string; duplicate: boolean }
-  | { ok: false; error: string }
+  | { ok: false; error: string; code?: 'external_lead_deleted' }
 
 /**
  * Parses a conservative numeric floor (EUR) from a free-text budget answer.
@@ -293,7 +295,7 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
   // the second event, we merge whatever new context it carries into the
   // existing lead (filling gaps + appending notes) and suppress the duplicate
   // notification by returning `duplicate: true`.
-  {
+  if (!norm.exactIdentityOnly) {
     const cutoff = new Date(Date.now() - SOFT_DEDUPE_WINDOW_MS).toISOString()
 
     let matchedId: string | null = null
@@ -390,10 +392,13 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     if (error?.code === '23505' && norm.externalId && norm.externalSource) {
       const { data: dup } = await supabase
         .from('leads')
-        .select('id')
+        .select('id, deleted_at')
         .eq('external_source', norm.externalSource)
         .eq('external_id', norm.externalId)
         .maybeSingle()
+      if (dup?.id && dup.deleted_at && norm.exactIdentityOnly) {
+        return { ok: false, error: 'External lead was deleted', code: 'external_lead_deleted' }
+      }
       if (dup?.id) {
         await linkConversionEventsToLead({
           leadId: dup.id as string,
