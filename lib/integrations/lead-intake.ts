@@ -103,7 +103,7 @@ function normalizeContactLanguage(value: string | null | undefined): 'ca' | 'es'
 
 export type LeadIntakeResult =
   | { ok: true; leadId: string; duplicate: boolean }
-  | { ok: false; error: string }
+  | { ok: false; error: string; code?: 'external_lead_deleted' }
 
 /**
  * Parses a conservative numeric floor (EUR) from a free-text budget answer.
@@ -392,10 +392,13 @@ export async function ingestLead(input: LeadIntake): Promise<LeadIntakeResult> {
     if (error?.code === '23505' && norm.externalId && norm.externalSource) {
       const { data: dup } = await supabase
         .from('leads')
-        .select('id')
+        .select('id, deleted_at')
         .eq('external_source', norm.externalSource)
         .eq('external_id', norm.externalId)
         .maybeSingle()
+      if (dup?.id && dup.deleted_at && norm.exactIdentityOnly) {
+        return { ok: false, error: 'External lead was deleted', code: 'external_lead_deleted' }
+      }
       if (dup?.id) {
         await linkConversionEventsToLead({
           leadId: dup.id as string,

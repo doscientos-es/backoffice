@@ -32,7 +32,11 @@ export async function POST(request: NextRequest) {
   if (!payload.success) return new NextResponse(null, { status: 400 })
   const event = payload.data
   const result = await ingestLead(menosliosIntake(event))
-  if (!result.ok) return new NextResponse(null, { status: 503 })
+  if (!result.ok) {
+    return new NextResponse(null, {
+      status: result.code === 'external_lead_deleted' ? 409 : 503,
+    })
+  }
   if (event.kind === 'registration') return new NextResponse(null, { status: 204 })
 
   const db = createAdminClient()
