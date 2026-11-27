@@ -1,6 +1,28 @@
 {
   "releases": [
     {
+      "version": "0.1.239",
+      "date": "2026-11-27",
+      "title": "v0.1.239",
+      "sections": [
+        {
+          "title": "Correcciones",
+          "items": [
+            "Reserve ML-SUS for Menoslios subscription invoices"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "7d7f138ad798686ebdfdcd1e934d30dc7b183313",
+          "type": "fix",
+          "scope": null,
+          "breaking": false,
+          "description": "Reserve ML-SUS for Menoslios subscription invoices"
+        }
+      ]
+    },
+    {
       "version": "0.1.237",
       "date": "2026-11-27",
       "title": "v0.1.237",
