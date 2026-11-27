@@ -2,6 +2,12 @@
 
 <!-- generado desde Git con Conventional Commits; no editar a mano -->
 
+## 2026-11-27 — v0.1.237
+
+### Nuevas funciones
+
+- Add Vercel configuration for build command
+
 ## 2026-11-27 — v0.1.236
 
 ### Nuevas funciones
