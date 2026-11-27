@@ -20,7 +20,9 @@ export async function prepareAbacoSubscription(
 ): Promise<string> {
   await assertDurableVerifactuPackage()
   verifactuSoftwareSnapshotFromEnv()
-  if (!serverEnv().RESEND_API_KEY || !serverEnv().ABACO_BILLING_PORTAL_URL) return 'unavailable'
+  const env = serverEnv()
+  if (!env.RESEND_API_KEY || !(env.MENOSLIOS_BILLING_PORTAL_URL || env.ABACO_BILLING_PORTAL_URL))
+    return 'unavailable'
   const admin = createAdminClient()
   const args = {
     p_tenant: tenantId,
@@ -60,7 +62,8 @@ export async function prepareAbacoSubscription(
 }
 
 export async function fulfillAbacoSubscription(payment: AbacoSubscriptionPayment) {
-  const portalBase = serverEnv().ABACO_BILLING_PORTAL_URL
+  const env = serverEnv()
+  const portalBase = env.MENOSLIOS_BILLING_PORTAL_URL || env.ABACO_BILLING_PORTAL_URL
   if (!portalBase) throw new Error('Falta el dominio de facturación de Ábaco')
   await assertDurableVerifactuPackage()
   const admin = createAdminClient()

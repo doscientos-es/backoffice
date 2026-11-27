@@ -2,10 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { POST } from './route'
 
-const { fulfill, prepare } = vi.hoisted(() => ({ fulfill: vi.fn(), prepare: vi.fn() }))
+const { fulfill, prepare, env } = vi.hoisted(() => ({
+  fulfill: vi.fn(),
+  prepare: vi.fn(),
+  env: { MENOSLIOS_BILLING_SECRET: '', ABACO_BILLING_SECRET: '' },
+}))
 const testToken = 'unit-test-credentials-not-used-anywhere-else'
 
-vi.mock('@/lib/env', () => ({ serverEnv: () => ({ ABACO_BILLING_SECRET: testToken }) }))
+vi.mock('@/lib/env', () => ({ serverEnv: () => env }))
 vi.mock('@/lib/invoices/abaco-subscription-fulfillment', () => ({
   fulfillAbacoSubscription: fulfill,
   prepareAbacoSubscription: prepare,
@@ -45,7 +49,20 @@ function post(body: unknown, token = testToken) {
 }
 
 describe('Ábaco subscription integration', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    env.MENOSLIOS_BILLING_SECRET = ''
+    env.ABACO_BILLING_SECRET = testToken
+  })
+
+  it('prefers the new secret while retaining the legacy fallback', async () => {
+    const newToken = 'another-unit-test-credential-for-menoslios'
+    env.MENOSLIOS_BILLING_SECRET = newToken
+    expect((await post({}, testToken)).status).toBe(401)
+    expect((await post({}, newToken)).status).toBe(422)
+    env.MENOSLIOS_BILLING_SECRET = ''
+    expect((await post({}, testToken)).status).toBe(422)
+  })
 
   it('rejects callers before sending any fiscal or payment work downstream', async () => {
     expect((await post({ action: 'issue', payment }, 'wrong')).status).toBe(401)

@@ -3,16 +3,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AbacoSubscriptionPayment } from './abaco-subscription-event'
 import { fulfillAbacoSubscription } from './abaco-subscription-fulfillment'
 
-const { rpc, send, single } = vi.hoisted(() => ({ rpc: vi.fn(), send: vi.fn(), single: vi.fn() }))
+const { rpc, send, single, env } = vi.hoisted(() => ({
+  rpc: vi.fn(),
+  send: vi.fn(),
+  single: vi.fn(),
+  env: { MENOSLIOS_BILLING_PORTAL_URL: '', ABACO_BILLING_PORTAL_URL: '' },
+}))
 
 vi.mock('server-only', () => ({}))
 vi.mock('@/components/email', () => ({ InvoiceEmail: (props: unknown) => props }))
 vi.mock('@/lib/clients/fiscal-verification', () => ({}))
 vi.mock('@/lib/email/render', () => ({ renderEmail: async () => '<p>Factura pagada</p>' }))
 vi.mock('@/lib/email/resend', () => ({ sendEmail: send }))
-vi.mock('@/lib/env', () => ({
-  serverEnv: () => ({ ABACO_BILLING_PORTAL_URL: 'https://invoices.example.test' }),
-}))
+vi.mock('@/lib/env', () => ({ serverEnv: () => env }))
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({
     rpc,
@@ -57,6 +60,8 @@ function fiscalState(state: string, finishFails = false) {
 describe('fulfillAbacoSubscription', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    env.MENOSLIOS_BILLING_PORTAL_URL = ''
+    env.ABACO_BILLING_PORTAL_URL = 'https://invoices.example.test'
     single.mockResolvedValue({
       data: {
         full_number: 'TEST-001',
@@ -64,6 +69,18 @@ describe('fulfillAbacoSubscription', () => {
         status: 'paid',
         is_client_visible: true,
       },
+    })
+  })
+
+  it('prefers the new portal URL and falls back to the legacy one', async () => {
+    fiscalState('sent')
+    env.MENOSLIOS_BILLING_PORTAL_URL = 'https://new.example.test'
+    expect(await fulfillAbacoSubscription(payment)).toMatchObject({
+      portalUrl: expect.stringContaining('https://new.example.test'),
+    })
+    env.MENOSLIOS_BILLING_PORTAL_URL = ''
+    expect(await fulfillAbacoSubscription(payment)).toMatchObject({
+      portalUrl: expect.stringContaining('https://invoices.example.test'),
     })
   })
 

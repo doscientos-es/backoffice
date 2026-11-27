@@ -12,7 +12,8 @@ export const runtime = 'nodejs'
 const log = scopedLogger('integrations.abaco.billing')
 
 export async function POST(request: Request): Promise<Response> {
-  const secret = serverEnv().ABACO_BILLING_SECRET
+  const env = serverEnv()
+  const secret = env.MENOSLIOS_BILLING_SECRET || env.ABACO_BILLING_SECRET
   if (secret.length < 32 || !isAuthorizedCronRequest(request, [secret])) {
     return Response.json({ error: 'unauthorized' }, { status: 401 })
   }

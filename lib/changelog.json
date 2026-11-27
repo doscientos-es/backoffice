@@ -1,6 +1,50 @@
 {
   "releases": [
     {
+      "version": "0.1.237",
+      "date": "2026-11-27",
+      "title": "v0.1.237",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add Vercel configuration for build command"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "153d1e844a175c9440901f9491273cbe7461c24e",
+          "type": "feat",
+          "scope": "build",
+          "breaking": false,
+          "description": "Add Vercel configuration for build command"
+        }
+      ]
+    },
+    {
+      "version": "0.1.236",
+      "date": "2026-11-27",
+      "title": "v0.1.236",
+      "sections": [
+        {
+          "title": "Nuevas funciones",
+          "items": [
+            "Add MENOSLIOS billing secrets and update integration tests"
+          ]
+        }
+      ],
+      "changes": [
+        {
+          "sha": "2abd01974c42befa11ba77704f6bd988c515da61",
+          "type": "feat",
+          "scope": "env",
+          "breaking": false,
+          "description": "Add MENOSLIOS billing secrets and update integration tests"
+        }
+      ]
+    },
+    {
       "version": "0.1.235",
       "date": "2026-11-26",
       "title": "v0.1.235",
